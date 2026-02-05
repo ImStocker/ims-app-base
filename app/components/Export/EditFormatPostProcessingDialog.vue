@@ -60,10 +60,27 @@ import DialogContent from '../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import LocalFsSyncManager from '../../logic/managers/LocalFsSyncManager';
 
-import { basicSetup } from 'codemirror';
-
 import { EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import {
+  EditorView,
+  keymap,
+  lineNumbers,
+  highlightSpecialChars,
+  drawSelection,
+} from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  bracketMatching,
+} from '@codemirror/language';
+import { searchKeymap } from '@codemirror/search';
+import {
+  autocompletion,
+  completionKeymap,
+  closeBrackets,
+  closeBracketsKeymap,
+} from '@codemirror/autocomplete';
 
 import { javascript } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -130,7 +147,21 @@ export default defineComponent({
       if (!editorElement) return;
 
       const editor_extensions = [
-        basicSetup,
+        lineNumbers(),
+        history(),
+        highlightSpecialChars(),
+        drawSelection(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        bracketMatching(),
+        closeBrackets(),
+        autocompletion(),
+        keymap.of([
+          ...defaultKeymap,
+          ...historyKeymap,
+          ...searchKeymap,
+          ...completionKeymap,
+          ...closeBracketsKeymap,
+        ]),
         javascript(),
         EditorView.domEventHandlers({
           blur: (event, view) => {
