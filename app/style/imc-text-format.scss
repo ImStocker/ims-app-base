@@ -1,0 +1,57 @@
+$imc-text-tab-size: 1.1em;
+$imc-text-max-indent: 9;
+$imc-text-list-padding: $imc-text-tab-size;
+$imc-text-list-padding-offset: 0.3em;
+
+@mixin imc-text-format {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  tab-size:#{$imc-text-max-indent};
+
+  p {
+    padding: 0;
+    margin: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6{
+    font-weight: bold;
+    line-height: var(--local-line-height);
+    margin: 0;
+    margin-bottom: 5px;
+    counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 12px 0px 10px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  h2 {
+    margin: 10px 0px 5px;
+    font-size: 18px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  h3 {
+    font-size: 17px;
+  }
+  h4 {
+    font-size: 16px;
+  }
+  h5 {
+    font-size: 1.02em;
+  }
+  h6 {
+    font-size: 1em;
+  }
+}

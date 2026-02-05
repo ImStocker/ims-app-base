@@ -1,0 +1,827 @@
+@use 'new-vars-mixins.scss';
+@use 'theme-ims-dark-mixin.scss';
+
+@mixin theme-ims-light{
+    
+    --color-accent: #ebbe44;
+    --color-success: #49E272;
+    --color-danger: #e93c25;
+    --color-warn: #ebbe44;
+    --color-ready-value: #70a500;
+    --color-main-yellow: #ebbe44;
+    --color-main-error: #e93c25;
+    
+    --color-inherited-value:#2b61b9;
+
+
+    --root-bg-color: #EDEEF0; //#EDEEF0
+    --root-box-color: #FFF;
+    --root-font-size: 15px;
+    --root-font-family: 'Ubuntu', Arial, Helvetica Neue, Helvetica, sans-serif;
+    --root-line-height: 1.7;
+    --root-line-height-thin: 1.2;
+    --root-line-height-text: 2;
+    --root-text-color: #1A2947;
+    --root-link-color: #3664da;
+    --root-border-color: #CCCCCC;
+    --root-hl-bg-color: #F5F7FC;
+    --root-hl-text-color: var(--root-text-color);
+    --root-sub-text-color: #999;
+    --root-header-color: #333;
+    @include new-vars-mixins.reset-local-vars;
+
+    --panel-bg-color: var(--root-box-color);
+    --panel-box-color: var(--root-bg-color);
+    --panel-border-radius: 4px;
+    --panel-border-color: var(--root-box-color);
+    --panel-border-width: 1px;
+    --panel-bg-color-2: var(--root-bg-color);
+    --panel-box-color-2: var(--root-box-color);
+
+    --dropdown-bg-color: #FFFFFF;
+    --dropdown-bg-filter: none;
+    --dropdown-box-shadow: 0px 0px 4px 0px #00000040;
+    --dropdown-hl-bg-color: var(--local-hl-bg-color);
+
+    --input-border-color: #999999;
+    --input-border-hl-color: #1A2947;
+    --input-placeholder-color: #999999;
+    --input-text-color: #1A2947;
+    --input-bg-color: #F5F7FC;
+
+    --app-menu-bg-color: #f7f7f7; //#FFF
+    --app-menu-hl-bg-color: #e7e7e7;
+    --app-menu-selected-bg-color: #f9cc50;
+    --app-menu-selected-text-color: var(--local-text-color);
+    --app-menu-focus-outline-color: #FFD668;
+
+    --app-toasts-bg-color: #F5F7FC;
+    --app-toasts-text-color: var(--local-text-color);
+    --app-toasts-success-color: #37ba56;
+    --app-toasts-fail-color: #f7263d;
+    --app-toasts-border-color: rgb(238, 216, 17, 0.5);
+    --app-toasts-progress-color: var(--color-accent);
+
+    --tag-bg-color: var(--root-hl-bg-color);
+    --tag-text-color: var(--root-sub-text-color);
+
+    --imsde-dropdown-bg-color: var(--dropdown-bg-color);
+    --imsde-dropdown-bg-filter: var(--dropdown-bg-filter);
+    --imsde-dropdown-box-shadow: var(--dropdown-box-shadow);
+    --imsde-dropdown-border-color: var(--dropdown-hl-bg-color);
+    --imsde-dropdown-border-radius: 4px;
+    --imsde-node-header-text-color: #1A2947;
+    --imsde-minimap-bg-color: #fff;
+    --imsde-minimap-node-color: #e2e2e2;
+    --imsde-minimap-mask-color: rgba(240, 240, 240, 0.6);
+
+    --task-checkbox-color: #49E272;
+
+    --task-badge-color-blue: #548AFF;
+    --task-badge-color-blue-10: rgb(84, 138, 255, 0.1);
+    --task-badge-color-blue-20: rgb(84, 138, 255, 0.2);
+    --task-badge-color-green: #49E272;
+    --task-badge-color-green-10: rgb(73, 226, 114, 0.1);
+    --task-badge-color-green-20: rgb(73, 226, 114, 0.2);
+    --task-badge-color-red: #FF513A;
+    --task-badge-color-red-10: rgb(255, 81, 58, 0.1);
+    --task-badge-color-red-20: rgb(255, 81, 58, 0.2);
+    --task-badge-color-orange: #FFC954;
+    --task-badge-color-orange-10: rgb(255, 201, 84, 0.1);
+    --task-badge-color-orange-20: rgb(255, 201, 84, 0.2);
+
+    --task-badge-bg-color: rgb(133, 163, 224, 0.1);
+    --task-badge-hl-bg-color: rgb(133, 163, 224, 0.2);
+
+    --task-box-color: #F9F9FB;
+    --task-card-bg-color: #F9FAFE;
+    --task-card-outline-color: #d7ddf3;
+
+    --task-column-create-task-color: #B2B7C5;
+
+    --view-is-busy-overlay-color: rgba(255, 255, 255, .3);
+
+    --loader-spinner-color1: var(--local-text-color);
+    --loader-spinner-color2: var(--local-sub-text-color);
+
+    --scrollbar-bg-color: #d5d5dd;
+
+    --button-bg-color-hover: rgba(143, 171, 229, .1);
+    --button-text-color-danger: #FF513A;
+
+    --editor-bg-color: var(--root-box-color);
+    --editor-box-color: var(--root-bg-color);
+
+    color: var(--root-text-color);
+
+    & .is-button,
+    .use-buttons-normal .is-button,
+    .is-button.is-button-normal{
+      --button-text-color: #1A2947;
+      --button-bg-color: transparent;
+      --button-border-color: #1A2947;
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+      }
+    
+      &:focus {
+        --button-outline-color: #1A2947;
+        --button-bg-color: var(--button-bg-color-hover);
+      }
+    
+      &:disabled, &.disabled {
+        --button-text-color: #CCCCCC;
+        --button-border-color: #CCCCCC;
+        --button-bg-color: transparent;
+
+        &.loading {
+          --button-border-color: #1A2947;
+          --button-text-color: #1A2947;
+        }
+      }
+
+      &.danger {
+        --button-bg-color: #FF513A1A;
+        --button-text-color: var(--button-text-color-danger);
+        --button-border-color: transparent;
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #CCCCCC;
+          --button-border-color: #CCCCCC;  
+          --button-text-color: #1A2947;
+
+          &.loading {
+            --button-bg-color: #FF513A1A;
+            --button-text-color: var(--button-text-color-danger);
+            --button-border-color: transparent;
+          }
+        }
+      }
+    }
+
+    .use-buttons-normal-outlined .is-button,
+    .is-button-normal-outlined {
+      &.accent {
+        --button-bg-color: transparent;
+        --button-text-color: #f2b000;
+        --button-border-color: #f2b000;
+
+        &:hover {
+          --button-text-color: #1A2947;
+        }
+        &:focus {
+          --button-text-color: #1A2947;
+        }
+
+        &:disabled, &.disabled {
+          &.loading {
+            --button-bg-color: transparent;
+            --button-text-color: #f2b000;
+            --button-border-color: #f2b000;
+          }
+        }
+      }
+      &.danger {
+        --button-border-color: var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+        }
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #CCCCCC;
+          --button-border-color: #CCCCCC;  
+          --button-text-color: #1A2947;
+
+          &.loading {
+            --button-text-color: var(--button-text-color-danger);
+            --button-border-color: var(--button-text-color-danger);
+          }
+        }
+      }
+    }
+
+    // кнопки для действий
+    .use-buttons-action .is-button,
+    .is-button.is-button-action {
+      &.danger {
+        --button-bg-color: #FF513A1A;
+        --button-text-color: var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: #CCCCCC;
+          --button-border-color: #CCCCCC;  
+          --button-text-color: #1A2947;
+
+          // &.loading {
+          // }
+        }
+      }
+    }
+
+    .use-buttons-action-outlined .is-button,
+    .is-button.is-button-action-outlined {
+      &.accent {
+        --button-bg-color: transparent;
+        --button-text-color: #f2b000;
+        --button-border-color: #f2b000;
+
+        &:hover {
+          --button-text-color: #1A2947;
+        }
+        &:focus {
+          --button-text-color: #1A2947;
+        }
+        &:disabled, &.disabled {
+          &.loading {
+            --button-border-color: #f2b000;
+            --button-text-color: #f2b000;
+          }
+        }
+      }
+
+      &.danger {
+        --button-bg-color: transparent;
+        --button-border-color: var(--button-text-color-danger);
+        --button-text-color: var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #FFFFFF;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #CCCCCC;
+          --button-border-color: #CCCCCC;  
+          --button-text-color: #1A2947;
+
+          &.loading {
+            --button-text-color: var(--button-text-color-danger);
+            --button-border-color:var(--button-text-color-danger);
+          }
+        }
+      }
+    }
+
+    & .is-button.accent,
+    .use-buttons-action .is-button.accent,
+    .is-button.is-button-action.accent,
+    .use-buttons-without-border .is-button.accent,
+    .is-button.is-button-without-border.accent {
+      --button-bg-color: #FFD668;
+      --button-text-color: #1A2947;
+      --button-border-color: #FFD668;
+  
+      &:hover {
+        --button-bg-color: #FFE08C;
+        --button-border-color: #FFE08C;
+      }
+    
+      &:focus {
+        --button-outline-color: #FFE08C;
+        --button-bg-color: #FFE08C;
+        --button-border-color: #FFE08C;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: #CCCCCC;
+        --button-border-color: #CCCCCC;  
+        --button-text-color: #1A2947;
+
+        &.loading {
+          --button-bg-color: #FFD668;
+          --button-border-color: transparent;
+        }
+      }
+    }
+
+    // пунктирные кнопки
+    .use-buttons-dotted .is-button,
+    .is-button.is-button-dotted{
+      --button-border-color: #CCCCCC;
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+        --button-border-style: dashed;
+        --button-border-color: #CCCCCC;
+      }
+      &:focus {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+        --button-outline-color: #1A2947;
+        --button-border-color: #CCCCCC;
+        --button-border-style: dashed;
+      }
+      &:disabled, &.disabled {
+        --button-text-color: #CCCCCC;
+        --button-border-color: #CCCCCC;
+        --button-bg-color: transparent;
+
+        &.loading {
+          --button-border-color: #CCCCCC;
+          --button-text-color: #1A2947;
+        }
+      }
+    }
+
+    // круглые кнопки
+    .use-buttons-rounded .is-button,
+    .is-button.is-button-rounded {
+      --button-border-color: #1A2947;
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+        --button-border-color: #1A2947;
+      }
+      &:focus {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+        --button-outline-color: #1A2947;
+        --button-border-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-text-color: #CCCCCC;
+        --button-border-color: #CCCCCC;
+        --button-bg-color: transparent;
+
+        &.loading {
+          --button-border-color: #1A2947;
+          --button-text-color: #1A2947;
+        }
+      }
+    }
+
+    .use-buttons-options .is-button,
+    .is-button.is-button-option {
+      --button-border-color: #1A2947;
+
+      &:hover {
+        --button-border-color: #1A2947;
+      }
+      &:focus {
+        --button-border-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-border-color: #CCCCCC;
+
+        &.loading {
+          --button-border-color: #1A2947;
+        }
+      }
+    }
+
+    .use-buttons-icon .is-button,
+    .is-button.is-button-icon,
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined,
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded,
+    .use-buttons-icon-small .is-button,
+    .is-button.is-button-icon-small{
+      --button-text-color: #1A2947;
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+      &:focus { 
+        --button-text-color: #1A2947;
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-outline-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+        --button-text-color: #CCCCCC;
+        --button-border-color: transparent;
+
+        &.loading {
+          --button-text-color: #1A2947;
+        }
+      }
+      
+      &.accent {
+        &:hover {
+          --button-bg-color: #FFD6684D;
+          --button-text-color: #FFD668;
+          --button-border-color: transparent;
+        }
+        &:focus {
+          --button-bg-color: #FFD6684D;
+          --button-outline-color: #FFD668;
+          --button-border-color: transparent;
+          --button-text-color: #FFD668;
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+          --button-text-color: #CCCCCC;
+          
+          &.loading {
+            --button-text-color: #1A2947;
+          }
+        }
+      }
+
+      &.danger {
+        &:hover {
+          --button-bg-color: #FF513A1A;
+          --button-text-color: var(--button-text-color-danger);
+        }
+        &:focus {
+          --button-bg-color: #FF513A1A;
+          --button-outline-color:var(--button-text-color-danger);
+          --button-text-color: var(--button-text-color-danger);
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+          --button-text-color: #CCCCCC;
+
+          &.loading {
+            --button-text-color: #1A2947;
+          }
+        }
+      }
+    }
+    .use-buttons-icon-small .is-button,
+    .is-button.is-button-icon-small{
+      --button-border-color: transparent
+    }
+    
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined{
+      --button-border-color: #CCCCCC;
+
+      &:hover {
+        --button-border-color: #CCCCCC;
+      }
+      &:focus {
+        --button-border-color: #CCCCCC;
+      }
+
+      &.accent {
+        --button-border-color: #CCCCCC;
+      }
+    }
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded{
+      --button-border-radius: 9999px;
+      --button-border-color: #CCCCCC;
+
+      &:hover, &:focus {
+        --button-border-color: #CCCCCC;
+      }
+      
+      &.accent {
+        --button-border-color: #CCCCCC;
+      }
+    }
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded,
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined {
+      &:disabled, &.disabled {
+        --button-border-color: #CCCCCC;
+      }
+      &.accent {
+        &:hover, &:focus {
+          --button-border-color: transparent;
+        }
+        &:disabled, &.disabled {
+          --button-border-color: #CCCCCC;
+          
+          &.loading {
+            --button-border-color: #CCCCCC;
+          }
+        }
+      }
+      &.danger {
+        &:hover, &:focus {
+          --button-border-color: transparent;
+        }
+        &:disabled, &.disabled {
+          --button-border-color: #CCCCCC;
+
+          &.loading {
+            --button-border-color: #CCCCCC;
+          }
+        }
+      }
+    }
+
+    .use-buttons-without-border .is-button,
+    .is-button.is-button-without-border {
+      --button-text-color: #1A2947;
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+      &:focus {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-outline-color: #F5F7FC;
+        --button-text-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+        --button-border-color: transparent;
+        --button-text-color: #CCCCCC;
+      }
+    }
+
+    .use-buttons-dropdown .is-button, 
+    .is-button.is-button-dropdown {
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+      &:focus {
+        --button-text-color: #1A2947;
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-outline-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-text-color: #CCCCCC;
+      }
+    }
+
+    .use-buttons-dropdown-item .is-button,
+    .is-button.is-button-dropdown-item {
+      --button-text-color: #1A2947;
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+      &:focus {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-outline-color: #1A2947;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+      }
+
+      &.danger {
+        --button-text-color: var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: #FF513A1A;
+        }
+        &:focus {
+          --button-bg-color: #FF513A1A;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+        }
+      }
+    }
+
+    .use-buttons-user .is-button,
+    .is-button.is-button-user {
+      --button-border-color: transparent;
+      --button-bg-color: #FFD668;
+      --button-text-color: #1A2947;
+
+      &:hover {
+        --button-bg-color: #FFE08C;
+        --button-border-color: transparent;
+      }
+      &:focus {
+        --button-bg-color: #FFE08C;
+        --button-outline-color: #FFE08C;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: #FFE08C;
+        --button-text-color: #1A2947;
+        --button-border-color: transparent;
+      }
+      &.nobody {
+        --button-text-color: #1A2947;
+        --button-border-color: #CCCCCC;
+        &:hover {
+          --button-bg-color: var(--button-bg-color-hover);
+          --button-border-color: #CCCCCC;
+        }
+        &:focus {
+          --button-outline-color: #1A2947;
+          --button-bg-color: var(--button-bg-color-hover);
+          --button-border-color: #CCCCCC;
+        }
+        &:disabled, &.disabled {
+          --button-border-color: #CCCCCC;
+          --button-bg-color: transparent;
+        }
+      }
+    }
+
+    .use-buttons-panel-selector .is-button,
+    .is-button.is-button-radio-panel {
+      --button-border-color: #CCCCCC;
+      --button-accent-color: #1A2947;
+
+      &:hover, &.selected {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+    }
+
+    .use-buttons-value-switcher .is-button,
+    .is-button.is-button-value-switcher {
+      --button-border-color: #CCCCCC;
+
+      &:hover, &:focus {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #1A2947;
+      }
+      &.selected {
+        --button-bg-color: #FFD668;
+        --button-text-color: #1A2947;
+        --button-border-color: #FFD668;
+      }
+    }
+
+    .use-buttons-menu-section .is-button,
+    .is-button.is-button-menu-section {
+      --button-text-color: #1A294780;
+      --button-border-color: transparent;
+
+      &:focus {
+        --button-outline-color: var(--local-hl-bg-color);
+      }
+    }
+
+    .use-buttons-text .is-button,
+    .is-button.is-button-text {
+      --button-border-color: transparent;
+
+      &:hover, &:focus {
+        --button-text-color: var(--local-text-color);
+        --button-bg-color: var(--local-hl-bg-color);
+      }
+    }
+
+    .is-space{
+        --color-accent: #ebbe44;
+
+        --root-bg-color: #EDEEF0;
+        --root-box-color: #FFF;
+        --root-text-color: #1A2947;
+        --root-border-color: #CCC;
+        --root-hl-bg-color: #F5F7FC;
+        @include new-vars-mixins.reset-local-vars;
+        
+        --panel-border-color: #FFF;
+        --panel-box-color: #F5F7FC;
+    }
+    
+    .button, input[type=button], input[type=submit], input[type=reset]{
+        text-shadow: none;
+    }
+
+    // OLD:
+
+    .App-content{
+        --default-bg-main: #EDEEF0;
+        --default-bg-primary: #FFF;
+        --text-intense: #1A2947;
+        .button {
+            text-shadow: none;
+        }
+        .button-light-grey{
+            border-color:#999;
+            color:#999;
+        }
+        .AssetsPageContent-parent{
+            color:#999;
+        }
+        .BreadCrumbs-item-link, 
+        .BreadCrumbs-separator,
+        .BreadCrumbs-list{
+            color:#999 !important;
+        }
+        .ChecklistBlockItem{
+            --ChecklistBlockItem-hover-bg: #FAFAFA !important;
+        }
+        .AssetEditorPropsBlock_Sheet{
+            background-color: #CCC !important;
+        }
+        .AssetEditorValueTableBlock-table{
+            --table-border: #CCC !important;
+        }
+        .ScrollableTable{
+            --table-border: #CCC !important;
+        }
+        .AssetFullEditor-Header-Manage-icon{
+            color:#999 !important;
+            &:hover{
+                color:#CCC !important;
+            }
+        }
+        .GameDesignWorkspacePage-addButton-left,
+        .GameDesignWorkspacePage-addButton-right,
+        .TeamMember-add{
+            color: var( --text-intense);
+            text-shadow: none;
+            &:hover{
+                background-color: #FAFAFA;
+            }
+        }
+        .ProjectTreePresenter{            
+            color: var( --text-intense);
+        }
+        .AssetInheritanceTree-row:hover,
+        .ProjectTreePresenterWorkspace-row:hover{
+            background-color: #FAFAFA !important;
+            color: var( --text-intense);
+        }
+        .AboutGameConfigurePage-header .AboutGameConfigurePage-manage{
+            color:#999;
+        }
+        .InformationAboutGame-create{
+            color: var(--text-intense);
+        }        
+        .FileAttachButton-attach-button{
+            color:var(--text-intense)
+        }
+        .TaskSearch-search {
+            .q-placeholder{
+                color:#666;
+            }
+        }
+        .GameDesignMenu-Header-search .q-field--outlined, 
+        .GameDesignMenu-Header-search .q-field__control:before{
+            border-color:#ccc;
+        }
+        .ColumnOfBoard-addTask{
+            color:var(--text-intense);   
+            &:hover{
+                background-color: #FAFAFA !important;
+            }
+        }
+        .Page-ActiveTab-Content-Common-item-value-select{
+            --vs-border-color: #ccc;
+            --vs-selected-color: var(--text-intense);
+        }
+        .q-field--dark .q-field__control:before{
+            border-color: #ccc;
+        }
+        .q-field--dark .q-field__native, .q-field--dark .q-field__prefix, .q-field--dark .q-field__suffix, .q-field--dark .q-field__input{
+            color: var(--text-intense);
+        }
+        .UserTask.selected .UserTask-overlay {
+            background: linear-gradient(90deg, #EEE, transparent);
+            z-index: 0;
+            border-radius: 4px;
+        }
+        .TaskSidebar{
+            color: var(--text-intense)
+        }
+    }
+    .App-header-theme-toggle{
+        color:#999;
+        &:hover{
+            color:#CCC;
+        }
+    }   
+    .is-space{
+        .App-header-theme-toggle{
+            color:#999;
+            &:hover{
+                color:#666;
+            }
+        }  
+    } 
+    .EditorBlock{
+        --EditorBlock-hoverLine: #CCC !important;
+    }
+}

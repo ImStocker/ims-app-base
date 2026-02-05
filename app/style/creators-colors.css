@@ -1,0 +1,98 @@
+:root {
+    /* BASE COLORS */
+    --white: white;
+    --gray-light: #f6f9fa;
+    --gray-light-silver: #d0d8de;
+    --gray-dark: #d0d7de3d;
+    --gray-dark-intense: #3a404f;
+    --light-black: #2a2a2a;
+    --light-black-scale: rgba(100, 100, 111, 0.30);
+
+    --purple: #8251df;
+    --purple-light: #b8d3ff;
+    --green: #40c463;
+    --green-light: #CDF677;
+    --blue: #0979da;
+    --light-blue: #218bff;
+    --red: #cf222e;
+    --soft-red: #EB6060;
+    --orange: #d4a72c;
+    --apricot: #fd8c74;
+    --dashed-bg: transparent;
+    --color-main-yellow: #EED811;
+
+    /* CREATORS THEME COLORS */
+    --default-bg-main: #363633;
+    --default-bg-primary: #2c2b29;
+    --default-border:#2c2b29;
+    --default-dark-lighter: var(--gray-light-silver);
+    --default-dark: var(--gray-dark-intense);
+    --default-dark-intense: var(--light-black);
+    --default-dark-bg-transparent: var(--light-black-scale);
+
+    --default-accent-pumpkin: var(--apricot);
+    --default-accent-secondary: var(--blue);
+    --default-accent-primary: var(--default-accent-secondary) !important;
+
+    --default-info: var(--light-blue) !important;
+    --default-success: var(--green) !important;
+    --default-error: var(--red) !important;
+    --default-warning: var(--orange) !important;
+
+    --text-title-light: var(--white);
+    --text-title-accent: var(--default-accent-primary);
+    --text-intense: #E0E0E0;
+    --text-dark: var(--light-black);
+    --text-link: var(--default-info);
+
+    --entity-status-ready: var(--green-light);
+    --entity-status-inherited: var(--purple-light);
+
+    --input-placeholder: var(--text-intense);
+    --input-hover-placeholder: var(--text-intense);
+    --input-text: var(--text-dark);
+    --input-hover-text: var(--text-dark);
+    --input-border: var(--default-border);
+    --input-hover-border: var(--default-border);
+    --input-focus-border: var(--default-border);
+    --input-active-border: var(--default-border);
+
+    --button-accent-bg: var(--default-accent-primary);
+    --button-accent-text: var(--default-bg-main);
+    --button-accent-hover-bg: var(--default-accent-primary);
+    --button-accent-hover-text: var(--default-bg-main);
+
+    --button-default-bg: var(--default-bg-primary);
+    --button-default-text: var(--text-intense);
+    --button-default-hover-bg: var(--button-default-bg);
+    --button-default-hover-text: var(--text-dark);
+
+    --button-dashed-bg: var(--dashed-bg);
+    --button-dashed-border: var(--gray-dark-intense);
+    --button-dashed-text: var(--button-dashed-border);
+    --button-dashed-hover-bg: var(--button-dashed-bg);
+    --button-dashed-hover-text: var(--button-dashed-border);
+
+    /* checklist */
+    --checkbox-text: var(--text-dark);
+    --checkbox-icon: var(--checkbox-text);
+    --checkbox-bg: var(--default-bg-primary);
+    --checkbox-hover-bg: var(--default-bg-primary);
+    --checkbox-border: var(--default-border);
+
+    /* editor */
+    --editor-bg: var(--default-bg-primary);
+    --editor-hover-bg: var(--default-bg-primary);
+    --editor-text: var(--text-intense);
+    --editor-hover-text: var(--text-dark);
+    --editor-placeholder-text: var(--editor-text);
+    --editor-placeholder-hover-text: var(--editor-hover-text);
+    --editor-border: var(--default-border);
+
+    /* modals */
+    --modal-bg: var(--default-bg-primary);
+    --modal-text: var(--text-intense);
+    --modal-border: var(--default-border);
+}
+
+/* Creators theme setting */

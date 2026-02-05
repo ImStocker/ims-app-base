@@ -1,0 +1,64 @@
+@use "./devices-mixins";
+
+.PageAuthForm{
+    margin-top: 45px;
+}
+.AuthForm {
+    border-radius: 4px;    
+    width: 500px;
+    max-width: 500px;
+    padding: 25px;
+    @include devices-mixins.device-type(not-pc) {
+      width: 100%;
+    }
+}
+[data-theme='ims-dark'] {
+    .AuthForm-header {
+        --AuthForm-header-text-color: var(--color-accent)
+    }
+}
+[data-theme='ims-light'] {
+    .AuthForm-header {
+        --AuthForm-header-text-color: var(--local-text-color)
+    }
+}
+.AuthForm-header{
+    font-family: var(--local-font-family);
+    font-size: 24px;
+    text-align: center;
+    color: var(--AuthForm-header-text-color);
+    padding-bottom: 20px;
+    font-weight: bold;
+}
+.AuthForm-content{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 20px;
+}
+.AuthForm-additional{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #ccc;
+}
+.AuthForm-link{
+    text-decoration: underline;
+    &:hover{
+        text-decoration: none;
+    }
+}
+.AuthForm-yellow-link{
+    color: var(--local-link-color);
+    text-decoration: underline;
+    &:hover{
+        text-decoration: none;
+    }
+}
+.AuthForm-registration{
+    padding-top: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

@@ -1,0 +1,45 @@
+@use 'new-vars-mixins.scss';
+@use 'theme-ims-dark-mixin.scss';
+
+:root,
+[data-theme='ims-dark']{
+    @include theme-ims-dark-mixin.theme-ims-dark;
+}
+
+
+.is-panel{
+    @include new-vars-mixins.is-panel;
+}
+
+.is-panel-inner{
+    @include new-vars-mixins.is-panel-inner;
+}
+
+.is-box {
+    @include new-vars-mixins.is-box;
+}
+
+.is-tag {
+  @include new-vars-mixins.is-tag;
+}
+
+.is-button {
+  @include new-vars-mixins.is-button;
+}
+
+.is-dropdown {
+  @include new-vars-mixins.is-dropdown;
+}
+
+.is-select, .vs__dropdown-menu {
+  @include new-vars-mixins.is-select;
+}
+.vs__dropdown-menu {
+  @include new-vars-mixins.is-dropdown;
+  border-radius: 0px 0px var(--dropdown-border-radius) var(--dropdown-border-radius);
+  border-width: 0px;
+}
+
+.is-input {
+  @include new-vars-mixins.is-input;
+}

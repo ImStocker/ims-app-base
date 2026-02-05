@@ -1,0 +1,69 @@
+button,input,optgroup,select,textarea {
+    font: inherit;
+    font-family: inherit;
+    margin: 0;
+    outline: none;
+}
+
+.button {
+    border:none;
+    text-decoration: none;
+    &:not(:disabled){
+        cursor: pointer;
+    }
+}
+
+.button-ripple-animation{
+    position: relative;
+    overflow: hidden;
+    transform: translate3d(0,0,0);
+    &:not(:disabled):before{
+        content:"";
+        background-color: rgba(255, 255, 255, 0.5);
+        display: block;
+        position: absolute;
+        transform: skewX(-45deg) translateX(0);
+        transition: none;
+        animation: button-ripple 3s ease-in-out infinite;
+        height: 1rem*calc(60/14);
+        width: 1rem*calc(40/14);
+        top: 0px;
+        left: -1rem* calc(140/14);
+    }
+    &:hover{
+        &:before{
+        visibility: hidden;
+        }
+    }
+}
+
+
+@keyframes button-ripple {
+    25%{
+        opacity: 1;
+    }
+    30% {
+        transform: skewX(-45deg) translateX(33.5em);
+        opacity: 0;
+    }
+    100% {
+        transform: skewX(-45deg) translateX(33.5em);
+        opacity: 0;
+    }
+}
+
+.light-yellow-button{
+    border-radius: 4px;
+    color: #000;
+    font-size: var(--local-font-size);
+}
+[data-theme='ims-light'] {
+  .light-yellow-button {
+    background-color: #FFD668;
+  }
+}
+[data-theme='ims-dark'] {
+  .light-yellow-button {
+    background-color: #FFF382;
+  }
+}

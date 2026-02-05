@@ -1,0 +1,18 @@
+export const ImcTextCodeLangs = [
+  { key: 'plain', label: 'Plain' },
+  { key: 'bash', label: 'Bash' },
+  { key: 'cpp', label: 'C++' },
+  { key: 'cs', label: 'C#' },
+  { key: 'css', label: 'CSS' },
+  { key: 'gml', label: 'GML' },
+  { key: 'diff', label: 'Diff' },
+  { key: 'xml', label: 'HTML/XML' },
+  { key: 'java', label: 'Java' },
+  { key: 'javascript', label: 'JavaScript' },
+  { key: 'lua', label: 'Lua' },
+  { key: 'markdown', label: 'Markdown' },
+  { key: 'php', label: 'PHP' },
+  { key: 'python', label: 'Python' },
+  { key: 'ruby', label: 'Ruby' },
+  { key: 'sql', label: 'SQL' },
+];

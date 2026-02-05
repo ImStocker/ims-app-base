@@ -1,0 +1,5 @@
+@use 'theme-ims-dark-mixin.scss';
+
+[data-theme='ims-dark']{
+    @include theme-ims-dark-mixin.theme-ims-dark;
+}

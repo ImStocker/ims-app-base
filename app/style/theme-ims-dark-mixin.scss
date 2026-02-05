@@ -1,0 +1,826 @@
+@use 'new-vars-mixins.scss';
+
+@mixin theme-ims-dark{
+    --color-accent: #EED811;
+    --color-success: #40C463;
+    --color-danger: #ff5b45;
+    --color-warn: #EED811;
+
+    --color-ready-value: #CDF677;
+    --color-main-yellow: #EED811;
+    --color-main-error: #ff5b45;
+
+    --root-bg-color: #363633;
+    --root-box-color: #2c2b29;
+    --root-font-size: 15px;
+    --root-font-family: 'Ubuntu', Arial, Helvetica Neue, Helvetica, sans-serif;
+    --root-line-height: 1.7;
+    --root-line-height-thin: 1.2;
+    --root-line-height-text: 2;
+    --root-text-color: #E9E9E9;
+    --root-text-on-primary-color: #2c2b29;
+    --root-link-color: var(--color-accent);
+    --root-border-color: rgba(255, 255, 255, 0.1);
+    --root-hl-bg-color: #3b3a38;
+    --root-hl-text-color: var(--root-text-color);
+    --root-sub-text-color: rgba(255, 255, 255, 0.3);
+    --root-header-color: var(--color-accent);
+    @include new-vars-mixins.reset-local-vars;
+    
+    --panel-bg-color: var(--root-box-color);
+    --panel-box-color: var(--root-bg-color);
+    --panel-border-radius: 4px;
+    --panel-border-color: var(--root-box-color);
+    --panel-border-width: 1px;
+    --panel-padding-horizontal: 15px;
+    --panel-padding-vertical: 15px;
+    --panel-padding: var(--panel-padding-vertical) var(--panel-padding-horizontal);
+    --panel-bg-color-2: var(--root-bg-color);
+    --panel-box-color-2: var(--root-box-color);
+
+    --dropdown-bg-color: #1d1d1df7;
+    --dropdown-bg-filter: blur(2px);
+    --dropdown-border-radius: 10px;
+    --dropdown-box-shadow: none;
+    --dropdown-hl-bg-color: #3a3a3a99;
+    --dropdown-padding: 10px 15px;
+
+    --input-border-color: #3A3A3A;
+    --input-border-hl-color: #CCCCCC;
+    --input-placeholder-color: #999999;
+    --input-text-color: #E0E0E0;
+    --input-bg-color: #252525;
+    
+    --input-outline-color: transparent;
+    --input-outline-width: 1px;
+    --input-font-size: var(--local-font-size);
+    --input-font-weight: 400;
+    --input-font-style: normal;
+    --input-placeholder-font-weight: 400;
+    --input-placeholder-font-style: italic;
+    --input-border-style: solid;
+    --input-border-width: 1px;
+    --input-border-radius: 4px;
+    --input-padding-vertical: 0.27em;
+    --input-padding-horizontal: 0.66em;
+
+    --input-padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+
+    --app-menu-bg-color: #333230;
+    --app-menu-hl-bg-color: #3b3a38;
+    --app-menu-selected-bg-color: #333230;
+    --app-menu-selected-text-color: var(--color-accent);
+    --app-menu-focus-outline-color: #272522;
+    --app-menu-item-gap: 5px;
+
+    --app-toasts-bg-color: #1d1d1df7;
+    --app-toasts-text-color: var(--local-text-color);
+    --app-toasts-border-color: rgb(238, 216, 17, 0.5);
+    --app-toasts-progress-color: var(--color-accent);
+    --app-toasts-success-color: #37ba56;
+    --app-toasts-fail-color: #f7263d;
+
+    --tag-bg-color: #313131;
+    --tag-text-color: var(--root-sub-text-color);
+
+    --view-is-busy-overlay-color: rgba(0, 0, 0, .3);
+
+    --imsde-dropdown-bg-color: var(--dropdown-bg-color);
+    --imsde-dropdown-bg-filter: var(--dropdown-bg-filter);
+    --imsde-dropdown-box-shadow: var(--dropdown-box-shadow);
+    --imsde-dropdown-border-color: var(--dropdown-hl-bg-color);
+    --imsde-dropdown-border-radius: 4px;
+    --imsde-node-header-text-color: #1A2947;
+    --imsde-minimap-bg-color: var(--local-bg-color);
+    --imsde-minimap-node-color: #e2e2e2;  
+    --imsde-minimap-mask-color: rgba(126, 126, 126, 0.6);
+
+    --task-checkbox-color: #40C463;
+
+    --task-badge-color-blue: #548aff;
+    --task-badge-color-blue-10: rgb(84, 138, 255, 0.1);
+    --task-badge-color-blue-20: rgb(84, 138, 255, 0.2);
+    --task-badge-color-green: #40c463;
+    --task-badge-color-green-10: rgb(64, 196, 99, 0.1);
+    --task-badge-color-green-20: rgb(64, 196, 99, 0.2);
+    --task-badge-color-red: #ff6854;
+    --task-badge-color-red-10: rgb(255, 104, 84, 0.1);
+    --task-badge-color-red-20: rgb(255, 104, 84, 0.2);
+    --task-badge-color-orange: #ffc954;
+    --task-badge-color-orange-10: rgb(255, 201, 84, 0.1);
+    --task-badge-color-orange-20: rgb(255, 201, 84, 0.2);
+
+    --task-badge-bg-color: #555555;
+    --task-badge-hl-bg-color: #606060;
+
+    --task-box-color: #232321;
+    --task-card-bg-color: #363633;
+    --task-card-outline-color: #CCC;
+
+    --task-column-create-task-color: rgb(255, 255, 255, 0.1);
+
+    --loader-spinner-color1: #ffffff;
+    --loader-spinner-color2: rgba(255, 255, 255, 0.2);
+
+    --scrollbar-bg-color: #232321;
+
+    --button-bg-color-hover: rgba(255, 255, 255, 0.1);
+    --button-text-color-danger: #FF6854;
+
+    color: var(--root-text-color);
+
+    --root-editor-block-padding-left: 25px;
+    --root-editor-block-padding-right: 25px;
+
+    --editor-block-padding-left: var(--root-editor-block-padding-left);
+    --editor-block-padding-right: var(--root-editor-block-padding-right);
+    --editor-bg-color: var(--root-box-color);
+    --editor-box-color: var(--root-bg-color);
+
+    & .is-button,
+    .use-buttons-normal .is-button,
+    .is-button.is-button-normal{
+      --button-width: auto;
+      --button-height: auto;
+      --button-position: relative;
+      --button-font-family: var(--local-font-family);
+      --button-font-weight: 500;
+      --button-font-size: var(--local-font-size);
+      --button-text-color: #CCCCCC;
+      --button-bg-color: transparent;
+      --button-padding: 0.53em 0.33em;
+      --button-border-radius: 0.26em;
+      --button-border-color: #CCCCCC;
+      --button-border-width: 1px;
+      --button-border-style: solid;
+      --button-outline-width: 0px;
+      --button-outline-offset: 0px;
+      --button-outline-color: transparent;
+      --button-outline-style: solid;
+      --button-icon-gap: 0.33em;
+      --button-transition: all 0.05s;
+
+      &:hover {
+        --button-bg-color: #CCCCCC;
+        --button-text-color: #222222;
+      }
+    
+      &:focus {
+        --button-outline-style: solid;
+        --button-outline-color: #CCCCCC;
+        --button-outline-width: 2px;
+        --button-outline-offset: 2px;
+    
+        --button-bg-color: #CCCCCC;
+        --button-text-color: #222222;
+      }
+    
+      &:disabled, &.disabled {
+        --button-text-color: #60605E;
+        --button-border-color: #60605E;
+        --button-bg-color: transparent;
+
+        &.loading {
+          --button-bg-color: transparent;
+          --button-text-color: #CCCCCC;
+          --button-border-color: #CCCCCC;
+        }
+      }
+
+      &.danger {
+        --button-bg-color: #FF68541A;
+        --button-text-color: var(--button-text-color-danger);
+        --button-border-color: transparent;
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #60605E;
+          --button-border-color: #60605E;
+          --button-text-color: #222222;
+
+          &.loading {
+            --button-bg-color: #FF68541A;
+            --button-text-color: var(--button-text-color-danger);
+            --button-border-color: transparent;
+          }
+        }
+      }
+    }
+
+    .use-buttons-normal-outlined .is-button,
+    .is-button.is-button-normal-outlined {
+      &.accent {
+        --button-bg-color: transparent;
+        --button-text-color: #EED811;
+
+        &:disabled, &.disabled {
+          &.loading {
+            --button-bg-color: transparent;
+            --button-text-color: #EED811;
+          }
+        }
+      }
+      &.danger {
+        --button-bg-color: transparent;
+        --button-border-color: var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+        }
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #60605E;
+          --button-border-color: #60605E;
+          --button-text-color: #222222;
+
+          &.loading {
+            --button-text-color: var(--button-text-color-danger);
+            --button-bg-color: transparent;
+            --button-border-color: var(--button-text-color-danger);
+          }
+        }
+      }
+    }
+
+    // кнопки для действий
+    .use-buttons-action .is-button,
+    .is-button.is-button-action {
+      --button-padding: 0.53em 1.6em;
+
+      &.danger {
+        --button-bg-color: #FF68541A;
+        --button-text-color: var(--button-text-color-danger);
+        --button-border-color: transparent;
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: #60605E;
+          --button-border-color: #60605E;
+          --button-text-color: #222222;
+
+          &.loading {
+            --button-bg-color: #FF68541A;
+            --button-text-color: var(--button-text-color-danger);
+            --button-border-color: transparent;
+          }
+        }
+      }
+    }
+
+    .use-buttons-action-outlined .is-button,
+    .is-button.is-button-action-outlined {
+      --button-padding: 0.53em 1.6em;
+
+      &.accent {
+        --button-bg-color: transparent;
+        --button-text-color: #EED811;
+
+        &:disabled, &.disabled {
+          &.loading {
+            --button-bg-color: transparent;
+            --button-text-color: #EED811;
+          }
+        }
+      }
+
+      &.danger {
+        --button-bg-color: transparent;
+        --button-border-color:var(--button-text-color-danger);
+        --button-text-color:var(--button-text-color-danger);
+
+        &:hover {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+        }
+
+        &:focus {
+          --button-bg-color: var(--button-text-color-danger);
+          --button-text-color: #222222;
+          --button-outline-color: var(--button-text-color-danger);
+        }
+
+        &:disabled, &.disabled {
+          --button-bg-color: #60605E;
+          --button-border-color: #60605E;
+          --button-text-color: #222222;
+
+          &.loading {
+            --button-bg-color: transparent;
+            --button-border-color: var(--button-text-color-danger);
+            --button-text-color: var(--button-text-color-danger);
+          }
+        }
+      }
+    }
+
+    & .is-button.accent,
+    .use-buttons-action .is-button.accent,
+    .is-button.is-button-action.accent,
+    .use-buttons-without-border .is-button.accent,
+    .is-button.is-button-without-border.accent {
+      --button-bg-color: #EED811;
+      --button-text-color: #222222;
+      --button-border-color: #EED811;
+  
+      &:hover {
+        --button-bg-color: #FFEC48;
+        --button-text-color: #222222;
+      }
+    
+      &:focus {
+        --button-outline-color: #FFEC48;
+        --button-bg-color: #FFEC48;
+        --button-text-color: #222222;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: #60605E;
+        --button-border-color: #60605E;  
+        --button-text-color: #222222;
+        
+        &.loading {
+          --button-bg-color: #EED811;
+          --button-text-color: #222222;
+          --button-border-color: #EED811;
+        }
+      }
+    }
+
+    // пунктирные кнопки
+    .use-buttons-dotted .is-button,
+    .is-button.is-button-dotted{
+      --button-padding: 0.66em;
+      --button-border-style: dashed;
+      --button-border-color: rgba(255, 255, 255, .1);
+
+      &:hover {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #E0E0E0;
+        --button-border-style: solid;
+        --button-border-color: transparent;
+      }
+      &:focus {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #E0E0E0;
+        --button-border-style: solid;
+        --button-border-color: transparent;
+        --button-outline-color: rgba(255, 255, 255, .1);
+      }
+      &:disabled, &.disabled {
+        --button-text-color: #60605E;
+        --button-border-color: rgba(255, 255, 255, .1);
+        --button-bg-color: transparent;
+        --button-border-style: dashed;
+
+        &.loading {
+          --button-border-color: rgba(255, 255, 255, .1);
+          --button-text-color: #E0E0E0;
+        }
+      }
+    }
+
+    // круглые кнопки
+    .use-buttons-rounded .is-button,
+    .is-button.is-button-rounded {
+      --button-font-weight: 400;
+      --button-border-color: rgba(255, 255, 255, .1);
+      --button-padding: 0.66em 1em;
+      --button-border-radius: 99999px;
+
+      &:hover {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #E0E0E0;
+        --button-border-color: transparent;
+      }
+      &:focus {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-outline-color: rgba(255, 255, 255, .1);
+        --button-text-color: #E0E0E0;
+        --button-border-color: transparent;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+        --button-text-color: #60605E;
+        --button-border-color: rgba(255, 255, 255, .1);
+
+        &.loading {
+          --button-border-color: rgba(255, 255, 255, .1);
+          --button-text-color: #E0E0E0;
+        }
+      }
+    }
+
+    .use-buttons-options .is-button,
+    .is-button.is-button-option {
+      --button-padding: 0.66em;
+      --button-border-color: rgba(255, 255, 255, .1);
+
+      &:hover {
+        --button-border-color: #CCCCCC;
+      }
+      &:focus {
+        --button-border-color: #CCCCCC;
+      }
+      &:disabled, &.disabled {
+        --button-border-color: rgba(255, 255, 255, .1);
+      }
+    }
+
+    .use-buttons-icon .is-button,
+    .is-button.is-button-icon,
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined,
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded,
+    .use-buttons-icon-small .is-button,
+    .is-button.is-button-icon-small{
+      --button-padding: 0.33em;
+      --button-border-color: transparent;
+      --button-text-color: #CCCCCC;
+
+      &:hover {
+        --button-bg-color: var(--button-bg-color-hover);
+        --button-text-color: #CCCCCC;
+        --button-border-color: transparent;
+      }
+      &:focus {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-outline-color: rgba(255, 255, 255, .1);
+        --button-text-color: #CCCCCC;
+        --button-border-color: transparent;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+        --button-text-color: #60605E;
+        --button-border-color: transparent;
+
+        &.loading {
+          --button-bg-color: transparent;
+          --button-text-color: #CCCCCC;
+        }
+      }
+      
+      &.accent {
+        --button-bg-color: transparent;
+        --button-border-color: transparent;
+        &:hover {
+          --button-bg-color: #EED8111A;
+          --button-text-color: #EED811;
+        }
+        &:focus {
+          --button-bg-color: #EED8111A;
+          --button-outline-color: #EED8111A;
+          --button-text-color: #EED811;
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+          --button-text-color: #60605E;
+
+          &.loading {
+            --button-bg-color: transparent;
+            --button-text-color: #CCCCCC;
+            --button-border-color: transparent;
+          }
+        }
+      }
+
+      &.danger {
+        --button-bg-color: transparent;
+        &:hover {
+          --button-bg-color: #FF68541A;
+          --button-text-color: var(--button-text-color-danger);
+        }
+        &:focus {
+          --button-bg-color: #FF68541A;
+          --button-outline-color: #FF68541A;
+          --button-text-color: var(--button-text-color-danger);
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+          --button-text-color: #60605E;
+
+          &.loading {
+            --button-bg-color: transparent;
+            --button-text-color: #CCCCCC;
+          }
+        }
+      }
+    }
+    
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined{
+      --button-border-color: rgba(255, 255, 255, .1);
+
+      &:disabled, &.disabled {
+        --button-border-color: rgba(255, 255, 255, .1);
+      }
+    }
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded{
+      --button-border-radius: 9999px;
+      --button-border-color: rgba(255, 255, 255, .1);
+      
+      &:disabled, &.disabled {
+        --button-border-color: rgba(255, 255, 255, .1);
+      }
+    }
+    .use-buttons-icon-rounded .is-button,
+    .is-button.is-button-icon-rounded,
+    .use-buttons-icon-outlined .is-button,
+    .is-button.is-button-icon-outlined {
+      &.accent {
+        --button-border-color: rgba(255, 255, 255, .1);
+        &:hover, &:focus {
+          --button-border-color: #EED8111A;
+        }
+        &:disabled, &.disabled {
+          --button-border-color: rgba(255, 255, 255, .1);
+
+          &.loading {
+            --button-border-color: rgba(255, 255, 255, .1);
+          }
+        }
+      }
+      &.danger {
+        &:hover, &:focus {
+          --button-border-color: #FF68541A;
+        }
+        &:disabled, &.disabled {
+          --button-border-color: rgba(255, 255, 255, .1);
+
+          &.loading {
+            --button-border-color: rgba(255, 255, 255, .1);
+          }
+        }
+      }
+    }
+
+    .use-buttons-icon-small .is-button,
+    .is-button.is-button-icon-small {
+      --button-padding: 0.13em;
+    }
+
+    .use-buttons-without-border .is-button,
+    .is-button.is-button-without-border {
+      --button-padding: 0.41em 1.25em;
+      --button-font-size: 12px;
+      --button-border-color: transparent;
+      --button-text-color: #CCCCCC;
+
+      &:hover {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #CCCCCC;
+      }
+      &:focus {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-outline-color: rgba(255, 255, 255, .1);
+        --button-text-color: #CCCCCC;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+      }
+    }
+
+    .use-buttons-dropdown .is-button, 
+    .is-button.is-button-dropdown,
+    .use-buttons-text .is-button.is-button-dropdown {
+      --button-padding: 0.33em 0.07em;
+      --button-border-width: 0px;
+
+      &:hover {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #CCCCCC;
+      }
+      &:focus {
+        --button-text-color: #CCCCCC;
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-outline-color: rgba(255, 255, 255, .1);
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+        --button-text-color: #60605E;
+      }
+    }
+
+    .use-buttons-dropdown-item .is-button,
+    .is-button.is-button-dropdown-item {
+      --button-padding: 0.8em 1em;
+      --button-border-radius: 0px;
+      --button-border-width: 0px;
+      width: 100%;
+      --button-icon-gap: 1em;
+      --button-text-color: #E0E0E0;
+      --button-font-weight: 400;
+      line-height: normal;
+      
+      &:hover {
+        --button-bg-color: #3a3a3a99;
+        --button-text-color: #E0E0E0;
+      }
+      &:focus {
+        --button-bg-color: #3a3a3a99;
+        --button-outline-color: #3a3a3a99;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: transparent;
+      }
+
+      &.danger {
+        --button-text-color: var(--button-text-color-danger);
+        --button-bg-color: transparent;
+
+        &:hover {
+          --button-bg-color: #FF68541A;
+        }
+        &:focus {
+          --button-bg-color: #FF68541A;
+          --button-outline-color: #FF68541A;
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+        }
+      }
+    }
+
+    .use-buttons-user .is-button,
+    .is-button.is-button-user {
+      --button-position: relative;
+      --button-width: 2.13em;
+      --button-height: 2.13em;
+      --button-padding: 0;
+      --button-border-width: 0px;
+      --button-border-radius: 9999px;
+      --button-bg-color: #EED811;
+      --button-text-color: #222222;
+      justify-content: center;
+
+      &:hover {
+        --button-bg-color: #FFEC48;
+        --button-text-color: #222222;
+      }
+      &:focus {
+        --button-bg-color: #FFEC48;
+        --button-outline-color: #FFEC48;
+      }
+      &:disabled, &.disabled {
+        --button-bg-color: #EED811;
+        --button-text-color: #222222;
+      }
+      &.nobody {
+        --button-bg-color: transparent;
+        --button-border-color: rgba(255, 255, 255, .1);
+        --button-border-width: 1px;
+        --button-text-color: #CCCCCC;
+        &:hover {
+          --button-bg-color: rgba(255, 255, 255, .1);
+          --button-border-color: transparent;
+        }
+        &:focus {
+          --button-bg-color: rgba(255, 255, 255, .1);
+          --button-outline-color: rgba(255, 255, 255, .1);
+          --button-border-color: transparent;
+        }
+        &:disabled, &.disabled {
+          --button-bg-color: transparent;
+          --button-border-color: #60605E;
+        }
+      }
+    }
+
+    .use-buttons-panel-selector .is-button,
+    .is-button.is-button-radio-panel {
+      --button-padding: 1em 1.33em;
+      --button-icon-gap: 0.5em;
+      --button-accent-color: var(--color-accent);
+      justify-content: space-between;
+      --button-font-weight: 400;
+      --button-border-color: rgba(255, 255, 255, .1);
+
+      &:hover, &.selected {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #E0E0E0;
+      }
+    }
+
+    .use-buttons-value-switcher .is-button,
+    .is-button.is-button-value-switcher {
+      --button-font-weight: 400;
+      --button-padding: 0.53em 1em;
+      --button-border-color: rgba(255, 255, 255, .1);
+
+      &:hover, &:focus {
+        --button-bg-color: rgba(255, 255, 255, .1);
+        --button-text-color: #CCCCCC;
+      }
+      &.selected {
+        --button-bg-color: #EED811;
+        --button-text-color: #222222;
+        --button-border-color: #EED811;
+      }
+    }
+
+    .use-buttons-menu-section .is-button,
+    .is-button.is-button-menu-section {
+      --button-padding: 10px;
+      --button-border-radius: 10px !important;
+      --button-border-color: transparent;
+      --button-text-font-weight: 500;
+      --button-text-color: rgb(255, 255, 255, .5);
+      --button-icon-gap: 10px;
+
+      &:hover, &.selected, &.router-link-exact-active {
+        --button-bg-color: var(--local-hl-bg-color);
+        --button-text-color: var(--local-hl-text-color);
+      }
+      &:focus {
+        --button-bg-color: var(--local-hl-bg-color);
+        --button-text-color: var(--local-hl-text-color);
+        --button-outline-color: var(--local-hl-bg-color);
+      }
+
+      i {
+        font-size: 1.6em;
+        line-height: 1;
+      }
+    }
+
+    .use-buttons-text .is-button,
+    .is-button.is-button-text {
+      --button-padding: 5px 10px;
+      --button-text-color: var(--local-text-color);
+      --button-font-size: 15px;
+      --button-border-radius: 7px;
+      --button-border-color: transparent;
+      --button-border-width: 1px;
+      --button-border-style: solid;
+      --button-font-weight: 400;
+      --button-icon-gap: 0;
+
+      &.selected {
+        --button-bg-color: rgba(255, 255, 255, .1);
+      }
+
+      &:hover, &:focus {
+        --button-text-color: var(--local-text-color);
+        --button-bg-color: rgba(255, 255, 255, .1);
+      }
+
+      &:disabled, &.disabled {
+        --button-text-color: var(--local-sub-text-color);
+        
+        &:hover {
+          --button-bg-color: transparent;
+        }
+      }
+    }
+    
+    .is-space{
+        --root-bg-color: #222222;
+        --root-box-color: #252525;
+        --root-text-color: #E0E0E0;
+        --root-border-color: rgba(255, 255, 255, 0.1);
+        --root-hl-bg-color:  #343434;
+        @include new-vars-mixins.reset-local-vars;
+
+        --panel-border-radius: 20px;
+        --panel-padding: 20px 15px;
+        --panel-border-color: var(--root-border-color);
+        --panel-bg-color: var(--root-box-color);
+        --panel-box-color: var(--root-bg-color);
+        .is-button:not(.is-button-dropdown-item){
+          --button-border-radius: 9999px;
+        }
+        .is-input, .is-select {
+          --input-border-width: 0px;
+          --input-border-radius: 10px;
+          --input-bg-color: var(--local-hl-bg-color);
+          --input-padding-horizontal: 15px;
+          --input-placeholder-font-weight: 500;
+        }
+    }
+
+    .q-menu{
+        color: #333;
+    }
+}

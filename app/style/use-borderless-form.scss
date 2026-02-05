@@ -1,0 +1,78 @@
+.use-borderless-form{
+    .ProjectUserPropEditor{
+        padding-top: 0px !important;
+
+        .is-select .vs__dropdown-toggle, .vs__dropdown-menu .vs__dropdown-toggle{
+            max-height: 25px;
+            border-radius: 7px;
+            border-color: transparent;
+        }
+        .is-select .vs__search, .vs__dropdown-menu .vs__search{
+            padding: 0 0 0 10px;
+            color: var(--input-text-color);
+        }
+    }
+    .FormDatePicker-clear{
+        right: 23px !important;
+        top: 0px !important;
+    }
+    .FormDatePicker-input{
+        max-width: 100%;
+        text-overflow: ellipsis;
+        padding: 0 34px 0 0 !important;
+    }
+    .FormDatePicker-input-i{
+        top: 0px !important;
+    }
+    .AttacmentPropEditor{
+        padding: 0 !important;
+        .ri-file-search-fill{
+            margin-left: -1px;
+        }
+    }
+
+
+    .AssetLinkListItem-icon,
+    .AssetLinkListItem-description-items{
+        display: none !important;
+    }
+    .AssetLinkListItem-asset{
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .AssetLinkListItem-asset-icon,
+    .AssetLinkListItem-asset-status{
+        font-size: 15px !important;
+    }
+
+    .AssetLinkListItem-asset-status.ri-checkbox-blank-line::before{
+        content: "\eb7d";
+    }
+    .AssetLinkListItem-asset-status.ri-checkbox-line::before{
+        content: "\eb81";
+    }
+
+    // кнопки для параметров в TaskSidebar 
+    .is-button, .is-button.is-button-normal{
+        --button-padding: 5px 10px;
+        --button-text-color: rgba(224, 224, 224, 1);
+        --button-font-size: 15px;
+        --button-border-radius: 7px;
+        --button-border-color: transparent;
+        --button-border-width: 1px;
+        --button-border-style: solid;
+        --button-font-weight: 400;
+    }
+    .is-button.is-button-normal{
+        --button-icon-gap: 0;
+    }
+    .is-button:hover, .is-button.is-button-normal:hover{
+        --button-text-color: rgba(224, 224, 224, 1);
+        --button-bg-color: rgba(255, 255, 255, 0.1);
+    }
+    .is-button:focus, .is-button.is-button-normal:focus{
+        --button-text-color: rgba(224, 224, 224, 1);
+        --button-bg-color: rgba(255, 255, 255, 0.1);
+    }
+}

@@ -1,0 +1,226 @@
+@use "./load-page-mixins";
+@use "./devices-mixins.scss";
+
+@mixin reset-local-vars{
+    --local-bg-color: var(--root-bg-color);
+    --local-box-color: var(--root-box-color);
+    --local-font-size: var(--root-font-size);
+    --local-font-family: var(--root-font-family);
+    --local-text-color: var(--root-text-color);
+    --local-text-on-primary-color: var(--root-text-on-primary-color);
+    --local-link-color: var(--root-link-color);
+    --local-border-color: var(--root-border-color);
+    --local-hl-bg-color: var(--root-hl-bg-color);
+    --local-hl-text-color: var(--root-hl-text-color);
+    --local-sub-text-color: var(--root-sub-text-color);
+    --local-header-color: var(--root-header-color);
+    --local-line-height: var(--root-line-height);
+    --local-line-height-text: var(--root-line-height-text);
+    --local-line-height-thin: var(--root-line-height-thin);
+}
+
+@mixin is-panel{
+    background: var(--panel-bg-color);
+    border-radius: var(--panel-border-radius);
+    border: var(--panel-border-width) solid var(--panel-border-color); 
+    padding: var(--panel-padding);
+
+    --local-box-color: var(--panel-box-color);
+    --local-bg-color: var(--panel-bg-color);
+}
+
+@mixin is-panel-inner{
+    --panel-box-color:  var(--panel-box-color-2);
+    --panel-bg-color: var(--panel-bg-color-2);
+}
+
+@mixin is-box {
+    background: var(--local-box-color);
+}
+
+@mixin is-tag {
+  background: var(--tag-bg-color);
+  color: var(--tag-text-color);
+}
+
+@mixin is-dropdown {
+  background-color: var(--dropdown-bg-color);
+  backdrop-filter: var(--dropdown-bg-filter);
+  box-shadow: var(--dropdown-box-shadow);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  border-radius: var(--dropdown-border-radius);
+  max-height: var(--DropdownContainer-freeHeight);
+  overflow: auto;
+  --local-bg-color: var(--dropdown-bg-color);
+}
+
+@mixin is-select {
+  --vs-border-width: var(--input-border-width);
+  --vs-border-style: var(--input-border-style);
+  --vs-border-color: var(--input-border-color);
+  --vs-search-input-color: var(--input-placeholder-color);
+  --vs-controls-color: var(--input-placeholder-color);
+  --vs-font-size: var(--input-font-size);
+  --vs-border-radius: var(--input-border-radius);
+  --vs-selected-color: var(--input-text-color);
+  --vs-disabled-bg: transparent;
+  
+  
+  .v-select:not(.vs--disabled):hover {
+    --vs-border-color: var(--input-border-hl-color);
+  }
+
+  .vs--disabled .vs__dropdown-toggle {
+    background-color: var(--vs-disabled-bg);
+  }
+
+  .vs--open {
+    --vs-border-color: var(--color-accent) !important;
+    --input-outline-color: var(--color-accent)
+  }
+
+  .vs__dropdown-toggle {
+    background-color: var(--input-bg-color);
+    transition: border-color .2s;
+    outline-style: solid;
+    outline-color: var(--input-outline-color);
+    outline-width: var(--input-outline-width);
+  }
+  .vs__selected-options {
+    padding: 0;
+  }
+  .vs__dropdown-option--highlight {
+    background: transparent;
+  }
+  .vs__dropdown-option {
+    padding: 0;
+    line-height: 1;
+  }
+  .vs__open-indicator {
+    font-size: 1.1em;
+  }
+  .vs__selected {
+    margin: 0;
+    padding: var(--input-padding-vertical) 0 0 var(--input-padding-horizontal);
+    height: 100%;
+  }
+  .vs__dropdown-toggle {
+    padding: 0 0 var(--input-padding-vertical);
+  }
+  .vs__search {
+    margin: 0;
+    padding: var(--input-padding-vertical) var(--input-padding-horizontal) 0;
+
+    &::placeholder {
+      color: var(--input-placeholder-color);
+      font-weight: var(--input-placeholder-font-weight);
+      font-style: var(--input-placeholder-font-style);
+    }
+  }
+  .vs__actions {
+    color: var(--vs-search-input-color);
+    fill: var(--vs-search-input-color)
+  }
+  .vs__actions {
+    padding: var(--input-padding-vertical) var(--input-padding-horizontal) 0 0;
+  }
+}
+
+@mixin is-input {
+  border-width: var(--input-border-width);
+  border-color: var(--input-border-color);
+  border-style: var(--input-border-style);
+  border-radius: var(--input-border-radius);
+  padding: var(--input-padding);
+  color: var(--input-text-color);
+  background-color: var(--input-bg-color);
+  font-size: var(--input-font-size);
+  font-weight: var(--input-font-weight);
+  font-style: var(--input-font-style);
+  transition: border-color .2s;
+
+  outline-style: solid;
+  outline-color: var(--input-outline-color);
+  outline-width: var(--input-outline-width);
+  &::placeholder {
+    color: var(--input-placeholder-color);
+    font-style: var(--input-placeholder-font-style);
+    font-weight: var(--input-placeholder-font-weight);
+  }
+
+  &:hover {
+    border-color: var(--input-border-hl-color);
+  }
+
+  &:focus, &.focus {
+    border-color: var(--color-accent);
+    outline-color: var(--color-accent)
+  }
+
+  &:disabled, &.disabled {
+    cursor: not-allowed;
+    background-color: transparent;
+    border-color: var(--input-border-color);
+    &:hover {
+      border-color: var(--input-border-color);
+    }
+  }
+}
+
+@mixin is-button {
+  gap: var(--button-icon-gap);
+  padding: 0;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--button-transition);
+  opacity: 1 !important;
+  text-align: left;
+
+  width: var(--button-width);
+  height: var(--button-height);
+  position: var(--button-position);
+
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+  padding: var(--button-padding);
+  font-size: var(--button-font-size);
+  border-radius: var(--button-border-radius);
+  border-color: var(--button-border-color);
+  border-width: var(--button-border-width);
+  border-style: var(--button-border-style);
+  font-family: var(--button-font-family);
+  font-weight: var(--button-font-weight);
+  
+  outline-width: var(--button-outline-width);
+  outline-style: var(--button-outline-style);
+  outline-color: var(--button-outline-color);
+  outline-offset: var(--button-outline-offset);
+  display: inline-flex;
+  align-items: center;
+  line-height: var(--button-font-size);
+
+  &.loading {
+    position: relative;
+    color: transparent;
+
+    &::after {
+      content: "";
+      --loader-spinner-color2: var(--button-text-color);
+      --loader-spinner-color1: transparent;
+      position: absolute;
+      right: 0;
+      margin-inline: auto; 
+      left: 0;
+      font-size: 1.2em;
+      width: 1em;
+      height: 1em;
+      border-radius: 50%;
+      transition: var(--button-transition);
+      @include load-page-mixins.loader-spinner;
+    }
+  }
+}

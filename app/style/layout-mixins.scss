@@ -1,0 +1,120 @@
+@use "./devices-mixins";
+
+@mixin clear-after($clear: both) {
+    &:after{
+        content:"";
+        clear: $clear;
+        display:block;
+    }
+}
+
+@mixin layout-columns($column-selector){
+    &>#{$column-selector}{
+        display:block;
+        float:left;
+    }
+    @include clear-after(left);
+}
+
+@mixin layout-2col($col-pos, $col-width, $col-margin){
+    @include clear-after;
+    &>.laypart-main{
+        width: 100%;
+        box-sizing: border-box;
+    }
+    @if $col-pos == right {
+        &>.laypart-main{
+            float: left;
+            padding-right: $col-width + $col-margin;
+        }
+        &>.laypart-second{
+            width:$col-width;
+            float:left;
+            margin-left: -$col-width;
+        }
+    }
+    @else {
+        &>.laypart-main{
+            float: right;
+            padding-left: $col-width + $col-margin;
+        }
+        &>.laypart-second{
+            width:$col-width;
+            float:right;
+            margin-right: -$col-width;
+        }
+    }
+}
+
+@mixin layout-normal-2col($col-pos, $col-width, $col-margin, $part-main: '.laypart-main', $part-second: ".laypart-second", $col-z-index:15){
+    @include clear-after;
+    &>#{$part-main}{
+        width: 100%;
+        box-sizing: border-box;
+    }
+    @if $col-pos == right {
+        &>#{$part-main}{
+            float: left;
+            padding-right: $col-width + $col-margin;
+        }
+        &>#{$part-second}{
+            width:$col-width;
+            float:left;
+            margin-left: -$col-width;
+        }
+    }
+    @else {
+        &>#{$part-main}{
+            float: left;
+            padding-left: $col-width + $col-margin;
+        }
+        &>#{$part-second}{
+            width:$col-width;
+            float:left;
+            margin-right: -$col-width;
+            position: relative;
+            z-index: $col-z-index;
+        }
+    }
+}
+
+@mixin layout-main-cols($col-width, $col-margin){
+    @include clear-after;
+    @include devices-mixins.device-type(pc){
+        @include layout-normal-2col(left, $col-width, $col-margin, '.laypart-main', ".laypart-second", 100);
+    }
+}
+
+@mixin layout-3col(
+    $left-col-selector, $middle-col-selector, $right-col-selector,
+    $left-col-width, $right-col-width,
+    $left-col-margin: 0px, $right-col-margin: 0px,
+    $left-col-z-index: 10, $right-col-z-index: 10)
+{
+    @include clear-after;
+    position: relative;
+    #{$left-col-selector},
+    #{$middle-col-selector},
+    #{$right-col-selector}{
+        display: block;
+        float:left;
+    }
+    #{$left-col-selector}{
+        width:$left-col-width;
+        margin-right: -$left-col-width;
+        position: relative;
+        z-index: $left-col-z-index;
+    }
+    #{$right-col-selector}{
+        width:$right-col-width;
+        margin-left: -$right-col-width;
+        position: relative;
+        z-index: $right-col-z-index;
+    }
+    #{$middle-col-selector}{
+        box-sizing: border-box;
+        padding-left: $left-col-width + $left-col-margin;
+        padding-right: $right-col-width + $right-col-margin;
+        width:100%;
+    }
+}

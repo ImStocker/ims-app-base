@@ -1,0 +1,63 @@
+// Размеры типов экранов
+// mb - мобильные
+// tb - планшет
+// pc - компьютер
+$size-mb-max: 480px;
+$size-tb-min: $size-mb-max;
+$size-tb-max: 960px;
+$size-pc-min: $size-tb-max;
+$size-large-pc-min: 1600px;
+
+@mixin device-type($type) {
+  @if $type == mb {
+    @media only screen and (max-width: $size-tb-min) { @content; }
+  }
+  @else if $type == tb {
+    @media only screen and (min-width: ($size-tb-min + 1)) and (max-width: ($size-tb-max - 1)) { @content; }
+  }
+  @else if $type == pc {
+    @media only screen and (min-width: $size-tb-max) { @content; }
+  }
+  @else if $type == mb-tb or $type == not-pc {
+    @media only screen and (max-width: ($size-tb-max - 1)) { @content; }
+  }
+  @else if $type == tb-pc or $type == not-mb {
+    @media only screen and (min-width: ($size-tb-min + 1)) { @content; }
+  }
+}
+
+@include device-type(mb){
+    .if-size-tb,
+    .if-size-pc,
+    .if-size-not-mb{
+        display: none !important;
+    }
+    .if-size-mb,
+    .if-size-not-pc{
+        display: block;
+    }
+}
+
+@include device-type(tb){
+    .if-size-mb,
+    .if-size-pc{
+        display: none !important;
+    }
+    .if-size-tb,
+    .if-size-not-mb,
+    .if-size-not-pc{
+        display: block;
+    }
+}
+
+@include device-type(pc){
+    .if-size-mb,
+    .if-size-tb,
+    .if-size-not-pc{
+        display: none !important;
+    }
+    .if-size-pc,
+    .if-size-not-mb{
+        display: block;
+    }
+}

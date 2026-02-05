@@ -1,0 +1,203 @@
+@use "./layout-mixins";
+@use "./devices-mixins";
+
+.Form {
+    margin-bottom: 20px;
+
+    &:last-child {
+        margin-bottom: 0px;
+    }
+}
+
+body:not(.has-js) .Form-jsOnly {
+    min-height: 50px;
+    position: relative;
+    pointer-events: none;
+    user-select: none;
+
+    input[type="submit"],
+    input[type="button"],
+    button {
+        display: none !important;
+    }
+
+    &:before {
+        content: "";
+        background: rgba(255, 255, 255, 0.8);
+        position: absolute;
+        z-index: 10;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+    }
+
+    &:after {
+        content: "Enable JavaScript to use this form";
+        box-sizing: border-box;
+        text-align: center;
+        position: absolute;
+        z-index: 20;
+        width: 100%;
+        top: 40%;
+        font-weight: bold;
+    }
+}
+
+.Form-row {
+    margin-bottom: 10px;
+
+    &:last-child {
+        margin-bottom: 0px;
+    }
+}
+
+.Form-row-header {
+  color: #666666;
+  font-weight: bold;
+  margin-bottom: 5px;
+  
+  @include layout-mixins.clear-after;
+  .Form-row-header-caption {
+    float: left;
+    padding: 5px;
+  }
+
+  .Form-row-header-tools {
+    float: right;
+  }
+}
+
+
+.Form-row-buttons {
+    display: flex;
+    margin-bottom: 10px;
+    font-size: 16px;
+
+    &:last-child {
+        margin-bottom: 0px;
+    }
+
+    .Form-row-buttons-left,
+    .Form-row-buttons-center,
+    .Form-row-buttons-right {
+        text-align: center;
+    }
+
+    .Form-row-buttons-left,
+    .Form-row-buttons-center,
+    .Form-row-buttons-right {
+        display: flex;
+        gap: 5px;
+    }
+
+    .Form-row-buttons-center{
+        flex: 1;
+        justify-content: center;
+    }
+
+    .button {
+        margin: 0px 2px 2px;
+
+        &:first-child {
+            margin-left: 0px;
+        }
+
+        &:last-child {
+            margin-right: 0px;
+        }
+    }
+
+    @include devices-mixins.device-type(pc) {
+        .Form-row-buttons-left {
+            text-align: left;
+        }
+        .Form-row-buttons-right {
+            text-align: right;
+
+            & > .button:last-child {
+                margin-right: 0px;
+            }
+        }
+    }
+    @include devices-mixins.device-type(not-pc) {
+        flex-direction: column;
+        .button {
+            margin-bottom: 10px;
+        }
+        .Form-row-buttons-left,
+        .Form-row-buttons-center,
+        .Form-row-buttons-right {
+            margin-bottom: 10px;
+        }
+    }
+}
+
+
+.Form-row-header-tools-button {
+    padding: 3px 5px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    cursor: pointer;
+
+    i {
+        margin-right: 2px;
+    }
+
+    span {
+        font-weight: 500;
+        user-select: none;
+    }
+
+    @include devices-mixins.device-type(mb) {
+        i {
+            margin-right: 0px;
+        }
+        span {
+            display: none;
+        }
+    }
+}
+
+.Form-row-header-tools-button.state-active,
+.state-active .Form-row-header-tools-button,
+.Form-row-header-tools-button:hover {
+    background: #eee
+}
+
+
+.Form-row-message {
+    margin-bottom: 15px;
+}
+
+.Form-message-success,
+.Form-message-error {
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.Form-message-success {
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
+}
+
+.Form-message-error {
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+}
+
+.Form-radio-label,
+.Form-checkbox-label {
+    white-space: nowrap;
+}
+
+.Form-space {
+    height: 20px;
+}
+
+.form-in-center{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

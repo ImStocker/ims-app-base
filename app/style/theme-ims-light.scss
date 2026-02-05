@@ -1,0 +1,5 @@
+@use 'theme-ims-light-mixin.scss';
+
+[data-theme='ims-light']{
+    @include theme-ims-light-mixin.theme-ims-light;
+}

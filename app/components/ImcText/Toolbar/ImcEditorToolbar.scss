@@ -1,0 +1,101 @@
+@mixin ImcEditorToolbar-button{
+    background: transparent;
+    border: none;
+    color: var(--local-text-color);
+    padding: 7px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    font-weight: normal;
+    --ImcEditorToolbar-button-activeColor: var(--color-accent);
+
+    &.danger{
+        color:var( --button-text-color-danger)
+    }
+    &:hover {
+        background-color: var(--dropdown-hl-bg-color);
+    }
+
+    &:disabled {
+        opacity: 1 !important;
+
+        & > i {
+        opacity: 0.2;
+        }
+
+        &:hover {
+        background-color: transparent;
+        }
+    }
+
+    &.state-active {
+        & > i {
+        position: relative;
+        &:after {
+            content: '';
+            border-radius: 50%;
+            width: 6px;
+            height: 6px;
+            position: absolute;
+            bottom: -1px;
+            right: 0px;
+            background-color: var(--ImcEditorToolbar-button-activeColor);
+        }
+        }
+    }
+
+    &.loading:after{
+      font-size: 0.8em;
+      width: 0.7em;
+      height: 0.7em;
+    }
+}
+
+@mixin ImcEditorToolbar-button-more{
+  @include ImcEditorToolbar-button;
+  padding: 7px 0;
+  width: 12px;
+  overflow: hidden;
+  &>i {
+    margin-left: -2px;
+  }
+}
+
+@mixin ImcEditorToolbar-section{  
+  border-right: 1px solid var(--local-border-color);
+  padding: 0 5px;
+  display: flex;
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+@mixin ImcEditorToolbar-dropdown{
+  background-color: var(--dropdown-bg-color);
+  backdrop-filter: var(--dropdown-bg-filter);
+  box-shadow: var(--dropdown-box-shadow);
+  border-radius: var(--dropdown-border-radius);
+}
+@mixin ImcEditorToolbar-toolbar{
+  padding: 2px 0;
+  @include ImcEditorToolbar-dropdown;
+}
+
+@mixin ImcEditorToolbar-dropdown-item{
+  display: block;
+  width: 100%;
+  &.is-button-toolbar{
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  &:first-child {
+    border-top-left-radius: var(--dropdown-border-radius);
+    border-top-right-radius: var(--dropdown-border-radius);
+  }
+  &:last-child {
+    border-bottom-left-radius: var(--dropdown-border-radius);
+    border-bottom-right-radius: var(--dropdown-border-radius);
+  }
+}

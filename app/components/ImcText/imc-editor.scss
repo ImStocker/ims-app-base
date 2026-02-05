@@ -1,0 +1,407 @@
+@use "$style/asset-icons";
+@use "$style/devices-mixins.scss";
+@use "$style/scrollbars-mixins.scss";
+
+@use "sass:meta";
+
+@use "$style/imc-text-format.scss";
+@import 'katex/dist/katex.min.css';
+
+body[data-theme="ims-light"] {
+  @include meta.load-css("highlight.js/styles/github");
+}
+body[data-theme="ims-dark"] {
+  @include meta.load-css("highlight.js/styles/github-dark");
+}
+
+.ql-bubble .ql-editor.tiny-scrollbars + .ql-flip {
+  margin-top: 0px !important;    // Исправляет автоматическое позиционирование тулбара при ограниченной высоте редактора
+}
+.ImcEditor-editor.ql-bubble .ql-toolbar{
+    display:none;
+}
+
+.ImcEditor-editor.ql-container{
+    font-family: inherit;
+    font-size:inherit;
+
+    .ql-editor{
+        padding:0;
+        line-height: inherit;
+        text-align: inherit;
+        &:focus{
+            outline: none;
+        }
+    }
+    .ql-editor.ql-blank::before{
+        color:var(--color-placeholder);
+        left:0;
+        white-space: nowrap;
+        content: attr(data-placeholder);
+        font-style: italic;
+        pointer-events: none;
+        position: absolute;
+        right: 15px;
+    }
+}
+
+.ImcPresenter-content,
+.ImcEditor-editor.state-sleep,
+.ImcEditor-editor.ql-container .ql-editor{
+    @include imc-text-format.imc-text-format;
+
+    blockquote {
+      border-left: 4px solid #ccc;
+      padding-left: 16px;
+      margin: 0;
+    }
+    
+    ol,
+    ul {
+      margin: 0;
+      padding: 0;
+      padding-left: #{imc-text-format.$imc-text-list-padding};
+    }
+    ol > li,
+    ul > li {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    ul > li::before {
+      content: '\2022';
+    }
+
+    a:not(.ql-close){
+        white-space: initial;
+    }
+
+    ul[data-checked=true],
+    ul[data-checked=false] {
+        pointer-events: none;
+    }
+    ul[data-checked=true] > li *,
+    ul[data-checked=false] > li * {
+        pointer-events: all;
+    }
+    ul[data-checked=true] > li::before,
+    ul[data-checked=false] > li::before {
+        color: #777;
+        cursor: pointer;
+        pointer-events: all;
+    }
+    ul[data-checked=true] > li::before {
+        content: '\2611';
+    }
+    ul[data-checked=false] > li::before {
+        content: '\2610';
+    }
+    li[data-list=bullet]:before{
+      content: '\2022' !important
+    }
+    li::before {
+        display: inline-block;
+        white-space: nowrap;
+        width: #{imc-text-format.$imc-text-list-padding - imc-text-format.$imc-text-list-padding-offset}
+    }
+    li:not(.ql-direction-rtl)::before {
+        margin-left: -#{imc-text-format.$imc-text-list-padding};
+        margin-right: #{imc-text-format.$imc-text-list-padding-offset};
+        text-align: right;
+    }
+    li.ql-direction-rtl::before {
+        margin-left: #{imc-text-format.$imc-text-list-padding-offset};
+        margin-right: -#{imc-text-format.$imc-text-list-padding};
+    }
+    ol li {
+        counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+        counter-increment: list-0;
+    }
+    ol li:before {
+        content: counter(list-0, decimal) '. ';
+    }
+    ol li.ql-indent-1 {
+        counter-increment: list-1;
+    }
+    ol li.ql-indent-1:before {
+        content: counter(list-1, lower-alpha) '. ';
+    }
+    ol li.ql-indent-1 {
+        counter-reset: list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+    }
+    ol li.ql-indent-2 {
+        counter-increment: list-2;
+    }
+    ol li.ql-indent-2:before {
+        content: counter(list-2, lower-roman) '. ';
+    }
+    ol li.ql-indent-2 {
+        counter-reset: list-3 list-4 list-5 list-6 list-7 list-8 list-9;
+    }
+    ol li.ql-indent-3 {
+        counter-increment: list-3;
+    }
+    ol li.ql-indent-3:before {
+        content: counter(list-3, decimal) '. ';
+    }
+    ol li.ql-indent-3 {
+        counter-reset: list-4 list-5 list-6 list-7 list-8 list-9;
+    }
+    ol li.ql-indent-4 {
+        counter-increment: list-4;
+    }
+    ol li.ql-indent-4:before {
+        content: counter(list-4, lower-alpha) '. ';
+    }
+    ol li.ql-indent-4 {
+        counter-reset: list-5 list-6 list-7 list-8 list-9;
+    }
+    ol li.ql-indent-5 {
+        counter-increment: list-5;
+    }
+    ol li.ql-indent-5:before {
+        content: counter(list-5, lower-roman) '. ';
+    }
+    ol li.ql-indent-5 {
+        counter-reset: list-6 list-7 list-8 list-9;
+    }
+    ol li.ql-indent-6 {
+        counter-increment: list-6;
+    }
+    ol li.ql-indent-6:before {
+        content: counter(list-6, decimal) '. ';
+    }
+    ol li.ql-indent-6 {
+        counter-reset: list-7 list-8 list-9;
+    }
+    ol li.ql-indent-7 {
+        counter-increment: list-7;
+    }
+    ol li.ql-indent-7:before {
+        content: counter(list-7, lower-alpha) '. ';
+    }
+    ol li.ql-indent-7 {
+        counter-reset: list-8 list-9;
+    }
+    ol li.ql-indent-8 {
+        counter-increment: list-8;
+    }
+    ol li.ql-indent-8:before {
+        content: counter(list-8, lower-roman) '. ';
+    }
+    ol li.ql-indent-8 {
+        counter-reset: list-9;
+    }
+    ol li.ql-indent-9 {
+        counter-increment: list-9;
+    }
+    ol li.ql-indent-9:before {
+        content: counter(list-9, decimal) '. ';
+    }
+  
+    @for $i from 1 through imc-text-format.$imc-text-max-indent  {
+        .ql-indent-#{$i}:not(.ql-direction-rtl) {
+            padding-left: #{imc-text-format.$imc-text-list-padding * $i};
+        }
+        li.ql-indent-#{$i}:not(.ql-direction-rtl) {
+            padding-left: #{imc-text-format.$imc-text-list-padding * $i};
+        }
+        .ql-indent-#{$i}.ql-direction-rtl.ql-align-right {
+            padding-right: #{imc-text-format.$imc-text-list-padding * $i};
+        }
+        li.ql-indent-#{$i}.ql-direction-rtl.ql-align-right {
+            padding-right: #{imc-text-format.$imc-text-list-padding * $i};
+        }
+    }
+    @for $i from 1 through imc-text-format.$imc-text-max-indent  {
+        li[data-imc-additional-indent="#{$i}"]{
+            padding-left: #{imc-text-format.$imc-text-list-padding * $i};
+        }
+    }
+
+    .ql-align-center{
+        text-align: center;
+    }
+    .ql-align-right{
+        text-align: right;
+    }
+    .ql-align-left{
+        text-align: left;
+    }
+    .ql-align-justify{
+        text-align: justify;
+    }
+
+    code,
+    .ql-code-block-container,
+    pre {
+        background-color: var(--local-box-color);
+        border-radius: 3px;
+        padding: 5px 10px;
+        color:var(--local-text-color);
+        font-family: monospace;
+    }
+    pre{
+        margin: 0;
+        &:before{
+            content: '\200B'
+        }
+    }
+    code {
+        font-size: 85%;
+        padding: 2px 4px;
+    }
+}
+
+.ql-code-block-container {
+  position: relative;
+
+  .ql-ui {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    font-size: 11px;
+    background: var(--local-box-color);
+    color: var(--local-sub-text-color);
+    border: none;
+  }
+}
+.ImcEditor-editor.ql-container .ql-editor .ql-code-block-container,
+.ImcEditor-editor pre[data-language],
+.ImcPresenter-content pre[data-language]{
+  padding-top:15px;
+  padding-bottom:15px;
+  overflow-x:auto;
+  white-space: pre;
+  @include scrollbars-mixins.tiny-scrollbars;
+}
+
+.ImcPresenter-content, .ImcEditor {
+  pre {
+    position: relative;
+  }
+  .code-lang {
+    line-height: 1;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    color: var(--local-sub-text-color);
+    font-size: 12px;
+  }
+}
+
+
+.ImcEditor-editor.ql-container.ql-bubble:not(.ql-disabled) a.ql-imc-asset,
+.ImcEditor-editor.ql-container a.ql-imc-asset{
+    &:after{
+        display:none;
+    }
+
+    &:before{
+        content: "";
+        display: inline-block;
+        position: static;
+        margin: 0;
+        transform: none;
+        width: auto;
+        padding: 0;
+        visibility: visible;
+        color:inherit;
+        background: none;
+        top: -1px;
+    }
+
+}
+.ImcPresenter a.ql-imc-asset {
+    &:before{
+        top:-1px;
+    }
+    &.state-renamed-form{
+        border-bottom: 1px dashed;
+    }
+
+}
+
+.ImcEditor-editor.ql-container,
+.ImcEditor-editor.state-sleep,
+.ImcPresenter-content {
+    .ql-imc-upload-job,
+    .ql-imc-file{
+        margin-bottom: 2px;
+        display: inline-flex;
+        vertical-align: middle;
+        max-width:100%;
+        white-space: nowrap;
+        &:not(:first-child){
+            margin-left: 2px;;
+        }
+        &:not(:last-child){
+            margin-right: 2px;;
+        }
+        & > span[contenteditable="false"],
+        & > .ImcTextFile-wrapper{
+            flex: 1;
+            min-width: 0;
+        }
+    }
+    .ql-image,
+    img.FilePresenter,
+    video.FilePresenter,
+    iframe.FilePresenter{
+        max-width: 100%;
+    }
+}
+
+.ImcEditor-editor.ql-container.ql-bubble:not(.ql-disabled) a.ql-imc-asset,
+.ImcEditor-editor.ql-container a.ql-imc-asset,
+.ImcEditor-editor.state-sleep a.ql-imc-asset,
+.ImcPresenter-content a.ql-imc-asset {
+    display: inline-block;
+    color: var(--local-link-color);
+    text-decoration: none;
+
+    &:before{
+        margin-right: 2px;
+        position: relative;
+        font-size: 14px;
+    }
+
+    @include asset-icons.asset-icons;
+
+    &.state-loading:before {
+        content: "\eec6";
+        font-family: 'remixicon' !important;
+        font-style: normal;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        animation: imc-asset-spin 1s linear infinite;
+    }
+    &.state-error{
+        color: var(--color-main-error);
+        &:before {
+            content: "\ECA0";
+            font-family: 'remixicon' !important;
+            font-style: normal;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    }
+
+}
+
+.ImcEditor-editor.ql-container .ql-imc-icon,
+.ImcEditor-editor.state-sleep .ql-imc-icon,
+.ImcPresenter-content .ql-imc-icon{
+    i{
+        @include asset-icons.asset-icons;
+    }
+}
+
+
+@keyframes imc-asset-spin{
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
