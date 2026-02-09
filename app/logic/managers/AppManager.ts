@@ -81,11 +81,11 @@ export default class AppManager implements IAppManager {
     return this.$router as unknown as Router;
   }
 
-  get<R extends T, T extends AppSubManagerBase>(
+  get<R extends T, T extends AppSubManagerBase = AppSubManagerBase>(
     manager_interface: IAppSubManagerCtr<T>,
   ): R;
 
-  get<R extends T, T extends IAppSubManager>(
+  get<R extends T, T extends IAppSubManager = AppSubManagerBase>(
     manager_interface: IAppSubManagerCtr<T>,
   ): R {
     const manager_id = manager_interface;
