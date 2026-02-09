@@ -14,7 +14,7 @@ export type AppManagerContext = {
 };
 
 export interface IAppManager {
-  get<R extends T, T extends AppSubManagerBase>(
+  get<R extends T, T extends AppSubManagerBase = AppSubManagerBase>(
     manager_interface: IAppSubManagerCtr<T>,
   ): R;
   register<T extends AppSubManagerBase>(
