@@ -1,6 +1,6 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#app';
 import { useAppManager } from '../composables/useAppManager';
-import CreatorAssetManager from '../logic/managers/CreatorAssetManager';
+import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import { getSignInLink } from '../logic/router/routes-helpers';
 
 export default defineNuxtRouteMiddleware(async (to) => {

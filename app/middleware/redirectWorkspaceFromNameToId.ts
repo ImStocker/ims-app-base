@@ -1,5 +1,5 @@
 import { defineNuxtRouteMiddleware, useNuxtApp } from '#app';
-import { redirectFromNameToIdBase } from '../logic/router/redirectFromNameToIdBase';
+import { redirectFromNameToIdBase } from '#logic/router/redirectFromNameToIdBase';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { $getAppManager } = useNuxtApp();
