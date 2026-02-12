@@ -172,11 +172,8 @@ export default class ProjectContentManager extends AppSubManagerBase {
       },
     );
   }
-  
-  protected async saveWithCustomFormat(file: {
-      content: Blob;
-      name: string;
-  }){
+
+  protected async saveWithCustomFormat(file: { content: Blob; name: string }) {
     await openBlobFile(file.content, file.name);
   }
 
@@ -223,8 +220,8 @@ export default class ProjectContentManager extends AppSubManagerBase {
         }
       },
       {
-          message: this.appManager.$t('toasts.actionTitles.exportAsset'),
-          icon: 'ri-upload-2-fill',
+        message: this.appManager.$t('toasts.actionTitles.exportAsset'),
+        icon: 'ri-upload-2-fill',
       },
     );
   }
