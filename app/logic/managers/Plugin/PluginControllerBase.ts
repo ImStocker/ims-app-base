@@ -1,43 +1,12 @@
-import type { IAppManager } from '../IAppManager';
-
-import type { FieldTypeController } from '../../types/FieldTypeController';
-import type { BlockTypeDefinition } from '../../types/BlockTypeDefinition';
 import EditorManager from '../EditorManager';
-import LocalFsSyncManager, { type SegmentEntity } from '../LocalFsSyncManager';
-
-type PluginContentDescriptorBlockContent = {
-  controller: BlockTypeDefinition;
-};
-
-type PluginContentDescriptorBlock = PluginContentDescriptorBase<
-  'block',
-  PluginContentDescriptorBlockContent
->;
-
-type PluginContentDescriptorFieldContent = {
-  controller: FieldTypeController;
-};
-
-type PluginContentDescriptorField = PluginContentDescriptorBase<
-  'field',
-  PluginContentDescriptorFieldContent
->;
-
-type PluginContentDescriptorExportSegmentContent = SegmentEntity;
-
-type PluginContentDescriptorExportSegment = PluginContentDescriptorBase<
-  'segment',
-  PluginContentDescriptorExportSegmentContent
->;
-
-type PluginContentDescriptorModuleContent = {
-  activate(appManager: IAppManager): Promise<() => Promise<void>>;
-};
-
-type PluginContentDescriptorModule = PluginContentDescriptorBase<
-  'module',
-  PluginContentDescriptorModuleContent
->;
+import type { IAppManager } from '../IAppManager';
+import LocalFsSyncManager from '../LocalFsSyncManager';
+import type {
+  PluginContentDescriptorBlock,
+  PluginContentDescriptorExportSegment,
+  PluginContentDescriptorField,
+  PluginContentDescriptorModule,
+} from './PluginControllerInternal';
 
 export type PluginContentDescriptor =
   | PluginContentDescriptorBlock
@@ -64,7 +33,7 @@ export type PluginDescriptor = WithPluginDescriptorLocale & {
   tags?: string[];
 };
 
-type PluginContentDescriptorBase<TypeName, Content> =
+export type PluginContentDescriptorBase<TypeName, Content> =
   WithPluginDescriptorLocale & {
     type: TypeName;
     name?: string;
@@ -79,9 +48,9 @@ type WithPluginDescriptorLocale = {
 };
 
 export default abstract class PluginControllerBase {
-  private _pluginDescriptor: PluginDescriptor;
-  private _activated: boolean = false;
-  private _activationLock = Promise.resolve();
+  protected _pluginDescriptor: PluginDescriptor | null = null;
+  protected _activated: boolean = false;
+  protected _activationLock = Promise.resolve();
   protected _deactivateCallbacks: (() => any)[] = [];
   appManager: IAppManager;
 
@@ -89,23 +58,24 @@ export default abstract class PluginControllerBase {
     return this._activated;
   }
 
+  get descriptor() {
+    return this._pluginDescriptor;
+  }
+
   isDev() {
     return false;
   }
 
-  constructor(appManager: IAppManager, pluginDescriptor: PluginDescriptor) {
-    this.appManager = appManager;
-    this._pluginDescriptor = pluginDescriptor;
-  }
+  async load(): Promise<void> {}
 
-  get descriptor() {
-    return this._pluginDescriptor;
+  constructor(appManager: IAppManager) {
+    this.appManager = appManager;
   }
 
   private _activateBlock(plugin_content: PluginContentDescriptorBlock) {
     const block = this.appManager
       .get(EditorManager)
-      .registerBlockType(plugin_content.content.controller);
+      .registerBlockType(plugin_content.content.definition);
     this._deactivateCallbacks.push(block.cancel);
   }
 
@@ -134,7 +104,8 @@ export default abstract class PluginControllerBase {
     const promise = this._activationLock.then(async () => {
       if (this._activated) return false;
 
-      const plugin = this.descriptor;
+      const plugin = this._pluginDescriptor;
+      if (!plugin) return false;
       for (const plugin_content of plugin.content) {
         switch (plugin_content.type) {
           case 'block':
