@@ -1848,3 +1848,19 @@ export function extractRemapParentProps(props: AssetProps): {
     remapParentProps: remap_parent_props,
   };
 }
+
+export function diffAssetPropObjects(
+  a: AssetProps,
+  b: AssetProps,
+): AssetProps[] {
+  const difference: AssetProps = {};
+  for (const key of Object.keys(b)) {
+    difference[key] = b[key];
+  }
+  for (const key of Object.keys(a)) {
+    if (!b.hasOwnProperty(key)) {
+      difference['~' + key] = null;
+    }
+  }
+  return [difference];
+}
