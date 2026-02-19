@@ -1,3 +1,4 @@
+import type { AssetChangeBatchOpDTO } from './AssetsType';
 import type { AssetPropsSelectionOrder } from './PropsSelection';
 import type { AssetPropWhere } from './PropsWhere';
 
@@ -1847,4 +1848,37 @@ export function extractRemapParentProps(props: AssetProps): {
     normalProps: computed_props,
     remapParentProps: remap_parent_props,
   };
+}
+export function diffAssetPropObjects(
+  local_a: AssetProps,
+  server_b: AssetProps,
+): AssetChangeBatchOpDTO {
+  const difference: AssetChangeBatchOpDTO = {
+    set: {
+      parentIds: undefined,
+      name: undefined,
+      title: undefined,
+      icon: undefined,
+      workspaceId: undefined,
+      isAbstract: undefined,
+      index: undefined,
+      creatorUserId: undefined,
+      blocks: undefined,
+      delete: undefined,
+      restore: undefined,
+    },
+  };
+  for (const key of Object.keys(server_b)) {
+    difference[key] = server_b[key];
+  }
+  //use compare props
+  // свойство изменилось, добавилось, удалилось.
+  // напомнить про массивы
+  for (const key of Object.keys(local_a)) {
+    if (!server_b.hasOwnProperty(key)) {
+      difference['~' + key] = null;
+      difference.set.delete = true;
+    }
+  }
+  return difference;
 }
