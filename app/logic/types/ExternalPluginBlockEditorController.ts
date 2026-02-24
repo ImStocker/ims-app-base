@@ -3,26 +3,30 @@ import type { ResolvedAssetBlock } from '../utils/assets';
 import { BlockEditorController } from './BlockEditorController';
 import type { BlockContentItem } from './BlockTypeDefinition';
 
-export type ExternalPluginBlockEditorControllerDescriptor = {
-  getContentItems: () => BlockContentItem<any>[];
+export type ExternalPluginBlockControllerDescriptor = {
+  getContentItems?: () => BlockContentItem<any>[];
 };
 
+export type GetPluginBlockController = (
+  getResolvedBlock: () => ResolvedAssetBlock | null,
+) => ExternalPluginBlockControllerDescriptor;
+
 export default class ExternalPluginBlockEditorController extends BlockEditorController {
+  private _pluginControllerDescriptor: ExternalPluginBlockControllerDescriptor;
+
   constructor(
     appManager: IAppManager,
     getResolvedBlock: () => ResolvedAssetBlock | null,
-    private _getBlockControllerDescriptor: (
-      resolvedBlock,
-    ) => ExternalPluginBlockEditorControllerDescriptor,
+    getPluginController: GetPluginBlockController,
   ) {
     super(appManager, getResolvedBlock);
-  }
-
-  get controllerDescriptor() {
-    return this._getBlockControllerDescriptor(this.resolvedBlock);
+    this._pluginControllerDescriptor = getPluginController(getResolvedBlock);
   }
 
   override getContentItems(): BlockContentItem<any>[] {
-    return this.controllerDescriptor.getContentItems();
+    if (!this._pluginControllerDescriptor.getContentItems) {
+      return super.getContentItems();
+    }
+    return this._pluginControllerDescriptor.getContentItems();
   }
 }
