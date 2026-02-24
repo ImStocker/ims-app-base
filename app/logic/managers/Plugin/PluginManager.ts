@@ -32,9 +32,6 @@ export default class PluginManager extends AppSubManagerBase {
           name: plugin_name,
           entity: descriptor,
           from: plugin.installedFrom,
-          disabledContent: plugin.disabledContent
-            ? [...plugin.disabledContent]
-            : [],
           activated: plugin.controller.activated,
         };
       } catch (err: any) {
@@ -48,9 +45,6 @@ export default class PluginManager extends AppSubManagerBase {
             api: plugin_name,
           },
           from: plugin.installedFrom,
-          disabledContent: plugin.disabledContent
-            ? [...plugin.disabledContent]
-            : [],
           activated: false,
           error: err.message,
         };
@@ -94,7 +88,6 @@ export default class PluginManager extends AppSubManagerBase {
         const installed_plugin: PluginInfo = {
           name: pluginDescriptor.name,
           controller: plugin,
-          disabledContent: [],
           installedFrom: PluginInstalledFrom.INTERNAL,
         };
         this._installedPlugins.set(pluginDescriptor.name, installed_plugin);

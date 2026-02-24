@@ -6,7 +6,7 @@ export type PluginSavedDescription = {
   from: PluginInstalledFrom;
   // hash: string;
   activated: boolean;
-  disabledContent: string[];
+  // disabledContent: string[];
   devPluginPath?: string;
   error?: string;
   properties?: Record<string, any>;
@@ -18,7 +18,7 @@ export type PluginInfo = {
   installedFrom: PluginInstalledFrom;
   controller: PluginControllerBase;
   // hash: string;
-  disabledContent: string[];
+  // disabledContent: string[];
 };
 
 export enum PluginInstalledFrom {
@@ -34,7 +34,7 @@ export type PluginListItemEntity = {
   activated: boolean;
   // hasUpdates: PluginOnlineDescriptor | null;
   from: PluginInstalledFrom;
-  disabledContent: string[];
+  // disabledContent: string[];
   error?: string;
 };
 

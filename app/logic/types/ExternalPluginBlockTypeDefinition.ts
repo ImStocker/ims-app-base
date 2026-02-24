@@ -1,3 +1,4 @@
+import type PluginControllerExternal from '../managers/Plugin/PluginControllerExternal';
 import { BlockTypeDefinition } from './BlockTypeDefinition';
 
 export type ExternalPluginComponentApi = {
@@ -8,10 +9,15 @@ export type ExternalPluginComponentApi = {
 export default abstract class ExternalPluginBlockTypeDefinition extends BlockTypeDefinition {
   override component = () => import('#components/ExternalPluginBlock.vue');
   componentCode: string;
+  protected pluginController: PluginControllerExternal;
 
-  constructor(componentCode: string) {
+  constructor(
+    componentCode: string,
+    pluginController: PluginControllerExternal,
+  ) {
     super();
     this.componentCode = componentCode;
+    this.pluginController = pluginController;
   }
 
   async componentApi() {
@@ -27,12 +33,14 @@ export default abstract class ExternalPluginBlockTypeDefinition extends BlockTyp
     const func = new AsyncFunction(
       'onMounted',
       'onUnmounted',
+      'pluginApi',
       this.componentCode,
     );
 
     await func(
       (callback) => (api.onMounted = callback),
       (callback) => (api.onUnmounted = callback),
+      this.pluginController.getPublicPluginApi(),
     );
 
     return api;

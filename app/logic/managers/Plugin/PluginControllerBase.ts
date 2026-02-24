@@ -1,6 +1,8 @@
+import { convertTranslatedTitle } from '../../utils/assets';
 import EditorManager from '../EditorManager';
 import type { IAppManager } from '../IAppManager';
 import LocalFsSyncManager from '../LocalFsSyncManager';
+import UiManager from '../UiManager';
 import type {
   PluginContentDescriptorBlock,
   PluginContentDescriptorExportSegment,
@@ -46,6 +48,58 @@ export type PluginContentDescriptorBase<TypeName, Content> =
 type WithPluginDescriptorLocale = {
   locale?: PluginDescriptorLocale;
 };
+
+export function convertTranslatedPluginTitle(
+  title: string,
+  appManager: IAppManager,
+  locale: PluginDescriptorLocale | null,
+) {
+  return convertTranslatedTitle(title, (key: string, params?: any) => {
+    const current_lang = appManager.get(UiManager).getLanguage();
+    if (key === 'localeName') {
+      return current_lang;
+    }
+    if (!locale) {
+      return appManager.$t(key, params);
+    }
+
+    const title_key = key.substring('translatedTitles.'.length);
+
+    const locales_for_search: PluginDescriptorLocale[] = [
+      locale[current_lang],
+      locale['en'],
+      ...Object.values(locale).filter(
+        (locale) => locale !== locale[current_lang] && locale !== locale['en'],
+      ),
+    ];
+
+    let res_title;
+    for (const locale_obj of locales_for_search) {
+      const val = getObjectValueByPath(locale_obj, title_key);
+      if (val !== undefined && typeof val === 'string') {
+        res_title = val;
+        break;
+      }
+    }
+
+    if (res_title === undefined) {
+      res_title = appManager.$t(key, params);
+    }
+    return res_title;
+  });
+}
+
+function getObjectValueByPath<T extends Record<string, any>>(
+  obj: T,
+  path: string,
+) {
+  if (!obj || typeof obj !== 'object') return undefined;
+
+  return path.split('.').reduce<T>((o, key) => {
+    if (!o) return undefined;
+    return o[key];
+  }, obj);
+}
 
 export default abstract class PluginControllerBase {
   protected _pluginDescriptor: PluginDescriptor | null = null;
