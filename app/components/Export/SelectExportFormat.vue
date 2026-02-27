@@ -24,10 +24,10 @@ import ExportFormatManager, {
 } from '../../logic/managers/ExportFormatManager';
 import DialogManager from '../../logic/managers/DialogManager';
 import EditFormatsDialog from './EditFormatsDialog.vue';
-import type { AssetPropWhere } from '../../logic/types/PropsWhere';
 import { getWorkspaceBaseAssetId } from '../Sync/getBaseAsset';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import { filterFormatsByAssetType } from './filterFormatsByAssetType';
+import type { AssetPropValueSelection } from '../../logic/types/Props';
 
 export default defineComponent({
   name: 'SelectExportFormat',
@@ -39,8 +39,8 @@ export default defineComponent({
       type: String,
       default: null,
     },
-    assetTypeFilter: {
-      type: Object as PropType<AssetPropWhere | null>,
+    assetSelection: {
+      type: Object as PropType<AssetPropValueSelection | null>,
       default: null,
     },
   },
@@ -61,7 +61,7 @@ export default defineComponent({
     },
   },
   watch: {
-    assetTypeFilter: {
+    assetSelection: {
       async handler() {
         await this.load();
       },
@@ -76,16 +76,16 @@ export default defineComponent({
       this.formats = this.$getAppManager()
         .get(ExportFormatManager)
         .getExportFormats();
-      if (this.assetTypeFilter) {
+      if (this.assetSelection) {
         let asset_id = null as null | string;
-        if (typeof this.assetTypeFilter?.workspaceids === 'string') {
+        if (typeof this.assetSelection.Where?.workspaceids === 'string') {
           asset_id = await getWorkspaceBaseAssetId(
             this.$getAppManager(),
-            this.assetTypeFilter.workspaceids,
+            this.assetSelection.Where.workspaceids,
           );
         }
-        if (typeof this.assetTypeFilter?.typeids === 'string') {
-          asset_id = this.assetTypeFilter.typeids;
+        if (typeof this.assetSelection.Where?.typeids === 'string') {
+          asset_id = this.assetSelection.Where.typeids;
         }
         if (asset_id) {
           const base_asset = await this.$getAppManager()
@@ -106,11 +106,11 @@ export default defineComponent({
         .get(DialogManager)
         .show(EditFormatsDialog, {
           selectable: true,
-          assetTypeFilter: this.assetTypeFilter,
+          assetSelection: this.assetSelection,
           actionType: 'export',
         });
       if (res && res.formatId) {
-        if (this.formats.find((el) => el.id !== res.formatId)) {
+        if (!this.formats.find((el) => el.id === res.formatId)) {
           this.load();
         }
         this.ownModelValue = res.formatId;
