@@ -30,7 +30,9 @@
                   ]"
                   class="EditFormatsDialog-content-filter-caption-icon"
                 ></i>
-                {{ baseAsset.title }}
+                <caption-string
+                  :value="baseAsset.title ?? undefined"
+                ></caption-string>
               </span>
             </span>
             <button
@@ -73,6 +75,7 @@
               </button>
               <div class="EditFormatsDialog-content-list-item-options">
                 <button
+                  v-if="creatingFormat?.id !== format.id"
                   class="is-button is-button-icon-small"
                   :class="{ loading: deletingFormatId === format.id }"
                   :disabled="deletingFormatId === format.id"
@@ -165,6 +168,7 @@ import {
   isFormatBelongToAsset,
 } from './filterFormatsByAssetType';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
+import CaptionString from '../Common/CaptionString.vue';
 
 type DialogProps = {
   selectable?: boolean;
@@ -182,6 +186,7 @@ export default defineComponent({
     DialogContent,
     EditFormat,
     FormSearch,
+    CaptionString,
   },
   props: {
     dialog: {
@@ -443,6 +448,8 @@ export default defineComponent({
 
     .EditFormatsDialog-content-filter-caption-asset {
       white-space: nowrap;
+      display: flex;
+      gap: 2px;
     }
   }
 }
