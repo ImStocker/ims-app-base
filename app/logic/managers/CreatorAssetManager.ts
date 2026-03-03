@@ -485,6 +485,14 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     );
   }
 
+  getAssetShortByTitleViaCacheSync(asset_title: string, checkValid = true) {
+    assert(this._shortAssetsCache, 'Not inited');
+    return this._shortAssetsCache.findElementSync(
+      (a: AssetShort) => a.title === asset_title,
+      checkValid,
+    );
+  }
+
   async requestAssetShortInCacheByNames(asset_names: string[]): Promise<void> {
     await this.getAssetShortsList({
       where: {
