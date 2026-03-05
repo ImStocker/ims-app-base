@@ -21,11 +21,13 @@ export type WorkspaceQueryDTOWhere = {
   query?: string;
   scope?: string;
   insideId?: string | null;
+  insideName?: string | null;
   hasAssets?: AssetPropWhere | boolean;
   isRoot?: boolean;
 };
 
 export type ChangeWorkspaceRequest = {
+  id?: string | null;
   parentId?: string | null;
   title?: string;
   name?: string | null;

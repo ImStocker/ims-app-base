@@ -29,7 +29,7 @@ export type AssetSetDTO = {
   workspaceId?: string | null;
   isAbstract?: boolean;
   index?: number | null;
-  creatorUserId?: string;
+  creatorUserId?: string | null;
   blocks?: {
     [blockKey: string]: AssetBlockParamsDTO;
   };
