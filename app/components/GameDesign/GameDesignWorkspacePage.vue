@@ -73,6 +73,13 @@
             :selection="selection"
             :asset-where="projectTreeWhere"
             :external-vm="vm.gameDesignMenuVM"
+            :get-asset-menu="
+              (asset) => vm.gameDesignMenuVM?.getAssetMenu(asset) ?? []
+            "
+            :get-workspace-menu="
+              (workspace) =>
+                vm.gameDesignMenuVM?.getWorkspaceMenu(workspace) ?? []
+            "
             @update:selection="setSelection($event)"
           ></project-tree-presenter>
           <create-element-buttons

@@ -1,17 +1,12 @@
-import type { ProjectFullInfo } from '../types/ProjectTypes';
 import {
-  assignPlainValueToAssetProps,
   castAssetPropValueToAsset,
   castAssetPropValueToString,
-  convertAssetPropsToPlainObject,
   stringifyAssetNewBlockRef,
-  type AssetProps,
   type AssetPropsPlainObject,
   type AssetPropValueAsset,
 } from '../types/Props';
-import CreatorAssetManager from './CreatorAssetManager';
 import { AppSubManagerBase } from './IAppManager';
-import ProjectManager from './ProjectManager';
+import ProjectSettingsManager from './ProjectSettingsManager';
 
 export function getExportFormatFieldRef({
   block_name,
@@ -52,39 +47,38 @@ export type ExportFormatField = {
 };
 
 export default class ExportFormatManager extends AppSubManagerBase {
-  private get _currentProject(): ProjectFullInfo | null {
-    return this.appManager.get(ProjectManager).getProjectInfo();
-  }
-
   init() {}
 
   public getExportFormats(): ExportFormatWithId[] {
-    if (!this._currentProject) return [];
-    const settings = this._currentProject.settings;
-    if (!settings) return [];
-
-    const format_maps = convertAssetPropsToPlainObject<Record<string, any>>(
-      settings.values['export-format'],
-    );
+    const formats = this.appManager
+      .get(ProjectSettingsManager)
+      .getValue<Record<string, any>>('export-format');
+    if (!formats) return [];
 
     const res: ExportFormatWithId[] = [];
 
-    for (const format of Object.values(format_maps)) {
+    for (const format of Object.values(formats)) {
+      if (!format) continue;
+
       const serialized_format: ExportFormatWithId = {
         id: castAssetPropValueToString(format.id),
         title: castAssetPropValueToString(format.title),
-        assetType: castAssetPropValueToAsset(format.asset_type),
+        assetType: castAssetPropValueToAsset(
+          format.assetType ?? format.asset_type,
+        ),
         fields: format.fields ? format.fields : [],
         kind: format.kind,
         jscode: castAssetPropValueToString(format.jscode),
         params: format.params
           ? {
-              showTitles: format.params.show_titles,
+              showTitles: format.params.showTitles ?? format.params.show_titles,
               delimiter: format.params.delimiter,
-              oneFile: format.params.one_file,
+              oneFile: format.params.oneFile ?? format.params.one_file,
             }
           : {},
-        segmentType: castAssetPropValueToString(format.segment_type),
+        segmentType: castAssetPropValueToString(
+          format.segmentType ?? format.segment_type,
+        ),
       };
       res.push(serialized_format);
     }
@@ -92,71 +86,14 @@ export default class ExportFormatManager extends AppSubManagerBase {
   }
 
   public async saveExportFormat(format: ExportFormatWithId) {
-    if (!this._currentProject) throw new Error('Project is not selected');
-    const settings = this._currentProject.settings;
-    if (!settings) throw new Error('Settings are not available');
-
-    const prepared_format: AssetProps = {};
-    prepared_format[`${format.id}\\id`] = format.id;
-    prepared_format[`${format.id}\\title`] = format.title;
-    prepared_format[`${format.id}\\asset_type`] = format.assetType;
-    prepared_format[`${format.id}\\segment_type`] = format.segmentType;
-    prepared_format[`${format.id}\\kind`] = format.kind;
-    prepared_format[`${format.id}\\jscode`] = format.jscode
-      ? format.jscode
-      : null;
-    assignPlainValueToAssetProps(
-      prepared_format,
-      format.fields,
-      `${format.id}\\fields`,
-    );
-    assignPlainValueToAssetProps(
-      prepared_format,
-      {
-        one_file: format.params.oneFile,
-        delimiter: format.params.delimiter,
-        show_titles: format.params.showTitles,
-      },
-      `${format.id}\\params`,
-    );
-
-    await this.appManager.get(CreatorAssetManager).changeAssets({
-      where: {
-        id: settings.id,
-      },
-      set: {
-        blocks: {
-          'export-format': {
-            props: {
-              [`~${format.id}`]: null,
-              ...prepared_format,
-            },
-          },
-        },
-      },
-    });
-    await this.appManager.get(ProjectManager).reloadProjectSettings();
+    await this.appManager
+      .get(ProjectSettingsManager)
+      .setValue('export-format', format.id, format);
   }
 
   public async deleteExportFormat(id: string) {
-    if (!this._currentProject) throw new Error('Project is not selected');
-    const settings = this._currentProject.settings;
-    if (!settings) throw new Error('Settings are not available');
-
-    await this.appManager.get(CreatorAssetManager).changeAssets({
-      where: {
-        id: settings.id,
-      },
-      set: {
-        blocks: {
-          'export-format': {
-            props: {
-              [`~${id}`]: null,
-            },
-          },
-        },
-      },
-    });
-    await this.appManager.get(ProjectManager).reloadProjectSettings();
+    await this.appManager
+      .get(ProjectSettingsManager)
+      .setValue('export-format', id, null);
   }
 }

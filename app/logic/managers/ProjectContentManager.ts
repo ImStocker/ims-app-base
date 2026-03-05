@@ -188,13 +188,15 @@ export default class ProjectContentManager extends AppSubManagerBase {
       .get(DialogManager)
       .show(EditFormatsDialog, {
         selectable: true,
-        assetTypeFilter: asset_type_filter,
+        // TODO: fix types
+        assetSelection: { Where: asset_type_filter, Str: '' },
         actionType: 'export',
       });
     if (!res || !res.formatId) return;
     const configuration: SyncLocalRootSegment = {
       id: uuidv4(),
-      assetFilter: asset_type_filter,
+      // TODO: fix types
+      assetSelection: { Where: asset_type_filter, Str: '' },
       index: 0,
       saveAs: title,
       formatId: res.formatId,

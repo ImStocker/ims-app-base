@@ -75,6 +75,7 @@ import {
   ASSET_SELECTION_MARKDOWN,
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
+  TEXT_ELEMENT_ID,
 } from '../../logic/constants';
 import type {
   AssetForSelection,
@@ -87,8 +88,6 @@ import { openProjectLink } from '../../logic/router/routes-helpers';
 import SelectAssetDialog from './SelectAssetDialog.vue';
 import { v4 as uuidv4 } from 'uuid';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-
-const TEXT_ELEMENT_ID = 'text-element';
 
 export default defineComponent({
   name: 'CreateAssetBox',

@@ -17,8 +17,6 @@ import type { ProjectFullInfo } from '../types/ProjectTypes';
 import {
   castAssetPropValueToFloat,
   castAssetPropValueToString,
-  convertAssetPropsToPlainObject,
-  type AssetProps,
   type AssetPropValueSelection,
 } from '../types/Props';
 import { AssetPropWhereOpKind, type AssetPropWhere } from '../types/PropsWhere';
@@ -33,6 +31,7 @@ import UiPreferenceManager from './UiPreferenceManager';
 import type UserCodeExecuteManager from '../local-fs-sync/UserCodeExecuteManager';
 import ExportFormatManager from './ExportFormatManager';
 import { MemorySyncTarget } from '../local-fs-sync/targets/MemorySyncTarget';
+import ProjectSettingsManager from './ProjectSettingsManager';
 
 const SYNC_CHUNK_SIZE = 50;
 
@@ -529,7 +528,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       .getWorkspaceIdByName('gdd');
 
     const asset_condition: AssetPropWhere = {
-      ...(segment.info.assetFilter ?? {}),
+      ...(segment.info.assetSelection?.Where ?? {}),
       _syncSegment: {
         op: AssetPropWhereOpKind.AND,
         v: [
@@ -677,23 +676,27 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public getExportConfigurations(): SyncLocalRootSegment[] {
-    if (!this._currentProject) return [];
-    const settings = this._currentProject.settings;
-    if (!settings) return [];
+    const configs = this.appManager
+      .get(ProjectSettingsManager)
+      .getValue<Record<string, any>>('sync-settings');
+    if (!configs) return [];
 
-    const config_maps = convertAssetPropsToPlainObject<Record<string, any>>(
-      settings.values['sync-settings'],
-    );
     const res: SyncLocalRootSegment[] = [];
-    for (const config of Object.values(config_maps)) {
+    for (const config of Object.values(configs)) {
+      let asset_selection: AssetPropValueSelection | null = null;
+      if (config.assetfilter || config.assetFilter) {
+        asset_selection = config.assetfilter ?? null;
+      } else if (config.assetSelection || config.assetselection) {
+        asset_selection = config.assetSelection;
+      }
       const segment: SyncLocalRootSegment = {
         id: castAssetPropValueToString(config.id),
-        assetFilter: config.assetfilter
-          ? ((config.assetfilter as AssetPropValueSelection).Where ?? null)
-          : null,
+        assetSelection: asset_selection,
         index: castAssetPropValueToFloat(config.index) ?? 0,
-        saveAs: castAssetPropValueToString(config.saveas),
-        formatId: castAssetPropValueToString(config.formatid),
+        saveAs: castAssetPropValueToString(config.saveAs ?? config.saveas),
+        formatId: castAssetPropValueToString(
+          config.formatId ?? config.formatid,
+        ),
       };
       res.push(segment);
     }
@@ -702,60 +705,15 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public async saveExportConfiguration(configuration: SyncLocalRootSegment) {
-    if (!this._currentProject) throw new Error('Project is not selected');
-    const settings = this._currentProject.settings;
-    if (!settings) throw new Error('Settings are not available');
-
-    const prepared_config: AssetProps = {};
-    prepared_config[`${configuration.id}\\id`] = configuration.id;
-    prepared_config[`${configuration.id}\\saveas`] = configuration.saveAs;
-    prepared_config[`${configuration.id}\\index`] = configuration.index;
-    prepared_config[`${configuration.id}\\formatid`] = configuration.formatId;
-    prepared_config[`${configuration.id}\\assetfilter`] =
-      configuration.assetFilter
-        ? {
-            Str: '',
-            Where: configuration.assetFilter,
-          }
-        : null;
-    await this.appManager.get(CreatorAssetManager).changeAssets({
-      where: {
-        id: settings.id,
-      },
-      set: {
-        blocks: {
-          'sync-settings': {
-            props: {
-              [`~${configuration.id}`]: null,
-              ...prepared_config,
-            },
-          },
-        },
-      },
-    });
-    await this.appManager.get(ProjectManager).reloadProjectSettings();
+    await this.appManager
+      .get(ProjectSettingsManager)
+      .setValue('sync-settings', configuration.id, configuration);
   }
 
   public async deleteExportConfiguration(id: string) {
-    if (!this._currentProject) throw new Error('Project is not selected');
-    const settings = this._currentProject.settings;
-    if (!settings) throw new Error('Settings are not available');
-
-    await this.appManager.get(CreatorAssetManager).changeAssets({
-      where: {
-        id: settings.id,
-      },
-      set: {
-        blocks: {
-          'sync-settings': {
-            props: {
-              [`~${id}`]: null,
-            },
-          },
-        },
-      },
-    });
-    await this.appManager.get(ProjectManager).reloadProjectSettings();
+    await this.appManager
+      .get(ProjectSettingsManager)
+      .setValue('sync-settings', id, null);
   }
 
   public getUserCodeExecutorManager(): UserCodeExecuteManager {

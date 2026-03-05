@@ -52,6 +52,8 @@ export const TASK_COLUMN_ENUM = '00000000-0000-0000-0000-000000000038';
 
 export const TITLE_CHAR_LIMIT = 20;
 
+export const TEXT_ELEMENT_ID = 'text-element';
+
 export const ASSET_VALUE_STRUCTURE: AssetPropValueAsset = {
   AssetId: STRUCT_ASSET_ID,
   Title: '[[t:Structure]]',

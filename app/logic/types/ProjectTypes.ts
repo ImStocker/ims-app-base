@@ -36,18 +36,20 @@ export type ProjectLicense = {
   features: LicenseFeatures;
 };
 
+export type ProjectSettingsValue = {
+  'menu-settings'?: {
+    'menu-about': boolean | null;
+    'menu-gamedesign': boolean | null;
+    'menu-team': boolean | null;
+  };
+  'sync-settings'?: AssetProps;
+  'export-format'?: AssetProps;
+};
+
 export type ProjectSettings = {
   id: string;
   rights: number;
-  values: {
-    'menu-settings': {
-      'menu-about': boolean | null;
-      'menu-gamedesign': boolean | null;
-      'menu-team': boolean | null;
-    };
-    'sync-settings': AssetProps;
-    'export-formats': AssetProps;
-  };
+  values: ProjectSettingsValue;
 } | null;
 
 export type ProjectFullInfo = {
