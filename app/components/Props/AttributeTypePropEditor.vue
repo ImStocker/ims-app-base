@@ -51,7 +51,7 @@ export default defineComponent({
     displayingFieldTypes() {
       if (this.$appConfiguration.name !== 'creators') {
         if (this.isDesktop) {
-          this.fieldTypes.filter((field) => {
+          return this.fieldTypes.filter((field) => {
             return ![
               'attributeType',
               'buttonDateTime',
