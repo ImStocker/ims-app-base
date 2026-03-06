@@ -12,11 +12,10 @@
     </div>
     <div ref="target"></div>
     {{ resolvedBlock.computed }}
-    {{ externalComponentApi?.testValue }}
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { AssetChanger } from '../logic/types/AssetChanger';
 import type {
   AssetDisplayMode,
@@ -64,7 +63,7 @@ export default defineComponent({
   async mounted() {
     this.externalComponentApi = await this.blockTypeDefinition.componentApi(
       this.assetChanger,
-      this.resolvedBlock,
+      () => this.resolvedBlock,
     );
 
     if (this.externalComponentApi.onMounted) {

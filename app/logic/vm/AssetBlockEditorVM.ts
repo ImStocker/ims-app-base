@@ -343,7 +343,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       };
     }
     this.assetFull.activate();
-    return calcResolvedBlocks(this.assetEdited);
+    return reactive(calcResolvedBlocks(this.assetEdited));
   }
 
   async refreshAssets() {

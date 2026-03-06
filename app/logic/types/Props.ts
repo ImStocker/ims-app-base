@@ -1025,8 +1025,8 @@ export function extractAssetPropsSubObject(
   for (const [key, val] of Object.entries(props)) {
     if (key === root) {
       nested_props[''] = val;
-    } else if (key.startsWith(root + '\\')) {
-      const rest_key = key.substring(root.length + 1);
+    } else if (key.startsWith(root + '\\') || root === '') {
+      const rest_key = root === '' ? key : key.substring(root.length + 1);
       const is_array_key = /^-?\d+(.\d+)?(\\|$)/.test(rest_key);
       const sub_key = (is_array_key ? '\\' : '') + rest_key;
       nested_props[sub_key] = val;
