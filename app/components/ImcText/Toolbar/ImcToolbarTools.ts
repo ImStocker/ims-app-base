@@ -6,6 +6,7 @@ import ImcEditorToolbarFormatColorButton from './ImcEditorToolbarFormatColorButt
 import ImcEditorToolbarFormatLinkButton from './ImcEditorToolbarFormatLinkButton.vue';
 import ImcEditorToolbarFormatListButton from './ImcEditorToolbarFormatListButton.vue';
 import ImcEditorToolbarFormulaButton from './ImcEditorToolbarFormulaButton.vue';
+import { ImcCalloutBlotTypes } from '../blots/ImcCalloutBlot';
 
 export type ImcToolbarSection = 'block' | 'inline' | 'additional';
 
@@ -116,6 +117,22 @@ export const ImcToolbarTools: ImcToolbarTool[] = [
     component: ImcEditorToolbarFormatButton,
     componentProps: {
       format: 'blockquote',
+    },
+  },
+  {
+    name: 'callout',
+    icon: 'ri-text-block',
+    section: 'block',
+    main: 1,
+    component: ImcEditorToolbarFormatOptionsButton,
+    componentProps: {
+      format: 'callout',
+      options: Object.values(ImcCalloutBlotTypes).map((el) => {
+        return {
+          value: el.type,
+          icon: el.toolbarIcon,
+        };
+      }),
     },
   },
   {
