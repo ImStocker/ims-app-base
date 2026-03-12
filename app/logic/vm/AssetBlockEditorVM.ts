@@ -783,7 +783,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       {
         name: 'blockPaste',
         isMain: true,
-        title: this.appManager.$t('assetEditor.toolbarCopyBlock'),
+        title: this.appManager.$t('assetEditor.toolbarPasteBlock'),
         disabled: false,
         icon: 'ri-clipboard-fill',
         action: () => {
