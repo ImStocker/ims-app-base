@@ -1,4 +1,3 @@
-import type { AssetChangeBatchOpDTO } from './AssetsType';
 import type { AssetPropsSelectionOrder } from './PropsSelection';
 import type { AssetPropWhere } from './PropsWhere';
 
@@ -1850,35 +1849,30 @@ export function extractRemapParentProps(props: AssetProps): {
   };
 }
 export function diffAssetPropObjects(
-  local_a: AssetProps,
-  server_b: AssetProps,
-): AssetChangeBatchOpDTO {
-  const difference: AssetChangeBatchOpDTO = {
-    set: {
-      parentIds: undefined,
-      name: undefined,
-      title: undefined,
-      icon: undefined,
-      workspaceId: undefined,
-      isAbstract: undefined,
-      index: undefined,
-      creatorUserId: undefined,
-      blocks: undefined,
-      delete: undefined,
-      restore: undefined,
-    },
-  };
-  for (const key of Object.keys(server_b)) {
-    difference[key] = server_b[key];
-  }
-  //use compare props
-  // свойство изменилось, добавилось, удалилось.
-  // напомнить про массивы
-  for (const key of Object.keys(local_a)) {
-    if (!server_b.hasOwnProperty(key)) {
+  source: AssetProps,
+  target: AssetProps,
+): AssetProps[] {
+  // флаг, есть ли хотя бы 1 изменение. Если нет, то отправляю пустой массив
+  let has_changes = false;
+  const difference: AssetProps = {};
+  for (const key of Object.keys(target)) {
+    if (source[key]) {
+      const res = compareAssetPropValues(source[key], target[key], true);
+      if (res !== 0) {
+        has_changes = true;
+        difference[key] = source[key];
+      }
+    } else {
+      has_changes = true;
       difference['~' + key] = null;
-      difference.set.delete = true;
     }
   }
-  return difference;
+  // напомнить про массивы
+  for (const key of Object.keys(source)) {
+    if (!target.hasOwnProperty(key)) {
+      has_changes = true;
+      difference[key] = source[key];
+    }
+  }
+  return has_changes ? [difference] : [];
 }
