@@ -25,7 +25,7 @@ export default function () {
     return {
       type: 'block',
       content: {
-        controller: el,
+        definition: el,
       },
     };
   });

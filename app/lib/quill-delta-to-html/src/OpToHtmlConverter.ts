@@ -175,6 +175,7 @@ export class OpToHtmlConverter {
         .map((prop) => prop + '-' + attrs[prop])
         .concat(this.op.isVideo() ? 'video' : [])
         .concat(this.op.isImage() ? 'image' : [])
+        .concat(this.op.isCallout() ? 'callout' : [])
         .map(<Str2StrType>this.prefixClass.bind(this)),
     );
   }
@@ -257,6 +258,12 @@ export class OpToHtmlConverter {
     if (this.op.isACheckList()) {
       return tagAttrs.concat(
         makeAttr('data-checked', this.op.isCheckedList() ? 'true' : 'false'),
+      );
+    }
+
+    if (this.op.isCallout()) {
+      return tagAttrs.concat(
+        makeAttr('data-type', this.op.attributes.callout!),
       );
     }
 
@@ -394,6 +401,7 @@ export class OpToHtmlConverter {
     const positionTag = this.options.paragraphTag || 'p';
 
     const blocks = [
+      ['callout', positionTag],
       ['blockquote'],
       ['code-block', 'pre'],
       ['list', this.options.listItemTag],

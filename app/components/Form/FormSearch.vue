@@ -3,7 +3,7 @@
     ref="formSearchInput"
     v-model="searchText"
     class="FormSearch"
-    :placeholder="$t('gddPage.menu.search') + '...'"
+    :placeholder="ownPlaceholder"
     :autofocus="autofocus"
   >
     <template #append>
@@ -32,12 +32,21 @@ export default defineComponent({
       type: Boolean,
       default: () => false,
     },
+    placeholder: {
+      type: String,
+      default: null,
+    },
   },
   emits: ['change'],
   data() {
     return {
       searchText: this.value,
     };
+  },
+  computed: {
+    ownPlaceholder() {
+      return this.placeholder ?? this.$t('gddPage.menu.search') + '...';
+    },
   },
   watch: {
     searchText() {

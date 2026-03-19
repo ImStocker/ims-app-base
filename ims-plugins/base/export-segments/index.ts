@@ -2,20 +2,14 @@ const segments = [
   {
     name: 'csv',
     controller: async () =>
-      (
-        await import(
-          '#logic/local-fs-sync/segments/CsvSyncExportSegment'
-        )
-      ).default,
+      (await import('#logic/local-fs-sync/segments/CsvSyncExportSegment'))
+        .default,
   },
   {
     name: 'json',
     controller: async () =>
-      (
-        await import(
-          '#logic/local-fs-sync/segments/JsonSyncExportSegment'
-        )
-      ).default,
+      (await import('#logic/local-fs-sync/segments/JsonSyncExportSegment'))
+        .default,
   },
 ];
 

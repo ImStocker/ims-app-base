@@ -553,6 +553,11 @@ export default {
       'header-2': 'Заголовок 2',
       'header-3': 'Заголовок 3',
       'header-4': 'Заголовок 4',
+      callout: 'Выноска',
+      'callout-info': 'Информация',
+      'callout-warning': 'Предупреждение',
+      'callout-solution': 'Решение',
+      'callout-error': 'Ошибка',
       blockquote: 'Цитата',
       link: 'Ссылка',
       background: 'Фон',
@@ -647,7 +652,7 @@ export default {
       deleteConfirm: 'Вы уверены, что хотите удалить тип "{title}"?',
     },
   },
-  boardPage: { 
+  boardPage: {
     addWatcher: 'Добавить наблюдателя',
     removeWatcher: 'Удалить наблюдателя',
     removeWatcherConfirm: 'Вы уверены, что хотите удалить наблюдателя?',

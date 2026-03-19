@@ -1,15 +1,24 @@
 import { AppSubManagerBase } from '../IAppManager';
-import type { PluginListItemEntity, PluginInfo } from './PluginEntity';
+import {
+  type PluginListItemEntity,
+  type PluginInfo,
+  PluginInstalledFrom,
+} from './PluginEntity';
 import UiManager from '../UiManager';
-import PluginController from './PluginController';
 import { assert } from '../../utils/typeUtils';
 import type { PluginDescriptor } from './PluginControllerBase';
+import PluginControllerInternal from './PluginControllerInternal';
+import type PluginControllerBase from './PluginControllerBase';
 
 export default class PluginManager extends AppSubManagerBase {
-  private _installedPlugins = new Map<string, PluginInfo>();
+  protected _installedPlugins = new Map<string, PluginInfo>();
   _destroyed: boolean = false;
 
   async init() {}
+
+  installPluginFromPath(_path: string, _from: PluginInstalledFrom) {}
+
+  async activateSavedPlugins() {}
 
   async getPluginsList(): Promise<PluginListItemEntity[]> {
     const res_map = new Map<string, PluginListItemEntity>();
@@ -18,9 +27,11 @@ export default class PluginManager extends AppSubManagerBase {
       let res_plugin: PluginListItemEntity;
       try {
         const descriptor = plugin.controller.descriptor;
+        assert(descriptor);
         res_plugin = {
           name: plugin_name,
           entity: descriptor,
+          from: plugin.installedFrom,
           activated: plugin.controller.activated,
         };
       } catch (err: any) {
@@ -33,6 +44,7 @@ export default class PluginManager extends AppSubManagerBase {
             version: '1.0.0',
             api: plugin_name,
           },
+          from: plugin.installedFrom,
           activated: false,
           error: err.message,
         };
@@ -48,59 +60,56 @@ export default class PluginManager extends AppSubManagerBase {
     return res_list;
   }
 
-  async deletePluginByName(plugin_name: string) {
+  async deletePluginByName(plugin_name: string): Promise<boolean> {
     const plugin = this._installedPlugins.get(plugin_name);
     if (plugin) {
-      try {
-        await this._deactivatePlugin(plugin_name);
-      } catch (err) {
-        console.error(
-          'PluginManager::deletePluginByName',
-          'cannot deactivate plugin',
-          plugin_name,
-          err,
-        );
-      }
+      await this._deactivatePlugin(plugin_name);
 
       this._installedPlugins.delete(plugin_name);
+
+      return true;
     }
+    return false;
   }
 
-  getPluginController(plugin_name: string) {
+  getPluginController(plugin_name: string): PluginControllerBase | undefined {
     const plugin = this._installedPlugins.get(plugin_name);
     return plugin?.controller;
   }
 
-  async activatePlugin(pluginDescriptor: PluginDescriptor) {
+  async activateInternalPlugin(pluginDescriptor: PluginDescriptor) {
     const plugin = this._installedPlugins.get(pluginDescriptor.name);
     if (!plugin) {
       try {
-        const plugin = new PluginController(this.appManager, pluginDescriptor);
-        const installed_plugin = {
+        const plugin = new PluginControllerInternal(
+          this.appManager,
+          pluginDescriptor,
+        );
+        const installed_plugin: PluginInfo = {
           name: pluginDescriptor.name,
           controller: plugin,
+          installedFrom: PluginInstalledFrom.INTERNAL,
         };
         this._installedPlugins.set(pluginDescriptor.name, installed_plugin);
         await this._activatePlugin(pluginDescriptor.name);
-      } catch (err) {
-        console.error(
-          'PluginManager::activatePluginByName',
-          'cannot activate plugin',
-          pluginDescriptor.name,
-          err,
-        );
+      } catch (err: any) {
+        this.appManager
+          .get(UiManager)
+          .showError(
+            `Plugin activation failed for plugin ${pluginDescriptor.name}: ${err.message}`,
+          );
       }
     }
   }
 
-  private async _activatePlugin(plugin_name: string): Promise<void> {
+  protected async _activatePlugin(plugin_name: string): Promise<void> {
     const plugin = this._installedPlugins.get(plugin_name);
     assert(plugin, `Plugin ${plugin_name} is not registered`);
 
     await plugin.controller.activate();
   }
 
-  private async _deactivatePlugin(plugin_name: string): Promise<boolean> {
+  protected async _deactivatePlugin(plugin_name: string): Promise<boolean> {
     try {
       const plugin = this._installedPlugins.get(plugin_name);
       if (!plugin) return false;

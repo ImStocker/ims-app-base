@@ -32,30 +32,33 @@ export class ImcEditorModule {
     );
     this.quill.on('selection-change', (_range) => this._updateCursorPos());
     this._enterLogic();
-    this._fixDeletingBlockquoute();
+    this._fixDeletingBlockquouteAndCallouts();
     this._tabLogic();
     this._backtickLogic();
+    this._calloutLogic();
   }
 
-  private _fixDeletingBlockquoute() {
-    quillAddKeyboardBindingBeforeOthers(
-      this.quill,
-      {
-        key: QuillKeys.BACKSPACE,
-      },
-      () => {
-        this.quill.format('blockquote', false, QuillSources.USER);
-        return false;
-      },
-      {
-        format: {
-          blockquote: true,
+  private _fixDeletingBlockquouteAndCallouts() {
+    const formats_to_fix = ['blockquote', 'callout'] as const;
+
+    const removeFormatOnBackspaceAtLineStart = (formatName: string) => {
+      quillAddKeyboardBindingBeforeOthers(
+        this.quill,
+        { key: QuillKeys.BACKSPACE },
+        () => {
+          this.quill.format(formatName, false, QuillSources.USER);
+          return false;
         },
-        prefix: /^$/,
-        suffix: /^$/,
-        collapsed: true,
-      },
-    );
+        {
+          format: { [formatName]: true },
+          prefix: /^$/,
+          suffix: /^$/,
+          collapsed: true,
+        },
+      );
+    };
+
+    formats_to_fix.forEach((el) => removeFormatOnBackspaceAtLineStart(el));
   }
 
   private _updateCursorPos() {
@@ -186,6 +189,27 @@ export class ImcEditorModule {
       },
       {
         collapsed: true,
+      },
+    );
+  }
+
+  private _calloutLogic() {
+    quillAddKeyboardBindingBeforeOthers(
+      this.quill,
+      {
+        key: QuillKeys.ENTER,
+      },
+      (_range: Range, context: Context) => {
+        if (context.empty) {
+          this.quill.format('callout', false, QuillSources.USER);
+          return false;
+        }
+        return true;
+      },
+      {
+        format: {
+          callout: true,
+        },
       },
     );
   }
