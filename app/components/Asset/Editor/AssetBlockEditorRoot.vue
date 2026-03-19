@@ -18,6 +18,7 @@ import { AssetRights } from '../../../logic/types/Rights';
 import AssetEditorToolbarWidget from '../Editor/AssetEditorToolbarWidget.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
 import { useAppManager } from '../../../composables/useAppManager';
+import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 
 export default defineComponent({
   name: 'AssetBlockEditorRoot',
@@ -32,6 +33,10 @@ export default defineComponent({
     toolbarShowBlockCopyPaste: {
       type: Boolean,
       default: true,
+    },
+    historyModeVM: {
+      type: [Object, null] as PropType<AssetHistoryVM | null>,
+      default: null,
     },
   },
   async setup(props) {
@@ -69,7 +74,11 @@ export default defineComponent({
         this.$getAppManager(),
         this.assetFull,
       );
+      this.assetBlockEditor.historyModeVM = this.historyModeVM;
       await this.assetBlockEditor.init();
+    },
+    historyModeVM() {
+      this.assetBlockEditor.historyModeVM = this.historyModeVM;
     },
   },
   async mounted() {

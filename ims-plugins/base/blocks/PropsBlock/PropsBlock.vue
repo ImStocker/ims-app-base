@@ -69,10 +69,7 @@ import PropsBlockChangeSettings from './PropsBlockChangeSettings.vue';
 import { AssetRights } from '#logic/types/Rights';
 import DialogManager from '#logic/managers/DialogManager';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
-import type {
-  AssetDisplayMode,
-  ResolvedAssetBlock,
-} from '#logic/utils/assets';
+import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import AssetServiceNameDialog from '#components/Asset/AssetServiceNameDialog.vue';
 import RightPanel from '#components/Common/RightPanel.vue';

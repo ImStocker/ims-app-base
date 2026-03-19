@@ -95,6 +95,18 @@ export class AssetChanger {
     this._saveChangesImpl = saveChangesImpl;
   }
 
+  get saveChangesImpl() {
+    return this._saveChangesImpl;
+  }
+
+  set saveChangesImpl(
+    saveCallback: (
+      request: HistorySaveRequest[],
+    ) => Promise<HistorySaveResponse>,
+  ) {
+    this._saveChangesImpl = saveCallback;
+  }
+
   discard() {
     if (this._cutUndoForSaved.length > 0) {
       this._history = [

@@ -9,6 +9,8 @@ import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.v
 import AssetPreviewDialog from '../../components/Asset/AssetPreviewDialog.vue';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
+import type { AssetHistoryMode } from '#logic/utils/assets';
+import { AssetHistoryVM } from './AssetHistoryVM';
 
 export class AssetFullEditorVM {
   appManager: IAppManager;
@@ -18,6 +20,7 @@ export class AssetFullEditorVM {
   loadDone: boolean;
   loadError: string | null;
   openedAssetId: string | null;
+  historyModeVM: AssetHistoryVM | null = null;
 
   constructor(appManager: IAppManager, asset_id: string | null) {
     this.appManager = appManager;
@@ -96,6 +99,26 @@ export class AssetFullEditorVM {
       this.loadDone = true;
     } catch (err: any) {
       this.loadError = err.message.toString();
+    }
+  }
+
+  get mode(): AssetHistoryMode {
+    if (this.historyModeVM) {
+      return 'history';
+    } else {
+      return 'usual';
+    }
+  }
+
+  async changeMode(mode: AssetHistoryMode) {
+    if (mode === 'history') {
+      this.historyModeVM = new AssetHistoryVM(
+        this.appManager,
+        this.openedAssetId,
+      );
+      await this.historyModeVM.load();
+    } else {
+      this.historyModeVM = null;
     }
   }
 
