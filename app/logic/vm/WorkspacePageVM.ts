@@ -1,7 +1,7 @@
 import type { IAppManager } from '../managers/IAppManager';
 import { PageVMBase } from '../types/PageVMBase';
 import CreatorAssetManager, {
-  type CreatorWorkspaceEventsArg,
+  type ProjectContentChangeEventArg,
 } from '../managers/CreatorAssetManager';
 import type { SubscriberHandler } from '../types/Subscriber';
 import { GameDesignMenuVM } from './GameDesignMenuVM';
@@ -80,19 +80,19 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
     this.gameDesignMenuVM.init();
     this._workspaceEventsSubscriber = this.appManager
       .get(CreatorAssetManager)
-      .workspaceEvents.subscribe(
+      .projectContentEvents.subscribe(
         async (change_res) => await this._handleWorkspacesEvents(change_res),
       );
   }
 
   protected async _handleWorkspacesEvents(
-    change_res: CreatorWorkspaceEventsArg,
+    change_res: ProjectContentChangeEventArg,
   ) {
     if (!this.workspaceId) return;
     const projectInfo = this.appManager.get(ProjectManager).getProjectInfo();
     assert(projectInfo, 'Project is not loaded');
 
-    if (change_res.deletedIds.includes(this.workspaceId)) {
+    if (change_res.wDelIds.includes(this.workspaceId)) {
       openProjectLink(
         this.appManager,
         {

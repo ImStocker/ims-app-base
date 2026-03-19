@@ -17,8 +17,7 @@ import type {
 } from '../../../logic/types/Workspaces';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
 import CreatorAssetManager, {
-  type CreatorAssetEventsArg,
-  type CreatorWorkspaceEventsArg,
+  type ProjectContentChangeEventArg,
 } from '../../../logic/managers/CreatorAssetManager';
 import { intersectObjectArrays } from '../../../logic/utils/array';
 import type {
@@ -649,15 +648,9 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
         });
       this._assetEventsSubscriber = this.appManager
         .get(CreatorAssetManager)
-        .assetEvents.subscribe((change_res) => {
+        .projectContentEvents.subscribe((change_res) => {
           // Don't await
-          this.handleAssetsEvents(change_res);
-        });
-      this._workspaceEventsSubscriber = this.appManager
-        .get(CreatorAssetManager)
-        .workspaceEvents.subscribe((change_res) => {
-          // Don't await
-          this.handleWorkspacesEvents(change_res);
+          this.handleProjectContentEvents(change_res);
         });
       this._changeProjectSubscriber = this.appManager
         .get(ProjectManager)
@@ -816,160 +809,153 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     return null;
   }
 
-  protected async handleAssetsEvents(change_res: CreatorAssetEventsArg) {
+  protected async _handleAssetsEventsImpl(
+    change_res: ProjectContentChangeEventArg,
+  ) {
+    if (this._analyzedWhere && this._analyzedWhere.isSystem) {
+      return;
+    }
+
+    let revalidate_visibility_workspace_ids = new Set<string>();
+    let revalidate_visibility_of_all = false;
+    const need_revalidate_workspace_visibility =
+      this.options.hideEmptyWorkspaces &&
+      this.options.showWorkspaceTree &&
+      this._analyzedWhere &&
+      Object.keys(this._analyzedWhere.assetWhereWithoutWorkspace).length > 0;
+
+    const ask_revalidate_workspace_for_asset_id = (asset_id) => {
+      if (!this.options.showWorkspaceTree) {
+        return;
+      }
+      const visible_workspace_id =
+        this.findWorkspaceOwnerForVisibilityRevalidate(`asset:${asset_id}`);
+      if (visible_workspace_id) {
+        revalidate_visibility_workspace_ids.add(visible_workspace_id);
+      } else {
+        revalidate_visibility_of_all = true;
+      }
+    };
+
+    // Process deleted assets
+    if (change_res.aDelIds.length > 0) {
+      for (const asset_id of change_res.aDelIds) {
+        if (need_revalidate_workspace_visibility) {
+          ask_revalidate_workspace_for_asset_id(asset_id);
+        }
+        this.deleteItemInState(`asset:${asset_id}`);
+      }
+    }
+
+    // Handle insert & update
+    if (change_res.aUpsIds.length > 0) {
+      const upserted_assets = (
+        await Promise.all(
+          change_res.aUpsIds.map((id) => {
+            return this.appManager
+              .get(CreatorAssetManager)
+              .getAssetShortViaCache(id);
+          }),
+        )
+      ).filter((x) => x) as AssetShort[];
+
+      const matched_assets = await this.appManager
+        .get(CreatorAssetManager)
+        .matchAssetShortsWithWhere(upserted_assets, this.options.assetWhere);
+
+      if (matched_assets.length !== upserted_assets.length) {
+        const matched_asset_id_set = new Set(matched_assets.map((a) => a.id));
+        for (const asset of upserted_assets) {
+          if (!matched_asset_id_set.has(asset.id)) {
+            if (need_revalidate_workspace_visibility) {
+              ask_revalidate_workspace_for_asset_id(asset.id);
+            }
+            this.deleteItemInState(`asset:${asset.id}`);
+          }
+        }
+      }
+
+      const states_to_be_reorder = new Set<
+        TreePresenterNodeState<ProjectTreeItemPayload>
+      >();
+
+      for (const asset of matched_assets) {
+        if (this.options.showWorkspaceTree) {
+          await this._ensureWorkspacePathExists(asset.workspaceId);
+        }
+        const old_owner_state = this.findOwnerState(`asset:${asset.id}`);
+        const new_owner_id =
+          this.options.showWorkspaceTree &&
+          !this.isRootWorkspaceId(asset.workspaceId)
+            ? `workspace:${asset.workspaceId}`
+            : '';
+        const new_owner_state = this.getState(new_owner_id);
+        let new_owner_state_reorder = false;
+        if (old_owner_state) {
+          const old_item =
+            old_owner_state.state.children[old_owner_state.index];
+          if (old_owner_state.state.id !== new_owner_id) {
+            if (need_revalidate_workspace_visibility) {
+              ask_revalidate_workspace_for_asset_id(asset.id);
+            }
+            old_owner_state.state.children.splice(old_owner_state.index, 1);
+          } else {
+            if (old_item.title !== asset.title) {
+              new_owner_state_reorder = true;
+              old_item.title = asset.title ?? '';
+            }
+            if (old_item.payload.index !== asset.index) {
+              new_owner_state_reorder = true;
+              old_item.payload.index = asset.index;
+            }
+          }
+        } else {
+          if (need_revalidate_workspace_visibility) {
+            revalidate_visibility_of_all = true;
+          }
+        }
+        if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
+          if (new_owner_state && new_owner_state.expanded) {
+            new_owner_state.children.push(this.makeItemForAssetShort(asset));
+            new_owner_state_reorder = true;
+          }
+        }
+        if (new_owner_state_reorder && new_owner_state) {
+          states_to_be_reorder.add(new_owner_state);
+        }
+      }
+
+      if (states_to_be_reorder.size > 0) {
+        for (const state of states_to_be_reorder) {
+          this.reorderStateChildren(state);
+        }
+      }
+    }
+
+    // Revalidate visible workspaces
+    if (need_revalidate_workspace_visibility) {
+      if (revalidate_visibility_of_all) {
+        revalidate_visibility_workspace_ids = new Set(
+          this._getAllVisibleWorkspaceIds(),
+        );
+      }
+
+      if (revalidate_visibility_workspace_ids.size > 0) {
+        await this._revalidateWorkspaceVisibility([
+          ...revalidate_visibility_workspace_ids,
+        ]);
+      }
+    }
+  }
+
+  protected async handleProjectContentEvents(
+    change_res: ProjectContentChangeEventArg,
+  ) {
     this._externalUpdateByEventTask = this._externalUpdateByEventTask.then(
       async () => {
         try {
-          if (this._analyzedWhere && this._analyzedWhere.isSystem) {
-            return;
-          }
-
-          let revalidate_visibility_workspace_ids = new Set<string>();
-          let revalidate_visibility_of_all = false;
-          const need_revalidate_workspace_visibility =
-            this.options.hideEmptyWorkspaces &&
-            this.options.showWorkspaceTree &&
-            this._analyzedWhere &&
-            Object.keys(this._analyzedWhere.assetWhereWithoutWorkspace).length >
-              0;
-
-          const ask_revalidate_workspace_for_asset_id = (asset_id) => {
-            if (!this.options.showWorkspaceTree) {
-              return;
-            }
-            const visible_workspace_id =
-              this.findWorkspaceOwnerForVisibilityRevalidate(
-                `asset:${asset_id}`,
-              );
-            if (visible_workspace_id) {
-              revalidate_visibility_workspace_ids.add(visible_workspace_id);
-            } else {
-              revalidate_visibility_of_all = true;
-            }
-          };
-
-          // Process deleted assets
-          if (change_res.deletedIds.length > 0) {
-            for (const asset_id of change_res.deletedIds) {
-              if (need_revalidate_workspace_visibility) {
-                ask_revalidate_workspace_for_asset_id(asset_id);
-              }
-              this.deleteItemInState(`asset:${asset_id}`);
-            }
-          }
-
-          // Handle insert & update
-          if (change_res.upsert.ids.length > 0) {
-            const upserted_assets = (
-              await Promise.all(
-                change_res.upsert.ids.map((id) => {
-                  return this.appManager
-                    .get(CreatorAssetManager)
-                    .getAssetShortViaCache(id);
-                }),
-              )
-            ).filter((x) => x) as AssetShort[];
-
-            const matched_assets = await this.appManager
-              .get(CreatorAssetManager)
-              .matchAssetShortsWithWhere(
-                upserted_assets,
-                this.options.assetWhere,
-              );
-
-            if (matched_assets.length !== upserted_assets.length) {
-              const matched_asset_id_set = new Set(
-                matched_assets.map((a) => a.id),
-              );
-              for (const asset of upserted_assets) {
-                if (!matched_asset_id_set.has(asset.id)) {
-                  if (need_revalidate_workspace_visibility) {
-                    ask_revalidate_workspace_for_asset_id(asset.id);
-                  }
-                  this.deleteItemInState(`asset:${asset.id}`);
-                }
-              }
-            }
-
-            const states_to_be_reorder = new Set<
-              TreePresenterNodeState<ProjectTreeItemPayload>
-            >();
-
-            for (const asset of matched_assets) {
-              if (this.options.showWorkspaceTree) {
-                await this._ensureWorkspacePathExists(asset.workspaceId);
-              }
-              const old_owner_state = this.findOwnerState(`asset:${asset.id}`);
-              const new_owner_id =
-                this.options.showWorkspaceTree &&
-                !this.isRootWorkspaceId(asset.workspaceId)
-                  ? `workspace:${asset.workspaceId}`
-                  : '';
-              const new_owner_state = this.getState(new_owner_id);
-              let new_owner_state_reorder = false;
-              if (old_owner_state) {
-                const old_item =
-                  old_owner_state.state.children[old_owner_state.index];
-                if (old_owner_state.state.id !== new_owner_id) {
-                  if (need_revalidate_workspace_visibility) {
-                    ask_revalidate_workspace_for_asset_id(asset.id);
-                  }
-                  old_owner_state.state.children.splice(
-                    old_owner_state.index,
-                    1,
-                  );
-                } else {
-                  if (old_item.title !== asset.title) {
-                    new_owner_state_reorder = true;
-                    old_item.title = asset.title ?? '';
-                  }
-                  if (old_item.payload.index !== asset.index) {
-                    new_owner_state_reorder = true;
-                    old_item.payload.index = asset.index;
-                  }
-                }
-              } else {
-                if (need_revalidate_workspace_visibility) {
-                  revalidate_visibility_of_all = true;
-                }
-              }
-              if (
-                !old_owner_state ||
-                old_owner_state.state.id !== new_owner_id
-              ) {
-                if (new_owner_state && new_owner_state.expanded) {
-                  new_owner_state.children.push(
-                    this.makeItemForAssetShort(asset),
-                  );
-                  new_owner_state_reorder = true;
-                }
-              }
-              if (new_owner_state_reorder && new_owner_state) {
-                states_to_be_reorder.add(new_owner_state);
-              }
-            }
-
-            if (states_to_be_reorder.size > 0) {
-              for (const state of states_to_be_reorder) {
-                this.reorderStateChildren(state);
-              }
-            }
-          }
-
-          // Revalidate visible workspaces
-          if (need_revalidate_workspace_visibility) {
-            if (revalidate_visibility_of_all) {
-              revalidate_visibility_workspace_ids = new Set(
-                this._getAllVisibleWorkspaceIds(),
-              );
-            }
-
-            if (revalidate_visibility_workspace_ids.size > 0) {
-              await this._revalidateWorkspaceVisibility([
-                ...revalidate_visibility_workspace_ids,
-              ]);
-            }
-          }
+          await this._handleAssetsEventsImpl(change_res);
+          await this._handleWorkspacesEventsImpl(change_res);
         } catch (err: any) {
           console.error(
             'ProjectTreePresenterVM: failed handle asset events',
@@ -981,80 +967,69 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     await this._externalUpdateByEventTask;
   }
 
-  protected async handleWorkspacesEvents(
-    change_res: CreatorWorkspaceEventsArg,
+  protected async _handleWorkspacesEventsImpl(
+    change_res: ProjectContentChangeEventArg,
   ) {
-    this._externalUpdateByEventTask = this._externalUpdateByEventTask.then(
-      async () => {
-        try {
-          if (this._analyzedWhere && this._analyzedWhere.isSystem) {
-            return;
-          }
+    if (this._analyzedWhere && this._analyzedWhere.isSystem) {
+      return;
+    }
 
-          for (const asset_id of change_res.deletedIds) {
-            this.deleteItemInState(`workspace:${asset_id}`);
-          }
+    for (const workspace_id of change_res.wDelIds) {
+      this.deleteItemInState(`workspace:${workspace_id}`);
+    }
 
-          if (!this.options.showWorkspaceTree) {
-            return;
-          }
+    if (!this.options.showWorkspaceTree) {
+      return;
+    }
 
-          const states_to_be_reorder = new Set<
-            TreePresenterNodeState<ProjectTreeItemPayload>
-          >();
+    const states_to_be_reorder = new Set<
+      TreePresenterNodeState<ProjectTreeItemPayload>
+    >();
 
-          for (const workspace of change_res.upsert) {
-            const old_owner_state = this.findOwnerState(
-              `workspace:${workspace.id}`,
-            );
-            const new_owner_id = !this.isRootWorkspaceId(workspace.parentId)
-              ? `workspace:${workspace.parentId}`
-              : '';
+    for (const workspace_id of change_res.wUpsIds) {
+      const workspace = this.appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByIdViaCacheSync(workspace_id);
+      if (!workspace) {
+        continue;
+      }
+      const old_owner_state = this.findOwnerState(`workspace:${workspace.id}`);
+      const new_owner_id = !this.isRootWorkspaceId(workspace.parentId)
+        ? `workspace:${workspace.parentId}`
+        : '';
 
-            const new_owner_state = this.getState(new_owner_id);
-            let new_owner_state_reorder = false;
-            if (old_owner_state) {
-              const old_item =
-                old_owner_state.state.children[old_owner_state.index];
-              if (old_owner_state.state.id !== new_owner_id) {
-                old_owner_state.state.children.splice(old_owner_state.index, 1);
-              } else {
-                if (old_item.title !== workspace.title) {
-                  new_owner_state_reorder = true;
-                  old_item.title = workspace.title ?? '';
-                }
-                if (old_item.payload.index !== workspace.index) {
-                  new_owner_state_reorder = true;
-                  old_item.payload.index = workspace.index;
-                }
-              }
-            }
-            if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
-              if (new_owner_state && new_owner_state.expanded) {
-                new_owner_state.children.push(
-                  this.makeItemForWorkspace(workspace),
-                );
-                new_owner_state_reorder = true;
-              }
-            }
-            if (new_owner_state_reorder && new_owner_state) {
-              states_to_be_reorder.add(new_owner_state);
-            }
+      const new_owner_state = this.getState(new_owner_id);
+      let new_owner_state_reorder = false;
+      if (old_owner_state) {
+        const old_item = old_owner_state.state.children[old_owner_state.index];
+        if (old_owner_state.state.id !== new_owner_id) {
+          old_owner_state.state.children.splice(old_owner_state.index, 1);
+        } else {
+          if (old_item.title !== workspace.title) {
+            new_owner_state_reorder = true;
+            old_item.title = workspace.title ?? '';
           }
-          if (states_to_be_reorder.size > 0) {
-            for (const state of states_to_be_reorder) {
-              this.reorderStateChildren(state);
-            }
+          if (old_item.payload.index !== workspace.index) {
+            new_owner_state_reorder = true;
+            old_item.payload.index = workspace.index;
           }
-        } catch (err: any) {
-          console.error(
-            'ProjectTreePresenterVM: failed handle wprkspace events',
-            err,
-          );
         }
-      },
-    );
-    await this._externalUpdateByEventTask;
+      }
+      if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
+        if (new_owner_state && new_owner_state.expanded) {
+          new_owner_state.children.push(this.makeItemForWorkspace(workspace));
+          new_owner_state_reorder = true;
+        }
+      }
+      if (new_owner_state_reorder && new_owner_state) {
+        states_to_be_reorder.add(new_owner_state);
+      }
+    }
+    if (states_to_be_reorder.size > 0) {
+      for (const state of states_to_be_reorder) {
+        this.reorderStateChildren(state);
+      }
+    }
   }
 
   override toJSON(): Record<string, any> {
