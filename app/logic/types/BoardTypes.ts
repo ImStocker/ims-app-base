@@ -1,3 +1,4 @@
+import type { AssetShort } from './AssetsType';
 import type {
   AssetPropValue,
   AssetPropValueAccount,
@@ -7,25 +8,16 @@ import type {
 } from './Props';
 
 // TODO: remove from this package
-export type TaskEntity = {
-  id: string;
+export type TaskEntity = AssetShort & {
   num: number;
   column: AssetPropValueEnum | null;
-  workspaceId: string | null;
-  title: string;
-  name: string | null;
   completedAt: string | null;
   isAttracting: boolean;
-  index: number | null;
   cover: AssetPropValueFile | null;
   assignedTo: {
     AccountId: string;
     Name: string;
   } | null;
-  creatorUserId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
   archivedAt?: string | null;
   color: string | null;
   scheduledAt: string | null;
@@ -35,9 +27,29 @@ export type TaskEntity = {
   category?: AssetPropValueEnum | null;
   timeLogs: TaskTimeLogRecord[];
   subTaskIds: string[];
-  unread: number;
   planMilestone: AssetPropValueEnum | null;
 };
+
+export function convertTaskToAssetShort(task: TaskEntity): AssetShort {
+  return {
+    id: task.id,
+    title: task.title,
+    name: task.name,
+    createdAt: task.createdAt,
+    creatorUserId: task.creatorUserId,
+    deletedAt: task.deletedAt,
+    hasImage: task.hasImage,
+    icon: task.icon,
+    index: task.index,
+    isAbstract: task.isAbstract,
+    projectId: task.projectId,
+    rights: task.rights,
+    typeIds: task.typeIds,
+    updatedAt: task.updatedAt,
+    workspaceId: task.workspaceId,
+    unread: task.unread,
+  };
+}
 
 export type TaskQueryDTOWhere = {
   [param: string]: any;

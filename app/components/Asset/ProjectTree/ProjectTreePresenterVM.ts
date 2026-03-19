@@ -71,8 +71,7 @@ type ProjectTreePresenterAnalyzedWhere = {
 
 export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
   private _reloadSubscriber: SubscriberHandler | null = null;
-  private _assetEventsSubscriber: SubscriberHandler | null = null;
-  private _workspaceEventsSubscriber: SubscriberHandler | null = null;
+  private _projectContentEventsSubscriber: SubscriberHandler | null = null;
   private _analyzedWhere: ProjectTreePresenterAnalyzedWhere | null = null;
   protected _loadedHiddenNonAlternativeIds: string[] = [];
   protected _options: ProjectTreePresenterVMOptions;
@@ -623,13 +622,9 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       this._reloadSubscriber.unsubscribe();
       this._reloadSubscriber = null;
     }
-    if (this._assetEventsSubscriber) {
-      this._assetEventsSubscriber.unsubscribe();
-      this._assetEventsSubscriber = null;
-    }
-    if (this._workspaceEventsSubscriber) {
-      this._workspaceEventsSubscriber.unsubscribe();
-      this._workspaceEventsSubscriber = null;
+    if (this._projectContentEventsSubscriber) {
+      this._projectContentEventsSubscriber.unsubscribe();
+      this._projectContentEventsSubscriber = null;
     }
     if (this._changeProjectSubscriber) {
       this._changeProjectSubscriber.unsubscribe();
@@ -645,7 +640,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
               : 'workspace:' + changes.workspaceId,
           );
         });
-      this._assetEventsSubscriber = this.appManager
+      this._projectContentEventsSubscriber = this.appManager
         .get(CreatorAssetManager)
         .projectContentEvents.subscribe((change_res) => {
           // Don't await
@@ -955,6 +950,23 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
         try {
           await this._handleAssetsEventsImpl(change_res);
           await this._handleWorkspacesEventsImpl(change_res);
+          if (
+            change_res.wTchIds.length > 0 &&
+            change_res.aDelIds.length === 0 &&
+            change_res.aUpsIds.length === 0 &&
+            change_res.wDelIds.length === 0 &&
+            change_res.wUpsIds.length === 0
+          ) {
+            for (const workspace_id of change_res.wTchIds) {
+              const state = this.getState(`workspace:${workspace_id}`);
+              // Force reload
+              if (state) {
+                state.children = [];
+                state.loaded = false;
+                state.loadingTask = null;
+              }
+            }
+          }
         } catch (err: any) {
           console.error(
             'ProjectTreePresenterVM: failed handle asset events',

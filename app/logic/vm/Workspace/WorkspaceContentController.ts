@@ -177,7 +177,8 @@ export class WorkspaceContentController {
         }
         const need_reload =
           change_res.aDelIds.some((id) => listen_asset_ids.has(id)) ||
-          change_res.aUpsIds.some((id) => listen_asset_ids.has(id));
+          change_res.aUpsIds.some((id) => listen_asset_ids.has(id)) ||
+          (this.workspaceId && change_res.wTchIds.includes(this.workspaceId));
 
         if (need_reload) {
           await this.reload(false, true);
@@ -294,6 +295,11 @@ export class WorkspaceContentController {
         .getAssetsView(query);
       this.items = data.list;
       this.total = data.total;
+      this.appManager
+        .get(CreatorAssetManager)
+        .requestExternalEventListenFullAssetIds(
+          this.items.map((i) => i.id as string),
+        );
       this._loadedQuery = query;
     } catch (err: any) {
       this.loadingError = err.message;

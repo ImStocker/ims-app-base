@@ -38,6 +38,7 @@ export type ProjectContentChangeEventArg = {
   wUpsIds: string[];
   wDelIds: string[];
   wTchIds: string[];
+  instigator: number | null;
 };
 
 export interface IProjectDatabaseAsset {

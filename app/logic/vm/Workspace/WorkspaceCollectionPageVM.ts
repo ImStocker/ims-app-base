@@ -3,9 +3,7 @@ import type {
   ApiResultListWithTotal,
   ProjectFullInfo,
 } from '../../types/ProjectTypes';
-import CreatorAssetManager, {
-  type CreatorWorkspaceEventsArg,
-} from '../../managers/CreatorAssetManager';
+import CreatorAssetManager from '../../managers/CreatorAssetManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
   type Workspace,
@@ -39,6 +37,7 @@ import {
   VIEW_TYPES_MAP,
 } from '../../../components/Workspace/ViewOptions/viewUtils';
 import type { ICollectionBlockController } from '../../../../ims-plugins/base/blocks/CollectionBlock/CollectionBlockController';
+import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
 
 export class WorkspaceCollectionPageVM
   extends WorkspacePageVM
@@ -225,10 +224,16 @@ export class WorkspaceCollectionPageVM
   }
 
   override async _handleWorkspacesEvents(
-    change_res: CreatorWorkspaceEventsArg,
+    change_res: ProjectContentChangeEventArg,
   ) {
     super._handleWorkspacesEvents(change_res);
-    for (const workspace of change_res.upsert) {
+    for (const workspace_id of change_res.wUpsIds) {
+      const workspace = this.appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByIdViaCacheSync(workspace_id);
+      if (!workspace) {
+        continue;
+      }
       if ((workspace.props.asset as any)?.AssetId) {
         this.baseAsset =
           (await this.appManager
