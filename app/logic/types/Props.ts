@@ -817,8 +817,13 @@ export function compareAssetPropValues(
         const ac = a as number[];
         const bc = b as number[];
         if (ac.length === bc.length) {
-          // NOTE: При сравнении одиночных значений мы не можем проверить равенство массивов
-          return -1;
+          // NOTE: При сравнении одиночных значений мы не можем проверить равенство массивов -> проверяются только индексы
+          for (let i = 0; i < ac.length; i++) {
+            if (ac[i] !== bc[i]) {
+              return ac[i] - bc[i];
+            }
+          }
+          return 0;
         } else {
           return ac.length - bc.length;
         }
@@ -1856,7 +1861,7 @@ export function diffAssetPropObjects(
   let has_changes = false;
   const difference: AssetProps = {};
   for (const key of Object.keys(target)) {
-    if (source[key]) {
+    if (source[key] !== undefined) {
       const res = compareAssetPropValues(source[key], target[key], true);
       if (res !== 0) {
         has_changes = true;
