@@ -172,6 +172,8 @@ export default {
       noVariablesYet: 'You have no variables yet',
       name: 'Name',
       type: 'Type',
+      defaultValue: 'Default value',
+      variables: 'Variables',
       description: 'Description',
       enterName: 'Enter name',
       enterType: 'Choose type',
