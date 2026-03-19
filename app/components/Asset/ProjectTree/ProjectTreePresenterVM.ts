@@ -16,9 +16,7 @@ import type {
   WorkspaceQueryDTOWhere,
 } from '../../../logic/types/Workspaces';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
-import CreatorAssetManager, {
-  type ProjectContentChangeEventArg,
-} from '../../../logic/managers/CreatorAssetManager';
+import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import { intersectObjectArrays } from '../../../logic/utils/array';
 import type {
   AssetForSelection,
@@ -34,6 +32,7 @@ import {
 } from './ProjectTreePresenterBaseVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import { getWorkspaceCollectionAsset } from '../../GameDesign/workspaceUtils';
+import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
 
 export type ProjectTreePresenterVMOptions = {
   assetWhere: AssetPropWhere;

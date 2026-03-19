@@ -72,7 +72,11 @@ import {
   type AssetPropWhereCondition,
   type AssetPropWhereOp,
 } from '../types/PropsWhere';
-import type { IProjectDatabase } from '../types/IProjectDatabase';
+import type {
+  IProjectDatabase,
+  IProjectDatabaseEventHandler,
+  ProjectContentChangeEventArg,
+} from '../types/IProjectDatabase';
 import { Service, HttpMethods } from './ApiWorker';
 import { BLOCK_NAME_META, TASK_COLUMNS_ID } from '../constants';
 import { convertTranslatedTitle } from '../utils/assets';
@@ -82,14 +86,6 @@ import {
 } from '../../components/GameDesign/WorkspaceCollectionContent';
 import isUUID from 'validator/es/lib/isUUID';
 import { ViewType } from '../../components/Workspace/ViewOptions/viewUtils';
-
-export type ProjectContentChangeEventArg = {
-  aUpsIds: string[];
-  aDelIds: string[];
-  wUpsIds: string[];
-  wDelIds: string[];
-  wTchIds: string[];
-};
 
 export type CreatorsAssetMultipleChangeResult = {
   upsert: AssetsFullResult;
@@ -113,6 +109,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   private _fullAssetsCache: EntityCache<AssetFullInstanceR> | undefined;
   private _workspacesCache: EntityCache<Workspace> | undefined;
   protected _projectDatabase: IProjectDatabase | undefined;
+  private _watchExternalEvents: boolean = false;
+  private _externalEventsHandler: IProjectDatabaseEventHandler | null = null;
 
   reloadSubscriber = new Subscriber<[{ workspaceId?: string | null }]>();
 
@@ -123,8 +121,9 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     this._apiManager = app_manager.get(ApiManager);
   }
 
-  async init(database: IProjectDatabase) {
+  async init(database: IProjectDatabase, watchExternalEvents: boolean) {
     this._projectDatabase = database;
+    this._watchExternalEvents = watchExternalEvents;
     this._shortAssetsCache = new EntityCache<AssetShort>({
       key: 'id',
       ttl: 1000 * 60 * 10,
@@ -195,9 +194,47 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     this._fullAssetsCache.reset();
     this._previewAssetsCache.reset();
     this._workspacesCache.reset();
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.cancel();
+      this._externalEventsHandler = null;
+    }
   }
 
-  initForProject(_project: ProjectFullInfo | null) {}
+  initForProject(_project: ProjectFullInfo | null) {
+    if (_project && this._watchExternalEvents && this._projectDatabase) {
+      const projectRole = this.appManager
+        .get(ProjectManager)
+        .getUserRoleInProject();
+      if (projectRole) {
+        this._externalEventsHandler = this._projectDatabase.subscribeEvents(
+          _project.id,
+          async (changes) => {
+            if (!this._projectDatabase) {
+              return;
+            }
+            if (changes.aUpsIds) {
+              const asset_full_res = await this._projectDatabase.assetsGetFull({
+                where: {
+                  id: changes.aUpsIds,
+                },
+              });
+              this.updateFullInstanceCache(asset_full_res);
+            }
+            if (changes.wUpsIds) {
+              const workpaces_res = await this._projectDatabase.workspacesGet({
+                where: {
+                  ids: changes.wUpsIds,
+                },
+              });
+              this.updateWorkspacesCache(workpaces_res.list);
+            }
+
+            this.projectContentEvents.notify(changes);
+          },
+        );
+      }
+    }
+  }
 
   //WORKSPACES
 
@@ -625,8 +662,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
     const res = await this._projectDatabase.assetsGetShort(query);
-    this._shortAssetsCache.addToCacheMany(res.list);
-    this._workspacesCache.addToCacheMany(Object.values(res.objects.workspaces));
+    this.updateShortAssetsCache(res.list);
+    this.updateWorkspacesCache(Object.values(res.objects.workspaces));
     return res;
   }
 
@@ -694,25 +731,47 @@ export default class CreatorAssetManager extends AppSubManagerBase {
         }
       }
     }
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        asset_fulls.map((a) => a.id),
+        [],
+      );
+    }
   }
 
   public updateFullInstanceCache(full_res: AssetsFullResult): void {
     assert(this._shortAssetsCache, 'Not inited');
     this.updateFullInstancesCache(Object.values(full_res.objects.assetFulls));
-    this._shortAssetsCache.addToCacheMany(
-      Object.values(full_res.objects.assetShorts),
-    );
+    this.updateShortAssetsCache(Object.values(full_res.objects.assetShorts));
     this.updateWorkspacesCache(Object.values(full_res.objects.workspaces));
   }
 
   updateShortAssetsCache(assets: AssetShort[]) {
     assert(this._shortAssetsCache, 'Not inited');
     this._shortAssetsCache.addToCacheMany(assets);
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        assets.map((a) => a.id),
+        [],
+      );
+    }
   }
 
   updateWorkspacesCache(workspaces: Workspace[]) {
     assert(this._workspacesCache, 'Not inited');
     this._workspacesCache.addToCacheMany(workspaces);
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        [],
+        workspaces.map((w) => w.id),
+      );
+    }
   }
 
   async getAssetInstancesList(
@@ -1329,11 +1388,9 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       );
     assert(this._shortAssetsCache, 'Not inited');
     if (this._shortAssetsCache) {
-      for (const asset_id of Object.keys(changesHistory.objects.assetShorts)) {
-        this._shortAssetsCache.addToCache(
-          changesHistory.objects.assetShorts[asset_id],
-        );
-      }
+      this.updateShortAssetsCache(
+        Object.values(changesHistory.objects.assetShorts),
+      );
     }
     return changesHistory;
   }

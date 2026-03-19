@@ -1,14 +1,13 @@
 import type { IAppManager } from '../managers/IAppManager';
 import { PageVMBase } from '../types/PageVMBase';
-import CreatorAssetManager, {
-  type ProjectContentChangeEventArg,
-} from '../managers/CreatorAssetManager';
+import CreatorAssetManager from '../managers/CreatorAssetManager';
 import type { SubscriberHandler } from '../types/Subscriber';
 import { GameDesignMenuVM } from './GameDesignMenuVM';
 import ProjectManager from '../managers/ProjectManager';
 import { openProjectLink } from '../router/routes-helpers';
 import { assert } from '../utils/typeUtils';
 import type { AssetPropWhere } from '../types/PropsWhere';
+import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
 
 export type WorkspacePageVMParams = {
   searchQuery: AssetPropWhere;
