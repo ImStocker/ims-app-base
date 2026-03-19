@@ -958,7 +958,11 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
             change_res.wUpsIds.length === 0
           ) {
             for (const workspace_id of change_res.wTchIds) {
-              const state = this.getState(`workspace:${workspace_id}`);
+              const state = this.getState(
+                this.isRootWorkspaceId(workspace_id)
+                  ? TREE_PRESENTER_ROOT_STATE_ID
+                  : `workspace:${workspace_id}`,
+              );
               // Force reload
               if (state) {
                 state.children = [];
