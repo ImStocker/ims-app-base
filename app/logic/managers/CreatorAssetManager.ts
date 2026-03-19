@@ -36,6 +36,7 @@ import type {
   ApiRequestList,
   ApiResultListWithMore,
   ApiResultListWithTotal,
+  ProjectFullInfo,
 } from '../types/ProjectTypes';
 import { EntityCache } from '../types/EntityCache';
 import {
@@ -71,7 +72,11 @@ import {
   type AssetPropWhereCondition,
   type AssetPropWhereOp,
 } from '../types/PropsWhere';
-import type { IProjectDatabase } from '../types/IProjectDatabase';
+import type {
+  IProjectDatabase,
+  IProjectDatabaseEventHandler,
+  ProjectContentChangeEventArg,
+} from '../types/IProjectDatabase';
 import { Service, HttpMethods } from './ApiWorker';
 import { BLOCK_NAME_META, TASK_COLUMNS_ID } from '../constants';
 import { convertTranslatedTitle } from '../utils/assets';
@@ -82,18 +87,11 @@ import {
 import isUUID from 'validator/es/lib/isUUID';
 import { ViewType } from '../../components/Workspace/ViewOptions/viewUtils';
 
-export type CreatorAssetEventsArg = {
+export type CreatorsAssetMultipleChangeResult = {
   upsert: AssetsFullResult;
   deletedIds: string[];
-};
-
-export type CreatorsAssetMultipleChangeResult = CreatorAssetEventsArg & {
   changeIds: string[];
-};
-
-export type CreatorWorkspaceEventsArg = {
-  upsert: Workspace[];
-  deletedIds: string[];
+  touchedWIds: string[];
 };
 
 type AssetHasChildrenRecord = {
@@ -110,20 +108,22 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     | undefined;
   private _fullAssetsCache: EntityCache<AssetFullInstanceR> | undefined;
   private _workspacesCache: EntityCache<Workspace> | undefined;
-  private _projectDatabase: IProjectDatabase | undefined;
+  protected _projectDatabase: IProjectDatabase | undefined;
+  private _watchExternalEvents: boolean = false;
+  private _externalEventsHandler: IProjectDatabaseEventHandler | null = null;
 
   reloadSubscriber = new Subscriber<[{ workspaceId?: string | null }]>();
 
-  assetEvents = new Subscriber<[CreatorAssetEventsArg]>();
-  workspaceEvents = new Subscriber<[CreatorWorkspaceEventsArg]>();
+  projectContentEvents = new Subscriber<[ProjectContentChangeEventArg]>();
 
   constructor(app_manager: IAppManager) {
     super(app_manager);
     this._apiManager = app_manager.get(ApiManager);
   }
 
-  async init(database: IProjectDatabase) {
+  async init(database: IProjectDatabase, watchExternalEvents: boolean) {
     this._projectDatabase = database;
+    this._watchExternalEvents = watchExternalEvents;
     this._shortAssetsCache = new EntityCache<AssetShort>({
       key: 'id',
       ttl: 1000 * 60 * 10,
@@ -194,6 +194,46 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     this._fullAssetsCache.reset();
     this._previewAssetsCache.reset();
     this._workspacesCache.reset();
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.cancel();
+      this._externalEventsHandler = null;
+    }
+  }
+
+  initForProject(_project: ProjectFullInfo | null) {
+    if (_project && this._watchExternalEvents && this._projectDatabase) {
+      const projectRole = this.appManager
+        .get(ProjectManager)
+        .getUserRoleInProject();
+      if (projectRole) {
+        this._externalEventsHandler = this._projectDatabase.subscribeEvents(
+          _project.id,
+          async (changes) => {
+            if (!this._projectDatabase) {
+              return;
+            }
+            if (changes.aUpsIds) {
+              const asset_full_res = await this._projectDatabase.assetsGetFull({
+                where: {
+                  id: changes.aUpsIds,
+                },
+              });
+              this.updateFullInstanceCache(asset_full_res);
+            }
+            if (changes.wUpsIds) {
+              const workpaces_res = await this._projectDatabase.workspacesGet({
+                where: {
+                  ids: changes.wUpsIds,
+                },
+              });
+              this.updateWorkspacesCache(workpaces_res.list);
+            }
+
+            this.projectContentEvents.notify(changes);
+          },
+        );
+      }
+    }
   }
 
   //WORKSPACES
@@ -356,9 +396,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     }
     const res = await this._projectDatabase.workspacesCreate(workspace_params);
     this._workspacesCache.addToCache(res);
-    await this.workspaceEvents.notify({
-      upsert: [res],
-      deletedIds: [],
+    await this.projectContentEvents.notify({
+      aDelIds: [],
+      aUpsIds: [],
+      wUpsIds: [res.id],
+      wTchIds: res.parentId ? [res.parentId] : [],
+      wDelIds: [],
     });
     return res;
   }
@@ -369,14 +412,22 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   ): Promise<Workspace> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
+    const old_parent_id =
+      this._workspacesCache.getElementSync(workspace_id)?.parentId ?? null;
     const res = await this._projectDatabase.workspacesChange(
       workspace_id,
       params,
     );
     this._workspacesCache.addToCache(res);
-    await this.workspaceEvents.notify({
-      upsert: [res],
-      deletedIds: [],
+    const workspacesContentIds: string[] = [];
+    if (old_parent_id) workspacesContentIds.push(old_parent_id);
+    if (res.parentId) workspacesContentIds.push(res.parentId);
+    await this.projectContentEvents.notify({
+      aUpsIds: [],
+      aDelIds: [],
+      wUpsIds: [res.id],
+      wDelIds: [],
+      wTchIds: workspacesContentIds,
     });
     return res;
   }
@@ -384,11 +435,18 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   async deleteWorkspace(workspace_id: string): Promise<void> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
+    const old_parent_id =
+      this._workspacesCache.getElementSync(workspace_id)?.parentId ?? null;
     await this._projectDatabase.workspacesDelete(workspace_id);
     this._workspacesCache.setNotFoundKeys([workspace_id]);
-    await this.workspaceEvents.notify({
-      upsert: [],
-      deletedIds: [workspace_id],
+    const workspacesContentIds: string[] = [];
+    if (old_parent_id) workspacesContentIds.push(old_parent_id);
+    await this.projectContentEvents.notify({
+      aUpsIds: [],
+      aDelIds: [],
+      wUpsIds: [],
+      wDelIds: [workspace_id],
+      wTchIds: workspacesContentIds,
     });
   }
 
@@ -604,8 +662,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
     const res = await this._projectDatabase.assetsGetShort(query);
-    this._shortAssetsCache.addToCacheMany(res.list);
-    this._workspacesCache.addToCacheMany(Object.values(res.objects.workspaces));
+    this.updateShortAssetsCache(res.list);
+    this.updateWorkspacesCache(Object.values(res.objects.workspaces));
     return res;
   }
 
@@ -673,25 +731,47 @@ export default class CreatorAssetManager extends AppSubManagerBase {
         }
       }
     }
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        asset_fulls.map((a) => a.id),
+        [],
+      );
+    }
   }
 
   public updateFullInstanceCache(full_res: AssetsFullResult): void {
     assert(this._shortAssetsCache, 'Not inited');
     this.updateFullInstancesCache(Object.values(full_res.objects.assetFulls));
-    this._shortAssetsCache.addToCacheMany(
-      Object.values(full_res.objects.assetShorts),
-    );
+    this.updateShortAssetsCache(Object.values(full_res.objects.assetShorts));
     this.updateWorkspacesCache(Object.values(full_res.objects.workspaces));
   }
 
   updateShortAssetsCache(assets: AssetShort[]) {
     assert(this._shortAssetsCache, 'Not inited');
     this._shortAssetsCache.addToCacheMany(assets);
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        assets.map((a) => a.id),
+        [],
+      );
+    }
   }
 
   updateWorkspacesCache(workspaces: Workspace[]) {
     assert(this._workspacesCache, 'Not inited');
     this._workspacesCache.addToCacheMany(workspaces);
+
+    // TODO
+    if (this._externalEventsHandler) {
+      this._externalEventsHandler.listenContent(
+        [],
+        workspaces.map((w) => w.id),
+      );
+    }
   }
 
   async getAssetInstancesList(
@@ -793,9 +873,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       res = await post_create_hook(res);
       this.updateFullInstanceCache(res);
     }
-    await this.assetEvents.notify({
-      upsert: res,
-      deletedIds: [],
+    await this.projectContentEvents.notify({
+      aUpsIds: res.ids,
+      aDelIds: [],
+      wUpsIds: [],
+      wDelIds: [],
+      wTchIds: res.touchedWIds,
     });
     return res;
   }
@@ -811,6 +894,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       upsert: createEmptyAssetFullResult(),
       deletedIds: [],
       changeIds: [],
+      touchedWIds: [],
     };
     if (ops.length === 0) {
       return res;
@@ -822,11 +906,23 @@ export default class CreatorAssetManager extends AppSubManagerBase {
           if (lastDeletetion.changeId) {
             res.changeIds.push(lastDeletetion.changeId);
           }
+          if (lastDeletetion.touchedWIds.length > 0) {
+            res.touchedWIds = [
+              ...res.touchedWIds,
+              ...lastDeletetion.touchedWIds,
+            ];
+          }
           lastChangeRes = undefined;
         } else if (ops[b].restore) {
           lastChangeRes = await this._restoreAssetsImpl(where, options);
           if (lastChangeRes.changeId) {
             res.changeIds.push(lastChangeRes.changeId);
+          }
+          if (lastChangeRes.touchedWIds.length > 0) {
+            res.touchedWIds = [
+              ...res.touchedWIds,
+              ...lastChangeRes.touchedWIds,
+            ];
           }
           lastDeletetion = undefined;
         } else {
@@ -834,6 +930,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
           lastChangeRes = await this._changeAssetsImpl(where, ops[b], options);
           if (lastChangeRes.changeId) {
             res.changeIds.push(lastChangeRes.changeId);
+          }
+          if (lastChangeRes.touchedWIds.length > 0) {
+            res.touchedWIds = [
+              ...res.touchedWIds,
+              ...lastChangeRes.touchedWIds,
+            ];
           }
         }
       }
@@ -903,7 +1005,13 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       }
     }
 
-    await this.assetEvents.notify(res);
+    await this.projectContentEvents.notify({
+      aUpsIds: res.upsert.ids,
+      aDelIds: res.deletedIds,
+      wUpsIds: [],
+      wDelIds: [],
+      wTchIds: [...new Set(res.touchedWIds)],
+    });
     return res;
   }
 
@@ -930,6 +1038,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       return {
         ...createEmptyAssetFullResult(),
         changeId: null,
+        touchedWIds: [],
       };
     }
     const res = await this.makeAssetMultipleChange(
@@ -940,6 +1049,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return {
       ...res.upsert,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,
+      touchedWIds: res.touchedWIds,
     };
   }
 
@@ -952,9 +1062,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._projectDatabase, 'Not inited');
     const res = await this._projectDatabase?.assetsChangeBatch(params, options);
     this.updateFullInstanceCache(res);
-    await this.assetEvents.notify({
-      upsert: res,
-      deletedIds: [],
+    await this.projectContentEvents.notify({
+      aUpsIds: res.ids,
+      aDelIds: [],
+      wUpsIds: [],
+      wDelIds: [],
+      wTchIds: res.touchedWIds,
     });
     return res;
   }
@@ -968,9 +1081,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._projectDatabase, 'Not inited');
     const res = await this._projectDatabase?.assetsChangeUndo(params, options);
     this.updateFullInstanceCache(res);
-    await this.assetEvents.notify({
-      upsert: res,
-      deletedIds: [],
+    await this.projectContentEvents.notify({
+      aUpsIds: res.ids,
+      aDelIds: [],
+      wUpsIds: [],
+      wDelIds: [],
+      wTchIds: res.touchedWIds,
     });
     return res;
   }
@@ -980,24 +1096,13 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._fullAssetsCache, 'Not inited');
     assert(this._shortAssetsCache, 'Not inited');
     const res = await this._projectDatabase.assetsMove(params);
-    const notify_upsert: AssetsFullResult = {
-      ids: [],
-      objects: {
-        assetFulls: {},
-        assetShorts: {},
-        users: {},
-        workspaces: {},
-      },
-      total: 0,
-    };
+    const moved_ids: string[] = [];
     for (const item of res.list) {
-      notify_upsert.ids.push(item.id);
-      notify_upsert.total++;
+      moved_ids.push(item.id);
       const cache_short = this._shortAssetsCache.getElementSync(item.id);
       if (cache_short) {
         cache_short.workspaceId = item.workspaceId;
         cache_short.index = item.index;
-        notify_upsert.objects.assetShorts[item.id] = cache_short;
       }
       const cached_full = this._fullAssetsCache.getElementSync(item.id);
       if (cached_full) {
@@ -1007,12 +1112,14 @@ export default class CreatorAssetManager extends AppSubManagerBase {
           index: item.index,
         };
         cached_full.update(full_changed);
-        notify_upsert.objects.assetFulls[full_changed.id] = full_changed;
       }
     }
-    this.assetEvents.notify({
-      deletedIds: [],
-      upsert: notify_upsert,
+    this.projectContentEvents.notify({
+      aUpsIds: moved_ids,
+      aDelIds: [],
+      wTchIds: res.touchedWIds,
+      wDelIds: [],
+      wUpsIds: [],
     });
     return res;
   }
@@ -1023,18 +1130,21 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._projectDatabase, 'Not inited');
     assert(this._workspacesCache, 'Not inited');
     const res = await this._projectDatabase.workspacesMove(params);
-    const notify_upsert: Workspace[] = [];
+    const notify_upsert_ids: string[] = [];
     for (const item of res.list) {
+      notify_upsert_ids.push(item.id);
       const cache_workspace = this._workspacesCache.getElementSync(item.id);
       if (cache_workspace) {
         cache_workspace.index = item.index;
         cache_workspace.parentId = item.parentId;
-        notify_upsert.push(cache_workspace);
       }
     }
-    this.workspaceEvents.notify({
-      deletedIds: [],
-      upsert: notify_upsert,
+    this.projectContentEvents.notify({
+      aUpsIds: [],
+      aDelIds: [],
+      wUpsIds: notify_upsert_ids,
+      wDelIds: [],
+      wTchIds: res.touchedWIds,
     });
     return res;
   }
@@ -1065,6 +1175,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return {
       ids: res.deletedIds,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,
+      touchedWIds: res.touchedWIds,
     };
   }
 
@@ -1094,6 +1205,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return {
       ...res.upsert,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,
+      touchedWIds: res.touchedWIds,
     };
   }
 
@@ -1132,16 +1244,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     assert(this._projectDatabase, 'Not inited');
     const create_asset_refs =
       await this._projectDatabase.assetsCreateRef(params);
-    const notify_upsert: AssetsFullResult = {
-      ids: [],
-      objects: {
-        assetFulls: {},
-        assetShorts: {},
-        users: {},
-        workspaces: {},
-      },
-      total: 0,
-    };
+    const notify_upsert_ids: string[] = [];
     let load_from_server = false;
     for (const id of create_asset_refs.ids) {
       const full_instance = this.getAssetInstanceViaCacheSync(id);
@@ -1152,22 +1255,23 @@ export default class CreatorAssetManager extends AppSubManagerBase {
           false,
         ).value;
         full_instance.references = create_asset_refs.refs[id];
-        notify_upsert.ids.push(id);
-        notify_upsert.total++;
-        notify_upsert.objects.assetFulls[id] = full_instance.convertToFull();
+        notify_upsert_ids.push(id);
       }
     }
-    if (notify_upsert.ids.length > 0) {
+    if (notify_upsert_ids.length > 0) {
       if (load_from_server) {
         await this.getAssetInstancesList({
           where: {
-            id: notify_upsert.ids,
+            id: notify_upsert_ids,
           },
         });
       }
-      await this.assetEvents.notify({
-        deletedIds: [],
-        upsert: notify_upsert,
+      await this.projectContentEvents.notify({
+        aUpsIds: notify_upsert_ids,
+        aDelIds: [],
+        wTchIds: [],
+        wDelIds: [],
+        wUpsIds: [],
       });
     }
     return create_asset_refs;
@@ -1176,16 +1280,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   async deleteRef(params: CreateRefDTO): Promise<{ ids: string[] }> {
     assert(this._projectDatabase, 'Not inited');
     const found_assets = await this._projectDatabase.assetsDeleteRef(params);
-    const notify_upsert: AssetsFullResult = {
-      ids: [],
-      objects: {
-        assetFulls: {},
-        assetShorts: {},
-        users: {},
-        workspaces: {},
-      },
-      total: 0,
-    };
+    const notify_upsert_ids: string[] = [];
     let load_from_server = false;
     for (const id of found_assets.ids) {
       const full_instance = this.getAssetInstanceViaCacheSync(id);
@@ -1212,22 +1307,23 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
           return false;
         });
-        notify_upsert.ids.push(id);
-        notify_upsert.total++;
-        notify_upsert.objects.assetFulls[id] = full_instance.convertToFull();
+        notify_upsert_ids.push(id);
       }
     }
-    if (notify_upsert.ids.length > 0) {
+    if (notify_upsert_ids.length > 0) {
       if (load_from_server) {
         await this.getAssetInstancesList({
           where: {
-            id: notify_upsert.ids,
+            id: notify_upsert_ids,
           },
         });
       }
-      await this.assetEvents.notify({
-        deletedIds: [],
-        upsert: notify_upsert,
+      await this.projectContentEvents.notify({
+        aUpsIds: notify_upsert_ids,
+        aDelIds: [],
+        wTchIds: [],
+        wDelIds: [],
+        wUpsIds: [],
       });
     }
     return found_assets;
@@ -1292,11 +1388,9 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       );
     assert(this._shortAssetsCache, 'Not inited');
     if (this._shortAssetsCache) {
-      for (const asset_id of Object.keys(changesHistory.objects.assetShorts)) {
-        this._shortAssetsCache.addToCache(
-          changesHistory.objects.assetShorts[asset_id],
-        );
-      }
+      this.updateShortAssetsCache(
+        Object.values(changesHistory.objects.assetShorts),
+      );
     }
     return changesHistory;
   }

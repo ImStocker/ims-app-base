@@ -8,9 +8,7 @@ import type {
   WorkspaceQueryDTOWhere,
 } from '../../../logic/types/Workspaces';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
-import CreatorAssetManager, {
-  type CreatorWorkspaceEventsArg,
-} from '../../../logic/managers/CreatorAssetManager';
+import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import { intersectObjectArrays } from '../../../logic/utils/array';
 import type { AssetForSelection } from '../../../logic/types/AssetsType';
 import type { SubscriberHandler } from '../../../logic/types/Subscriber';
@@ -21,6 +19,7 @@ import {
   type ProjectTreeItemPayload,
 } from './ProjectTreePresenterBaseVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
+import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
 
 export type ProjectWorkspacesPresenterVMOptions = {
   workspaceWhere: WorkspaceQueryDTOWhere;
@@ -397,7 +396,7 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
         });
       this._workspaceEventsSubscriber = this.appManager
         .get(CreatorAssetManager)
-        .workspaceEvents.subscribe((change_res) => {
+        .projectContentEvents.subscribe((change_res) => {
           // Don't await
           this._handleWorkspacesEvents(change_res);
         });
@@ -423,11 +422,13 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
     this._resetInit(false);
   }
 
-  private async _handleWorkspacesEvents(change_res: CreatorWorkspaceEventsArg) {
+  private async _handleWorkspacesEvents(
+    change_res: ProjectContentChangeEventArg,
+  ) {
     this._externalUpdateByEventTask = this._externalUpdateByEventTask.then(
       async () => {
         try {
-          for (const asset_id of change_res.deletedIds) {
+          for (const asset_id of change_res.wDelIds) {
             this.deleteItemInState(`workspace:${asset_id}`);
           }
 
@@ -435,9 +436,15 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
             TreePresenterNodeState<ProjectTreeItemPayload>
           >();
 
-          for (const workspace of change_res.upsert) {
+          for (const workspace_id of change_res.wUpsIds) {
+            const workspace = this.appManager
+              .get(CreatorAssetManager)
+              .getWorkspaceByIdViaCacheSync(workspace_id);
+            if (!workspace) {
+              continue;
+            }
             const old_owner_state = this.findOwnerState(
-              `workspace:${workspace.id}`,
+              `workspace:${workspace_id}`,
             );
             const new_owner_id = !this.isRootWorkspaceId(workspace.parentId)
               ? `workspace:${workspace.parentId}`

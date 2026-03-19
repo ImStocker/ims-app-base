@@ -101,9 +101,9 @@ export default defineComponent({
   },
   mounted() {
     this.$getAppManager().get(EditorManager).currentEditorPage = this;
-    this.assetEventsHandler = this.$getAppManager()
-      .get(CreatorAssetManager)
-      .assetEvents.subscribe(async (ev) => {
+    const creatorsAssetManager = this.$getAppManager().get(CreatorAssetManager);
+    this.assetEventsHandler =
+      creatorsAssetManager.projectContentEvents.subscribe(async (ev) => {
         if (!this.projectInfo) return;
         if (!this.openedAssetId) return;
 
@@ -118,11 +118,11 @@ export default defineComponent({
         ).value;
         if (current_asset_tracking) {
           let reload_asset = false;
-          for (const upserted_id of ev.upsert.ids) {
-            const upserted_asset: AssetShort | undefined = ev.upsert.objects
-              .assetFulls[upserted_id]
-              ? ev.upsert.objects.assetFulls[upserted_id]
-              : ev.upsert.objects.assetShorts[upserted_id];
+          for (const upserted_id of ev.aUpsIds) {
+            const upserted_asset: AssetShort | null =
+              creatorsAssetManager.getAssetInstanceViaCacheSync(upserted_id) ??
+              creatorsAssetManager.getAssetShortViaCacheSync(upserted_id) ??
+              null;
             if (!upserted_asset) continue;
             if (!upserted_asset.typeIds.includes(TASK_ASSET_ID)) {
               continue;
@@ -140,7 +140,7 @@ export default defineComponent({
           }
         }
 
-        if (ev.deletedIds.includes(this.openedAssetId)) {
+        if (ev.aDelIds.includes(this.openedAssetId)) {
           // Check if deleted system base objects
           const asset = await this.$getAppManager()
             .get(CreatorAssetManager)
