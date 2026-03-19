@@ -1,8 +1,8 @@
 function atob(inp: string): string {
-  if (import.meta.server) {
-    return Buffer.from(inp, 'base64').toString('binary');
+  if (typeof globalThis.Buffer !== 'undefined') {
+    return globalThis.Buffer.from(inp, 'base64').toString('binary');
   } else {
-    return window.atob(inp);
+    return globalThis.atob(inp);
   }
 }
 
