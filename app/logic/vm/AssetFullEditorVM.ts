@@ -79,6 +79,15 @@ export class AssetFullEditorVM {
     return opened ? opened.rights < 2 : true;
   }
 
+  async init() {}
+
+  destroy() {
+    if (this.historyModeVM) {
+      this.historyModeVM.destroy();
+      this.historyModeVM = null;
+    }
+  }
+
   async load() {
     try {
       this.loadError = null;
@@ -111,14 +120,20 @@ export class AssetFullEditorVM {
   }
 
   async changeMode(mode: AssetHistoryMode) {
+    const full_asset = this.openedAssetId
+      ? this.getAssetFull(this.openedAssetId)
+      : null;
     if (mode === 'history') {
-      this.historyModeVM = new AssetHistoryVM(
-        this.appManager,
-        this.openedAssetId,
-      );
-      await this.historyModeVM.load();
+      if (full_asset) {
+        this.historyModeVM = new AssetHistoryVM(this.appManager, full_asset);
+        await this.historyModeVM.init();
+        await this.historyModeVM.load();
+      }
     } else {
-      this.historyModeVM = null;
+      if (this.historyModeVM) {
+        this.historyModeVM.destroy();
+        this.historyModeVM = null;
+      }
     }
   }
 

@@ -2,54 +2,89 @@ import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import DialogManager from '#logic/managers/DialogManager';
 import UiManager from '#logic/managers/UiManager';
-import { AssetChanger } from '#logic/types/AssetChanger';
+import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { AssetHistoryDTO } from '#logic/types/AssetHistory';
 import type { ApiResultListWithMore } from '#logic/types/ProjectTypes';
 import type { AssetHistoryMode } from '#logic/utils/assets';
 import type { IAppManager } from '../managers/IAppManager';
+import { AssetChangerDefault } from '../types/AssetChangerDefault';
+import type { AssetFullInstanceR } from '../types/AssetFullInstance';
+import type { SubscriberHandler } from '../types/Subscriber';
 
 export class AssetHistoryVM {
   appManager: IAppManager;
+  loadEpoch: number = 0;
   loadDone: boolean;
   loadError: string | null;
-  openedAssetId: string | null;
   mode: AssetHistoryMode = 'usual';
   history: ApiResultListWithMore<AssetHistoryDTO>;
   private _selectedVersionId: string | null;
   assetChanger: AssetChanger;
+  private _subscribe: SubscriberHandler | null = null;
 
-  constructor(appManager: IAppManager, asset_id: string | null) {
+  constructor(
+    appManager: IAppManager,
+    private _assetFull: AssetFullInstanceR,
+    private _customProjectId: string | null = null,
+  ) {
     this.appManager = appManager;
     this.loadDone = false;
     this.loadError = null;
-    this.openedAssetId = asset_id;
     this.history = {
       list: [],
       more: true,
     };
-    this.assetChanger = new AssetChanger(async () => {
-      return { originals: [] };
-    });
+    this.assetChanger = new AssetChangerDefault(
+      appManager,
+      this._assetFull,
+      this._customProjectId,
+    );
     this._selectedVersionId = null;
+  }
+
+  get openedAssetId() {
+    return this._assetFull.id;
   }
 
   get selectedVersionId() {
     return this._selectedVersionId;
   }
 
+  async init() {
+    this._subscribe = this.appManager
+      .get(CreatorAssetManager)
+      .projectContentEvents.subscribe(async (change_res) => {
+        if (change_res.aUpsIds.includes(this.openedAssetId)) {
+          await this.load();
+        }
+      });
+  }
+
+  destroy() {
+    if (this._subscribe) {
+      this._subscribe.unsubscribe();
+      this._subscribe = null;
+    }
+  }
+
   async load() {
     this.loadDone = false;
+    const load_epoch = ++this.loadEpoch;
     try {
-      if (this.openedAssetId) {
-        this.history = await this.appManager
-          .get(CreatorAssetManager)
-          .getHistory(this.openedAssetId);
+      this.history = await this.appManager
+        .get(CreatorAssetManager)
+        .getHistory(this.openedAssetId);
+      if (load_epoch === this.loadEpoch) {
         this._loadAssetChangerOfSelectedVersion();
       }
     } catch (err: any) {
-      this.loadError = err.message;
+      if (load_epoch === this.loadEpoch) {
+        this.loadError = err.message;
+      }
     } finally {
-      this.loadDone = true;
+      if (load_epoch === this.loadEpoch) {
+        this.loadDone = true;
+      }
     }
   }
 
@@ -60,9 +95,11 @@ export class AssetHistoryVM {
 
   private _loadAssetChangerOfSelectedVersion() {
     if (!this.openedAssetId) return;
-    const new_asset_changer = new AssetChanger(async () => {
-      return { originals: [] };
-    });
+    const new_asset_changer = new AssetChangerDefault(
+      this.appManager,
+      this._assetFull,
+      this._customProjectId,
+    );
     if (this._selectedVersionId) {
       for (const item of this.history.list) {
         if (item.id === this._selectedVersionId) {
