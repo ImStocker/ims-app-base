@@ -174,6 +174,7 @@ export type AssetsFullResult = {
 };
 
 export type AssetsChangeResult = AssetsFullResult & {
+  touchedWIds: string[];
   changeId: string | null;
 };
 
@@ -243,6 +244,7 @@ export type AssetsGraph = {
 export type AssetDeleteResultDTO = {
   ids: string[];
   changeId: string | null;
+  touchedWIds: string[];
 };
 
 export type AssetDeleteRefResultDTO = {
@@ -265,4 +267,5 @@ export type AssetMoveResultItem = {
 export type AssetMoveResult = {
   list: AssetMoveResultItem[];
   changeId: string | null;
+  touchedWIds: string[];
 };

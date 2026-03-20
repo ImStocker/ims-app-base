@@ -65,6 +65,7 @@ export type WorkspaceMoveResultItem = {
 
 export type WorkspaceMoveResult = {
   list: WorkspaceMoveResultItem[];
+  touchedWIds: string[];
 };
 
 export const WORKSPACE_TYPE_COLLECTION = 'collection';

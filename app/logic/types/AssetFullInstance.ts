@@ -40,7 +40,7 @@ export type ComputedAssetPropResult = {
 
 export type AssetFullInstanceR = UnwrapNestedRefs<AssetFullInstance>;
 
-export function copyAssetFullData(asset: AssetFull) {
+export function copyAssetFullData(asset: AssetForEdit): AssetForEdit {
   return {
     ...asset,
     blocks: asset.blocks.map((block) => {

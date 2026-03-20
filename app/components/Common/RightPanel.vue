@@ -50,4 +50,18 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.RightPanel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background: var(--local-box-color);
+  z-index: 200;
+  box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.2);
+  padding: 20px 20px 20px;
+  --local-bg-color: var(--local-box-color);
+  overflow: auto;
+}
+</style>

@@ -32,6 +32,15 @@ import type {
   WorkspaceQueryDTOWhere,
 } from './Workspaces';
 
+export type ProjectContentChangeEventArg = {
+  aUpsIds: string[];
+  aDelIds: string[];
+  wUpsIds: string[];
+  wDelIds: string[];
+  wTchIds: string[];
+  instigator: number | null;
+};
+
 export interface IProjectDatabaseAsset {
   assetsGetShort(
     query: ApiRequestList<AssetQueryWhere>,
@@ -98,6 +107,17 @@ export interface IProjectDatabaseWorkspace {
   getWorkspaceLocalPath(workspace_id: string): Promise<string | null>;
 }
 
+export type IProjectDatabaseEventHandler = {
+  cancel: () => void;
+  isConnected: () => boolean;
+  listenContent: (asset_ids: string[], workpace_ids: string[]) => void;
+};
+
 export interface IProjectDatabase
   extends IProjectDatabaseAsset,
-    IProjectDatabaseWorkspace {}
+    IProjectDatabaseWorkspace {
+  subscribeEvents(
+    pid: string,
+    callback: (changes: ProjectContentChangeEventArg) => void,
+  ): IProjectDatabaseEventHandler;
+}

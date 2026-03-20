@@ -136,14 +136,12 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public initClient() {
-    this.appManager.get(CreatorAssetManager).assetEvents.subscribe(() => {
-      this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
-      this.autosync();
-    });
-    this.appManager.get(CreatorAssetManager).workspaceEvents.subscribe(() => {
-      this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
-      this.autosync();
-    });
+    this.appManager
+      .get(CreatorAssetManager)
+      .projectContentEvents.subscribe(() => {
+        this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
+        this.autosync();
+      });
     const bc = new BroadcastChannel(BC_NAME);
     bc.onmessage = (ev) => {
       if (!ev.data || typeof ev.data !== 'object') return;
