@@ -127,6 +127,13 @@ export default abstract class PluginControllerBase {
   }
 
   private _activateBlock(plugin_content: PluginContentDescriptorBlock) {
+    const definition = plugin_content.content.definition;
+    const blocks_map = this.appManager.get(EditorManager).getBlockTypesMap();
+
+    const existing_block = blocks_map[definition.name];
+    if (existing_block) {
+      definition.overriddenBlockDefinition = existing_block;
+    }
     const block = this.appManager
       .get(EditorManager)
       .registerBlockType(plugin_content.content.definition);

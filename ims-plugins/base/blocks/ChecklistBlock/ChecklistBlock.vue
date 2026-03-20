@@ -26,7 +26,6 @@
         @dragover="dragOver($event, entry)"
         @dragleave.prevent="dragLeave($event)"
         @drop="dragChecklistItemDrop($event, entry)"
-        @blur="resetGlobalClickOutside(false)"
       >
         <template #checklist-item-append="props">
           <slot name="checklist-item-append" v-bind="props"></slot>
