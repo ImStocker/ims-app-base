@@ -16,6 +16,7 @@ import { assert } from '../../logic/utils/typeUtils';
 import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
 import EditorManager from '../../logic/managers/EditorManager';
+import type { ImcClipboard } from './ImcClipboard';
 
 export class ImcEditorQuillController {
   editorElement: HTMLElement | null = null;
@@ -66,6 +67,8 @@ export class ImcEditorQuillController {
             toolbar: [],
           },
         });
+
+        (quill.getModule('clipboard') as ImcClipboard).controller = this;
 
         if (this.component.maxHeight) {
           quill.root.style.maxHeight = `${this.component.maxHeight}px`;
@@ -301,13 +304,13 @@ export class ImcEditorQuillController {
       });
       quill.setSelection(pos + 1, 0);
       upload_job.awaitResult().then(
-        () => this._materializeFiles(),
+        () => this.materializeFiles(),
         (err) => this.component.$getAppManager().get(UiManager).showError(err),
       );
     }
   }
 
-  private async _materializeFiles() {
+  async materializeFiles() {
     const content = this.component.quillContent;
     if (!content) return;
     let any_changed = false;

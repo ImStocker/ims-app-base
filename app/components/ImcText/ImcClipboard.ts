@@ -3,8 +3,20 @@ import Clipboard from 'quill/modules/clipboard';
 import type { Range } from 'quill/core/selection.js';
 import Delta from 'quill-delta';
 import tinycolor from 'tinycolor2';
+import type { ImcEditorQuillController } from './ImcEditorQuillController';
+import { base64ToBuffer } from '../../logic/utils/dataUtils';
+import EditorManager from '../../logic/managers/EditorManager';
+import UiManager from '../../logic/managers/UiManager';
+
+const ALLOWED_MIME_TYPES = {
+  'image/jpeg': 'jpeg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+};
 
 export class ImcClipboard extends Clipboard {
+  controller: ImcEditorQuillController | null = null;
+
   override onPaste(
     range: Range,
     { text, html }: { text?: string; html?: string },
@@ -16,6 +28,65 @@ export class ImcClipboard extends Clipboard {
       .delete(range.length)
       .concat(pastedDelta);
     delta.forEach((op: any) => {
+      if (op.insert && op.insert.image) {
+        if (!this.controller) return;
+        const image_uri = op.insert.image;
+
+        if (typeof image_uri !== 'string' || !image_uri.startsWith('data:')) {
+          return;
+        }
+
+        const parsed_base64 = image_uri.match(
+          /^data:([^;,]+)(?:;base64)?,(.+)$/i,
+        );
+        if (!parsed_base64) {
+          this.controller.component
+            .$getAppManager()
+            .get(UiManager)
+            .showError('Invalid data URL format');
+          return;
+        }
+
+        const data_type = parsed_base64[1].toLowerCase();
+        const base64_data = parsed_base64[2];
+
+        const filename = ALLOWED_MIME_TYPES[data_type]
+          ? 'image.' + ALLOWED_MIME_TYPES[data_type]
+          : undefined;
+
+        if (!filename) {
+          this.controller.component
+            .$getAppManager()
+            .get(UiManager)
+            .showError(`Forbidden MIME type: ${data_type}`);
+          return;
+        }
+
+        delete op.insert.image;
+
+        const buffer = base64ToBuffer(base64_data);
+        const file = new File([buffer], filename, { type: data_type });
+        const upload_job = this.controller.component
+          .$getAppManager()
+          .get(EditorManager)
+          .attachFile(file, file.name);
+
+        op.insert = {
+          'upload-job': {
+            uploadId: upload_job.uploadId,
+            inline: /^image\//.test(file.type),
+          },
+        };
+
+        upload_job.awaitResult().then(
+          () => this.controller?.materializeFiles(),
+          (err) =>
+            this.controller?.component
+              .$getAppManager()
+              .get(UiManager)
+              .showError(err),
+        );
+      }
       if (op.attributes && op.attributes.background) {
         delete op.attributes.background;
       }
