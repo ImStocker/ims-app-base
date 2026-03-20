@@ -13,6 +13,7 @@
     <asset-history
       :asset-history="dialog.state.assetHistory"
       :show-header="false"
+      @close="dialog.close()"
     ></asset-history>
   </dialog-content>
 </template>

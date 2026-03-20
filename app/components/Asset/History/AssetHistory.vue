@@ -31,8 +31,8 @@
           @click="
             assetHistory.setSelectedVersionId(ind === 0 ? null : historyRow.id)
           "
-          @rollback-change="assetHistory.rollbackChange($event)"
-          @revert-to-state="assetHistory.revertToState($event)"
+          @restore-version="restoreVersion($event)"
+          @save-as-copy="saveAsCopy($event)"
         ></asset-history-row>
       </div>
 
@@ -52,6 +52,9 @@ import UiManager from '../../../logic/managers/UiManager';
 import AssetHistoryRow from './AssetHistoryRow.vue';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
+import { openProjectLink } from '#logic/router/routes-helpers';
+import { TASK_ASSET_ID } from '#logic/constants';
+import TaskManager from '#logic/managers/TaskManager';
 
 export default defineComponent({
   name: 'AssetHistory',
@@ -77,10 +80,44 @@ export default defineComponent({
       if (!project_info) return false;
       return project_info.license?.features.changeHistoryDays;
     },
+    projectInfo() {
+      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+    },
   },
   methods: {
     async upgrade() {
       await this.$getAppManager().get(UiManager).showUpgradeDialog();
+    },
+    async restoreVersion(version_id: string) {
+      this.$emit('close');
+      await this.assetHistory.restoreVersion(version_id);
+    },
+    async saveAsCopy(version_id: string) {
+      const copy_assets = await this.assetHistory.saveAsCopy(version_id);
+      if (!copy_assets) return;
+      const copy_asset = copy_assets.objects.assetFulls[copy_assets.ids[0]];
+      let assetLinkTo: any = {
+        name: 'project-asset-by-id',
+        params: {
+          assetId: copy_asset.id,
+        },
+      };
+      if (copy_asset.typeIds && copy_asset.typeIds.includes(TASK_ASSET_ID)) {
+        const task_entity = this.$getAppManager()
+          .get(TaskManager)
+          .getTaskViaCacheSync(copy_asset.id);
+        if (task_entity) {
+          assetLinkTo = {
+            name: 'project-tasks-task',
+            params: {
+              taskNum: task_entity.num,
+            },
+          };
+        }
+      }
+      this.$emit('close');
+      if (!this.projectInfo) return;
+      openProjectLink(this.$getAppManager(), this.projectInfo, assetLinkTo);
     },
   },
 });
@@ -100,7 +137,7 @@ export default defineComponent({
 }
 
 .AssetHistory-rows-short {
-  height: 390px;
+  height: calc(100% - 250px);
 }
 
 .AssetHistory-row {

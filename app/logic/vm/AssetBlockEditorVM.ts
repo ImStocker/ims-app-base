@@ -1,7 +1,6 @@
 import type { IAppManager } from '../managers/IAppManager';
 import CreatorAssetManager from '../managers/CreatorAssetManager';
 import type {
-  AssetBlockParamsDTO,
   AssetForEdit,
   AssetQueryWhere,
   AssetReferenceEntity,
@@ -10,14 +9,9 @@ import type {
 import DialogManager from '../managers/DialogManager';
 import type { UiNavigationGuardHandler } from '../managers/UiManager';
 import UiManager from '../managers/UiManager';
-import {
-  convertTranslatedTitle,
-  type ResolvedAssetBlock,
-  type ResolvedAssetBlocks,
-} from '../utils/assets';
+import type { ResolvedAssetBlock, ResolvedAssetBlocks } from '../utils/assets';
 import {
   calcResolvedBlocks,
-  copyAssetFullData,
   type AssetFullInstanceR,
 } from '../types/AssetFullInstance';
 import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.vue';
@@ -54,7 +48,6 @@ import type { Workspace, WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import type { IEditorVM } from './IEditorVM';
 import type { IAssetBlockComponent } from '../types/IAssetBlockComponent';
 import { GAME_INFO_ASSET_ID, MARKDOWN_ASSET_ID } from '../constants';
-import PromptDialog from '#components/Common/PromptDialog.vue';
 import type { AssetHistoryVM } from './AssetHistoryVM';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
 
@@ -144,48 +137,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
   }
 
-  async saveAsCopy(): Promise<void> {
-    const changed_asset = unref(this.assetEditedComp);
-    if (!changed_asset) return;
-    const full = copyAssetFullData(changed_asset);
-    let blocks:
-      | {
-          [blockKey: string]: AssetBlockParamsDTO;
-        }
-      | undefined = undefined;
-    for (const r of full.blocks) {
-      const key = stringifyAssetNewBlockRef(null, r.id);
-      if (!blocks) blocks = {};
-      blocks[key] = {
-        index: r.index,
-        name: r.name,
-        title: r.title,
-        props: r.props,
-        type: r.type,
-      };
-    }
-    const new_title = await this.appManager
-      .get(DialogManager)
-      .show(PromptDialog, {
-        header: this.appManager.$t('gddPage.saveAsCopy', {
-          element: convertTranslatedTitle(full.title ?? '', this.appManager.$t),
-        }),
-        message: this.appManager.$t('gddPage.elements.inputElementName'),
-        yesCaption: this.appManager.$t('gddPage.saveAsCopy'),
-        value: full.title ?? '',
-      });
-    if (!new_title) return;
-
-    await this.appManager.get(CreatorAssetManager).createAsset({
-      set: {
-        icon: full.ownIcon ?? undefined,
-        title: new_title,
-        isAbstract: full.isAbstract,
-        parentIds: full.parentIds,
-        workspaceId: full.workspaceId ?? undefined,
-        blocks,
-      },
-    });
+  async saveHistoryCopy(): Promise<void> {
+    await this.historyModeVM?.saveAsCopy(this.historyModeVM.selectedVersionId);
+    this.historyModeVM = null;
   }
 
   get assetChanger(): AssetChanger {
@@ -437,7 +391,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return false;
     }
-    return await this.assetChanger.saveChanges();
+    const res = await this.assetChanger.saveChanges();
+    this.historyModeVM = null;
+    return res;
   }
 
   async changeBlockServiceName(
@@ -831,8 +787,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         {
           name: 'history',
           title: this.appManager.$t('gddPage.saveAsCopy'),
-          icon: 'ti-file-copy-fill',
-          action: async () => await this.saveAsCopy(),
+          icon: 'ri-file-copy-fill',
+          action: async () => await this.saveHistoryCopy(),
           type: 'button',
         },
       ];

@@ -5,6 +5,7 @@ import {
   type Workspace,
 } from '../types/Workspaces';
 import type {
+  AssetForEdit,
   AssetForSelection,
   AssetShort,
   AssetWhereParams,
@@ -620,10 +621,10 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     });
   }
 
-  async copyAsset(id: string, title: string) {
+  async copyAsset(full: AssetForEdit | null, title: string) {
     const res = await this.appManager
       .get(CreatorAssetManager)
-      .copyAsset(id, title);
+      .copyAsset(full, title);
     await this._openNewElement(res.ids[0]);
   }
 
@@ -648,7 +649,10 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       });
     if (new_title) {
       await this.appManager.get(UiManager).doTask(async () => {
-        await this.copyAsset(asset.id, new_title);
+        const full = await this.appManager
+          .get(CreatorAssetManager)
+          .getAssetInstance(asset.id);
+        await this.copyAsset(full, new_title);
       });
     }
   }

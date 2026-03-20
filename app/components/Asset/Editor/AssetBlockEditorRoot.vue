@@ -39,6 +39,7 @@ export default defineComponent({
       default: null,
     },
   },
+  emits: ['close-history-mode'],
   async setup(props) {
     const appManager = useAppManager();
     const assetBlockEditor = AssetBlockEditorVM.CreateInstance(
@@ -66,8 +67,19 @@ export default defineComponent({
         ? []
         : ['blockCopy', 'blockPaste', 'blockCopyAsMirror'];
     },
+    assetBlockEditorHistoryMode() {
+      return this.assetBlockEditor.historyModeVM;
+    },
   },
   watch: {
+    assetBlockEditorHistoryMode() {
+      if (
+        this.assetBlockEditorHistoryMode !== this.historyModeVM &&
+        !this.assetBlockEditorHistoryMode
+      ) {
+        this.$emit('close-history-mode');
+      }
+    },
     async assetFull() {
       if (this.assetBlockEditor) this.assetBlockEditor.destroy();
       this.assetBlockEditor = AssetBlockEditorVM.CreateInstance(
@@ -78,7 +90,9 @@ export default defineComponent({
       await this.assetBlockEditor.init();
     },
     historyModeVM() {
-      this.assetBlockEditor.historyModeVM = this.historyModeVM;
+      if (this.assetBlockEditorHistoryMode !== this.historyModeVM) {
+        this.assetBlockEditor.historyModeVM = this.historyModeVM;
+      }
     },
   },
   async mounted() {

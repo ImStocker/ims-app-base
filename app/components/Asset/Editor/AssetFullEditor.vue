@@ -11,6 +11,7 @@
         layoutDescriptor.props.toolbarShowBlockCopyPaste ?? true
       "
       :history-mode-v-m="assetEditor.historyModeVM"
+      @close-history-mode="assetEditor.changeMode('usual')"
     >
       <template #default="{ assetBlockEditor }">
         <slot

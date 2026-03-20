@@ -22,6 +22,7 @@ import {
   type AssetMoveParams,
   type AssetsBatchChangeResultDTO,
   type AssetChangeBatchOpDTO,
+  type AssetForEdit,
 } from '../types/AssetsType';
 import {
   WORKSPACE_TYPE_COLLECTION,
@@ -1465,8 +1466,10 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return found_assets;
   }
 
-  async copyAsset(assetId: string, title: string): Promise<AssetsFullResult> {
-    const full = await this.getAssetInstance(assetId);
+  async copyAsset(
+    full: AssetForEdit | null,
+    title: string,
+  ): Promise<AssetsFullResult> {
     if (!full) throw new Error('Asset not found');
     let blocks:
       | {
