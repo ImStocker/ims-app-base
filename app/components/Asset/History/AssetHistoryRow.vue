@@ -40,20 +40,22 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['rollbackChange', 'revertToState'],
+  emits: ['restoreVersion', 'saveAsCopy'],
   computed: {
     menuList() {
       return [
         {
-          title: this.$t('assetHistory.rollbackChange'),
-          icon: 'history',
-          action: this.rollbackChange,
+          name: 'restoreVersion',
+          title: this.$t('gddPage.restoreThisVersion'),
+          icon: 'ri-save-fill',
+          action: () => this.restoreThisVersion(),
         },
-        // TODO: IMPLEMENT THIS:
-        // {
-        //   title: this.$t('assetHistory.revertToState'),
-        //   action: this.revertToState
-        // }
+        {
+          name: 'saveAsCopy',
+          title: this.$t('gddPage.saveAsCopy'),
+          icon: 'ri-file-copy-fill',
+          action: () => this.saveAsCopy(),
+        },
       ];
     },
     createdAt() {
@@ -149,11 +151,11 @@ export default defineComponent({
     },
   },
   methods: {
-    rollbackChange() {
-      this.$emit('rollbackChange', this.historyRow.id);
+    restoreThisVersion() {
+      this.$emit('restoreVersion', this.historyRow.id);
     },
-    revertToState() {
-      this.$emit('revertToState', this.historyRow.id);
+    saveAsCopy() {
+      this.$emit('saveAsCopy', this.historyRow.id);
     },
   },
 });

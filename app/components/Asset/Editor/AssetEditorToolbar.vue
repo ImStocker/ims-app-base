@@ -17,6 +17,7 @@
         @click="restoreThisVersion()"
       >
         <i class="ri-save-fill AssetEditorToolbar-button-icon"></i>
+        {{ $t('gddPage.restoreThisVersion') }}
       </button>
       <menu-button v-if="blockButtonsMenu.length > 0">
         <template #button="{ toggle }">

@@ -5,11 +5,20 @@ import UiManager from '#logic/managers/UiManager';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { AssetHistoryDTO } from '#logic/types/AssetHistory';
 import type { ApiResultListWithMore } from '#logic/types/ProjectTypes';
-import type { AssetHistoryMode } from '#logic/utils/assets';
+import {
+  convertTranslatedTitle,
+  type AssetHistoryMode,
+} from '#logic/utils/assets';
+import { unref } from 'vue';
 import type { IAppManager } from '../managers/IAppManager';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
-import type { AssetFullInstanceR } from '../types/AssetFullInstance';
+import {
+  copyAssetFullData,
+  type AssetFullInstanceR,
+} from '../types/AssetFullInstance';
 import type { SubscriberHandler } from '../types/Subscriber';
+import PromptDialog from '#components/Common/PromptDialog.vue';
+import type { AssetsFullResult } from '#logic/types/AssetsType';
 
 export class AssetHistoryVM {
   appManager: IAppManager;
@@ -75,7 +84,7 @@ export class AssetHistoryVM {
         .get(CreatorAssetManager)
         .getHistory(this.openedAssetId);
       if (load_epoch === this.loadEpoch) {
-        this._loadAssetChangerOfSelectedVersion();
+        this._loadAssetChangerForSelectedVersion();
       }
     } catch (err: any) {
       if (load_epoch === this.loadEpoch) {
@@ -90,25 +99,62 @@ export class AssetHistoryVM {
 
   setSelectedVersionId(version_id: string | null) {
     this._selectedVersionId = version_id;
-    this._loadAssetChangerOfSelectedVersion();
+    this._loadAssetChangerForSelectedVersion();
   }
 
-  private _loadAssetChangerOfSelectedVersion() {
-    if (!this.openedAssetId) return;
+  async restoreVersion(version_id: string | null) {
+    this._loadAssetChanger(version_id);
+    await this.assetChanger.saveChanges();
+  }
+
+  async saveAsCopy(
+    version_id: string | null,
+  ): Promise<AssetsFullResult | undefined> {
+    const asset_changer = this._loadAssetChanger(version_id);
+    if (!asset_changer) return;
+    const changed_asset_version = asset_changer.applyChanges(this._assetFull);
+    const changed_asset = unref(changed_asset_version);
+    if (!changed_asset) return;
+    const full = copyAssetFullData(changed_asset);
+    const new_title = await this.appManager
+      .get(DialogManager)
+      .show(PromptDialog, {
+        header: this.appManager.$t('gddPage.saveAsCopy', {
+          element: convertTranslatedTitle(full.title ?? '', this.appManager.$t),
+        }),
+        message: this.appManager.$t('gddPage.elements.inputElementName'),
+        yesCaption: this.appManager.$t('gddPage.saveAsCopy'),
+        value: full.title ?? '',
+      });
+    if (!new_title) return;
+    return await this.appManager
+      .get(CreatorAssetManager)
+      .copyAsset(full, new_title);
+  }
+
+  private _loadAssetChangerForSelectedVersion() {
+    const asset_changer = this._loadAssetChanger(this._selectedVersionId);
+    if (asset_changer) {
+      this.assetChanger = asset_changer;
+    }
+  }
+
+  private _loadAssetChanger(version_id: string | null): AssetChanger | null {
+    if (!this.openedAssetId) return null;
     const new_asset_changer = new AssetChangerDefault(
       this.appManager,
       this._assetFull,
       this._customProjectId,
     );
-    if (this._selectedVersionId) {
+    if (version_id) {
       for (const item of this.history.list) {
-        if (item.id === this._selectedVersionId) {
+        if (item.id === version_id) {
           break;
         }
         new_asset_changer.registerChange(this.openedAssetId, item.undo);
       }
     }
-    this.assetChanger = new_asset_changer;
+    return new_asset_changer;
   }
 
   async rollbackChange(change_id: string) {
