@@ -12,13 +12,13 @@ body[data-theme="ims-light"] {
 
   .ql-callout {
     &[data-type='error'] {
-      --callout-color: 233, 49, 71;
+      --callout-color: 233, 49, 71 !important;
     }
     &[data-type='warning'] {
-      --callout-color: 236, 117, 0;
+      --callout-color: 236, 117, 0 !important;
     }
     &[data-type='solution'] {
-      --callout-color: 8, 185, 78;
+      --callout-color: 8, 185, 78 !important;
     }
   }
 }
