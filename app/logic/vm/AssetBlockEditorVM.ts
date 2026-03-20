@@ -47,7 +47,11 @@ import {
 import type { Workspace, WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import type { IEditorVM } from './IEditorVM';
 import type { IAssetBlockComponent } from '../types/IAssetBlockComponent';
-import { GAME_INFO_ASSET_ID, MARKDOWN_ASSET_ID } from '../constants';
+import {
+  GAME_INFO_ASSET_ID,
+  MARKDOWN_ASSET_ID,
+  TASK_ASSET_ID,
+} from '../constants';
 import type { AssetHistoryVM } from './AssetHistoryVM';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
 
@@ -790,6 +794,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
           icon: 'ri-file-copy-fill',
           action: async () => await this.saveHistoryCopy(),
           type: 'button',
+          disabled: !!(
+            this.assetFull && this.assetFull.typeIds.includes(TASK_ASSET_ID)
+          ),
         },
       ];
     }
