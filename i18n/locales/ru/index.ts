@@ -329,6 +329,7 @@ export default {
     versionsHistory: 'История версий',
     restoreThisVersion: 'Восстановить эту версию',
     saveAsCopy: 'Сохранить как копию',
+    inputElementName: 'Введите имя элемента',
     links: 'Связи',
     abstract: 'Абстрактный',
     referencesBlockHeader: 'Ссылки',

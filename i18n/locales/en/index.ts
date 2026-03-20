@@ -319,6 +319,7 @@ export default {
     versionsHistory: 'Version history',
     restoreThisVersion: 'Restore this version',
     saveAsCopy: 'Save as copy',
+    inputElementName: 'Enter element name',
     links: 'References',
     abstract: 'Abstract',
     referencesBlockHeader: 'References',

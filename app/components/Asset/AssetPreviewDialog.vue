@@ -1,5 +1,12 @@
 <template>
-  <dialog-content class="AssetPreviewDialog" @escape-press="choose()">
+  <dialog-content
+    class="AssetPreviewDialog"
+    :class="{
+      'AssetPreviewDialog-forHistory':
+        assetEditor.mode === 'history' && assetEditor.historyModeVM,
+    }"
+    @escape-press="choose()"
+  >
     <div
       v-if="assetEditor.loadError || !assetEditor.loadDone"
       class="AssetPreviewDialog-loading-wrapper"
@@ -568,6 +575,9 @@ export default defineComponent({
   padding: 0px 0px 20px 0px;
 
   --local-bg-color: var(--editor-bg-color);
+}
+.AssetPreviewDialog-forHistory {
+  margin-left: -170px;
 }
 .AssetPreviewDialog-loading-wrapper {
   display: flex;

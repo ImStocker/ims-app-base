@@ -54,4 +54,14 @@ export default defineComponent({
     width: 800px;
   }
 }
+.AssetHistoryDialog {
+  .AssetHistory {
+    height: 470px;
+    max-height: 470px;
+    overflow: auto;
+  }
+  .AssetHistory-rows-short {
+    height: calc(100% - 170px);
+  }
+}
 </style>

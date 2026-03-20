@@ -114,15 +114,15 @@
           <i class="ri-save-fill AssetEditorToolbar-button-icon"></i>
         </button>
       </div>
-      <div class="AssetEditorToolbar-section">
-        <button
-          class="is-button is-button-toolbar"
-          @click="$emit('update:pinned', !pinned)"
-        >
-          <i :class="pinned ? 'ri-unpin-fill' : 'ri-pushpin-2-fill'"></i>
-        </button>
-      </div>
     </template>
+    <div class="AssetEditorToolbar-section">
+      <button
+        class="is-button is-button-toolbar"
+        @click="$emit('update:pinned', !pinned)"
+      >
+        <i :class="pinned ? 'ri-unpin-fill' : 'ri-pushpin-2-fill'"></i>
+      </button>
+    </div>
   </div>
 </template>
 <script lang="ts">

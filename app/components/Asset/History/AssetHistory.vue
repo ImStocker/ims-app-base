@@ -132,8 +132,8 @@ export default defineComponent({
 }
 
 .AssetHistory-rows {
-  height: 100%;
   overflow: auto;
+  height: calc(100% - 37px);
 }
 
 .AssetHistory-rows-short {

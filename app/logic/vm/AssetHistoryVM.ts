@@ -122,7 +122,7 @@ export class AssetHistoryVM {
         header: this.appManager.$t('gddPage.saveAsCopy', {
           element: convertTranslatedTitle(full.title ?? '', this.appManager.$t),
         }),
-        message: this.appManager.$t('gddPage.elements.inputElementName'),
+        message: this.appManager.$t('gddPage.inputElementName'),
         yesCaption: this.appManager.$t('gddPage.saveAsCopy'),
         value: full.title ?? '',
       });

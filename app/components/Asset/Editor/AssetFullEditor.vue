@@ -35,6 +35,7 @@
     </asset-block-editor-root>
     <right-panel
       v-if="assetEditor.mode === 'history' && assetEditor.historyModeVM"
+      class="RightHistoryPanel"
     >
       <asset-history
         :asset-history="assetEditor.historyModeVM"
