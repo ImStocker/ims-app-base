@@ -65,11 +65,14 @@
         :value="entry.title"
       />
     </div>
-    <slot
-      name="checklist-item-append"
-      :item="entry"
-      :shown="isFocused || isHovered"
-    ></slot>
+    <slot name="checklist-item-append" :item="entry" :shown="shown">
+      <checklist-block-item-menu
+        v-if="!readonly"
+        :item="entry"
+        :shown="shown"
+        :vm="vm"
+      ></checklist-block-item-menu>
+    </slot>
   </div>
 </template>
 
@@ -87,6 +90,7 @@ import TaskCheckbox from '#components/Common/TaskCheckbox.vue';
 import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import type ChecklistBlockVM from './ChecklistBlockVM';
 import type { ChecklistBlockDragProps } from './ChecklistBlockVM';
+import ChecklistBlockItemMenu from './ChecklistBlockItemMenu.vue';
 
 export default defineComponent({
   name: 'ChecklistBlockItem',
@@ -94,6 +98,7 @@ export default defineComponent({
     ImcPresenter,
     ImcEditor,
     TaskCheckbox,
+    ChecklistBlockItemMenu,
   },
   props: {
     entry: {
@@ -145,6 +150,9 @@ export default defineComponent({
     };
   },
   computed: {
+    shown() {
+      return this.isFocused || this.isHovered;
+    },
     isEmpty() {
       return !isFilledAssetPropValue(this.entry.title);
     },

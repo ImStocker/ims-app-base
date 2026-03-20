@@ -51,6 +51,8 @@ export abstract class BlockTypeDefinition {
   abstract icon: string;
   abstract component: () => Promise<Component>;
 
+  overriddenBlockDefinition: null | BlockTypeDefinition = null;
+
   get title(): string | null {
     return null;
   }
