@@ -187,6 +187,7 @@ export default defineComponent({
   background-color: var(--panel-bg-color) !important;
   margin-left: 8px;
   --local-bg-color: var(--panel-bg-color) !important;
+  border: 1px solid var(--local-border-color);
 }
 .AssetBlockComment-chat-block:deep(.ChatBlock-sendForm-wrapper) {
   border-radius: 20px;
