@@ -1,6 +1,10 @@
 import type { AssetProps } from './Props';
 import type { UserWithNameDTO } from './UserType';
 
+export type SetLikeDTO = {
+  like: string | null;
+};
+
 export type CommentBlockDTO = {
   id: string;
   anchor: AssetProps;
@@ -31,6 +35,12 @@ export type CommentReplyDTO = {
   createdAt: string;
   updatedAt: string;
   sended?: boolean;
+  likes: CommentLike[];
+};
+
+export type CommentLike = {
+  user: UserWithNameDTO;
+  emoji: string;
 };
 
 export type GetCommentsResultObjectsDTO = {

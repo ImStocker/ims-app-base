@@ -41,6 +41,11 @@
             <i v-else class="ri-check-fill" />
             <!-- <i class="ri-check-double-fill"></i> -->
           </div>
+          <chat-block-likes
+            :comment-id="message.commentId"
+            :reply-id="message.answerToId"
+            :like="message.likes"
+          ></chat-block-likes>
         </div>
       </div>
     </div>
@@ -56,6 +61,7 @@ import { formatDateTime } from '#logic/utils/format';
 import UiManager from '#logic/managers/UiManager';
 import MenuButton from '#components/Common/MenuButton.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import ChatBlockLikes from './ChatBlockLikes.vue';
 
 export default defineComponent({
   name: 'ChatBlockMessage',
@@ -63,6 +69,7 @@ export default defineComponent({
     ImcPresenter,
     MenuButton,
     MenuList,
+    ChatBlockLikes,
   },
   props: {
     message: {

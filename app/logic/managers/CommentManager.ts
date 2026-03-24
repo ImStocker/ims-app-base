@@ -7,6 +7,7 @@ import type {
   CommentReplyDTO,
   GetCommentsParamsDTO,
   GetCommentsResultDTO,
+  SetLikeDTO,
 } from '../types/CommentTypes';
 import CreatorAssetManager from './CreatorAssetManager';
 import { Service, HttpMethods } from './ApiWorker';
@@ -64,6 +65,21 @@ export default class CommentManager extends AppSubManagerBase {
       Service.CREATORS,
       HttpMethods.PATCH,
       `assets/comment/${comment_id}/reply/${reply_id}`,
+      {
+        ...params,
+      },
+    );
+  }
+
+  async setLike(
+    comment_id: string,
+    reply_id: string,
+    params: SetLikeDTO,
+  ): Promise<void> {
+    await this._apiManager.call<any>(
+      Service.CREATORS,
+      HttpMethods.POST,
+      `assets/comment/${comment_id}/reply/${reply_id}/like`,
       {
         ...params,
       },
