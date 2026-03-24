@@ -232,18 +232,20 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getWorkspacesList(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithTotal<Workspace>> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
-    const res = await this._projectDatabase.workspacesGet(query);
+    const res = await this._projectDatabase.workspacesGet(query, options);
     this.updateWorkspacesCache(res.list);
     return res;
   }
 
   async getWorkspacesListAll(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithTotal<Workspace>> {
-    const res = await this.getWorkspacesList(query);
+    const res = await this.getWorkspacesList(query, options);
     let has_more = res.total > res.list.length;
     let next_offset = res.list.length;
     while (has_more) {
@@ -251,7 +253,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
         ...query,
         offset: next_offset,
       };
-      const chunk = await this.getWorkspacesList(chunk_query);
+      const chunk = await this.getWorkspacesList(chunk_query, options);
       if (chunk.list.length === 0) break;
       next_offset += chunk.list.length;
       res.list = [...res.list, ...chunk.list];
@@ -261,14 +263,23 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return res;
   }
 
-  async getWorkspaceById(workspace_id: string): Promise<Workspace | null> {
-    const workspaces = await this.getWorkspacesList({
-      where: { ids: [workspace_id] },
-    });
+  async getWorkspaceById(
+    workspace_id: string,
+    options?: { pid?: string },
+  ): Promise<Workspace | null> {
+    const workspaces = await this.getWorkspacesList(
+      {
+        where: { ids: [workspace_id] },
+      },
+      options,
+    );
     return workspaces.list.length > 0 ? workspaces.list[0] : null;
   }
 
-  async createWorkspace(params: ChangeWorkspaceRequest): Promise<Workspace> {
+  async createWorkspace(
+    params: ChangeWorkspaceRequest,
+    options?: { pid?: string },
+  ): Promise<Workspace> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
     let workspace_params = { ...params };
@@ -388,7 +399,10 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     }
     const res = await this._expectMyEvents(
       () => {
-        return this._projectDatabase!.workspacesCreate(workspace_params);
+        return this._projectDatabase!.workspacesCreate(
+          workspace_params,
+          options,
+        );
       },
       (res) => {
         const workspaceIds = [res.id];
@@ -426,6 +440,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   async changeWorkspace(
     workspace_id: string,
     params: ChangeWorkspaceRequest,
+    options?: { pid?: string },
   ): Promise<Workspace> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
@@ -434,7 +449,11 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
     const res = await this._expectMyEvents(
       () => {
-        return this._projectDatabase!.workspacesChange(workspace_id, params);
+        return this._projectDatabase!.workspacesChange(
+          workspace_id,
+          params,
+          options,
+        );
       },
       (res) => {
         const workspaceIds = [res.id];
@@ -466,7 +485,10 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return res;
   }
 
-  async deleteWorkspace(workspace_id: string): Promise<void> {
+  async deleteWorkspace(
+    workspace_id: string,
+    options?: { pid?: string },
+  ): Promise<void> {
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
     const old_parent_id =
@@ -474,7 +496,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
     await this._expectMyEvents(
       async () => {
-        await this._projectDatabase!.workspacesDelete(workspace_id);
+        await this._projectDatabase!.workspacesDelete(workspace_id, options);
       },
       () => {
         const workspaceIds = [workspace_id];
@@ -527,13 +549,17 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async requestWorkspaceInCacheByNames(
     workspaceNames: string[],
+    options?: { pid?: string },
   ): Promise<void> {
-    await this.getWorkspacesList({
-      where: {
-        names: workspaceNames,
-        isSystem: false,
+    await this.getWorkspacesList(
+      {
+        where: {
+          names: workspaceNames,
+          isSystem: false,
+        },
       },
-    });
+      options,
+    );
   }
 
   async getWorkspaceByNameViaCache(workspace_name: string) {
@@ -656,14 +682,18 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   async getAssetInstance(
     assetId: string,
     refresh = false,
+    options?: { pid?: string },
   ): Promise<AssetFullInstanceR | null> {
     assert(this._fullAssetsCache, 'Not inited');
     if (refresh) {
-      const refresh_res = await this.getAssetInstancesList({
-        where: {
-          id: [assetId],
+      const refresh_res = await this.getAssetInstancesList(
+        {
+          where: {
+            id: [assetId],
+          },
         },
-      });
+        options,
+      );
       if (refresh_res.list.length === 0) {
         this._fullAssetsCache.setNotFoundKeys([assetId]);
         return null;
@@ -712,11 +742,12 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getAssetShortsList(
     query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithTotal<AssetShort>> {
     assert(this._shortAssetsCache, 'Not inited');
     assert(this._workspacesCache, 'Not inited');
     assert(this._projectDatabase, 'Not inited');
-    const res = await this._projectDatabase.assetsGetShort(query);
+    const res = await this._projectDatabase.assetsGetShort(query, options);
     this.updateShortAssetsCache(res.list);
     this.updateWorkspacesCache(Object.values(res.objects.workspaces));
     return res;
@@ -843,9 +874,10 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getAssetInstancesList(
     query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithTotal<AssetFullInstanceR>> {
     assert(this._projectDatabase, 'Not inited');
-    const res = await this._projectDatabase.assetsGetFull(query);
+    const res = await this._projectDatabase.assetsGetFull(query, options);
     this.updateFullInstanceCache(res);
     return {
       list: res.ids.map((id) => {
@@ -860,30 +892,32 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getAssetsListForGraph(
     query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
   ): Promise<AssetsGraph> {
     assert(this._projectDatabase, 'Not inited');
-    const graph = await this._projectDatabase.assetsGraph(query);
+    const graph = await this._projectDatabase.assetsGraph(query, options);
     this._shortAssetsCache?.addToCacheMany(Object.values(graph.objects.assets));
     return graph;
   }
 
   getAssetsView<T extends AssetProps>(
     query: AssetPropsSelection,
-    options?: { folded: false },
+    options?: { folded: false; pid?: string },
   ): Promise<ApiResultListWithTotal<T>>;
   getAssetsView<T extends AssetPropsPlainObject>(
     query: AssetPropsSelection,
-    options: { folded: true } | { folded: boolean },
+    options: { folded: true; pid?: string } | { folded: boolean; pid?: string },
   ): Promise<ApiResultListWithTotal<T>>;
   async getAssetsView<T extends AssetPropsPlainObject>(
     query: AssetPropsSelection,
-    options?: { folded: boolean },
+    options?: { folded: boolean; pid?: string },
   ): Promise<ApiResultListWithTotal<T>> {
     assert(this._projectDatabase, 'Not inited');
     if (!options || !options.folded) {
-      return this._projectDatabase.assetsGetView<AssetProps>(query) as Promise<
-        ApiResultListWithTotal<T>
-      >;
+      return this._projectDatabase.assetsGetView<AssetProps>(query, {
+        ...options,
+        folded: false,
+      }) as Promise<ApiResultListWithTotal<T>>;
     } else {
       return this._projectDatabase.assetsGetView<T>(query, options);
     }
@@ -891,15 +925,15 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   getAssetsViewAll<T extends AssetProps>(
     query: AssetPropsSelection,
-    options?: { folded: false },
+    options?: { folded: false; pid?: string },
   ): Promise<ApiResultListWithTotal<T>>;
   getAssetsViewAll<T extends AssetPropsPlainObject>(
     query: AssetPropsSelection,
-    options: { folded: true } | { folded: boolean },
+    options: { folded: true; pid?: string } | { folded: boolean; pid?: string },
   ): Promise<ApiResultListWithTotal<T>>;
   async getAssetsViewAll<T extends AssetPropsPlainObject>(
     query: AssetPropsSelection,
-    options?: { folded: boolean },
+    options?: { folded: boolean; pid?: string },
   ): Promise<ApiResultListWithTotal<T>> {
     const res = await (options
       ? this.getAssetsView<T>(query, options)
@@ -932,12 +966,13 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     post_create_hook?: (
       res: AssetsChangeResult,
     ) => AssetsChangeResult | Promise<AssetsChangeResult>,
+    options?: { pid?: string },
   ): Promise<AssetsChangeResult & { limit?: boolean }> {
     assert(this._projectDatabase, 'Not inited');
 
     let res = await this._expectMyEvents(
       async () => {
-        return await this._projectDatabase!.assetsCreate(params);
+        return await this._projectDatabase!.assetsCreate(params, options);
       },
       (res) => {
         return {
@@ -1071,11 +1106,14 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     }
 
     if (reload_changed_assets.length > 0) {
-      await this.getAssetInstancesList({
-        where: {
-          id: reload_changed_assets,
+      await this.getAssetInstancesList(
+        {
+          where: {
+            id: reload_changed_assets,
+          },
         },
-      });
+        options,
+      );
       for (const reloaded_id of reload_changed_assets) {
         const instance = this.getAssetInstanceViaCacheSync(reloaded_id);
         if (instance) {
@@ -1183,13 +1221,16 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return res;
   }
 
-  async moveAssets(params: AssetMoveParams): Promise<AssetMoveResult> {
+  async moveAssets(
+    params: AssetMoveParams,
+    options?: { pid?: string },
+  ): Promise<AssetMoveResult> {
     assert(this._projectDatabase, 'Not inited');
     assert(this._fullAssetsCache, 'Not inited');
     assert(this._shortAssetsCache, 'Not inited');
     const res = await this._expectMyEvents(
       async () => {
-        return await this._projectDatabase!.assetsMove(params);
+        return await this._projectDatabase!.assetsMove(params, options);
       },
       (res) => {
         return {
@@ -1230,12 +1271,13 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async moveWorkspaces(
     params: WorkspaceMoveParams,
+    options?: { pid?: string },
   ): Promise<WorkspaceMoveResult> {
     assert(this._projectDatabase, 'Not inited');
     assert(this._workspacesCache, 'Not inited');
     const res = await this._expectMyEvents(
       async () => {
-        return await this._projectDatabase!.workspacesMove(params);
+        return await this._projectDatabase!.workspacesMove(params, options);
       },
       (res) => {
         return {
@@ -1375,10 +1417,15 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   //ASSET LINKS
 
-  async createRef(params: CreateRefDTO): Promise<AssetReferencesResult> {
+  async createRef(
+    params: CreateRefDTO,
+    options?: { pid?: string },
+  ): Promise<AssetReferencesResult> {
     assert(this._projectDatabase, 'Not inited');
-    const create_asset_refs =
-      await this._projectDatabase.assetsCreateRef(params);
+    const create_asset_refs = await this._projectDatabase.assetsCreateRef(
+      params,
+      options,
+    );
     const notify_upsert_ids: string[] = [];
     let load_from_server = false;
     for (const id of create_asset_refs.ids) {
@@ -1413,9 +1460,15 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return create_asset_refs;
   }
 
-  async deleteRef(params: CreateRefDTO): Promise<{ ids: string[] }> {
+  async deleteRef(
+    params: CreateRefDTO,
+    options?: { pid?: string },
+  ): Promise<{ ids: string[] }> {
     assert(this._projectDatabase, 'Not inited');
-    const found_assets = await this._projectDatabase.assetsDeleteRef(params);
+    const found_assets = await this._projectDatabase.assetsDeleteRef(
+      params,
+      options,
+    );
     const notify_upsert_ids: string[] = [];
     let load_from_server = false;
     for (const id of found_assets.ids) {
@@ -1469,6 +1522,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
   async copyAsset(
     full: AssetForEdit | null,
     title: string,
+    options?: { pid?: string },
   ): Promise<AssetsFullResult> {
     if (!full) throw new Error('Asset not found');
     let blocks:
@@ -1487,23 +1541,28 @@ export default class CreatorAssetManager extends AppSubManagerBase {
         type: r.type,
       };
     }
-    return await this.createAsset({
-      set: {
-        icon: full.ownIcon ?? undefined,
-        title,
-        isAbstract: full.isAbstract,
-        parentIds: full.parentIds,
-        workspaceId: full.workspaceId ?? undefined,
-        blocks,
+    return await this.createAsset(
+      {
+        set: {
+          icon: full.ownIcon ?? undefined,
+          title,
+          isAbstract: full.isAbstract,
+          parentIds: full.parentIds,
+          workspaceId: full.workspaceId ?? undefined,
+          blocks,
+        },
       },
-    });
+      undefined,
+      options,
+    );
   }
 
   async getHistory(
     assetId: string,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithMore<AssetHistoryDTO>> {
     assert(this._projectDatabase, 'Not inited');
-    return await this._projectDatabase.assetsGetHistory(assetId);
+    return await this._projectDatabase.assetsGetHistory(assetId, options);
   }
 
   async getGlobalHistory(

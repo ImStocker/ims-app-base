@@ -11,6 +11,10 @@ export type CommentReplyChangeDTO = {
   answerToReplyId?: string;
 };
 
+export type SetLikeDTO = {
+  like: string | null;
+};
+
 export type CommentCreateDTO = {
   assetId: string;
   content: AssetProps;

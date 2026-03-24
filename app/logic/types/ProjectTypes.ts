@@ -150,26 +150,6 @@ export type ApiRequestList<W> = {
   order?: any[];
 };
 
-export type ProjectInfoWithParams = {
-  id: string;
-  title: string;
-  shortLink: string;
-  lang: Lang;
-  timezoneShift: number;
-  isPublicGdd: boolean;
-  isPublicTasks: boolean;
-  isPublicAbout: boolean;
-  isPublicPulse: boolean;
-  parentsTree: ProjectIdWithTitle[];
-  settings: ProjectSettings;
-  isUnsafeContent: boolean;
-  isTemplate: boolean;
-  isUnsafeContentByModerator: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  rootWorkspaces: Workspace[];
-};
-
 export type ProjectParamsDTO = {
   title?: string;
   lang?: Lang;

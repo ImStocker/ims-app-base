@@ -276,6 +276,20 @@ export default defineComponent({
       await this.$nextTick();
       (this.$refs.editor as InstanceType<typeof ImcEditor>).focusEnd();
     },
+    async setLike(
+      message: { commentId: string; replyId: string },
+      like: string,
+    ) {
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          await this.$getAppManager()
+            .get(CommentManager)
+            .setLike(message.commentId, message.replyId, {
+              like,
+            });
+        });
+    },
     async deleteMessage(message: { commentId: string; replyId: string }) {
       const answer = await this.$getAppManager()
         .get(DialogManager)

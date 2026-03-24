@@ -1,7 +1,6 @@
 import { AppSubManagerBase } from './IAppManager';
 import type {
   ProjectFullInfo,
-  ProjectInfoWithParams,
   IProjectUserOwnRole,
   ProjectImportResponseDTO,
   ChangesStreamRequest,
@@ -21,8 +20,10 @@ import type {
   RoleWorkspaceRightsChangeDTOOne,
   RoleWorkspaceRightsGetDTO,
 } from '../types/RightsAndRoles';
+import { EntityCache } from '#logic/types/EntityCache';
+import { assert } from '#logic/utils/typeUtils';
 
-export type IProjectInfo = ProjectInfoWithParams;
+export type IProjectInfo = ProjectFullInfo;
 
 export type ProjectChangeEventArg = {
   oldProjectId: string | null;
@@ -32,10 +33,26 @@ export type ProjectChangeEventArg = {
 export default class ProjectManager extends AppSubManagerBase {
   private _projectInfo: ProjectFullInfo | null = null;
   private _userRole: IProjectUserOwnRole | null = null;
+  private _fullProjectsCache: EntityCache<ProjectFullInfo> | undefined;
 
   changeProjectSubscriber = new Subscriber<[ProjectChangeEventArg]>();
 
-  async init() {}
+  async init() {
+    this._fullProjectsCache = new EntityCache<ProjectFullInfo>({
+      key: 'id',
+      ttl: 1000 * 60 * 10,
+      loadFunc: async (project_ids) => {
+        const res: ProjectFullInfo[] = [];
+        for (const project_id of project_ids) {
+          const project_full_info = await this.getProjectFullInfo(project_id);
+          if (project_full_info) {
+            res.push(project_full_info);
+          }
+        }
+        return res;
+      },
+    });
+  }
 
   setCurrentProjectInfo(
     project_info: ProjectFullInfo | null,
@@ -57,6 +74,20 @@ export default class ProjectManager extends AppSubManagerBase {
 
   getAllowAnonymUsers() {
     return false;
+  }
+
+  getProjectFullInfoViaCache(projectId: string) {
+    assert(this._fullProjectsCache, 'Not inited');
+    return this._fullProjectsCache.getElement(projectId);
+  }
+
+  getProjectFullInfoViaCacheSync(projectId: string) {
+    assert(this._fullProjectsCache, 'Not inited');
+    return this._fullProjectsCache.getElementSync(projectId);
+  }
+
+  async requestProjectFullInfoInCache(projectId: string) {
+    await this.getProjectFullInfoViaCache(projectId);
   }
 
   getWorkspaceByName(workspace_name: string) {
@@ -156,19 +187,27 @@ export default class ProjectManager extends AppSubManagerBase {
       });
   }
 
-  async getProjectInfoWithParams(project_id?: string) {
-    const res: ProjectInfoWithParams = await this.appManager
+  async getProjectFullInfo(
+    project_id?: string,
+  ): Promise<ProjectFullInfo | null> {
+    assert(this._fullProjectsCache, 'Not inited');
+    const res: ProjectFullInfo = await this.appManager
       .get(ApiManager)
       .call(Service.CREATORS, HttpMethods.GET, 'project/info', {
         pid: project_id,
       });
+    if (res) {
+      this._fullProjectsCache.addToCache(res);
+    }
     return res;
   }
 
   async reloadProjectSettings() {
     if (!this._projectInfo) return;
-    const project_info = await this.getProjectInfoWithParams();
-    this._projectInfo.settings = project_info.settings;
+    const project_info = await this.getProjectFullInfo();
+    if (project_info) {
+      this._projectInfo.settings = project_info.settings;
+    }
   }
 
   async getChangesStream(

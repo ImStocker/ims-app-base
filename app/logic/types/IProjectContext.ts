@@ -14,7 +14,7 @@ import { assert } from '../utils/typeUtils';
 export interface IProjectContextApi {
   getAssetShortViaCacheSync(assetId: string): AssetShort | null | undefined;
   getAssetShortViaCache(assetId: string): Promise<AssetShort | null>;
-  requestAssetShortInCache(assetId: string): Promise<void>;
+  requestAssetShortInCache(assetId: string, pid?: string): Promise<void>;
   getAssetShortsList(
     query: ApiRequestList<AssetQueryWhere>,
   ): Promise<ApiResultListWithTotal<AssetShort>>;
@@ -25,6 +25,7 @@ export interface IProjectContextApi {
 
   getAssetInstancesList(
     query: ApiRequestList<AssetQueryWhere>,
+    pid?: string,
   ): Promise<ApiResultListWithTotal<AssetFullInstanceR>>;
 
   checkHasChildrenViaCache(assetId: string): Promise<boolean | null>;
@@ -34,6 +35,8 @@ export interface IProjectContextApi {
   ): Workspace | null | undefined;
 
   getWorkspaceByIdViaCache(workspace_id: string): Promise<Workspace | null>;
+
+  getWorkspaceByNameViaCache(workspace_name: string): Promise<Workspace | null>;
 
   getWorkspacesList(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
@@ -96,10 +99,104 @@ export function makeProjectContextFromAppManager(
         .get(CreatorAssetManager)
         .getWorkspaceByIdViaCache(workspace_id);
     },
+    getWorkspaceByNameViaCache(workspace_name: string) {
+      return appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByNameViaCache(workspace_name);
+    },
     getWorkspacesList(
       query: ApiRequestList<WorkspaceQueryDTOWhere>,
     ): Promise<ApiResultListWithTotal<Workspace>> {
       return appManager.get(CreatorAssetManager).getWorkspacesList(query);
+    },
+  };
+}
+
+export function makeProjectContextFromProjectInfo(
+  appManager: IAppManager,
+  projectFullInfo: ProjectFullInfo,
+): IProjectContext {
+  const isCurrentProject = () => {
+    const current_project = appManager.get(ProjectManager).getProjectInfo();
+    return current_project?.id === projectFullInfo.id;
+  };
+  return {
+    getAssetShortViaCacheSync(assetId: string) {
+      return appManager
+        .get(CreatorAssetManager)
+        .getAssetShortViaCacheSync(assetId);
+    },
+    getAssetShortViaCache(assetId: string) {
+      return appManager.get(CreatorAssetManager).getAssetShortViaCache(assetId);
+    },
+    requestAssetShortInCache(assetId: string) {
+      return appManager
+        .get(CreatorAssetManager)
+        .requestAssetShortInCache(assetId);
+    },
+    getAssetShortsList(query: ApiRequestList<AssetQueryWhere>) {
+      return appManager
+        .get(CreatorAssetManager)
+        .getAssetShortsList(
+          query,
+          isCurrentProject() ? undefined : { pid: projectFullInfo.id },
+        );
+    },
+    getAssetInstance(assetId: string, refresh?: boolean) {
+      return appManager
+        .get(CreatorAssetManager)
+        .getAssetInstance(
+          assetId,
+          refresh,
+          isCurrentProject() ? undefined : { pid: projectFullInfo.id },
+        );
+    },
+    get projectInfo() {
+      return projectFullInfo;
+    },
+    getAssetInstancesList(
+      query: ApiRequestList<AssetQueryWhere>,
+    ): Promise<ApiResultListWithTotal<AssetFullInstanceR>> {
+      return appManager
+        .get(CreatorAssetManager)
+        .getAssetInstancesList(
+          query,
+          isCurrentProject() ? undefined : { pid: projectFullInfo.id },
+        );
+    },
+    checkHasChildrenViaCache(assetId: string): Promise<boolean | null> {
+      return appManager
+        .get(CreatorAssetManager)
+        .checkHasChildrenViaCache(assetId);
+    },
+    getWorkspaceByIdViaCacheSync(
+      workspace_id: string,
+    ): Workspace | null | undefined {
+      return appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByIdViaCacheSync(workspace_id);
+    },
+    getWorkspaceByIdViaCache(workspace_id: string): Promise<Workspace | null> {
+      return appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByIdViaCache(workspace_id);
+    },
+    getWorkspaceByNameViaCache(
+      workspace_name: string,
+    ): Promise<Workspace | null> {
+      return appManager
+        .get(CreatorAssetManager)
+        .getWorkspaceByNameViaCache(workspace_name);
+    },
+    getWorkspacesList(
+      query: ApiRequestList<WorkspaceQueryDTOWhere>,
+    ): Promise<ApiResultListWithTotal<Workspace>> {
+      return appManager
+        .get(CreatorAssetManager)
+        .getWorkspacesList(
+          query,
+          isCurrentProject() ? undefined : { pid: projectFullInfo.id },
+        );
     },
   };
 }

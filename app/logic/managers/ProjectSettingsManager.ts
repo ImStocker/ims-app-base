@@ -69,7 +69,7 @@ export default class ProjectSettingsManager extends AppSubManagerBase {
   async reloadProjectSettings() {
     const project_info = await this.appManager
       .get(ProjectManager)
-      .getProjectInfoWithParams();
+      .getProjectFullInfo();
     this._projectSettings = project_info.settings;
   }
 }

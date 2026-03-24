@@ -44,22 +44,30 @@ export type ProjectContentChangeEventArg = {
 export interface IProjectDatabaseAsset {
   assetsGetShort(
     query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
   ): Promise<AssetsShortResult>;
   assetsGetFull(
     query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
   ): Promise<AssetsFullResult>;
 
   assetsGetView<T extends AssetProps>(
     query: AssetPropsSelection,
-    options?: { folded: false },
+    options?: { folded: false; pid?: string },
   ): Promise<ApiResultListWithTotal<T>>;
   assetsGetView<T extends AssetPropsPlainObject>(
     query: AssetPropsSelection,
-    options: { folded: true } | { folded: boolean },
+    options: { folded: true; pid?: string } | { folded: boolean },
   ): Promise<ApiResultListWithTotal<T>>;
 
-  assetsGraph(query: ApiRequestList<AssetQueryWhere>): Promise<AssetsGraph>;
-  assetsCreate(params: AssetCreateDTO): Promise<AssetsChangeResult>;
+  assetsGraph(
+    query: ApiRequestList<AssetQueryWhere>,
+    options?: { pid?: string },
+  ): Promise<AssetsGraph>;
+  assetsCreate(
+    params: AssetCreateDTO,
+    options?: { pid?: string },
+  ): Promise<AssetsChangeResult>;
   assetsChange(
     params: AssetChangeDTO,
     options?: { pid?: string },
@@ -84,33 +92,60 @@ export interface IProjectDatabaseAsset {
     where: AssetWhereParams,
     options?: { pid?: string },
   ): Promise<AssetsChangeResult>;
-  assetsCreateRef(params: CreateRefDTO): Promise<AssetReferencesResult>;
-  assetsDeleteRef(params: CreateRefDTO): Promise<AssetDeleteRefResultDTO>;
-  assetsMove(params: AssetMoveParams): Promise<AssetMoveResult>;
+  assetsCreateRef(
+    params: CreateRefDTO,
+    options?: { pid?: string },
+  ): Promise<AssetReferencesResult>;
+  assetsDeleteRef(
+    params: CreateRefDTO,
+    options?: { pid?: string },
+  ): Promise<AssetDeleteRefResultDTO>;
+  assetsMove(
+    params: AssetMoveParams,
+    options?: { pid?: string },
+  ): Promise<AssetMoveResult>;
   assetsGetHistory(
     assetId: string,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithMore<AssetHistoryDTO>>;
-  getAssetLocalPath(asset_id: string): Promise<string | null>;
+  getAssetLocalPath(
+    asset_id: string,
+    options?: { pid?: string },
+  ): Promise<string | null>;
 }
 
 export interface IProjectDatabaseWorkspace {
   workspacesGet(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
+    options?: { pid?: string },
   ): Promise<ApiResultListWithTotal<Workspace>>;
-  workspacesCreate(params: ChangeWorkspaceRequest): Promise<Workspace>;
+  workspacesCreate(
+    params: ChangeWorkspaceRequest,
+    options?: { pid?: string },
+  ): Promise<Workspace>;
   workspacesChange(
     workspace_id: string,
     params: ChangeWorkspaceRequest,
+    options?: { pid?: string },
   ): Promise<Workspace>;
-  workspacesDelete(workspace_id: string): Promise<void>;
-  workspacesMove(params: WorkspaceMoveParams): Promise<WorkspaceMoveResult>;
-  getWorkspaceLocalPath(workspace_id: string): Promise<string | null>;
+  workspacesDelete(
+    workspace_id: string,
+    options?: { pid?: string },
+  ): Promise<void>;
+  workspacesMove(
+    params: WorkspaceMoveParams,
+    options?: { pid?: string },
+  ): Promise<WorkspaceMoveResult>;
+  getWorkspaceLocalPath(
+    workspace_id: string,
+    options?: { pid?: string },
+  ): Promise<string | null>;
 }
 
 export type IProjectDatabaseEventHandler = {
   cancel: () => void;
   isConnected: () => boolean;
-  listenContent: (asset_ids: string[], workpace_ids: string[]) => void;
+  listenContent: (asset_ids: string[], workspace_ids: string[]) => void;
 };
 
 export interface IProjectDatabase
