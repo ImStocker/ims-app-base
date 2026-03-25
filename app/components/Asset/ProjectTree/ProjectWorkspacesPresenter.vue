@@ -54,7 +54,7 @@
   </tree-presenter>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import TreePresenter from '../../Common/TreePresenter/TreePresenter.vue';
 import ProjectTreePresenterWorkspace from './ProjectTreePresenterWorkspace.vue';
 import type { AssetForSelection } from '../../../logic/types/AssetsType';
@@ -70,6 +70,7 @@ import {
   ProjectWorkspacesPresenterVM,
   type ProjectWorkspacesPresenterVMOptions,
 } from './ProjectWorkspacesPresenterVM';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'ProjectWorkspacesPresenter',
@@ -122,12 +123,18 @@ export default defineComponent({
     'item:focus',
     'item:keydown',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       treePresenterVM: this.externalVm
         ? this.externalVm
         : new ProjectWorkspacesPresenterVM(
-            this.$getAppManager(),
+            this.projectContext!,
             this._getTreePresenterOptions(),
           ),
     };
@@ -173,7 +180,7 @@ export default defineComponent({
       this.treePresenterVM = this.externalVm
         ? this.externalVm
         : new ProjectWorkspacesPresenterVM(
-            this.$getAppManager(),
+            this.projectContext!,
             this._getTreePresenterOptions(),
           );
       if (!this.externalVm && this.$el) {

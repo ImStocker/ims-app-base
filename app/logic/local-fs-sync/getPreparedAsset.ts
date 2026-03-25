@@ -1,5 +1,5 @@
-import CreatorAssetManager from '../managers/CreatorAssetManager';
-import type { IAppManager } from '../managers/IAppManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
 import type { AssetQueryWhere } from '../types/AssetsType';
 import type { ApiRequestList } from '../types/ProjectTypes';
@@ -42,7 +42,7 @@ function formatAssetFull(asset: AssetFullInstanceR) {
 }
 
 export async function getPreparedAssets(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   selection: ApiRequestList<AssetQueryWhere>,
   options:
     | {
@@ -68,7 +68,7 @@ export async function getPreparedAssets(
         })
       : [];
     prepared_assets = (
-      await appManager.get(CreatorAssetManager).getAssetsView(
+      await projectContext.get(AssetSubContext).getAssetsView(
         {
           ...selection,
           select: [...select_fields],
@@ -79,8 +79,8 @@ export async function getPreparedAssets(
       )
     ).list;
   } else {
-    const updated_data = await appManager
-      .get(CreatorAssetManager)
+    const updated_data = await projectContext
+      .get(AssetSubContext)
       .getAssetInstancesList(selection);
     prepared_assets = updated_data.list.map((asset) => formatAssetFull(asset));
     if (options.kind === 'valuesOnly') {

@@ -69,16 +69,6 @@ export default class ApiManager extends AppSubManagerBase {
     );
   }
 
-  setCurrentProjectId(project_id: string | null) {
-    assert(this._apiWorker, 'ApiWorker was not inited');
-    this._apiWorker.setCurrentProjectId(project_id);
-  }
-
-  getCurrentProjectId() {
-    assert(this._apiWorker, 'ApiWorker was not inited');
-    return this._apiWorker.getCurrentProjectId();
-  }
-
   async call<T>(
     service: Service,
     method: HttpMethods,

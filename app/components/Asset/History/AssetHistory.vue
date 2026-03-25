@@ -54,7 +54,7 @@ import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 import { openProjectLink } from '#logic/router/routes-helpers';
 import { TASK_ASSET_ID } from '#logic/constants';
-import TaskManager from '#logic/managers/TaskManager';
+import TaskManager from '#logic/managers/TaskSubContext';
 
 export default defineComponent({
   name: 'AssetHistory',

@@ -1,5 +1,4 @@
-import CreatorAssetManager from '../managers/CreatorAssetManager';
-import type { IAppManager } from '../managers/IAppManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import {
   AssetChanger,
   type HistorySaveRequest,
@@ -9,12 +8,12 @@ import {
   copyAssetFullData,
   type AssetFullInstanceR,
 } from './AssetFullInstance';
+import type { IProjectContext } from './IProjectContext';
 
 export class AssetChangerDefault extends AssetChanger {
   constructor(
-    public appManager: IAppManager,
+    public projectContext: IProjectContext,
     private _assetFull: AssetFullInstanceR | null,
-    private _customProjectId: string | null = null,
   ) {
     super();
   }
@@ -30,12 +29,11 @@ export class AssetChangerDefault extends AssetChanger {
       if (request.assetId !== this._assetFull.id) continue;
       const original = copyAssetFullData(this._assetFull);
       response.originals.push(original);
-      await this.appManager.get(CreatorAssetManager).makeAssetMultipleChange(
+      await this.projectContext.get(AssetSubContext).makeAssetMultipleChange(
         {
           id: [original.id],
         },
         request.changes,
-        this._customProjectId ? { pid: this._customProjectId } : {},
       );
     }
     return response;

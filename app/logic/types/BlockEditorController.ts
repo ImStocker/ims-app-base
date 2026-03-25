@@ -1,16 +1,16 @@
-import type { IAppManager } from '../managers/IAppManager';
 import type { ResolvedAssetBlock } from '../utils/assets';
 import type { BlockContentItem } from './BlockTypeDefinition';
 import { assert } from '../utils/typeUtils';
 import type { AssetBlockEditorVM } from '../vm/AssetBlockEditorVM';
 import type { IAssetBlockComponent } from './IAssetBlockComponent';
 import type { ExtendedMenuListItem } from './MenuList';
+import type { IProjectContext } from './IProjectContext';
 
 export abstract class BlockEditorController {
   protected assetBlockEditor: AssetBlockEditorVM | null = null;
 
   constructor(
-    public appManager: IAppManager,
+    public projectContext: IProjectContext,
     public getResolvedBlock: () => ResolvedAssetBlock | null,
   ) {}
 

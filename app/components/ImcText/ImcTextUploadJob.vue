@@ -13,8 +13,8 @@
 import type { PropType } from 'vue';
 import { defineComponent } from 'vue';
 import './quill-init';
-import type { UploadingJob } from '../../logic/managers/EditorManager';
-import EditorManager from '../../logic/managers/EditorManager';
+import type { UploadingJob } from '../../logic/project-sub-contexts/EditorSubContext';
+import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 
 type UploadJobInfo = {
   uploadId: string;
@@ -37,7 +37,7 @@ export default defineComponent({
   computed: {
     uploadingJobObject(): UploadingJob | undefined {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getUploadJob(this.uploadJob.uploadId);
     },
     uploadingPercent() {

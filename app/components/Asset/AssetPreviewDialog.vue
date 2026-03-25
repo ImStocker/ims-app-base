@@ -152,7 +152,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
-import type { Member } from '../../logic/types/ProjectTypes';
+import type { ProjectMember } from '../../logic/types/ProjectTypes';
 import type { AssetShort } from '../../logic/types/AssetsType';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import AssetSettings from './AssetSettings.vue';
@@ -186,7 +186,7 @@ import {
 } from '../../logic/constants';
 import { calcResolvedBlocks } from '../../logic/types/AssetFullInstance';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 
 type DialogProps = {
   assetId: string;
@@ -223,7 +223,7 @@ export default defineComponent({
     });
     return {
       buttonIsPressed: false,
-      members: [] as Member[],
+      members: [] as ProjectMember[],
       assetShorts: [] as AssetShort[],
       assetEditor: new AssetFullEditorVM(
         this.$getAppManager(),
@@ -310,9 +310,7 @@ export default defineComponent({
     },
     canChange() {
       return this.currentAssetFull
-        ? this.$getAppManager()
-            .get(CreatorAssetManager)
-            .canChangeAsset(this.currentAssetFull)
+        ? this.currentAssetFull.rights >= MIN_ASSET_RIGHTS_TO_CHANGE
         : false;
     },
     openedAssetId() {
@@ -333,7 +331,7 @@ export default defineComponent({
   },
   async mounted() {
     try {
-      this.$getAppManager().get(EditorManager).currentEditorPage = this;
+      this.$getAppManager().get(EditorSubContext).currentEditorPage = this;
 
       await this.loadAsset();
       this.assetShorts = [];
@@ -395,7 +393,7 @@ export default defineComponent({
     }
   },
   unmounted() {
-    const editor_manager = this.$getAppManager().get(EditorManager);
+    const editor_manager = this.$getAppManager().get(EditorSubContext);
     if (editor_manager.currentEditorPage === this) {
       editor_manager.currentEditorPage = null;
     }

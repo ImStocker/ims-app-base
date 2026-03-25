@@ -1,5 +1,5 @@
 import { extractPropsBlockEntries2 } from './PropsBlock';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import type { IAppManager } from '#logic/managers/IAppManager';
 import type {
   AssetLocalizableField,
@@ -40,7 +40,7 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
     const variables: BlockProvidedVariable[] = [];
     for (const field of fields) {
       const field_controller = field.type
-        ? app_manager.get(EditorManager).getFieldTypesMap()[field.type]
+        ? app_manager.get(EditorSubContext).getFieldTypesMap()[field.type]
         : undefined;
 
       if (!field.propTitle) continue;

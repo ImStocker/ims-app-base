@@ -24,7 +24,7 @@ import { castAssetPropValueToString } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import ImsSelect from '../Common/ImsSelect.vue';
 import type { FieldTypeController } from '../../logic/types/FieldTypeController';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 
 type AttributeTypeOption = { title: string; value: string | null };
 
@@ -43,7 +43,7 @@ export default defineComponent({
   emits: ['update:modelValue', 'blur'],
   computed: {
     fieldTypes() {
-      return this.$getAppManager().get(EditorManager).getFieldTypesList();
+      return this.$getAppManager().get(EditorSubContext).getFieldTypesList();
     },
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
@@ -109,7 +109,7 @@ export default defineComponent({
       if (
         this.selectedValue &&
         !this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getFieldTypesMap()
           .hasOwnProperty(this.selectedValue)
       ) {

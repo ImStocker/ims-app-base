@@ -10,10 +10,11 @@ import type {
 } from './BlockTypeDefinition';
 import type { BlockEditorController } from './BlockEditorController';
 import type { IAppManager } from '../managers/IAppManager';
-import EditorManager from '../managers/EditorManager';
+import EditorSubContext from '../project-sub-contexts/EditorSubContext';
 import type { AssetForEdit } from './AssetsType';
 import type { AssetBlockEditorVM } from '../vm/AssetBlockEditorVM';
 import type { ExtendedMenuListItem } from './MenuList';
+import type { IProjectContext } from './IProjectContext';
 
 type BlockControllerHolder = {
   type: string;
@@ -28,7 +29,7 @@ export class EditorContextForAsset {
   protected assetBlockEditor: AssetBlockEditorVM | null = null;
 
   private constructor(
-    public appManager: IAppManager,
+    public projectContext: IProjectContext,
     asset: AssetFullInstanceR,
   ) {
     this._asset = asset;
@@ -102,7 +103,7 @@ export class EditorContextForAsset {
   }
 
   get editingAsset(): AssetForEdit {
-    const editor_manager = this.appManager.get(EditorManager);
+    const editor_manager = this.projectContext.get(EditorSubContext);
     let asset: AssetForEdit = this._asset;
     if (editor_manager.activeEditor) {
       asset = editor_manager.activeEditor.applyAssetChanges(asset);
@@ -120,10 +121,10 @@ export class EditorContextForAsset {
   }
 
   static CreateInstance(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     asset: AssetFullInstanceR,
   ): EditorContextForAsset {
-    const raw = new EditorContextForAsset(appManager, asset);
+    const raw = new EditorContextForAsset(projectContext, asset);
     const instance = reactive(raw);
     raw._resolvedBlocks = computed(() => {
       return calcResolvedBlocks(instance.editingAsset);
@@ -139,7 +140,7 @@ export class EditorContextForAsset {
     );
     watch(
       () => {
-        const editor_manager = raw.appManager.get(EditorManager);
+        const editor_manager = raw.projectContext.get(EditorSubContext);
         return editor_manager.activeEditor
           ? editor_manager.activeEditor.getAssetBlockEditorForAsset(
               instance.editingAsset.id,
@@ -197,8 +198,8 @@ export class EditorContextForAsset {
       if (exists_record && exists_record.type === block.type) {
         continue;
       }
-      const definition = this.appManager
-        .get(EditorManager)
+      const definition = this.projectContext
+        .get(EditorSubContext)
         .getBlockTypeDefinition(block.type);
       const controller = definition
         ? definition.createController(this.appManager, () => {

@@ -1,7 +1,7 @@
-import type { IAppManager } from '../managers/IAppManager';
-import type { ResolvedAssetBlock } from '../utils/assets';
-import { BlockEditorController } from './BlockEditorController';
-import type { BlockContentItem } from './BlockTypeDefinition';
+import { BlockEditorController } from '#logic/types/BlockEditorController';
+import type { BlockContentItem } from '#logic/types/BlockTypeDefinition';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import type { ResolvedAssetBlock } from '#logic/utils/assets';
 
 export type ExternalPluginBlockControllerDescriptor = {
   getContentItems?: () => BlockContentItem<any>[];
@@ -15,11 +15,11 @@ export default class ExternalPluginBlockEditorController extends BlockEditorCont
   private _pluginControllerDescriptor: ExternalPluginBlockControllerDescriptor;
 
   constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     getResolvedBlock: () => ResolvedAssetBlock | null,
     getPluginController: GetPluginBlockController,
   ) {
-    super(appManager, getResolvedBlock);
+    super(projectContext, getResolvedBlock);
     this._pluginControllerDescriptor = getPluginController(getResolvedBlock);
   }
 

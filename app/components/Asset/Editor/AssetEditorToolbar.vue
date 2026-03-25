@@ -128,7 +128,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import UiManager from '../../../logic/managers/UiManager';
-import LocalFsSyncManager from '../../../logic/managers/LocalFsSyncManager';
+import LocalFsSyncSubContext from '../../../logic/managers/LocalFsSyncSubContext';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
@@ -168,7 +168,7 @@ export default defineComponent({
     isSaving() {
       const saving = this.toolbarVm.isSaving();
       if (saving) return true;
-      return this.$getAppManager().get(LocalFsSyncManager).syncStatus.isSyncing;
+      return this.$getAppManager().get(LocalFsSyncSubContext).syncStatus.isSyncing;
     },
     isUndoRedoBusy() {
       return this.toolbarVm.isUndoRedoBusy();

@@ -21,8 +21,8 @@ import type {
   AssetDisplayMode,
   ResolvedAssetBlock,
 } from '../logic/utils/assets';
-import type ExternalPluginBlockTypeDefinition from '../logic/types/ExternalPluginBlockTypeDefinition';
-import type { ExternalPluginComponentApi } from '../logic/types/ExternalPluginBlockTypeDefinition';
+import type ExternalPluginBlockTypeDefinition from '../logic/plugin/ExternalPluginBlockTypeDefinition';
+import type { ExternalPluginComponentApi } from '../logic/plugin/ExternalPluginBlockTypeDefinition';
 
 export default defineComponent({
   name: 'ExternalPluginBlock',

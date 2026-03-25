@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import CollectionContent from '#components/GameDesign/CollectionContent.vue';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import {
@@ -16,7 +16,6 @@ import {
   type ResolvedAssetBlock,
 } from '#logic/utils/assets';
 import UiManager from '#logic/managers/UiManager';
-import ProjectManager from '#logic/managers/ProjectManager';
 import { CollectionBlockEditorController } from './CollectionBlockController';
 import {
   convertAssetPropsToPlainObject,
@@ -28,8 +27,9 @@ import {
   VIEW_TYPES_MAP,
 } from '#components/Workspace/ViewOptions/viewUtils';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import type { Workspace } from '#logic/types/Workspaces';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'CollectionBlock',
@@ -53,6 +53,12 @@ export default defineComponent({
       type: Object as PropType<ResolvedAssetBlock>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -78,7 +84,7 @@ export default defineComponent({
         const new_key = normalizeAssetPropPart(view_title);
         return {
           [new_key]: {
-            filter: [],
+            filter: null,
             index: 1,
             key: new_key,
             props: [],
@@ -94,13 +100,16 @@ export default defineComponent({
   },
   async mounted() {
     if (this.assetBlockEditor.assetFull?.workspaceId) {
-      this.workspace = await this.$getAppManager()
-        .get(CreatorAssetManager)
-        .getWorkspaceById(this.assetBlockEditor.assetFull?.workspaceId);
+      this.workspace =
+        (await this.projectContext
+          ?.get(AssetSubContext)
+          .getWorkspaceByIdViaCache(
+            this.assetBlockEditor.assetFull?.workspaceId,
+          )) ?? null;
     }
-    const gdd_workspace = this.$getAppManager()
-      .get(ProjectManager)
-      .getWorkspaceByName('gdd');
+    const gdd_workspace = await this.projectContext
+      ?.get(AssetSubContext)
+      .getWorkspaceByNameViaCache('gdd');
     if (!gdd_workspace) return;
 
     this.collectionBlockEditorController = new CollectionBlockEditorController(

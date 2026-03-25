@@ -51,8 +51,8 @@ import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
-import type { UploadingJob } from '../../logic/managers/EditorManager';
-import EditorManager from '../../logic/managers/EditorManager';
+import type { UploadingJob } from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'FileAttachButton',
@@ -109,7 +109,7 @@ export default defineComponent({
       const all_res: AssetPropValueFile[] = [];
       for (const file of files) {
         this.uploadingJob = this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .attachFile(file, file.name);
         await this.uploadingJob.awaitResult().then(
           (res) => {

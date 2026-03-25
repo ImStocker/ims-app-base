@@ -32,7 +32,7 @@ import { isFilledAssetPropValue } from '../../logic/types/Props';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import FileAttachButton from '../File/FileAttachButton.vue';
 import FilePresenter from '../File/FilePresenter.vue';
-import type { UploadingJob } from '../../logic/managers/EditorManager';
+import type { UploadingJob } from '../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'AttachmentPropEditor',

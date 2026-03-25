@@ -52,7 +52,7 @@
     "v-calendar": "^3.1.2",
     "v-network-graph": "^0.9.21",
     "validator": "^13.9.0",
-    "vue": "3.5.13",
+    "vue": "^3.5.31",
     "vue-router": "4.5.0",
     "vue-select": "beta",
     "y-webrtc": "^10.3.0",

@@ -121,7 +121,7 @@ import type { FieldTypeController } from '#logic/types/FieldTypeController';
 import CaptionString from '#components/Common/CaptionString.vue';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import UiManager from '#logic/managers/UiManager';
 import RenamableText from '#components/Common/RenamableText.vue';
 
@@ -210,7 +210,7 @@ export default defineComponent({
     },
     typeController(): FieldTypeController | null {
       return (
-        this.$getAppManager().get(EditorManager).getFieldTypesMap()[
+        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
           this.type
         ] ?? null
       );

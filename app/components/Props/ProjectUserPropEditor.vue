@@ -33,7 +33,7 @@
 import type { PropType } from 'vue';
 import { defineComponent } from 'vue';
 import ProjectManager from '../../logic/managers/ProjectManager';
-import type { Member } from '../../logic/types/ProjectTypes';
+import type { ProjectMember } from '../../logic/types/ProjectTypes';
 import type {
   AssetPropValue,
   AssetPropValueAccount,
@@ -62,7 +62,7 @@ export default defineComponent({
     return {
       loading: false,
       loadingError: null as string | null,
-      members: [] as Member[],
+      members: [] as ProjectMember[],
     };
   },
   computed: {

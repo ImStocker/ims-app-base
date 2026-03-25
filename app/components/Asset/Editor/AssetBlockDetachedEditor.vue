@@ -38,7 +38,7 @@ import SortableList from '../../Common/SortableList.vue';
 import { COLLECTION_PID, COLLECTION_GAME_ASSET_ID } from '../../../logic/constants';
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetBlockDetachedEditor',
@@ -88,7 +88,7 @@ export default defineComponent({
     },
     blockTypes() {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
     },

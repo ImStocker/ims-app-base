@@ -1,20 +1,19 @@
 import type { BlockTypeDefinition } from '../types/BlockTypeDefinition';
 import { EditorContextForAsset } from '../types/EditorContextForAsset';
 import type { FieldTypeController } from '../types/FieldTypeController';
-import CreatorAssetManager from './CreatorAssetManager';
-import { AppSubManagerBase } from './IAppManager';
 import { assert } from '../utils/typeUtils';
 import type { Component } from 'vue';
 import { defineAsyncComponent, markRaw, reactive, unref } from 'vue';
 import type { IEditorVM } from '../vm/IEditorVM';
 import { openProjectLink } from '../router/routes-helpers';
-import ProjectManager from './ProjectManager';
-import UiManager from './UiManager';
-import DialogManager from './DialogManager';
+import UiManager from '../managers/UiManager';
+import DialogManager from '../managers/DialogManager';
 import { makeAnchorTagId } from '../utils/assets';
 import type { AssetPropValueFile } from '../types/Props';
 import { getSrcByFileId } from '../utils/files';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
+import { ProjectSubContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from './AssetSubContext';
 
 export interface UploadingJob {
   result: AssetPropValueFile | null | undefined;
@@ -68,7 +67,7 @@ const AssetLayoutDefault = markRaw({
   props: {},
 });
 
-export default abstract class EditorManager extends AppSubManagerBase {
+export default abstract class EditorSubContext extends ProjectSubContext {
   private _blockTypeEntities: BlockTypeDefinition[] = [];
   private _fieldTypeEntities: FieldTypeController[] = [];
   private _assetLayoutDescriptors: AssetLayoutDescriptor[] = [
@@ -148,11 +147,11 @@ export default abstract class EditorManager extends AppSubManagerBase {
         context: undefined,
         requests: [],
         promise: (async () => {
-          const asset = await this.appManager
-            .get(CreatorAssetManager)
+          const asset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetInstance(assetId);
           const context = asset
-            ? EditorContextForAsset.CreateInstance(this.appManager, asset)
+            ? EditorContextForAsset.CreateInstance(this.projectContext, asset)
             : null;
           if (context) {
             await context.init();
@@ -227,14 +226,11 @@ export default abstract class EditorManager extends AppSubManagerBase {
     }>;
   } {
     let opened: Promise<{ success: boolean; navigated: boolean }>;
-    const project_info = this.appManager.get(ProjectManager).getProjectInfo();
-    if (!project_info) {
-      throw new Error('Project is not set');
-    }
+    const project_info = this.projectContext.projectInfo;
     if (target === 'popup') {
       opened = import('../../components/Asset/AssetPreviewDialog.vue').then(
         async (dialogComponent) => {
-          const dialog = this.appManager
+          const dialog = this.projectContext.appManager
             .get(DialogManager)
             .create(dialogComponent.default, {
               assetId,
@@ -257,13 +253,13 @@ export default abstract class EditorManager extends AppSubManagerBase {
         (!this.currentEditorPage ||
           this.currentEditorPage.openedAssetId !== assetId)
       ) {
-        opened = openProjectLink(this.appManager, project_info, {
+        opened = openProjectLink(this.projectContext.appManager, project_info, {
           name: 'project-asset-by-id',
           params: {
             assetId: assetId,
           },
         }).then(() => {
-          const router = this.appManager.getRouter();
+          const router = this.projectContext.appManager.getRouter();
           return {
             success:
               !!router.currentRoute &&
@@ -280,7 +276,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
     } else {
       // it is if (target === 'new-tab')
       opened = openProjectLink(
-        this.appManager,
+        this.projectContext.appManager,
         project_info,
         {
           name: 'project-asset-by-id',
@@ -320,7 +316,8 @@ export default abstract class EditorManager extends AppSubManagerBase {
 
         let editor_page = this.currentEditorPage;
         if (!editor_page || editor_page.openedAssetId !== assetId) {
-          await this.appManager.get(UiManager).pageNavigateState.loadPromise;
+          await this.projectContext.appManager.get(UiManager).pageNavigateState
+            .loadPromise;
 
           for (let attempt = 0; attempt < 10; attempt++) {
             if (this.currentEditorPage?.openedAssetId === assetId) {
@@ -426,7 +423,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
   abstract attachFile(_file: Blob, _name: string): UploadingJob;
 
   public async downloadAttachment(file: AssetPropValueFile) {
-    const link = getSrcByFileId(this.appManager, file);
+    const link = getSrcByFileId(this.projectContext.appManager, file);
     const a = document.createElement('a');
     a.download = file.Title;
     a.href = link + '?download=1';

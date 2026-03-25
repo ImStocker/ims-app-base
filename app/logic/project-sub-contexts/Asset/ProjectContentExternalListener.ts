@@ -1,10 +1,11 @@
 import { debounceForThis } from '#components/utils/ComponentUtils';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type {
   IProjectDatabase,
   IProjectDatabaseEventHandler,
   ProjectContentChangeEventArg,
 } from '#logic/types/IProjectDatabase';
-import type CreatorAssetManager from '../CreatorAssetManager';
+import { AssetSubContext } from '../AssetSubContext';
 
 type ExpectEvents = {
   promise: Promise<{
@@ -27,10 +28,8 @@ export class ProjectContentExternalListener {
   private readonly _requestListenContentDelayed: () => void;
 
   constructor(
-    private _creatorsAssetManager: CreatorAssetManager,
+    private _projectContext: IProjectContext,
     private _projectDatabase: IProjectDatabase,
-    private _projectId: string,
-    private _userId: number | null,
   ) {
     this._requestListenContentDelayed = debounceForThis(function () {
       (this as ProjectContentExternalListener)._requestListenContentImpl();
@@ -59,7 +58,7 @@ export class ProjectContentExternalListener {
     changes: ProjectContentChangeEventArg,
   ): Promise<ProjectContentChangeEventArg> {
     if (
-      changes.instigator !== this._userId ||
+      changes.instigator !== this._projectContext.user?.id ||
       this._expectingMyEvents.length === 0
     ) {
       return changes;
@@ -99,7 +98,7 @@ export class ProjectContentExternalListener {
 
   init() {
     this._handler = this._projectDatabase.subscribeEvents(
-      this._projectId,
+      this._projectContext.projectInfo.id,
       async (changes) => {
         if (!this._projectDatabase) {
           return;
@@ -130,10 +129,9 @@ export class ProjectContentExternalListener {
                 id: need_full,
               },
             });
-            this._creatorsAssetManager.updateFullInstanceCache(
-              asset_full_res,
-              false,
-            );
+            this._projectContext
+              .get(AssetSubContext)
+              .updateFullInstanceCache(asset_full_res, false);
           }
           if (need_short.length > 0) {
             const asset_short_res = await this._projectDatabase.assetsGetShort({
@@ -141,10 +139,9 @@ export class ProjectContentExternalListener {
                 id: need_short,
               },
             });
-            this._creatorsAssetManager.updateShortAssetsCache(
-              asset_short_res.list,
-              false,
-            );
+            this._projectContext
+              .get(AssetSubContext)
+              .updateShortAssetsCache(asset_short_res.list, false);
           }
         }
         if (filtered_changes.wUpsIds) {
@@ -153,15 +150,14 @@ export class ProjectContentExternalListener {
               ids: filtered_changes.wUpsIds,
             },
           });
-          this._creatorsAssetManager.updateWorkspacesCache(
-            workpaces_res.list,
-            false,
-          );
+          this._projectContext
+            .get(AssetSubContext)
+            .updateWorkspacesCache(workpaces_res.list, false);
         }
 
-        this._creatorsAssetManager.projectContentEvents.notify(
-          filtered_changes,
-        );
+        this._projectContext
+          .get(AssetSubContext)
+          .projectContentEvents.notify(filtered_changes);
       },
     );
   }

@@ -27,7 +27,7 @@ import {
 } from '../../logic/types/Props';
 import FileAttachButton from '../File/FileAttachButton.vue';
 import ImcEditor from '../ImcText/ImcEditor.vue';
-import type { UploadingJob } from '../../logic/managers/EditorManager';
+import type { UploadingJob } from '../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'TextAttachmentPropEditor',

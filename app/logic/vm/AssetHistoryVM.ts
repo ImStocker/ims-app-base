@@ -1,5 +1,4 @@
 import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import DialogManager from '#logic/managers/DialogManager';
 import UiManager from '#logic/managers/UiManager';
 import type { AssetChanger } from '#logic/types/AssetChanger';
@@ -10,7 +9,6 @@ import {
   type AssetHistoryMode,
 } from '#logic/utils/assets';
 import { unref } from 'vue';
-import type { IAppManager } from '../managers/IAppManager';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
 import {
   copyAssetFullData,
@@ -19,9 +17,11 @@ import {
 import type { SubscriberHandler } from '../types/Subscriber';
 import PromptDialog from '#components/Common/PromptDialog.vue';
 import type { AssetsFullResult } from '#logic/types/AssetsType';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export class AssetHistoryVM {
-  appManager: IAppManager;
+  projectContext: IProjectContext;
   loadEpoch: number = 0;
   loadDone: boolean;
   loadError: string | null;
@@ -32,11 +32,10 @@ export class AssetHistoryVM {
   private _subscribe: SubscriberHandler | null = null;
 
   constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     private _assetFull: AssetFullInstanceR,
-    private _customProjectId: string | null = null,
   ) {
-    this.appManager = appManager;
+    this.projectContext = projectContext;
     this.loadDone = false;
     this.loadError = null;
     this.history = {
@@ -44,9 +43,8 @@ export class AssetHistoryVM {
       more: true,
     };
     this.assetChanger = new AssetChangerDefault(
-      appManager,
+      projectContext,
       this._assetFull,
-      this._customProjectId,
     );
     this._selectedVersionId = null;
   }
@@ -60,8 +58,8 @@ export class AssetHistoryVM {
   }
 
   async init() {
-    this._subscribe = this.appManager
-      .get(CreatorAssetManager)
+    this._subscribe = this.projectContext
+      .get(AssetSubContext)
       .projectContentEvents.subscribe(async (change_res) => {
         if (change_res.aUpsIds.includes(this.openedAssetId)) {
           await this.load();
@@ -80,8 +78,8 @@ export class AssetHistoryVM {
     this.loadDone = false;
     const load_epoch = ++this.loadEpoch;
     try {
-      this.history = await this.appManager
-        .get(CreatorAssetManager)
+      this.history = await this.projectContext
+        .get(AssetSubContext)
         .getHistory(this.openedAssetId);
       if (load_epoch === this.loadEpoch) {
         this._loadAssetChangerForSelectedVersion();
@@ -116,19 +114,22 @@ export class AssetHistoryVM {
     const changed_asset = unref(changed_asset_version);
     if (!changed_asset) return;
     const full = copyAssetFullData(changed_asset);
-    const new_title = await this.appManager
+    const new_title = await this.projectContext.appManager
       .get(DialogManager)
       .show(PromptDialog, {
-        header: this.appManager.$t('gddPage.saveAsCopy', {
-          element: convertTranslatedTitle(full.title ?? '', this.appManager.$t),
+        header: this.projectContext.appManager.$t('gddPage.saveAsCopy', {
+          element: convertTranslatedTitle(
+            full.title ?? '',
+            this.projectContext.appManager.$t,
+          ),
         }),
-        message: this.appManager.$t('gddPage.inputElementName'),
-        yesCaption: this.appManager.$t('gddPage.saveAsCopy'),
+        message: this.projectContext.appManager.$t('gddPage.inputElementName'),
+        yesCaption: this.projectContext.appManager.$t('gddPage.saveAsCopy'),
         value: full.title ?? '',
       });
     if (!new_title) return;
-    return await this.appManager
-      .get(CreatorAssetManager)
+    return await this.projectContext
+      .get(AssetSubContext)
       .copyAsset(full, new_title);
   }
 
@@ -142,9 +143,8 @@ export class AssetHistoryVM {
   private _loadAssetChanger(version_id: string | null): AssetChanger | null {
     if (!this.openedAssetId) return null;
     const new_asset_changer = new AssetChangerDefault(
-      this.appManager,
+      this.projectContext,
       this._assetFull,
-      this._customProjectId,
     );
     if (version_id) {
       for (const item of this.history.list) {
@@ -160,15 +160,17 @@ export class AssetHistoryVM {
   async rollbackChange(change_id: string) {
     const historyRecord = this.history.list.find((r) => r.id === change_id);
     if (!historyRecord) return;
-    const confirm = await this.appManager
+    const confirm = await this.projectContext.appManager
       .get(DialogManager)
       .show(ConfirmDialog, {
-        header: this.appManager.$t('common.dialogs.confirm'),
-        message: this.appManager.$t('assetHistory.rollbackChangeConfirm'),
+        header: this.projectContext.appManager.$t('common.dialogs.confirm'),
+        message: this.projectContext.appManager.$t(
+          'assetHistory.rollbackChangeConfirm',
+        ),
       });
     if (!confirm) return;
-    await this.appManager.get(UiManager).doTask(async () => {
-      await this.appManager.get(CreatorAssetManager).changeAssets({
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
+      await this.projectContext.get(AssetSubContext).changeAssets({
         where: {
           id: this.openedAssetId,
         },
@@ -182,14 +184,16 @@ export class AssetHistoryVM {
       (r) => r.id === change_id,
     );
     if (historyRecordIndex < 0) return;
-    const confirm = await this.appManager
+    const confirm = await this.projectContext.appManager
       .get(DialogManager)
       .show(ConfirmDialog, {
-        header: this.appManager.$t('common.dialogs.confirm'),
-        message: this.appManager.$t('assetHistory.revertToStateConfirm'),
+        header: this.projectContext.appManager.$t('common.dialogs.confirm'),
+        message: this.projectContext.appManager.$t(
+          'assetHistory.revertToStateConfirm',
+        ),
       });
     if (!confirm) return;
-    await this.appManager.get(UiManager).doTask(async () => {
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
       throw new Error('NOT IMPLEMENTED');
     });
   }

@@ -1,16 +1,9 @@
-import CreatorAssetManager from '../managers/CreatorAssetManager';
+import type { InjectionKey } from 'vue';
 import type { IAppManager } from '../managers/IAppManager';
-import ProjectManager from '../managers/ProjectManager';
-import type { AssetFullInstanceR } from './AssetFullInstance';
-import type { AssetQueryWhere, AssetShort } from './AssetsType';
-import type {
-  ApiRequestList,
-  ApiResultListWithTotal,
-  ProjectFullInfo,
-} from './ProjectTypes';
-import type { Workspace, WorkspaceQueryDTOWhere } from './Workspaces';
-import { assert } from '../utils/typeUtils';
+import type { ProjectFullInfo, UserInProject } from './ProjectTypes';
 
+/*
+  TODO: REMOVE
 export interface IProjectContextApi {
   getAssetShortViaCacheSync(assetId: string): AssetShort | null | undefined;
   getAssetShortViaCache(assetId: string): Promise<AssetShort | null>;
@@ -41,12 +34,40 @@ export interface IProjectContextApi {
   getWorkspacesList(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
   ): Promise<ApiResultListWithTotal<Workspace>>;
+}*/
+
+export const injectedProjectContext: InjectionKey<IProjectContext> =
+  Symbol('projectContext');
+
+export abstract class ProjectSubContext {
+  constructor(public readonly projectContext: IProjectContext) {}
 }
 
-export interface IProjectContext extends IProjectContextApi {
+export type ProjectSubContextCtr<T extends ProjectSubContext> = abstract new (
+  projectContext: IProjectContext,
+  ...otherArgs: any[]
+) => T;
+
+export interface IProjectContext {
+  get appManager(): IAppManager;
   get projectInfo(): ProjectFullInfo;
+  get user(): UserInProject | null;
+
+  get<R extends T, T extends ProjectSubContext = ProjectSubContext>(
+    subcontext_interface: ProjectSubContextCtr<T>,
+  ): R;
+  register<T extends ProjectSubContext>(
+    subcontext_interface: ProjectSubContextCtr<T>,
+    subcontext: ProjectSubContext,
+  ): void;
+
+  init(): Promise<void>;
+  destroy(): Promise<void>;
+  saveState(): Record<string, any>;
+  loadState(state: Record<string, any>): void;
 }
 
+/*
 export function makeProjectContextFromAppManager(
   appManager: IAppManager,
 ): IProjectContext {
@@ -200,3 +221,4 @@ export function makeProjectContextFromProjectInfo(
     },
   };
 }
+*/

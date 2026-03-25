@@ -7,8 +7,6 @@ import type {
   Workspace,
   WorkspaceQueryDTOWhere,
 } from '../../../logic/types/Workspaces';
-import type { IAppManager } from '../../../logic/managers/IAppManager';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import { intersectObjectArrays } from '../../../logic/utils/array';
 import type { AssetForSelection } from '../../../logic/types/AssetsType';
 import type { SubscriberHandler } from '../../../logic/types/Subscriber';
@@ -20,6 +18,8 @@ import {
 } from './ProjectTreePresenterBaseVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export type ProjectWorkspacesPresenterVMOptions = {
   workspaceWhere: WorkspaceQueryDTOWhere;
@@ -45,7 +45,6 @@ type ProjectWorkspacesPresenterAnalyzedWhere = {
 };
 
 export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
-  private _reloadSubscriber: SubscriberHandler | null = null;
   private _workspaceEventsSubscriber: SubscriberHandler | null = null;
   private _analyzedWhere: ProjectWorkspacesPresenterAnalyzedWhere | null = null;
   private _options: ProjectWorkspacesPresenterVMOptions;
@@ -60,10 +59,10 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
   }
 
   public constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     options: ProjectWorkspacesPresenterVMOptions = getDefaultProjectWorkspacesPresenterVMOptions(),
   ) {
-    super(appManager);
+    super(projectContext);
     this._options = options;
   }
 
@@ -156,15 +155,15 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
         const workspace_load: Promise<Workspace | null>[] = [];
         for (const workspace_id of workspace_ids) {
           workspace_load.push(
-            this.appManager
-              .get(CreatorAssetManager)
+            this.projectContext
+              .get(AssetSubContext)
               .getWorkspaceByIdViaCache(workspace_id),
           );
         }
         for (const workspace_name of workspace_names) {
           workspace_load.push(
-            this.appManager
-              .get(CreatorAssetManager)
+            this.projectContext
+              .get(AssetSubContext)
               .getWorkspaceByNameViaCache(workspace_name),
           );
         }
@@ -191,8 +190,8 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
                       return (
                         await Promise.all(
                           target_w_list.map((tw) => {
-                            this.appManager
-                              .get(CreatorAssetManager)
+                            this.projectContext
+                              .get(AssetSubContext)
                               .checkWorkspaceIsInside(w.id, tw.id);
                           }),
                         )
@@ -270,7 +269,7 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
 
     if (parent_workspace_id) {
       found_workspaces = (
-        await this.appManager.get(CreatorAssetManager).getWorkspacesListAll({
+        await this.projectContext.get(AssetSubContext).getWorkspacesList({
           where: {
             ...analyzed_where.workspaceWhereSubSearch,
             parentId: parent_workspace_id,
@@ -289,13 +288,13 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
           workspace_where.isRoot = true;
         }
         found_workspaces = (
-          await this.appManager.get(CreatorAssetManager).getWorkspacesListAll({
+          await this.projectContext.get(AssetSubContext).getWorkspacesList({
             where: workspace_where,
           })
         ).list;
       } else {
         found_workspaces = (
-          await this.appManager.get(CreatorAssetManager).getWorkspacesListAll({
+          await this.projectContext.get(AssetSubContext).getWorkspacesList({
             where: {
               ...analyzed_where.workspaceWhereSubSearch,
               query: analyzed_where.query,
@@ -315,7 +314,7 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
     item: TreePresenterItem<ProjectTreeItemPayload> | null,
   ): Promise<TreePresenterItem<ProjectTreeItemPayload>[]> {
     await this._externalUpdateByEventTask; // Wait for hadling external updates
-    const project_info = this.appManager.get(ProjectManager).getProjectInfo();
+    const project_info = this.projectContext.projectInfo;
     this._loadedForProjectId = project_info ? project_info.id : null;
 
     let found_workspaces: Workspace[] = [];
@@ -352,7 +351,7 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
         );
         found_additional = found_additional.filter((ao) => {
           const translated = convertTranslatedTitle(ao.title ?? '', (...args) =>
-            this.appManager.$t(...args),
+            this.projectContext.appManager.$t(...args),
           );
           return query_pattern.test(translated);
         });
@@ -374,10 +373,6 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
   }
 
   private _resetInit(init: boolean) {
-    if (this._reloadSubscriber) {
-      this._reloadSubscriber.unsubscribe();
-      this._reloadSubscriber = null;
-    }
     if (this._workspaceEventsSubscriber) {
       this._workspaceEventsSubscriber.unsubscribe();
       this._workspaceEventsSubscriber = null;
@@ -387,20 +382,13 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
       this._changeProjectSubscriber = null;
     }
     if (init) {
-      this._reloadSubscriber = this.appManager
-        .get(CreatorAssetManager)
-        .reloadSubscriber.subscribe(async (changes) => {
-          this.forgetChildren(
-            changes.workspaceId ? 'workspace:' + changes.workspaceId : '',
-          );
-        });
-      this._workspaceEventsSubscriber = this.appManager
-        .get(CreatorAssetManager)
+      this._workspaceEventsSubscriber = this.projectContext
+        .get(AssetSubContext)
         .projectContentEvents.subscribe((change_res) => {
           // Don't await
           this._handleWorkspacesEvents(change_res);
         });
-      this._changeProjectSubscriber = this.appManager
+      this._changeProjectSubscriber = this.projectContext.appManager
         .get(ProjectManager)
         .changeProjectSubscriber.subscribe(({ newProjectId }) => {
           if (
@@ -437,8 +425,8 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
           >();
 
           for (const workspace_id of change_res.wUpsIds) {
-            const workspace = this.appManager
-              .get(CreatorAssetManager)
+            const workspace = this.projectContext
+              .get(AssetSubContext)
               .getWorkspaceByIdViaCacheSync(workspace_id);
             if (!workspace) {
               continue;

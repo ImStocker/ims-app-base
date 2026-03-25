@@ -1,5 +1,5 @@
 import { defineAsyncComponent } from 'vue';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import type { IAppManager } from '#logic/managers/IAppManager';
 import { STRUCT_ASSET_ID, ENUM_ASSET_ID } from '#logic/constants';
 
@@ -12,7 +12,7 @@ export default function () {
           const cancel_callbacks: { cancel: () => void }[] = [];
 
           cancel_callbacks.push(
-            appManager.get(EditorManager).registerAssetLayout({
+            appManager.get(EditorSubContext).registerAssetLayout({
               name: 'full',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -33,7 +33,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorManager).registerAssetLayout({
+            appManager.get(EditorSubContext).registerAssetLayout({
               name: 'detached',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -50,7 +50,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorManager).registerAssetLayout({
+            appManager.get(EditorSubContext).registerAssetLayout({
               name: 'enum',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -69,7 +69,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorManager).registerAssetLayout({
+            appManager.get(EditorSubContext).registerAssetLayout({
               name: 'struct',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -89,13 +89,13 @@ export default function () {
 
           cancel_callbacks.push(
             appManager
-              .get(EditorManager)
+              .get(EditorSubContext)
               .registerAssetLayoutBind(STRUCT_ASSET_ID, 'struct'),
           );
 
           cancel_callbacks.push(
             appManager
-              .get(EditorManager)
+              .get(EditorSubContext)
               .registerAssetLayoutBind(ENUM_ASSET_ID, 'enum'),
           );
 

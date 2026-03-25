@@ -20,7 +20,7 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import { defineComponent } from 'vue';
-import TaskManager from '../../logic/managers/TaskManager';
+import TaskManager from '../../logic/managers/TaskSubContext';
 import type { Workspace } from '../../logic/types/Workspaces';
 import ImsSelect from '../Common/ImsSelect.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';

@@ -10,8 +10,6 @@ import {
   type Workspace,
   type WorkspaceMoveParams,
 } from '../../../logic/types/Workspaces';
-import type { IAppManager } from '../../../logic/managers/IAppManager';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import type {
   AssetForSelection,
   AssetMoveParams,
@@ -22,13 +20,14 @@ import {
   MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT,
   MIN_WORKSPACE_RIGHTS_TO_MOVE,
 } from '../../../logic/types/Rights';
-import ProjectManager from '../../../logic/managers/ProjectManager';
-import ProjectContentManager from '../../../logic/managers/ProjectContentManager';
 import {
   getBetweenIndexWithTimestamp,
   getNextIndexWithTimestamp,
 } from '../Editor/blockUtils';
 import type { AssetPropValueAsset } from '../../../logic/types/Props';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import ImportExportSubContext from '../../../logic/project-sub-contexts/ImportExportSubContext';
 
 export type ProjectTreeItemPayload = {
   id: string;
@@ -66,7 +65,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
   protected dragSelfContext: ProjectTreePresenterDragContext | null = null;
   protected loadedRootWorkspaceId: string | null | undefined = undefined;
 
-  public constructor(public appManager: IAppManager) {
+  public constructor(public projectContext: IProjectContext) {
     super();
   }
 
@@ -154,8 +153,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
     let first = false;
     for (const node of nodes) {
       if (node.item.payload.type === 'asset') {
-        const asset = this.appManager
-          .get(CreatorAssetManager)
+        const asset = this.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCacheSync(node.item.payload.id);
         if (asset && asset.rights >= MIN_ASSET_RIGHTS_TO_MOVE) {
           canMove = true;
@@ -164,8 +163,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
           }
         }
       } else if (node.item.payload.type === 'workspace') {
-        const workspace = this.appManager
-          .get(CreatorAssetManager)
+        const workspace = this.projectContext
+          .get(AssetSubContext)
           .getWorkspaceByIdViaCacheSync(node.item.payload.id);
         if (workspace && workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_MOVE) {
           canMove = true;
@@ -255,9 +254,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
                 return 'none';
               }
             } else {
-              const user_role = this.appManager
-                .get(ProjectManager)
-                .getUserRoleInProject();
+              const user_role = this.projectContext.user?.role;
               if (!user_role || !user_role.isAdmin) {
                 return 'none'; // Only admin can add items to project root
               }
@@ -407,7 +404,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
           for (const workspace of drop.workspaces) {
             if (workspace.props.type !== WORKSPACE_TYPE_COLLECTION) {
               throw new Error(
-                this.appManager.$t(
+                this.projectContext.appManager.$t(
                   'sourcePage.folders.collection.cannotDropFolder',
                 ),
               );
@@ -416,8 +413,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
               ? (workspace.props.asset as AssetPropValueAsset).AssetId
               : null;
             const workspace_collection_asset = workspace_asset_id
-              ? await this.appManager
-                  .get(CreatorAssetManager)
+              ? await this.projectContext
+                  .get(AssetSubContext)
                   .getAssetShortViaCache(workspace_asset_id)
               : null;
             if (
@@ -429,7 +426,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
                 workspace_collection_asset.id !== target_collection_asset_id)
             ) {
               throw new Error(
-                this.appManager.$t(
+                this.projectContext.appManager.$t(
                   'sourcePage.folders.collection.cannotDropAssetTypeMissmatched',
                 ),
               );
@@ -442,7 +439,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
                 asset.id !== target_collection_asset_id)
             ) {
               throw new Error(
-                this.appManager.$t(
+                this.projectContext.appManager.$t(
                   'sourcePage.folders.collection.cannotDropAssetTypeMissmatched',
                 ),
               );
@@ -457,13 +454,13 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
 
     if (any_move) {
       if (moving_assets_params.ids.length > 0) {
-        await this.appManager
-          .get(CreatorAssetManager)
+        await this.projectContext
+          .get(AssetSubContext)
           .moveAssets(moving_assets_params);
       }
       if (moving_workspace_params.ids.length > 0) {
-        await this.appManager
-          .get(CreatorAssetManager)
+        await this.projectContext
+          .get(AssetSubContext)
           .moveWorkspaces(moving_workspace_params);
       }
     }
@@ -503,8 +500,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
       }
     }
     const target_parent_workspace = target_parent_workspace_id
-      ? this.appManager
-          .get(CreatorAssetManager)
+      ? this.projectContext
+          .get(AssetSubContext)
           .getWorkspaceByIdViaCacheSync(target_parent_workspace_id)
       : target_parent_workspace_id === null
         ? null
@@ -534,8 +531,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
       if (dt_item.kind === 'file') {
         // import
         if (drop_target.workspace === undefined) return; // No drop target
-        await this.appManager
-          .get(ProjectContentManager)
+        await this.projectContext
+          .get(ImportExportSubContext)
           .importFiles(
             drop_target.workspace ? drop_target.workspace.id : null,
             [...dt.files],
@@ -575,8 +572,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
     const moving_content_assets = (
       await Promise.all(
         moving_content_asset_ids.map((id) => {
-          return this.appManager
-            .get(CreatorAssetManager)
+          return this.projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCache(id);
         }),
       )
@@ -584,8 +581,8 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
     const moving_content_workspaces = (
       await Promise.all(
         moving_content_workspace_ids.map((id) => {
-          return this.appManager
-            .get(CreatorAssetManager)
+          return this.projectContext
+            .get(AssetSubContext)
             .getWorkspaceByIdViaCache(id);
         }),
       )

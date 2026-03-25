@@ -35,7 +35,7 @@
   </tree-presenter>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import TreePresenter from '../../Common/TreePresenter/TreePresenter.vue';
 import type {
   TreePresenterItem,
@@ -49,17 +49,17 @@ import {
 import CaptionString from '../../Common/CaptionString.vue';
 import BlockWithMenu from '../../Common/BlockWithMenu.vue';
 import { getIconClass } from '../../utils/ui';
-import EditorManager from '../../../logic/managers/EditorManager';
 import {
   convertTranslatedTitle,
   makeAnchorTagId,
 } from '../../../logic/utils/assets';
 import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
 import type { EditorContextForAsset } from '../../../logic/types/EditorContextForAsset';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import { getProjectLinkHref } from '../../../logic/router/routes-helpers';
 import { clipboardCopyPlainText } from '../../../logic/utils/clipboard';
 import UiManager from '../../../logic/managers/UiManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetContentTreePresenter',
@@ -104,6 +104,12 @@ export default defineComponent({
     'item:keydown',
     'select',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       treePresenterVM: new AssetContentTreePresenterVM(),
@@ -137,8 +143,11 @@ export default defineComponent({
       },
     },
     revealedContentIds() {
-      return this.$getAppManager()
-        .get(EditorManager)
+      if (!this.projectContext) {
+        return [];
+      }
+      return this.projectContext
+        .get(EditorSubContext)
         .getRevealedContentIds(this.assetId);
     },
   },
@@ -207,9 +216,7 @@ export default defineComponent({
           icon: 'link',
           action: async () => {
             try {
-              const projectInfo = this.$getAppManager()
-                .get(ProjectManager)
-                .getProjectInfo();
+              const projectInfo = this.projectContext?.projectInfo;
               let link = '';
               if (projectInfo && this.assetId) {
                 link = getProjectLinkHref(

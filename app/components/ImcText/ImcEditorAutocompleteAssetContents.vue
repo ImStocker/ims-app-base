@@ -37,8 +37,8 @@
 </template>
 <script lang="ts">
 import { defineAsyncComponent, defineComponent } from 'vue';
-import type { EditorContextForAssetRequested } from '../../logic/managers/EditorManager';
-import EditorManager from '../../logic/managers/EditorManager';
+import type { EditorContextForAssetRequested } from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 import type AssetContentTreePresenter from '../Asset/ProjectTree/AssetContentTreePresenter.vue';
 import type { BlockContentItem } from '../../logic/types/BlockTypeDefinition';
 
@@ -119,7 +119,7 @@ export default defineComponent({
       }
       if (init) {
         this.editorContextForAssetRequest = this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .requestEditorContextForAsset(this.assetId);
         const assigned_request = this.editorContextForAssetRequest;
         try {

@@ -23,9 +23,13 @@ import { openProjectLink } from '../router/routes-helpers';
 import { convertTranslatedTitle } from '../utils/assets';
 import { DISCUSSION_ASSET_ID } from '../constants';
 import {
+  MIN_ASSET_RIGHTS_TO_CHANGE,
+  MIN_ASSET_RIGHTS_TO_DELETE,
   MIN_ASSET_RIGHTS_TO_READ,
+  MIN_ASSET_RIGHTS_TO_RENAME,
   MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT,
   MIN_WORKSPACE_RIGHTS_TO_CHANGE,
+  MIN_WORKSPACE_RIGHTS_TO_DELETE,
   MIN_WORKSPACE_RIGHTS_TO_READ,
   MIN_WORKSPACE_RIGHTS_TO_RENAME,
 } from '../types/Rights';
@@ -41,24 +45,24 @@ import type {
 } from '../types/Props';
 import ChangeCollectionTypeDialog from '../../components/Asset/ChangeCollectionTypeDialog.vue';
 import { isWorkspaceInsideCollection } from '../../components/GameDesign/workspaceUtils';
-import ProjectContentManager from '../managers/ProjectContentManager';
+import ProjectContentManager from '../project-sub-contexts/ImportExportSubContext';
 import {
   getDefaultProjectTreePresenterVMOptions,
   ProjectTreePresenterVM,
   type ProjectTreePresenterVMOptions,
 } from '../../components/Asset/ProjectTree/ProjectTreePresenterVM';
-import type { IAppManager } from '../managers/IAppManager';
 import {
   TREE_PRESENTER_ROOT_STATE_ID,
   type TreePresenterItem,
 } from '../../components/Common/TreePresenter/TreePresenter';
 import type { ProjectTreeItemPayload } from '../../components/Asset/ProjectTree/ProjectTreePresenterBaseVM';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export class GameDesignMenuVM extends ProjectTreePresenterVM {
   private _searchValue: AssetPropValueSelection | null = null;
 
   constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     public rootWorkspaceId: string | null,
   ) {
     super(appManager, getDefaultProjectTreePresenterVMOptions());
@@ -228,7 +232,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     }
     const asset_is_discussion =
       asset.typeIds && asset.typeIds.includes(DISCUSSION_ASSET_ID);
-    if (this.appManager.get(CreatorAssetManager).canChangeAsset(asset)) {
+    if (asset.rights >= MIN_ASSET_RIGHTS_TO_CHANGE) {
       assetActions.push({
         title: this.appManager.$t('gddPage.settings'),
         icon: 'settings',
@@ -264,7 +268,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         action: () => this.createAsset(asset.workspaceId, asset.id),
       });
     }
-    if (this.appManager.get(CreatorAssetManager).canRenameAsset(asset)) {
+    if (asset.rights >= MIN_ASSET_RIGHTS_TO_RENAME) {
       assetActions.push({
         title: this.appManager.$t('common.dialogs.rename'),
         action: () => this.renameElement(asset),
@@ -308,7 +312,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         ],
       });
     }
-    if (this.appManager.get(CreatorAssetManager).canDeleteAsset(asset)) {
+    if (asset.rights >= MIN_ASSET_RIGHTS_TO_DELETE) {
       assetActions.push({
         title: this.appManager.$t('sourcePage.elements.delete'),
         action: () => this.deleteAssetMenu(asset),
@@ -544,10 +548,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         icon: 'import',
       });
     }
-    if (
-      this.appManager.get(CreatorAssetManager).canDeleteWorkspace(workspace) &&
-      has_parent
-    ) {
+    if (workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_DELETE && has_parent) {
       workspaceActions.push({
         title: this.appManager.$t('sourcePage.folders.delete'),
         action: () => this.deleteWorkspaceMenu(workspace),

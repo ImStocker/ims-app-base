@@ -184,7 +184,7 @@ export default defineComponent({
       return cached_asset.workspaceId
         ? (this.$getAppManager()
             .get(CreatorAssetManager)
-            .getParentWorkspacesListFromCache(cached_asset.workspaceId) ?? [])
+            .getParentWorkspacesListFromCacheSync(cached_asset.workspaceId) ?? [])
         : [];
     },
   },

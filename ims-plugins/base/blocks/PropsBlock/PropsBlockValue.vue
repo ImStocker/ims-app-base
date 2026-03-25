@@ -120,7 +120,7 @@ import FormBuilderFieldTooltip from '#components/Form/FormBuilderFieldTooltip.vu
 import StringPropPresenter from '#components/Props/StringPropPresenter.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';
 import type { FieldTypeController } from '#logic/types/FieldTypeController';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import AsyncComponent from '#components/Common/AsyncComponent.vue';
 
 export default defineComponent({
@@ -196,7 +196,7 @@ export default defineComponent({
     } {
       const type = this.field.type ? this.field.type : 'text';
       const hint = this.field.hint;
-      const map = this.$getAppManager().get(EditorManager).getFieldTypesMap();
+      const map = this.$getAppManager().get(EditorSubContext).getFieldTypesMap();
       const controller = map.hasOwnProperty(type) ? map[type] : undefined;
       return {
         loading: false,

@@ -88,8 +88,8 @@ export type AssetPropValueWorkspace = {
 };
 
 export type AssetPropValueSelection = {
-  Select: any;
-  Group: any;
+  Select?: any;
+  Group?: any;
   Str: string;
   Where: AssetPropWhere;
   Order?: AssetPropsSelectionOrder[];

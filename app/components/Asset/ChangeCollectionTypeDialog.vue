@@ -129,7 +129,7 @@ export default defineComponent({
           assert(this.collectionType);
           const nested_workspaces = await this.$getAppManager()
             .get(CreatorAssetManager)
-            .getWorkspacesListAll({
+            .getWorkspacesList({
               where: {
                 insideId: this.dialog.state.workspaceId,
               },

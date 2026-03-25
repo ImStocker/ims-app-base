@@ -93,7 +93,12 @@
   </tree-presenter>
 </template>
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import TreePresenter from '../../Common/TreePresenter/TreePresenter.vue';
 import type { AssetPropWhere } from '../../../logic/types/PropsWhere';
 import {
@@ -113,6 +118,7 @@ import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
 import type { Workspace } from '../../../logic/types/Workspaces';
 import type { ProjectTreeItemPayload } from './ProjectTreePresenterBaseVM';
 import ProjectTreePresenterContents from './ProjectTreePresenterContents.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'ProjectTreePresenter',
@@ -200,12 +206,18 @@ export default defineComponent({
     'item:focus',
     'item:keydown',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       treePresenterVM: this.externalVm
         ? this.externalVm
         : new ProjectTreePresenterVM(
-            this.$getAppManager(),
+            this.projectContext!,
             this._getTreePresenterOptions(),
           ),
     };
@@ -251,7 +263,7 @@ export default defineComponent({
       this.treePresenterVM = this.externalVm
         ? this.externalVm
         : new ProjectTreePresenterVM(
-            this.$getAppManager(),
+            this.projectContext!,
             this._getTreePresenterOptions(),
           );
       if (!this.externalVm && this.$el) {

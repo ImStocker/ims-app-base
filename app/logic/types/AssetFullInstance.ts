@@ -1,5 +1,4 @@
 import { type UnwrapNestedRefs, reactive, watch } from 'vue';
-import type { IAppManager } from '../managers/IAppManager';
 import type { ResolvedAssetBlock, ResolvedAssetBlocks } from '../utils/assets';
 import type {
   AssetForEdit,
@@ -32,6 +31,7 @@ import {
   readAssetMetaCompletionBlockProps,
   type AssetCompletionMeta,
 } from '../../components/Asset/Completion/AssetCompletion';
+import type { IProjectContext } from './IProjectContext';
 
 export type ComputedAssetPropResult = {
   value: AssetPropValue;
@@ -143,7 +143,7 @@ export function calcResolvedBlocks(asset: AssetForEdit) {
 }
 
 export class AssetFullInstance implements AssetFull {
-  readonly appManager: IAppManager;
+  readonly projectContext: IProjectContext;
   id!: string;
   projectId!: string;
   workspaceId!: string | null;
@@ -206,12 +206,15 @@ export class AssetFullInstance implements AssetFull {
     });
   }
 
-  static Create(appManager: IAppManager, asset: AssetFull): AssetFullInstanceR {
-    return reactive(new AssetFullInstance(appManager, asset));
+  static Create(
+    projectContext: IProjectContext,
+    asset: AssetFull,
+  ): AssetFullInstanceR {
+    return reactive(new AssetFullInstance(projectContext, asset));
   }
 
-  private constructor(appManager: IAppManager, asset: AssetFull) {
-    this.appManager = appManager;
+  private constructor(projectContext: IProjectContext, asset: AssetFull) {
+    this.projectContext = projectContext;
     this.update(asset);
   }
 

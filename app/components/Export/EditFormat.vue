@@ -49,7 +49,7 @@ import { AssetPropWhereOpKind } from '../../logic/types/PropsWhere';
 import type { UiNavigationGuardHandler } from '../../logic/managers/UiManager';
 import UiManager from '../../logic/managers/UiManager';
 import ExportFormatManager from '../../logic/managers/ExportFormatManager';
-import LocalFsSyncManager from '../../logic/managers/LocalFsSyncManager';
+import LocalFsSyncSubContext from '../../logic/managers/LocalFsSyncSubContext';
 import {
   ASSET_SELECTION_DIAGRAM,
   ASSET_SELECTION_ENUM,
@@ -102,7 +102,7 @@ export default defineComponent({
   },
   computed: {
     segments() {
-      return this.$getAppManager().get(LocalFsSyncManager).getSegmentList();
+      return this.$getAppManager().get(LocalFsSyncSubContext).getSegmentList();
     },
     formats() {
       return this.$getAppManager().get(ExportFormatManager).getExportFormats();

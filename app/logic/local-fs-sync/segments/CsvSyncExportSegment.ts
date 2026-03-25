@@ -1,6 +1,7 @@
-import type { ExportFormat } from '../../managers/ExportFormatManager';
-import ExportFormatManager from '../../managers/ExportFormatManager';
-import LocalFsSyncManager from '../../managers/LocalFsSyncManager';
+import ImportExportSubContext, {
+  type ExportFormat,
+} from '#logic/project-sub-contexts/ImportExportSubContext';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
 import {
   castAssetPropPlainObjectValueToString,
   castAssetPropValueToString,
@@ -39,8 +40,8 @@ export default class CsvSyncExportSegment extends SyncExportSegment {
   }
 
   private get _currentFormat(): ExportFormat | undefined {
-    const format = this.appManager
-      .get(ExportFormatManager)
+    const format = this.projectContext
+      .get(ImportExportSubContext)
       .getExportFormats()
       .find((el) => el.id === this.info.formatId);
     return format;
@@ -61,7 +62,7 @@ export default class CsvSyncExportSegment extends SyncExportSegment {
       if (!fields || !Array.isArray(fields)) return;
 
       prepared_assets = await getPreparedAssets(
-        this.appManager,
+        this.projectContext,
         {
           where: {
             id: chunk.assetUpdatedIds,
@@ -78,8 +79,8 @@ export default class CsvSyncExportSegment extends SyncExportSegment {
       );
 
       if (jscode) {
-        prepared_assets = await this.appManager
-          .get(LocalFsSyncManager)
+        prepared_assets = await this.projectContext
+          .get(LocalFsSyncSubContext)
           .getUserCodeExecutorManager()
           .formatAssetsByCode(prepared_assets, jscode);
       }

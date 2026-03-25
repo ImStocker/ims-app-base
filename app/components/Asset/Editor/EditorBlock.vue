@@ -153,7 +153,7 @@ import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import CaptionString from '../../Common/CaptionString.vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../../logic/managers/TaskManager';
+import TaskManager from '../../../logic/managers/TaskSubContext';
 import {
   castAssetPropValueToString,
   makeBlockRef,
@@ -173,7 +173,7 @@ import type { MenuListItem } from '../../../logic/types/MenuList';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import NotificationIcon from '../ProjectTree/NotificationIcon.vue';
 import { isAssetUnreadAny } from '../../../logic/types/AssetUnread';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import EditorBlockContent from './EditorBlockContent.vue';
 import { isElementInteractive } from '../../utils/DomElementUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -434,7 +434,7 @@ export default defineComponent({
     },
     blockTypeDefinition() {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getBlockTypeDefinition(this.resolvedBlock.type);
     },
     isInherited() {

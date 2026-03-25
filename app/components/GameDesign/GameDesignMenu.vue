@@ -84,7 +84,7 @@ import {
 } from '../../logic/types/Rights';
 import { HUB_PID } from '../../logic/constants';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import ProjectContentManager from '../../logic/managers/ProjectContentManager';
+import ProjectContentManager from '../../logic/project-sub-contexts/ImportExportSubContext';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
 import ProjectTreeSearch from '../Asset/ProjectTree/ProjectTreeSearch.vue';
 import CreateElementButtons from '../Asset/CreateElementButtons.vue';
@@ -203,7 +203,6 @@ export default defineComponent({
     },
     canCreateElements() {
       return (
-        this.$getAppManager().get(ProjectManager).canCreateAssets() &&
         this.gddVM &&
         this.gddVM.rootWorkspaceCached &&
         this.gddVM.rootWorkspaceCached.rights >=

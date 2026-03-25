@@ -5,7 +5,7 @@ import Delta from 'quill-delta';
 import tinycolor from 'tinycolor2';
 import type { ImcEditorQuillController } from './ImcEditorQuillController';
 import { base64ToBuffer } from '../../logic/utils/dataUtils';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import UiManager from '../../logic/managers/UiManager';
 
 const ALLOWED_MIME_TYPES = {
@@ -68,7 +68,7 @@ export class ImcClipboard extends Clipboard {
         const file = new File([buffer], filename, { type: data_type });
         const upload_job = this.controller.component
           .$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .attachFile(file, file.name);
 
         op.insert = {

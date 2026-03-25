@@ -84,9 +84,9 @@ import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import UiManager from '../../../logic/managers/UiManager';
 import type { BlockContentItem } from '../../../logic/types/BlockTypeDefinition';
 import AssetPageContentsTable from '../Editor/AssetPageContentsTable.vue';
-import EditorManager, {
+import EditorSubContext, {
   type EditorContextForAssetRequested,
-} from '../../../logic/managers/EditorManager';
+} from '../../../logic/managers/EditorSubContext';
 import { makeAnchorTagId } from '../../../logic/utils/assets';
 
 export default defineComponent({
@@ -203,7 +203,7 @@ export default defineComponent({
       if (init) {
         this.editorContextForAssetRequest = this.currentAssetFull
           ? this.$getAppManager()
-              .get(EditorManager)
+              .get(EditorSubContext)
               .requestEditorContextForAsset(this.currentAssetFull.id)
           : null;
       }

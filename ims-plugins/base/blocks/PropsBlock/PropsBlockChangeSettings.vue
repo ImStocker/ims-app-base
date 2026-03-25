@@ -134,7 +134,7 @@ import CaptionString from '#components/Common/CaptionString.vue';
 import StringPropEditor from '#components/Props/StringPropEditor.vue';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import RenamableText from '#components/Common/RenamableText.vue';
 
 export default defineComponent({
@@ -224,7 +224,7 @@ export default defineComponent({
     typeController(): FieldTypeController | null {
       if (!this.type) return null;
       return (
-        this.$getAppManager().get(EditorManager).getFieldTypesMap()[
+        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
           this.type
         ] ?? null
       );

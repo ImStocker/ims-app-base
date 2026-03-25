@@ -16,7 +16,7 @@ import { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
 import { AssetRights } from '../../../logic/types/Rights';
 import AssetEditorToolbarWidget from '../Editor/AssetEditorToolbarWidget.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import { useAppManager } from '../../../composables/useAppManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 
@@ -58,7 +58,7 @@ export default defineComponent({
     },
     isActiveEditor() {
       return (
-        this.$getAppManager().get(EditorManager).activeEditor ===
+        this.$getAppManager().get(EditorSubContext).activeEditor ===
         this.assetBlockEditor
       );
     },

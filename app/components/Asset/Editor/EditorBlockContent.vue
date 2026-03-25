@@ -72,7 +72,7 @@ import AsyncComponent from '../../Common/AsyncComponent.vue';
 import AssetBlockResizer from './AssetBlockResizer.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import { capitalizeFirstLetter } from '../../../logic/utils/stringUtils';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import type { IAssetBlockComponent } from '../../../logic/types/IAssetBlockComponent';
 
 export default defineComponent({
@@ -157,7 +157,7 @@ export default defineComponent({
     },
     blockTypeDefinition() {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getBlockTypeDefinition(this.resolvedBlock.type);
     },
     blockController() {

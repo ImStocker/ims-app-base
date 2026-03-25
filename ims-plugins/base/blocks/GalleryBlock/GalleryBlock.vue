@@ -117,7 +117,7 @@ import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import ScreenshotRenderer from '#components/Common/ScreenshotRenderer.vue';
 import type { UploadingJob } from '#logic/managers/EditorManager';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 import { getNextIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
 
 const AllowedExtensions = new Set(['jpg', 'jpeg', 'png', 'bmp', 'svg', 'gif']);
@@ -279,7 +279,7 @@ export default defineComponent({
         .get(UiManager)
         .doTask(async () => {
           this.uploadJob = this.$getAppManager()
-            .get(EditorManager)
+            .get(EditorSubContext)
             .attachFile(blob, file_name);
           const res = await this.uploadJob.awaitResult();
           if (!res) return;

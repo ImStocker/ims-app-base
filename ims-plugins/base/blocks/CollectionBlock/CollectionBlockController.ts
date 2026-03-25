@@ -5,6 +5,7 @@ import {
 } from '#components/Workspace/ViewOptions/viewUtils';
 import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import type { IAppManager } from '#logic/managers/IAppManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import type { ExtendedMenuListItem } from '#logic/types/MenuList';
 import {
   normalizeAssetPropPart,
@@ -245,9 +246,9 @@ export class CollectionBlockEditorController
 
   async saveWorkspaceViews(views_map: { [key: string]: UserView }) {
     assert(this.workspaceId);
-    const workspace = await this.appManager
-      .get(CreatorAssetManager)
-      .getWorkspaceById(this.workspaceId);
+    const workspace = await this.projectContext
+      .get(AssetSubContext)
+      .loadWorkspaceById(this.workspaceId);
     assert(workspace);
 
     const new_workspace_props = { ...workspace.props };

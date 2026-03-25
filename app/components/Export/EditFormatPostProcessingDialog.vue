@@ -58,7 +58,7 @@
 import { defineComponent, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
-import LocalFsSyncManager from '../../logic/managers/LocalFsSyncManager';
+import LocalFsSyncSubContext from '../../logic/managers/LocalFsSyncSubContext';
 
 import { EditorState } from '@codemirror/state';
 import {
@@ -196,7 +196,7 @@ export default defineComponent({
         this.preview = '';
         if (this.dialog.state.sampleAsset) {
           const prepared_objs = await this.$getAppManager()
-            .get(LocalFsSyncManager)
+            .get(LocalFsSyncSubContext)
             .getUserCodeExecutorManager()
             .formatAssetsByCode([this.dialog.state.sampleAsset], this.jscode);
           this.preview = JSON.stringify(prepared_objs[0] ?? {}, null, 1);

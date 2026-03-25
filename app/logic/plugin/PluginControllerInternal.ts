@@ -1,7 +1,7 @@
-import type { BlockTypeDefinition } from '../../types/BlockTypeDefinition';
-import type { FieldTypeController } from '../../types/FieldTypeController';
-import type { IAppManager } from '../IAppManager';
-import type { SegmentEntity } from '../LocalFsSyncManager';
+import type { SegmentEntity } from '#logic/project-sub-contexts/LocalFsSyncSubContext';
+import type { BlockTypeDefinition } from '#logic/types/BlockTypeDefinition';
+import type { FieldTypeController } from '#logic/types/FieldTypeController';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import PluginControllerBase, {
   type PluginContentDescriptorBase,
   type PluginDescriptor,
@@ -33,7 +33,7 @@ export type PluginContentDescriptorExportSegment = PluginContentDescriptorBase<
 >;
 
 type PluginContentDescriptorModuleContent = {
-  activate(appManager: IAppManager): Promise<() => Promise<void>>;
+  activate(projectContext: IProjectContext): Promise<() => Promise<void>>;
 };
 
 export type PluginContentDescriptorModule = PluginContentDescriptorBase<
@@ -42,8 +42,11 @@ export type PluginContentDescriptorModule = PluginContentDescriptorBase<
 >;
 
 export default class PluginControllerInternal extends PluginControllerBase {
-  constructor(appManager: IAppManager, pluginDescriptor: PluginDescriptor) {
-    super(appManager);
+  constructor(
+    projectContext: IProjectContext,
+    pluginDescriptor: PluginDescriptor,
+  ) {
+    super(projectContext);
     this._pluginDescriptor = pluginDescriptor;
   }
 }

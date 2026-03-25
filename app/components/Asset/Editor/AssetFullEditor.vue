@@ -67,7 +67,7 @@ import {
   BLOCK_TYPE_LOCALE,
   BLOCK_TYPE_PROPS,
 } from '../../../logic/constants';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import RightPanel from '#components/Common/RightPanel.vue';
 import AssetHistory from '../History/AssetHistory.vue';
 
@@ -101,11 +101,11 @@ export default defineComponent({
     layoutDescriptor() {
       if (!this.currentSingleAsset) {
         return this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentSingleAsset);
     },
     projectInfo() {

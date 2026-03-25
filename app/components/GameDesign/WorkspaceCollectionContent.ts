@@ -1,11 +1,11 @@
+import type { UserViewProp } from '#components/Workspace/ViewOptions/viewUtils';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import { BLOCK_NAME_META } from '../../logic/constants';
-import EditorManager from '../../logic/managers/EditorManager';
-import type { IAppManager } from '../../logic/managers/IAppManager';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import { stringifyAssetNewBlockRef } from '../../logic/types/Props';
 import type { PropsFormFieldDef } from '../../logic/types/PropsForm';
 import type { ImcGridColumn } from '../ImcGrid/ImcGrid';
-import type { UserViewProp } from '../ViewOptions/viewUtils';
 
 export type SavedWorkspaceCollectionPreferences = {
   columns?: {
@@ -28,7 +28,7 @@ export type WorkspaceCollectionColumn = ImcGridColumn & {
 
 export function gatherColumns(
   asset: AssetFullInstanceR,
-  app_manager: IAppManager,
+  projectContext: IProjectContext,
 ): WorkspaceCollectionColumn[] {
   let columns: WorkspaceCollectionColumn[] = [];
   for (const block of asset.blocks) {
@@ -36,8 +36,8 @@ export function gatherColumns(
       continue;
     }
     const fields: PropsFormFieldDef[] = [];
-    const current_block_controller = app_manager
-      .get(EditorManager)
+    const current_block_controller = projectContext
+      .get(EditorSubContext)
       .getBlockTypesMap()[block.type];
     if (!current_block_controller) {
       continue;
@@ -51,7 +51,7 @@ export function gatherColumns(
           references: [],
           assetId: asset.id,
         },
-        app_manager,
+        projectContext,
       );
     for (const variable of current_block_variables) {
       fields.push(variable.field);

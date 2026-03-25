@@ -5,7 +5,6 @@ import {
   type AssetPropValueText,
   type AssetPropValueType,
 } from './Props';
-import type { IAppManager } from '../managers/IAppManager';
 import type {
   AssetLocalizableField,
   ResolvedAssetBlock,
@@ -18,6 +17,7 @@ import {
   DefaultBlockEditorController,
   type BlockEditorController,
 } from './BlockEditorController';
+import type { IProjectContext } from './IProjectContext';
 
 export type BlockContentItem<U> = {
   blockId: string;
@@ -109,7 +109,7 @@ export abstract class BlockTypeDefinition {
   }
 
   async beforeBlockCreate(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     params: { title: string | null },
   ): Promise<{ title: string | null; props?: AssetProps } | undefined> {
     return {
@@ -121,7 +121,7 @@ export abstract class BlockTypeDefinition {
   getBlockProvidedVariables(
     _asset: AssetFullInstanceR,
     _resolved_block: ResolvedAssetBlock,
-    _app_manager: IAppManager,
+    _projectContext: IProjectContext,
   ): BlockProvidedVariable[] {
     return [];
   }
@@ -134,9 +134,9 @@ export abstract class BlockTypeDefinition {
   }
 
   createController(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     getResolvedBlock: () => ResolvedAssetBlock | null,
   ): BlockEditorController {
-    return new DefaultBlockEditorController(appManager, getResolvedBlock);
+    return new DefaultBlockEditorController(projectContext, getResolvedBlock);
   }
 }

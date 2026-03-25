@@ -2,7 +2,7 @@ import { BLOCK_NAME_META, TASK_ASSET_ID } from '../../../logic/constants';
 import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import DialogManager from '../../../logic/managers/DialogManager';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
-import TaskManager from '../../../logic/managers/TaskManager';
+import TaskManager from '../../../logic/managers/TaskSubContext';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
 import type {
   AssetPropsParamsDTO,

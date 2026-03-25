@@ -2,26 +2,14 @@ import { AppSubManagerBase } from './IAppManager';
 import type {
   ProjectFullInfo,
   IProjectUserOwnRole,
-  ProjectImportResponseDTO,
-  ChangesStreamRequest,
-  ChangesStreamResponse,
-  ApiResultListWithTotal,
 } from '../types/ProjectTypes';
 import CreatorAssetManager from './CreatorAssetManager';
 import Subscriber from '../types/Subscriber';
-import type { AssetShort } from '../types/AssetsType';
-import type { Workspace } from '../types/Workspaces';
-import { openBlobFile } from '../utils/dataUtils';
 import { Service, HttpMethods } from './ApiWorker';
 import ApiManager from './ApiManager';
-import type {
-  ProjectRightsInspectResponseDTO,
-  RoleAssetRightsChangeDTOOne,
-  RoleWorkspaceRightsChangeDTOOne,
-  RoleWorkspaceRightsGetDTO,
-} from '../types/RightsAndRoles';
 import { EntityCache } from '#logic/types/EntityCache';
 import { assert } from '#logic/utils/typeUtils';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export type IProjectInfo = ProjectFullInfo;
 
@@ -44,7 +32,7 @@ export default class ProjectManager extends AppSubManagerBase {
       loadFunc: async (project_ids) => {
         const res: ProjectFullInfo[] = [];
         for (const project_id of project_ids) {
-          const project_full_info = await this.getProjectFullInfo(project_id);
+          const project_full_info = await this.loadProjectFullInfo(project_id);
           if (project_full_info) {
             res.push(project_full_info);
           }
@@ -54,10 +42,18 @@ export default class ProjectManager extends AppSubManagerBase {
     });
   }
 
+  getCurrentProjectContext(): IProjectContext | null {}
+
+  loadProjectContext(projectId: string): Promise<IProjectContext | null> {}
+
   setCurrentProjectInfo(
     project_info: ProjectFullInfo | null,
     user_role: IProjectUserOwnRole | null,
   ) {
+    assert(this._fullProjectsCache, 'Not inited');
+    if (project_info) {
+      this._fullProjectsCache.addToCache(project_info);
+    }
     const old_project_id = this._projectInfo ? this._projectInfo.id : null;
     this._projectInfo = project_info;
     this._userRole = user_role;
@@ -90,6 +86,7 @@ export default class ProjectManager extends AppSubManagerBase {
     await this.getProjectFullInfoViaCache(projectId);
   }
 
+  /*
   getWorkspaceByName(workspace_name: string) {
     const workspace = this.appManager
       .get(CreatorAssetManager)
@@ -101,27 +98,13 @@ export default class ProjectManager extends AppSubManagerBase {
     const workspace = this.getWorkspaceByName(workspace_name);
     return workspace ? workspace.id : null;
   }
-
+*/
   getProjectInfo(): ProjectFullInfo | null {
     return this._projectInfo;
   }
 
   getUserRoleInProject(): IProjectUserOwnRole | null {
     return this._userRole;
-  }
-
-  canCreateAssets(): boolean {
-    if (!this.getAllowAnonymUsers()) {
-      if (!this._userRole) return false;
-    }
-    if (!this._projectInfo) return false;
-    return true;
-  }
-
-  canCreateWorkspaces(): boolean {
-    if (!this._userRole) return false;
-    if (!this._projectInfo) return false;
-    return true;
   }
 
   canCreateTask(): boolean {
@@ -132,63 +115,8 @@ export default class ProjectManager extends AppSubManagerBase {
     return this._userRole && this._userRole.isAdmin;
   }
 
-  async exportWorkspace(
-    workspace: Workspace,
-    params?: Record<string, any>,
-  ): Promise<void> {
-    const res = await this.appManager
-      .get(ApiManager)
-      .download(Service.CREATORS, HttpMethods.GET, 'project/export', {
-        workspace_id: workspace.id,
-        ...params,
-      });
-
-    const file_title = `${workspace.name ? workspace.name : workspace.title}.zip`;
-    await openBlobFile(new Blob([res]), file_title);
-  }
-
-  async exportAsset(
-    asset: AssetShort,
-    params?: Record<string, any>,
-  ): Promise<void> {
-    const res = await this.appManager
-      .get(ApiManager)
-      .download(
-        Service.CREATORS,
-        HttpMethods.GET,
-        `project/export/asset/${asset.id}`,
-        {
-          use_names: params?.use_names,
-        },
-      );
-    const file_title = `${asset.name ? asset.name : asset.title}.ima.json`;
-    await openBlobFile(new Blob([res]), file_title);
-  }
-
-  async importFile(
-    file: Blob,
-    name: string,
-    workspace_id?: string | null,
-  ): Promise<ProjectImportResponseDTO> {
-    const project_info = this.appManager.get(ProjectManager).getProjectInfo();
-    if (!project_info) throw new Error('Project is not set');
-
-    const formData = new FormData();
-    formData.append('file', file, name);
-    formData.append('pid', project_info.id);
-
-    if (workspace_id === undefined) {
-      workspace_id = this.getWorkspaceIdByName('gdd') ?? undefined;
-    }
-    return await this.appManager
-      .get(ApiManager)
-      .call(Service.CREATORS, HttpMethods.POST, 'project/import', formData, {
-        workspace_id: workspace_id,
-      });
-  }
-
-  async getProjectFullInfo(
-    project_id?: string,
+  async loadProjectFullInfo(
+    project_id: string,
   ): Promise<ProjectFullInfo | null> {
     assert(this._fullProjectsCache, 'Not inited');
     const res: ProjectFullInfo = await this.appManager
@@ -200,51 +128,6 @@ export default class ProjectManager extends AppSubManagerBase {
       this._fullProjectsCache.addToCache(res);
     }
     return res;
-  }
-
-  async reloadProjectSettings() {
-    if (!this._projectInfo) return;
-    const project_info = await this.getProjectFullInfo();
-    if (project_info) {
-      this._projectInfo.settings = project_info.settings;
-    }
-  }
-
-  async getChangesStream(
-    params: ChangesStreamRequest,
-  ): Promise<ChangesStreamResponse> {
-    return await this.appManager
-      .get(ApiManager)
-      .call<ChangesStreamResponse>(
-        Service.CREATORS,
-        HttpMethods.POST,
-        'project/changes/stream/get',
-        params,
-      );
-  }
-
-  async getRights(
-    _asset_id?: string,
-    _workspace_id?: string,
-  ): Promise<ProjectRightsInspectResponseDTO | undefined> {
-    return;
-  }
-
-  async setWorkspaceRoleRightsList(
-    _changes: RoleWorkspaceRightsChangeDTOOne[],
-  ): Promise<ApiResultListWithTotal<RoleWorkspaceRightsGetDTO>> {
-    return {
-      list: [],
-      total: 0,
-    };
-  }
-
-  async setAssetRoleRightsList(
-    _changes: RoleAssetRightsChangeDTOOne[],
-  ): Promise<{ success: true }> {
-    return {
-      success: true,
-    };
   }
 
   async loadProjectTemplates() {

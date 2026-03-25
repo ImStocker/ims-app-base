@@ -92,7 +92,7 @@ import { type PropType, type RendererElement, defineComponent } from 'vue';
 import ImcEditor from '#components/ImcText/ImcEditor.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-import CommentManager from '#logic/managers/CommentManager';
+import CommentSubContext from '#logic/managers/CommentSubContext';
 import {
   type AssetPropValue,
   type AssetPropValueFile,
@@ -284,7 +284,7 @@ export default defineComponent({
         .get(UiManager)
         .doTask(async () => {
           await this.$getAppManager()
-            .get(CommentManager)
+            .get(CommentSubContext)
             .setLike(message.commentId, message.replyId, {
               like,
             });
@@ -326,7 +326,7 @@ export default defineComponent({
               }
             }
             await this.$getAppManager()
-              .get(CommentManager)
+              .get(CommentSubContext)
               .deleteReply(message.commentId, message.replyId);
             this.messages.splice(deleted_message_index, 1);
           });
@@ -343,7 +343,7 @@ export default defineComponent({
         this.$emit('update:lastViewedAt', new Date().toISOString());
         try {
           const res = await this.$getAppManager()
-            .get(CommentManager)
+            .get(CommentSubContext)
             .getComments(loading_branch_id, {});
           if (loading_branch_id === this.chatCommentBranchId) {
             const messages = [] as CommentReplyDTO[];
@@ -409,7 +409,7 @@ export default defineComponent({
               await this.scrollToBottom();
               this.commentContent = '';
               const res = await this.$getAppManager()
-                .get(CommentManager)
+                .get(CommentSubContext)
                 .addAnswer(this.chatCommentBranch.id, {
                   assetId: this.currentAsset.id,
                   content: { '': comment_content_to_db },
@@ -444,7 +444,7 @@ export default defineComponent({
               this.commentContent = '';
 
               const res = await this.$getAppManager()
-                .get(CommentManager)
+                .get(CommentSubContext)
                 .createComment({
                   assetId: this.currentAsset.id,
                   content: { '': comment_content_to_db },
@@ -484,7 +484,7 @@ export default defineComponent({
             this.editingMessageId = null;
 
             const res = await this.$getAppManager()
-              .get(CommentManager)
+              .get(CommentSubContext)
               .changeReply(
                 this.chatCommentBranch?.id,
                 this.messages[editing_message_index].id,

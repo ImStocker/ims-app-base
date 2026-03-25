@@ -16,7 +16,7 @@
 import { defineComponent } from 'vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
@@ -28,7 +28,7 @@ export default defineComponent({
   computed: {
     blockTypes() {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
     },

@@ -10,7 +10,7 @@ import { defineComponent } from 'vue';
 import type { AssetPropValue } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'AttributeTypePropPresenter',
@@ -24,7 +24,7 @@ export default defineComponent({
   emits: ['update:modelValue', 'blur'],
   computed: {
     fieldTypesMap() {
-      return this.$getAppManager().get(EditorManager).getFieldTypesMap();
+      return this.$getAppManager().get(EditorSubContext).getFieldTypesMap();
     },
     displayingValue() {
       const type = castAssetPropValueToString(this.modelValue);

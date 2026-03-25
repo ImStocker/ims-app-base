@@ -59,7 +59,7 @@ import type { AssetLink } from '../../logic/types/AssetsType';
 import DropdownContainer from '../Common/DropdownContainer.vue';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import AssetIcon from './AssetIcon.vue';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import UiManager from '../../logic/managers/UiManager';
 
 const TOOLTIP_OFFSET_X = 10;
@@ -170,7 +170,7 @@ export default defineComponent({
         .get(UiManager)
         .doTask(async () => {
           this.$getAppManager()
-            .get(EditorManager)
+            .get(EditorSubContext)
             .openAsset(
               this.asset.id,
               open_blank ? 'new-tab' : 'popup',

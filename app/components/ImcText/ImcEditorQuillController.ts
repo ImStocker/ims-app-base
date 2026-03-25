@@ -15,7 +15,7 @@ import UiManager from '../../logic/managers/UiManager';
 import { assert } from '../../logic/utils/typeUtils';
 import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import type { ImcClipboard } from './ImcClipboard';
 
 export class ImcEditorQuillController {
@@ -178,7 +178,7 @@ export class ImcEditorQuillController {
       if (op.insert && (op.insert as any)['upload-job']) {
         const upload_job = this.component
           .$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getUploadJob((op.insert as any)['upload-job'].uploadId);
         if (!upload_job || upload_job.result === null || upload_job.error) {
           _any_changed = true;
@@ -295,7 +295,7 @@ export class ImcEditorQuillController {
       const pos = quill.getSelection()?.index ?? 0;
       const upload_job = this.component
         .$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .attachFile(file, file.name);
 
       quill.insertEmbed(pos, 'upload-job', {
@@ -319,7 +319,7 @@ export class ImcEditorQuillController {
       if (op.insert && (op.insert as any)['upload-job']) {
         const upload_job = this.component
           .$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getUploadJob((op.insert as any)['upload-job'].uploadId);
         if (!upload_job || upload_job.result === null || upload_job.error) {
           any_changed = true;

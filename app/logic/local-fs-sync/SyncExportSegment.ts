@@ -1,4 +1,4 @@
-import type { IAppManager } from '../managers/IAppManager';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type { AssetPropWhere } from '../types/PropsWhere';
 import type { ISyncTarget } from './ISyncTarget';
 import type { SyncChunk } from './SyncChunk';
@@ -7,7 +7,7 @@ import type { SyncLocalRootSegment } from './SyncLocalRoot';
 
 export interface SyncExportSegmentCtr<T extends SyncExportSegment> {
   Name: string;
-  new (appManager: IAppManager, info: SyncLocalRootSegment): T;
+  new (projectContext: IProjectContext, info: SyncLocalRootSegment): T;
 }
 
 export abstract class SyncExportSegment {
@@ -15,7 +15,7 @@ export abstract class SyncExportSegment {
   static Version: string = '';
 
   constructor(
-    public appManager: IAppManager,
+    public projectContext: IProjectContext,
     public info: SyncLocalRootSegment,
   ) {}
 

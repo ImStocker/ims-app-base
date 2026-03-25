@@ -22,7 +22,7 @@ import type {
   PropsFormFieldDef,
   PropsFormState,
 } from '../../logic/types/PropsForm';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'FieldParamsEditor',
@@ -57,7 +57,7 @@ export default defineComponent({
     },
     forFieldTypeController(): FieldTypeController | null {
       return (
-        this.$getAppManager().get(EditorManager).getFieldTypesMap()[
+        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
           this.forFieldType
         ] ?? null
       );

@@ -1,4 +1,4 @@
-import type { IAppManager } from '../managers/IAppManager';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 type WorkerJob = {
   id: number;
@@ -10,10 +10,10 @@ export default class UserCodeExecuteManager {
   private _worker: Worker | null = null;
   private _workerMessageIdGen = 0;
   private _workerJobs: WorkerJob[] = [];
-  appManager: IAppManager;
+  projectContext: IProjectContext;
 
-  constructor(appManager: IAppManager) {
-    this.appManager = appManager;
+  constructor(projectContext: IProjectContext) {
+    this.projectContext = projectContext;
   }
 
   public formatAssetsByCode(fulls: Record<string, any>[], jscode: string) {
@@ -39,7 +39,7 @@ export default class UserCodeExecuteManager {
                 event.data.error?.message &&
                 event.data.error.message === 'full_asset is not defined'
               ) {
-                event.data.error.message = this.appManager.$t(
+                event.data.error.message = this.projectContext.appManager.$t(
                   'importExport.formats.settings.renameFullAssetInConfig',
                 );
               }

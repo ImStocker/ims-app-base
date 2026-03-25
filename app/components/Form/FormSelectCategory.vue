@@ -35,7 +35,7 @@ import CaptionString from '../Common/CaptionString.vue';
 import MenuButton from '../Common/MenuButton.vue';
 import MenuList from '../Common/MenuList.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import TaskManager from '../../logic/managers/TaskManager';
+import TaskManager from '../../logic/managers/TaskSubContext';
 import type { AssetPropValueEnum } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 

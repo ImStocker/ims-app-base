@@ -8,7 +8,7 @@
 import { type PropType, defineComponent } from 'vue';
 import type { AssetFullEditorVM } from '../../logic/vm/AssetFullEditorVM';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../logic/managers/TaskManager';
+import TaskManager from '../../logic/managers/TaskSubContext';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import DialogManager from '../../logic/managers/DialogManager';
 import PromptDialog from '../Common/PromptDialog.vue';
@@ -28,7 +28,7 @@ import { clipboardCopyPlainText } from '../../logic/utils/clipboard';
 import SetUpAccessDialog from './Rights/SetUpAccessDialog.vue';
 import type { AssetPropValueAccount } from '../../logic/types/Props';
 import { castAssetPropValueToAccount } from '../../logic/types/Props';
-import ProjectContentManager from '../../logic/managers/ProjectContentManager';
+import ProjectContentManager from '../../logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   name: 'AssetSettings',

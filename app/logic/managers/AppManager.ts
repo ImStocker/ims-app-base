@@ -21,7 +21,7 @@ type StateRoutine = {
 export default class AppManager implements IAppManager {
   public readonly $appConfiguration: BaseAppConfiguration;
   private _inited: boolean;
-  private readonly _subManagers: Map<any, AppSubManagerBase>;
+  private readonly _subManagers: Map<IAppSubManagerCtr<any>, AppSubManagerBase>;
   private readonly _initRoutines: (() => Promise<void>)[];
   private readonly _postInitRoutines: (() => Promise<void>)[];
   private readonly _destroyRoutines: (() => Promise<void>)[];

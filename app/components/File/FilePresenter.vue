@@ -89,7 +89,7 @@ import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ThumbParams } from '../../logic/utils/files';
 import { getSrcByFileId } from '../../logic/utils/files';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'FilePresenter',
@@ -197,7 +197,7 @@ export default defineComponent({
         .doTask(async () => {
           if (!this.fileValue) return;
           await this.$getAppManager()
-            .get(EditorManager)
+            .get(EditorSubContext)
             .downloadAttachment(this.fileValue);
         });
     },

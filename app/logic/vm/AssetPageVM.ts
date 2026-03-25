@@ -1,7 +1,7 @@
-import type { IAppManager } from '../managers/IAppManager';
 import type { LangStr } from '../types/ProjectTypes';
 import { PageVMBase } from '../types/PageVMBase';
 import { AssetFullEditorVM } from './AssetFullEditorVM';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export type AssetPageVMParams = {
   assetId: string;
@@ -12,11 +12,14 @@ export class AssetPageVM extends PageVMBase<AssetPageVMParams> {
   assetId: string;
   private _assetFullEditorVM: AssetFullEditorVM;
 
-  constructor(appManager: IAppManager, params: AssetPageVMParams) {
-    super(appManager, params);
+  constructor(
+    public projectContext: IProjectContext,
+    params: AssetPageVMParams,
+  ) {
+    super(projectContext.appManager, params);
     this.assetId = params.assetId;
     this._assetFullEditorVM = new AssetFullEditorVM(
-      this.appManager,
+      projectContext,
       this.assetId,
     );
   }
@@ -52,7 +55,7 @@ export class AssetPageVM extends PageVMBase<AssetPageVMParams> {
     this._params = data.params;
     if (data.assetFullEditor) {
       this._assetFullEditorVM = new AssetFullEditorVM(
-        this.appManager,
+        this.projectContext,
         data.assetId,
       );
       this._assetFullEditorVM.loadJSON(data.assetFullEditor);

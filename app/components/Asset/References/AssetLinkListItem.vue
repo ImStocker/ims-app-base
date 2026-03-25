@@ -99,7 +99,7 @@ import type {
   AssetShort,
 } from '../../../logic/types/AssetsType';
 import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../../logic/managers/TaskManager';
+import TaskManager from '../../../logic/managers/TaskSubContext';
 import UiManager from '../../../logic/managers/UiManager';
 import DialogManager from '../../../logic/managers/DialogManager';
 import AssetPreviewDialog from '../AssetPreviewDialog.vue';

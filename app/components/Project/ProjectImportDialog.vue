@@ -128,10 +128,6 @@ export default defineComponent({
           this.importResult.updatedWorkspaces += one_res.updatedWorkspaces;
           this.importResult.logs = [...this.importResult.logs, ...one_res.logs];
         }
-
-        this.$getAppManager().get(CreatorAssetManager).reloadSubscriber.notify({
-          workspaceId: this.dialog.state.workspaceId,
-        });
       } catch (err: any) {
         this.error = err.message.toString();
       } finally {

@@ -126,7 +126,7 @@ import {
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
 import AssetBlockComment from './AssetBlockComment.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import AssetBlockHideButton from './AssetBlockHideButton.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import type EditorBlock from './EditorBlock.vue';
@@ -220,7 +220,7 @@ export default defineComponent({
     },
     blockTypes() {
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
     },

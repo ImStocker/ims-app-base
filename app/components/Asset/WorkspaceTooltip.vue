@@ -102,7 +102,7 @@ export default defineComponent({
       return cached_workspace.parentId
         ? (this.$getAppManager()
             .get(CreatorAssetManager)
-            .getParentWorkspacesListFromCache(cached_workspace.parentId) ?? [])
+            .getParentWorkspacesListFromCacheSync(cached_workspace.parentId) ?? [])
         : [];
     },
   },

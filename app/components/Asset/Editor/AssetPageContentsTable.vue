@@ -40,7 +40,7 @@ import CaptionString from '../../Common/CaptionString.vue';
 import { getCurrentUrl } from '../../../logic/router/routes-helpers';
 import type { BlockContentItem } from '../../../logic/types/BlockTypeDefinition';
 import { makeAnchorTagId } from '../../../logic/utils/assets';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetPageContentsTable',
@@ -98,7 +98,7 @@ export default defineComponent({
     openAnchor(item: BlockContentItem<any>) {
       if (item.anchor === undefined) return null;
       this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .openAsset(this.assetId, 'self', item.blockId, item.anchor);
     },
     getItemHref(item: BlockContentItem<any>) {

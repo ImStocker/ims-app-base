@@ -154,7 +154,7 @@ export default defineComponent({
       const match = this.where
         ? await this.$getAppManager()
             .get(CreatorAssetManager)
-            .matchAssetShortsWithWhere([asset], this.where)
+            .matchAssetsWithWhere([asset], this.where)
         : [asset];
       if (match.length === 0) {
         return;

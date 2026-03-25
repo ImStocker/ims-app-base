@@ -31,12 +31,14 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ProjectTreeItemPayload } from './ProjectTreePresenterBaseVM';
 import type { TreePresenterItem } from '../../Common/TreePresenter/TreePresenter';
-import type { EditorContextForAssetRequested } from '../../../logic/managers/EditorManager';
-import EditorManager from '../../../logic/managers/EditorManager';
 import AssetContentTreePresenter from './AssetContentTreePresenter.vue';
+import EditorSubContext, {
+  type EditorContextForAssetRequested,
+} from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'ProjectTreePresenterContents',
@@ -48,6 +50,12 @@ export default defineComponent({
       type: Object as PropType<TreePresenterItem<ProjectTreeItemPayload>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -96,8 +104,11 @@ export default defineComponent({
         this.editorContextForAssetRequest = null;
       }
       if (init) {
-        this.editorContextForAssetRequest = this.$getAppManager()
-          .get(EditorManager)
+        if (!this.projectContext) {
+          return;
+        }
+        this.editorContextForAssetRequest = this.projectContext
+          .get(EditorSubContext)
           .requestEditorContextForAsset(this.assetId);
         const assigned_request = this.editorContextForAssetRequest;
         try {
@@ -120,8 +131,11 @@ export default defineComponent({
       anchor: string;
       selectable: any;
     }) {
-      const open_res = await this.$getAppManager()
-        .get(EditorManager)
+      if (!this.projectContext) {
+        return;
+      }
+      const open_res = await this.projectContext
+        .get(EditorSubContext)
         .openAsset(this.assetId, 'self', e.blockId, e.anchor).mounted;
       if (open_res.navigated && e.selectable && this.editorContext) {
         this.editorContext.setSelectedContentIds([e.assetId]);

@@ -1,5 +1,3 @@
-import type { IAppManager } from '../managers/IAppManager';
-import CreatorAssetManager from '../managers/CreatorAssetManager';
 import type { AssetsFullResult, AssetShort } from '../types/AssetsType';
 import AssetSettingsDialog from '../../components/Asset/AssetSettingsDialog.vue';
 import DialogManager from '../managers/DialogManager';
@@ -7,13 +5,15 @@ import UiManager from '../managers/UiManager';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
 import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.vue';
 import AssetPreviewDialog from '../../components/Asset/AssetPreviewDialog.vue';
-import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import type { AssetHistoryMode } from '#logic/utils/assets';
 import { AssetHistoryVM } from './AssetHistoryVM';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { serializeAssetFullInstances } from '#logic/project-sub-contexts/Asset/serializeAssetFullInstances';
 
 export class AssetFullEditorVM {
-  appManager: IAppManager;
+  projectContext: IProjectContext;
   assetFulls: {
     [key: string]: AssetFullInstanceR;
   };
@@ -22,8 +22,8 @@ export class AssetFullEditorVM {
   openedAssetId: string | null;
   historyModeVM: AssetHistoryVM | null = null;
 
-  constructor(appManager: IAppManager, asset_id: string | null) {
-    this.appManager = appManager;
+  constructor(projectContext: IProjectContext, asset_id: string | null) {
+    this.projectContext = projectContext;
     this.assetFulls = {};
     this.loadDone = false;
     this.loadError = null;
@@ -31,9 +31,7 @@ export class AssetFullEditorVM {
   }
 
   get projectInfo() {
-    const res = this.appManager.get(ProjectManager).getProjectInfo();
-    assert(res);
-    return res;
+    return this.projectContext.projectInfo;
   }
   getOpenedAssetFull(): AssetFullInstanceR | null {
     if (
@@ -52,8 +50,8 @@ export class AssetFullEditorVM {
       : null;
     if (res) return res;
     return (
-      this.appManager
-        .get(CreatorAssetManager)
+      this.projectContext
+        .get(AssetSubContext)
         .getAssetInstanceViaCacheSync(asset_id) ?? null
     );
   }
@@ -68,8 +66,8 @@ export class AssetFullEditorVM {
     if (!opened) return null;
     if (opened.parentIds.length === 0) return null;
     return (
-      this.appManager
-        .get(CreatorAssetManager)
+      this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(opened.parentIds[0]) ?? null
     );
   }
@@ -93,8 +91,8 @@ export class AssetFullEditorVM {
       this.loadError = null;
       this.loadDone = false;
       if (this.openedAssetId) {
-        const assets_result = await this.appManager
-          .get(CreatorAssetManager)
+        const assets_result = await this.projectContext
+          .get(AssetSubContext)
           .getAssetInstancesList({
             where: {
               id: [this.openedAssetId],
@@ -125,7 +123,10 @@ export class AssetFullEditorVM {
       : null;
     if (mode === 'history') {
       if (full_asset) {
-        this.historyModeVM = new AssetHistoryVM(this.appManager, full_asset);
+        this.historyModeVM = new AssetHistoryVM(
+          this.projectContext,
+          full_asset,
+        );
         await this.historyModeVM.init();
         await this.historyModeVM.load();
       }
@@ -138,12 +139,13 @@ export class AssetFullEditorVM {
   }
 
   async changeAsset(assetIds: string[]) {
-    this.appManager.get(UiManager).doTask(async () => {
-      const res: AssetsFullResult | undefined = await this.appManager
-        .get(DialogManager)
-        .show(AssetSettingsDialog, {
-          assetIds,
-        });
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
+      const res: AssetsFullResult | undefined =
+        await this.projectContext.appManager
+          .get(DialogManager)
+          .show(AssetSettingsDialog, {
+            assetIds,
+          });
       if (res) {
         await this.load();
       }
@@ -151,8 +153,8 @@ export class AssetFullEditorVM {
   }
 
   async openAssetPreviewDialog(assetId: string) {
-    this.appManager.get(UiManager).doTask(async () => {
-      const _res = await this.appManager
+    this.projectContext.appManager.get(UiManager).doTask(async () => {
+      const _res = await this.projectContext.appManager
         .get(DialogManager)
         .show(AssetPreviewDialog, {
           assetId,
@@ -164,31 +166,36 @@ export class AssetFullEditorVM {
   }
 
   async changeAssetLinks(assetIds: string[]) {
-    this.appManager.get(UiManager).doTask(async () => {
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
       const AssetLinksDialog = (
         await import('../../components/Asset/AssetLinksDialog.vue')
       ).default;
-      await this.appManager.get(DialogManager).show(AssetLinksDialog, {
-        assetIds,
-      });
+      await this.projectContext.appManager
+        .get(DialogManager)
+        .show(AssetLinksDialog, {
+          assetIds,
+        });
     });
   }
 
   async openCreateRefDialog(reverse = false): Promise<void> {
     if (!this.openedAssetId) return;
     const asset_id = this.openedAssetId;
-    this.appManager.get(UiManager).doTask(async () => {
-      await this.appManager.get(DialogManager).show(AssetRefsDialog, {
-        assetIds: [asset_id],
-        reverse,
-      });
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
+      await this.projectContext.appManager
+        .get(DialogManager)
+        .show(AssetRefsDialog, {
+          assetIds: [asset_id],
+          reverse,
+        });
     });
   }
 
   toJSON(): Record<string, any> {
-    const asset_full_preserved = this.appManager
-      .get(CreatorAssetManager)
-      .serializeAssetFullInstances(Object.values(this.assetFulls));
+    const asset_full_preserved = serializeAssetFullInstances(
+      this.projectContext,
+      Object.values(this.assetFulls),
+    );
 
     return {
       loadDone: this.loadDone,
@@ -200,14 +207,14 @@ export class AssetFullEditorVM {
   loadJSON(data: Record<string, any>): void {
     this.loadDone = data.loadDone;
     this.loadError = data.loadError;
-    this.appManager
-      .get(CreatorAssetManager)
+    this.projectContext
+      .get(AssetSubContext)
       .updateFullInstanceCache(data.assetFulls);
 
     this.assetFulls = {};
     for (const asset_id of data.assetFulls.ids) {
-      const asset_instance = this.appManager
-        .get(CreatorAssetManager)
+      const asset_instance = this.projectContext
+        .get(AssetSubContext)
         .getAssetInstanceViaCacheSync(asset_id);
       assert(asset_instance);
       this.assetFulls[asset_id] = asset_instance;

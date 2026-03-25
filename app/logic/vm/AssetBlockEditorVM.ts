@@ -1,11 +1,4 @@
-import type { IAppManager } from '../managers/IAppManager';
-import CreatorAssetManager from '../managers/CreatorAssetManager';
-import type {
-  AssetForEdit,
-  AssetQueryWhere,
-  AssetReferenceEntity,
-  AssetShort,
-} from '../types/AssetsType';
+import type { AssetForEdit, AssetReferenceEntity } from '../types/AssetsType';
 import DialogManager from '../managers/DialogManager';
 import type { UiNavigationGuardHandler } from '../managers/UiManager';
 import UiManager from '../managers/UiManager';
@@ -23,20 +16,10 @@ import {
 } from '../types/Props';
 import { AssetRights } from '../types/Rights';
 import type { AssetChanger, BlockCursor } from '../types/AssetChanger';
-import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
-import type {
-  ApiRequestList,
-  ApiResultListWithTotal,
-  ProjectFullInfo,
-} from '../types/ProjectTypes';
-import type { IProjectContext } from '../types/IProjectContext';
 import { computed, reactive, unref, type ComputedRef } from 'vue';
 import { AssetPropWhereOpKind } from '../types/PropsWhere';
-import EditorManager, {
-  type EditorContextForAssetRequested,
-} from '../managers/EditorManager';
 import type { BlockTypeDefinition } from '../types/BlockTypeDefinition';
 import type ImcEditor from '../../components/ImcText/ImcEditor.vue';
 import type { ExtendedMenuListItem } from '../types/MenuList';
@@ -44,12 +27,15 @@ import {
   getBetweenIndexWithTimestamp,
   getNextIndexWithTimestamp,
 } from '../../components/Asset/Editor/blockUtils';
-import type { Workspace, WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import type { IEditorVM } from './IEditorVM';
 import type { IAssetBlockComponent } from '../types/IAssetBlockComponent';
 import { GAME_INFO_ASSET_ID, MARKDOWN_ASSET_ID } from '../constants';
 import type { AssetHistoryVM } from './AssetHistoryVM';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
+import type { EditorContextForAssetRequested } from '#logic/project-sub-contexts/EditorSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type CopiedBlock = {
   title: string | null;
@@ -57,15 +43,14 @@ type CopiedBlock = {
   props: AssetProps;
 };
 
-export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
-  appManager: IAppManager;
+export class AssetBlockEditorVM implements IEditorVM {
+  projectContext: IProjectContext;
   assetFull: AssetFullInstanceR | null;
   assetEditedComp!: ComputedRef<AssetForEdit | null>;
   saveOnBlockCommit: boolean;
   private _assetChanger: AssetChanger;
   copiedBlock: CopiedBlock | null = null;
   private _navigationGuardHandler: UiNavigationGuardHandler | null = null;
-  private _projectInfo: ProjectFullInfo | null;
   sharedState: AssetProps = {};
   editingBlockId: string | null = null;
   editorContextForAssetRequest: EditorContextForAssetRequested | null = null;
@@ -73,11 +58,10 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   historyModeVM: AssetHistoryVM | null = null;
 
   static CreateInstance(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     asset: AssetFullInstanceR | null,
-    projectInfo?: ProjectFullInfo,
   ): AssetBlockEditorVM {
-    const raw = new AssetBlockEditorVM(appManager, asset, projectInfo);
+    const raw = new AssetBlockEditorVM(projectContext, asset);
     const res = reactive(raw);
     raw.assetEditedComp = computed(() => {
       return res.assetFull
@@ -104,20 +88,14 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   }
 
   protected constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     asset: AssetFullInstanceR | null,
-    projectInfo?: ProjectFullInfo,
   ) {
-    this.appManager = appManager;
+    this.projectContext = projectContext;
     this.assetFull = asset;
     this.saveOnBlockCommit =
-      this.appManager.$appConfiguration.saveOnBlockCommit;
-    this._assetChanger = new AssetChangerDefault(
-      this.appManager,
-      asset,
-      projectInfo?.id ?? null,
-    );
-    this._projectInfo = projectInfo ?? null;
+      this.projectContext.appManager.$appConfiguration.saveOnBlockCommit;
+    this._assetChanger = new AssetChangerDefault(this.projectContext, asset);
 
     if (
       typeof window !== 'undefined' &&
@@ -150,40 +128,13 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
   }
 
-  getWorkspacesList(
-    query: ApiRequestList<WorkspaceQueryDTOWhere>,
-  ): Promise<ApiResultListWithTotal<Workspace>> {
-    return this.appManager.get(CreatorAssetManager).getWorkspacesList(query);
-  }
-  getAssetInstancesList(
-    query: ApiRequestList<AssetQueryWhere>,
-  ): Promise<ApiResultListWithTotal<AssetFullInstanceR>> {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getAssetInstancesList(query);
-  }
-
-  getWorkspaceByIdViaCacheSync(
-    workspace_id: string,
-  ): Workspace | null | undefined {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getWorkspaceByIdViaCacheSync(workspace_id);
-  }
-
-  getWorkspaceByIdViaCache(workspace_id: string): Promise<Workspace | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getWorkspaceByIdViaCache(workspace_id);
-  }
-
   get assetEdited() {
     return unref(this.assetEditedComp);
   }
 
   destroy() {
     this._resetNavigationGuard();
-    this.appManager.get(EditorManager).deactivateEditor(this);
+    this.projectContext.get(EditorSubContext).deactivateEditor(this);
     if (this.editorContextForAssetRequest) {
       this.editorContextForAssetRequest.release();
       this.editorContextForAssetRequest = null;
@@ -192,8 +143,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
 
   async init() {
     if (this.assetFull) {
-      this.editorContextForAssetRequest = this.appManager
-        .get(EditorManager)
+      this.editorContextForAssetRequest = this.projectContext
+        .get(EditorSubContext)
         .requestEditorContextForAsset(this.assetFull.id);
       await this.editorContextForAssetRequest.promise;
     }
@@ -202,7 +153,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   initClient(viewerOnly = false) {
     if (!viewerOnly) {
       this._initNavigationGuard();
-      this.appManager.get(EditorManager).activateEditor(this);
+      this.projectContext.get(EditorSubContext).activateEditor(this);
     }
   }
 
@@ -214,7 +165,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
 
   private _initNavigationGuard() {
     if (this._navigationGuardHandler) return;
-    this._navigationGuardHandler = this.appManager
+    this._navigationGuardHandler = this.projectContext.appManager
       .get(UiManager)
       .setNavigationGuard(
         () => !this.getHasChanges(),
@@ -226,24 +177,17 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
             await this.saveChanges();
             return true;
           } else {
-            const confirm = await this.appManager
+            const confirm = await this.projectContext.appManager
               .get(DialogManager)
               .show(ConfirmDialog, {
-                message: this.appManager.$t('common.dialogs.unsavedChanges'),
+                message: this.projectContext.appManager.$t(
+                  'common.dialogs.unsavedChanges',
+                ),
               });
             return !!confirm;
           }
         },
       );
-  }
-
-  get projectInfo(): ProjectFullInfo {
-    if (this._projectInfo) {
-      return this._projectInfo;
-    }
-    const res = this.appManager.get(ProjectManager).getProjectInfo();
-    assert(res);
-    return res;
   }
 
   assetFullsCount() {
@@ -272,8 +216,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const block = this.editingBlock;
     if (!block) return null;
 
-    const block_type_controller = this.appManager
-      .get(EditorManager)
+    const block_type_controller = this.projectContext
+      .get(EditorSubContext)
       .getBlockTypesMap()[block.type];
     if (!block_type_controller) {
       return null;
@@ -351,7 +295,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return;
     }
-    await this.appManager.get(CreatorAssetManager).getAssetInstancesList({
+    await this.projectContext.get(AssetSubContext).getAssetInstancesList({
       where: {
         id: [this.assetFull.id],
       },
@@ -408,8 +352,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       return; // Nothing to change
     }
     await this.assetChanger.executeTask(async () => {
-      const change_res = await this.appManager
-        .get(CreatorAssetManager)
+      const change_res = await this.projectContext
+        .get(AssetSubContext)
         .changeAssets({
           set: {
             blocks: {
@@ -444,7 +388,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         });
       return async () => {
         if (change_res.changeId) {
-          await this.appManager.get(CreatorAssetManager).changeAssetsUndo({
+          await this.projectContext.get(AssetSubContext).changeAssetsUndo({
             changeId: change_res.changeId,
           });
         }
@@ -482,14 +426,14 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const blocks = this.resolveBlocks();
     const default_title = params?.title ?? null;
 
-    const block_type_controller = this.appManager
-      .get(EditorManager)
+    const block_type_controller = this.projectContext
+      .get(EditorSubContext)
       .getBlockTypesMap()[type];
     if (!block_type_controller) {
       throw new Error('Unregistered block type');
     }
     const block_params = await block_type_controller.beforeBlockCreate(
-      this.appManager,
+      this.projectContext,
       {
         title: default_title,
       },
@@ -527,8 +471,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) return [];
     const asset_id = this.assetFull.id;
     const asset_short_ids: string[] = [];
-    await this.appManager.get(UiManager).doTask(async () => {
-      const refs_result = await this.appManager
+    await this.projectContext.appManager.get(UiManager).doTask(async () => {
+      const refs_result = await this.projectContext.appManager
         .get(DialogManager)
         .show(AssetRefsDialog, {
           assetIds: [asset_id],
@@ -554,17 +498,23 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   ): Promise<boolean> {
     const answer = silent
       ? silent
-      : await this.appManager.get(DialogManager).show(ConfirmDialog, {
-          header: this.appManager.$t('assetEditor.blockMenu.deleteLink'),
-          message: this.appManager.$t(
-            'assetEditor.blockMenu.deleteLinkConfirm',
-          ),
-          yesCaption: this.appManager.$t('common.dialogs.delete'),
-          danger: true,
-        });
+      : await this.projectContext.appManager
+          .get(DialogManager)
+          .show(ConfirmDialog, {
+            header: this.projectContext.appManager.$t(
+              'assetEditor.blockMenu.deleteLink',
+            ),
+            message: this.projectContext.appManager.$t(
+              'assetEditor.blockMenu.deleteLinkConfirm',
+            ),
+            yesCaption: this.projectContext.appManager.$t(
+              'common.dialogs.delete',
+            ),
+            danger: true,
+          });
     if (answer) {
-      await this.appManager.get(UiManager).doTask(async () => {
-        await this.appManager.get(CreatorAssetManager).deleteRef({
+      await this.projectContext.appManager.get(UiManager).doTask(async () => {
+        await this.projectContext.get(AssetSubContext).deleteRef({
           where: {
             id: [ref.sourceAssetId],
           },
@@ -657,45 +607,6 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     return this.assetFull.rights >= AssetRights.COMMENT;
   }
 
-  getAssetShortViaCache(assetId: string): Promise<AssetShort | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getAssetShortViaCache(assetId);
-  }
-
-  async requestAssetShortInCache(assetId: string): Promise<void> {
-    await this.appManager
-      .get(CreatorAssetManager)
-      .requestAssetShortInCache(assetId);
-  }
-
-  getAssetShortViaCacheSync(assetId: string): AssetShort | null | undefined {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getAssetShortViaCacheSync(assetId);
-  }
-
-  getAssetShortsList(
-    query: ApiRequestList<AssetQueryWhere>,
-  ): Promise<ApiResultListWithTotal<AssetShort>> {
-    return this.appManager.get(CreatorAssetManager).getAssetShortsList(query);
-  }
-
-  getAssetInstance(
-    assetId: string,
-    refresh = false,
-  ): Promise<AssetFullInstanceR | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .getAssetInstance(assetId, refresh);
-  }
-
-  checkHasChildrenViaCache(assetId: string): Promise<boolean | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
-      .checkHasChildrenViaCache(assetId);
-  }
-
   copyEditingBlock() {
     const editing = this.editingBlock;
     if (!editing) return;
@@ -710,11 +621,15 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         'AssetEditorToolbar-copied',
         JSON.stringify(this.copiedBlock),
       );
-      this.appManager
+      this.projectContext.appManager
         .get(UiManager)
-        .showSuccess(this.appManager.$t('assetEditor.toolbarCopyBlockDone'));
+        .showSuccess(
+          this.projectContext.appManager.$t('assetEditor.toolbarCopyBlockDone'),
+        );
     } else {
-      this.appManager.get(UiManager).showError('Window is undefined');
+      this.projectContext.appManager
+        .get(UiManager)
+        .showError('Window is undefined');
     }
   }
 
@@ -739,13 +654,17 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         'AssetEditorToolbar-copied',
         JSON.stringify(this.copiedBlock),
       );
-      this.appManager
+      this.projectContext.appManager
         .get(UiManager)
         .showSuccess(
-          this.appManager.$t('assetEditor.toolbarCopyBlockAsBlockMirrorDone'),
+          this.projectContext.appManager.$t(
+            'assetEditor.toolbarCopyBlockAsBlockMirrorDone',
+          ),
         );
     } else {
-      this.appManager.get(UiManager).showError('Window is undefined');
+      this.projectContext.appManager
+        .get(UiManager)
+        .showError('Window is undefined');
     }
   }
   pasteBlock() {
@@ -776,9 +695,11 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       title: copied.title,
       props: copied.props,
     });
-    this.appManager
+    this.projectContext.appManager
       .get(UiManager)
-      .showSuccess(this.appManager.$t('assetEditor.toolbarPasteBlockDone'));
+      .showSuccess(
+        this.projectContext.appManager.$t('assetEditor.toolbarPasteBlockDone'),
+      );
   }
 
   getToolbarActions(): ExtendedMenuListItem[] {
@@ -786,7 +707,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       return [
         {
           name: 'history',
-          title: this.appManager.$t('gddPage.saveAsCopy'),
+          title: this.projectContext.appManager.$t('gddPage.saveAsCopy'),
           icon: 'ri-file-copy-fill',
           action: async () => await this.saveHistoryCopy(),
           type: 'button',
@@ -797,7 +718,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       {
         name: 'blockCopy',
         isMain: true,
-        title: this.appManager.$t('assetEditor.toolbarCopyBlock'),
+        title: this.projectContext.appManager.$t(
+          'assetEditor.toolbarCopyBlock',
+        ),
         disabled: !this.editingBlock,
         icon: 'ri-file-copy-fill',
         action: () => {
@@ -807,7 +730,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       {
         name: 'blockPaste',
         isMain: true,
-        title: this.appManager.$t('assetEditor.toolbarPasteBlock'),
+        title: this.projectContext.appManager.$t(
+          'assetEditor.toolbarPasteBlock',
+        ),
         disabled: false,
         icon: 'ri-clipboard-fill',
         action: () => {
@@ -817,8 +742,10 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       {
         name: 'blockCopyAsMirror',
         icon: 'ims-icon-font-block-link',
-        title: this.appManager.$t('assetEditor.toolbarCopyBlockAsBlockMirror'),
-        tooltip: this.appManager.$t(
+        title: this.projectContext.appManager.$t(
+          'assetEditor.toolbarCopyBlockAsBlockMirror',
+        ),
+        tooltip: this.projectContext.appManager.$t(
           'assetEditor.toolbarCopyBlockAsBlockMirrorHint',
         ),
         action: () => this.copyEditingBlockAsBlockMirror(),
@@ -847,8 +774,8 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return;
     }
-    this.appManager
-      .get(EditorManager)
+    this.projectContext
+      .get(EditorSubContext)
       .revealBlockContentIds(this.assetFull.id, blockId, item_ids);
   }
 }

@@ -8,11 +8,12 @@ import {
   type AssetProps,
   type AssetPropsPlainObject,
 } from '../types/Props';
-import CreatorAssetManager from './CreatorAssetManager';
-import { AppSubManagerBase } from './IAppManager';
-import ProjectManager from './ProjectManager';
+import ProjectManager from '../managers/ProjectManager';
+import { ProjectSubContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from './AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 
-export default class ProjectSettingsManager extends AppSubManagerBase {
+export default class SettingsSubContext extends ProjectSubContext {
   protected _projectSettings: ProjectSettings | null = null;
 
   async init() {}
@@ -48,7 +49,7 @@ export default class ProjectSettingsManager extends AppSubManagerBase {
       }
     }
 
-    await this.appManager.get(CreatorAssetManager).changeAssets({
+    await this.projectContext.get(AssetSubContext).changeAssets({
       where: {
         id: this._projectSettings.id,
       },
@@ -67,9 +68,10 @@ export default class ProjectSettingsManager extends AppSubManagerBase {
   }
 
   async reloadProjectSettings() {
-    const project_info = await this.appManager
+    const project_info = await this.projectContext.appManager
       .get(ProjectManager)
-      .getProjectFullInfo();
+      .loadProjectFullInfo(this.projectContext.projectInfo.id);
+    assert(project_info, 'project info not found');
     this._projectSettings = project_info.settings;
   }
 }

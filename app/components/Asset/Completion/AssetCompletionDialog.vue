@@ -168,8 +168,8 @@ import type {
 import { getCompletionDisplay, setAssetCompleted } from './AssetCompletion';
 import TaskCheckbox from '../../Common/TaskCheckbox.vue';
 import FormBuilderFieldTooltip from '../../Form/FormBuilderFieldTooltip.vue';
-import type { TaskMilestone } from '../../../logic/managers/TaskManager';
-import TaskManager from '../../../logic/managers/TaskManager';
+import type { TaskMilestone } from '../../../logic/managers/TaskSubContext';
+import TaskManager from '../../../logic/managers/TaskSubContext';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import type { MenuListItem } from '../../../logic/types/MenuList';

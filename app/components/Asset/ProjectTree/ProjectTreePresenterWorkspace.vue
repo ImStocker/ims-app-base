@@ -43,15 +43,15 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ProjectTreeItemPayload } from './ProjectTreePresenterBaseVM';
 import type { TreePresenterItem } from '../../Common/TreePresenter/TreePresenter';
 import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
 import WorkspaceLink from '../WorkspaceLink.vue';
 import BlockWithMenu from '../../Common/BlockWithMenu.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { Workspace } from '../../../logic/types/Workspaces';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'ProjectTreePresenterWorkspace',
@@ -76,6 +76,12 @@ export default defineComponent({
     },
     showProjectItemsPathInTooltip: { type: Boolean, default: false },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
+  },
   computed: {
     injectedBlockSlots() {
       return Object.keys(this.$slots)
@@ -88,11 +94,14 @@ export default defineComponent({
         });
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext?.projectInfo;
     },
     workspace() {
-      return this.$getAppManager()
-        .get(CreatorAssetManager)
+      if (!this.projectContext) {
+        return null;
+      }
+      return this.projectContext
+        .get(AssetSubContext)
         .getWorkspaceByIdViaCacheSync(this.item.payload.id);
     },
   },

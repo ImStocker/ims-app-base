@@ -72,7 +72,6 @@ export class ApiWorker {
   private _tokenInfoCache: AuthTokenInfoCache | null = null;
   private _tokenMainSavedData: TokenMainSavedData | null = null;
   private _lastQueryTime: number | null = null;
-  private _currentProjectId: string | null = null;
   private _tokenStorage: IApiTokenStorage | null = null;
   private _sendRequestFunc: (request: HttpRequestParams) => any;
   private _doRefreshTokenTask: Promise<boolean> | null = null;
@@ -87,14 +86,6 @@ export class ApiWorker {
     this._tokenStorage = tokenStorage;
     this.debugSkipTokenAndRefresh = !!debug_skip_token_and_refresh;
     this._sendRequestFunc = send_request;
-  }
-
-  setCurrentProjectId(project_id: string | null) {
-    this._currentProjectId = project_id;
-  }
-
-  getCurrentProjectId() {
-    return this._currentProjectId;
   }
 
   private async _awaitQueryDelay() {
@@ -242,12 +233,6 @@ export class ApiWorker {
         ...(requestParams.params ? requestParams.params : {}),
         ...paramsQuery,
       };
-    }
-    if (this._currentProjectId && requestParams.params?.pid === undefined) {
-      if (service !== Service.FILE_STORAGE) {
-        if (!requestParams.params) requestParams.params = {};
-        requestParams.params.pid = this._currentProjectId;
-      }
     }
     if (token) {
       requestParams.headers = {

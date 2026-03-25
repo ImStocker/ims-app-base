@@ -18,7 +18,7 @@ import { openProjectLink } from '../../logic/router/routes-helpers';
 import type { AssetPageVM } from '../../logic/vm/AssetPageVM';
 import type { BreadCrumbsEntity } from '../../logic/types/BreadCrumbs';
 import type { AssetShort } from '../../logic/types/AssetsType';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 import {
   BLOCK_NAME_LOCALE,
   BLOCK_NAME_PROPS,
@@ -47,11 +47,11 @@ export default defineComponent({
     layoutDescriptor() {
       if (!this.currentAssetFull) {
         return this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentAssetFull);
     },
     currentAssetFull() {
@@ -100,7 +100,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.$getAppManager().get(EditorManager).currentEditorPage = this;
+    this.$getAppManager().get(EditorSubContext).currentEditorPage = this;
     const creatorsAssetManager = this.$getAppManager().get(CreatorAssetManager);
     this.assetEventsHandler =
       creatorsAssetManager.projectContentEvents.subscribe(async (ev) => {
@@ -158,7 +158,7 @@ export default defineComponent({
       });
   },
   unmounted() {
-    const editor_manager = this.$getAppManager().get(EditorManager);
+    const editor_manager = this.$getAppManager().get(EditorSubContext);
     if (editor_manager.currentEditorPage === this) {
       editor_manager.currentEditorPage = null;
     }
@@ -176,7 +176,7 @@ export default defineComponent({
       const parents =
         this.$getAppManager()
           .get(CreatorAssetManager)
-          .getParentWorkspacesListFromCache(workspace_id) ?? [];
+          .getParentWorkspacesListFromCacheSync(workspace_id) ?? [];
       return parents.map((workspace) => {
         return {
           title: workspace.title,

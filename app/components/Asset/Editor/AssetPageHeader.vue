@@ -90,7 +90,10 @@
 import { defineComponent, type PropType, type UnwrapRef } from 'vue';
 import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AuthManager from '../../../logic/managers/AuthManager';
-import { MIN_ASSET_RIGHTS_TO_CHANGE } from '../../../logic/types/Rights';
+import {
+  MIN_ASSET_RIGHTS_TO_CHANGE,
+  MIN_ASSET_RIGHTS_TO_RENAME,
+} from '../../../logic/types/Rights';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import { DISCUSSION_ASSET_ID, HUB_PID } from '../../../logic/constants';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
@@ -108,7 +111,7 @@ import CaptionString from '../../Common/CaptionString.vue';
 import { calcResolvedBlocks } from '../../../logic/types/AssetFullInstance';
 import AssetCompletionCheckWidget from '../Completion/AssetCompletionCheckWidget.vue';
 import AssetPropsDialog from '../AssetPropsDialog.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetPageHeader',
@@ -140,11 +143,11 @@ export default defineComponent({
     layoutDescriptor() {
       if (!this.currentAssetFull) {
         return this.$getAppManager()
-          .get(EditorManager)
+          .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
       return this.$getAppManager()
-        .get(EditorManager)
+        .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentAssetFull);
     },
     isSystemAsset() {
@@ -226,16 +229,12 @@ export default defineComponent({
     },
     canRename() {
       return this.vm.asset
-        ? this.$getAppManager()
-            .get(CreatorAssetManager)
-            .canRenameAsset(this.vm.asset)
+        ? this.vm.asset.rights >= MIN_ASSET_RIGHTS_TO_RENAME
         : false;
     },
     canChange() {
       return this.vm.asset
-        ? this.$getAppManager()
-            .get(CreatorAssetManager)
-            .canChangeAsset(this.vm.asset)
+        ? this.vm.rights >= MIN_ASSET_RIGHTS_TO_CHANGE
         : false;
     },
     headerIcon() {

@@ -112,22 +112,21 @@
   </dialog-content>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import FormCheckBox from '../Form/FormCheckBox.vue';
 import SortableList from '../Common/SortableList.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import RenamableText from '../Common/RenamableText.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import {
-  getExportFormatFieldRef,
-  type ExportFormatField,
-} from '../../logic/managers/ExportFormatManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
-import EditorManager from '../../logic/managers/EditorManager';
 import { BLOCK_NAME_META } from '../../logic/constants';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import type { ExportFormatField } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { getExportFormatFieldRef } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type ExportFormatFieldWithSelected = {
   is_selected: boolean;
@@ -157,6 +156,12 @@ export default defineComponent({
       type: Object as PropType<DialogInterface<DialogProps, DialogResult>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -207,22 +212,25 @@ export default defineComponent({
       this.isLoading = true;
       this.loadError = null;
       try {
+        assert(this.projectContext, 'projectContext not provided');
         const base_asset_id = this.dialog.state.assetId;
         if (!base_asset_id) {
-          const gdd_workspace_id = this.$getAppManager()
-            .get(ProjectManager)
-            .getWorkspaceIdByName('gdd');
+          const gdd_workspace_id = (
+            await this.projectContext
+              .get(AssetSubContext)
+              .getWorkspaceByNameViaCache('gdd')
+          )?.id;
 
           this.asset = (
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
+            await this.projectContext
+              .get(AssetSubContext)
               .getAssetInstancesList({
                 where: { workspaceids: gdd_workspace_id },
               })
           ).list[0];
         } else {
-          this.asset = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          this.asset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetInstance(base_asset_id);
         }
         if (!this.asset) return;
@@ -257,8 +265,8 @@ export default defineComponent({
           if (block.name === BLOCK_NAME_META) {
             continue;
           }
-          const current_block_controller = this.$getAppManager()
-            .get(EditorManager)
+          const current_block_controller = this.projectContext
+            .get(EditorSubContext)
             .getBlockTypesMap()[block.type];
           if (!current_block_controller) {
             continue;
@@ -270,8 +278,9 @@ export default defineComponent({
                 ...block,
                 rights: this.asset.rights,
                 references: [],
+                assetId: this.asset.id,
               },
-              this.$getAppManager(),
+              this.projectContext,
             );
           for (const variable of block_variables) {
             const ref = getExportFormatFieldRef({

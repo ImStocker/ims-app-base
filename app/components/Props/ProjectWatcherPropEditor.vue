@@ -52,7 +52,7 @@ import {
 import DialogManager from '../../logic/managers/DialogManager';
 import TaskManager, {
   TASK_MAX_WATCHERS,
-} from '../../logic/managers/TaskManager';
+} from '../../logic/managers/TaskSubContext';
 import UiManager from '../../logic/managers/UiManager';
 import SelectProjectMemberDialog from '../Common/SelectProjectMemberDialog.vue';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';

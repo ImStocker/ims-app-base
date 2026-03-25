@@ -165,7 +165,7 @@ import type {
 } from '../../../logic/types/PropsForm';
 import AttributeTypePropPresenter from '../../Props/AttributeTypePropPresenter.vue';
 import AttributeTypePropEditor from '../../Props/AttributeTypePropEditor.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
+import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import type { FieldTypeController } from '../../../logic/types/FieldTypeController';
 import { extractPropsFormState } from '~ims-plugin-base/blocks/PropsBlock/PropsBlock';
 import StringPropEditor from '../../Props/StringPropEditor.vue';
@@ -233,7 +233,7 @@ export default defineComponent({
     typeController(): FieldTypeController | null {
       if (!this.item.type) return null;
       return (
-        this.$getAppManager().get(EditorManager).getFieldTypesMap()[
+        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
           this.item.type
         ] ?? null
       );

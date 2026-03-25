@@ -22,16 +22,15 @@ import {
 import { AssetPropWhereOpKind, type AssetPropWhere } from '../types/PropsWhere';
 import type { WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import { assert } from '../utils/typeUtils';
-import CreatorAssetManager from './CreatorAssetManager';
-import DialogManager from './DialogManager';
-import { AppSubManagerBase } from './IAppManager';
-import ProjectManager from './ProjectManager';
-import UiManager from './UiManager';
-import UiPreferenceManager from './UiPreferenceManager';
+import DialogManager from '../managers/DialogManager';
+import UiManager from '../managers/UiManager';
+import UiPreferenceManager from '../managers/UiPreferenceManager';
 import type UserCodeExecuteManager from '../local-fs-sync/UserCodeExecuteManager';
-import ExportFormatManager from './ExportFormatManager';
 import { MemorySyncTarget } from '../local-fs-sync/targets/MemorySyncTarget';
-import ProjectSettingsManager from './ProjectSettingsManager';
+import { ProjectSubContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from './AssetSubContext';
+import ImportExportSubContext from './ImportExportSubContext';
+import SettingsSubContext from './SettingsSubContext';
 
 const SYNC_CHUNK_SIZE = 50;
 
@@ -96,7 +95,7 @@ export type SegmentEntity = {
   controller: () => Promise<SyncExportSegmentCtr<SyncExportSegment>>;
 };
 
-export default class LocalFsSyncManager extends AppSubManagerBase {
+export default class LocalFsSyncSubContext extends ProjectSubContext {
   private _syncWorkerId = Math.round(Math.random() * 10000000).toString();
   private _primarySyncWorkerId: string | null = null;
   private _broadcastChannel: BroadcastChannel | null = null;
@@ -114,7 +113,9 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     const UserCodeExecuteManager = (
       await import('../local-fs-sync/UserCodeExecuteManager')
     ).default;
-    this._userCodeExecutorManager = new UserCodeExecuteManager(this.appManager);
+    this._userCodeExecutorManager = new UserCodeExecuteManager(
+      this.projectContext,
+    );
   }
 
   registerSegment(segment: SegmentEntity) {
@@ -136,8 +137,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public initClient() {
-    this.appManager
-      .get(CreatorAssetManager)
+    this.projectContext
+      .get(AssetSubContext)
       .projectContentEvents.subscribe(() => {
         this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
         this.autosync();
@@ -161,14 +162,14 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     };
     this._broadcastChannel = bc;
 
-    const role = this.appManager.get(ProjectManager).getUserRoleInProject();
+    const role = this.projectContext.user?.role;
     if (this._currentProject && role) {
       this.autosync(); // No await
     }
   }
 
   public get autosyncEnabled(): boolean {
-    return this.appManager
+    return this.projectContext.appManager
       .get(UiPreferenceManager)
       .getPreference<boolean>(
         'LocalFsSyncManager-autoSync-' + (this._currentProjectId ?? '0'),
@@ -177,7 +178,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public set autosyncEnabled(val: boolean) {
-    this.appManager
+    this.projectContext.appManager
       .get(UiPreferenceManager)
       .setPreference(
         'LocalFsSyncManager-autoSync-' + (this._currentProjectId ?? '0'),
@@ -185,12 +186,12 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       );
   }
 
-  private get _currentProject(): ProjectFullInfo | null {
-    return this.appManager.get(ProjectManager).getProjectInfo();
+  private get _currentProject(): ProjectFullInfo {
+    return this.projectContext.projectInfo;
   }
 
-  private get _currentProjectId(): string | null {
-    return this._currentProject ? this._currentProject.id : null;
+  private get _currentProjectId(): string {
+    return this.projectContext.projectInfo.id;
   }
 
   private async _findOutPrimaryWorker(): Promise<boolean> {
@@ -278,8 +279,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       const segmentsInfos: SyncLocalRootSegment[] = config
         ? [config]
         : this.getExportConfigurations();
-      const formats = this.appManager
-        .get(ExportFormatManager)
+      const formats = this.projectContext
+        .get(ImportExportSubContext)
         .getExportFormats();
 
       for (const si of segmentsInfos) {
@@ -288,7 +289,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
         const segment_entity = segmentsMap.get(format.segmentType);
         if (segment_entity) {
           const segment_controller = await segment_entity.controller();
-          segments.push(new segment_controller(this.appManager, si));
+          segments.push(new segment_controller(this.projectContext, si));
         }
       }
     }
@@ -297,7 +298,9 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
   public async sync(full = false, progress?: (p: number) => void) {
     if (!window.showDirectoryPicker) {
-      throw new Error(this.appManager.$t('sync.fsSync.browserNotSupported'));
+      throw new Error(
+        this.projectContext.appManager.$t('sync.fsSync.browserNotSupported'),
+      );
     }
     let rootDirHandle: FileSystemDirectoryHandle;
 
@@ -401,15 +404,19 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
       const rootInfo = await context.readRootInfo(syncTarget);
       if (rootInfo.status === 'badContent') {
-        this.appManager
-          .get(UiManager)
-          .showError(this.appManager.$t('fsSync.targetFolderNotEmpty'));
-        return false;
-      } else if (rootInfo.status === 'badProject') {
-        this.appManager
+        this.projectContext.appManager
           .get(UiManager)
           .showError(
-            this.appManager.$t('fsSync.targetFolderBelongDifferentProject'),
+            this.projectContext.appManager.$t('fsSync.targetFolderNotEmpty'),
+          );
+        return false;
+      } else if (rootInfo.status === 'badProject') {
+        this.projectContext.appManager
+          .get(UiManager)
+          .showError(
+            this.projectContext.appManager.$t(
+              'fsSync.targetFolderBelongDifferentProject',
+            ),
           );
         return false;
       }
@@ -422,11 +429,13 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
         JSON.stringify(context.segments.map((s) => s.info)) !==
         JSON.stringify(rootInfo.index.segments)
       ) {
-        const confirm = await this.appManager
+        const confirm = await this.projectContext.appManager
           .get(DialogManager)
           .show(ConfirmDialog, {
-            header: this.appManager.$t('fsSync.synchronization'),
-            message: this.appManager.$t('fsSync.targetFolderHasDifferSegments'),
+            header: this.projectContext.appManager.$t('fsSync.synchronization'),
+            message: this.projectContext.appManager.$t(
+              'fsSync.targetFolderHasDifferSegments',
+            ),
           });
         if (!confirm) return false;
 
@@ -434,23 +443,25 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       }
       if (delete_old) {
         const old_segments_ctrl: SyncExportSegment[] = [];
-        const formats = this.appManager
-          .get(ExportFormatManager)
+        const formats = this.projectContext
+          .get(ImportExportSubContext)
           .getExportFormats();
         for (const segment of rootInfo.index.segments) {
           const format = formats.find((el) => el.id === segment.formatId);
           assert(format, 'Format is not defined');
           const segment_entity = segmentsMap.get(format.segmentType);
           if (!segment_entity) {
-            this.appManager
+            this.projectContext.appManager
               .get(UiManager)
               .showError(
-                this.appManager.$t('fsSync.cannotReinitialzeOldSegmentsMissed'),
+                this.projectContext.appManager.$t(
+                  'fsSync.cannotReinitialzeOldSegmentsMissed',
+                ),
               );
             return false;
           }
           const ctrl = await segment_entity.controller();
-          old_segments_ctrl.push(new ctrl(this.appManager, segment));
+          old_segments_ctrl.push(new ctrl(this.projectContext, segment));
           delete rootInfo.index.segmentStates[segment.id];
         }
 
@@ -521,9 +532,11 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       return false;
     }
 
-    const gdd_workspace_id = this.appManager
-      .get(ProjectManager)
-      .getWorkspaceIdByName('gdd');
+    const gdd_workspace_id = (
+      await this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCache('gdd')
+    )?.id;
 
     const asset_condition: AssetPropWhere = {
       ...(segment.info.assetSelection?.Where ?? {}),
@@ -551,8 +564,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       let last_workspace_id = null as string | null;
       let last_time = sync_at;
       while (has_more) {
-        const changes = await this.appManager
-          .get(ProjectManager)
+        const changes = await this.projectContext
+          .get(AssetSubContext)
           .getChangesStream({
             dateFrom: last_time,
             lastAssetId: last_asset_id ?? undefined,
@@ -617,8 +630,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
           workspaceUpdatedIds: [],
         };
         if (segment.needAssets()) {
-          const asset_ids = await this.appManager
-            .get(CreatorAssetManager)
+          const asset_ids = await this.projectContext
+            .get(AssetSubContext)
             .getAssetsView({
               select: ['id'],
               where: asset_condition,
@@ -630,8 +643,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
           asset_has_more = asset_proccessed < asset_ids.total;
         }
         if (segment.needWorkspaces()) {
-          const workspaces = await this.appManager
-            .get(CreatorAssetManager)
+          const workspaces = await this.projectContext
+            .get(AssetSubContext)
             .getWorkspacesList({
               where: workspace_condition,
               count: SYNC_CHUNK_SIZE,
@@ -674,8 +687,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public getExportConfigurations(): SyncLocalRootSegment[] {
-    const configs = this.appManager
-      .get(ProjectSettingsManager)
+    const configs = this.projectContext
+      .get(SettingsSubContext)
       .getValue<Record<string, any>>('sync-settings');
     if (!configs) return [];
 
@@ -703,14 +716,14 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   }
 
   public async saveExportConfiguration(configuration: SyncLocalRootSegment) {
-    await this.appManager
-      .get(ProjectSettingsManager)
+    await this.projectContext
+      .get(SettingsSubContext)
       .setValue('sync-settings', configuration.id, configuration);
   }
 
   public async deleteExportConfiguration(id: string) {
-    await this.appManager
-      .get(ProjectSettingsManager)
+    await this.projectContext
+      .get(SettingsSubContext)
       .setValue('sync-settings', id, null);
   }
 

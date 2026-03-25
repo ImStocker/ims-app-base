@@ -1,8 +1,9 @@
-import { convertTranslatedTitle } from '../../utils/assets';
-import EditorManager from '../EditorManager';
-import type { IAppManager } from '../IAppManager';
-import LocalFsSyncManager from '../LocalFsSyncManager';
-import UiManager from '../UiManager';
+import type { IAppManager } from '#logic/managers/IAppManager';
+import UiManager from '#logic/managers/UiManager';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { convertTranslatedTitle } from '#logic/utils/assets';
 import type {
   PluginContentDescriptorBlock,
   PluginContentDescriptorExportSegment,
@@ -106,7 +107,7 @@ export default abstract class PluginControllerBase {
   protected _activated: boolean = false;
   protected _activationLock = Promise.resolve();
   protected _deactivateCallbacks: (() => any)[] = [];
-  appManager: IAppManager;
+  projectContext: IProjectContext;
 
   get activated() {
     return this._activated;
@@ -122,27 +123,29 @@ export default abstract class PluginControllerBase {
 
   async load(): Promise<void> {}
 
-  constructor(appManager: IAppManager) {
-    this.appManager = appManager;
+  constructor(projectContext: IProjectContext) {
+    this.projectContext = projectContext;
   }
 
   private _activateBlock(plugin_content: PluginContentDescriptorBlock) {
     const definition = plugin_content.content.definition;
-    const blocks_map = this.appManager.get(EditorManager).getBlockTypesMap();
+    const blocks_map = this.projectContext
+      .get(EditorSubContext)
+      .getBlockTypesMap();
 
     const existing_block = blocks_map[definition.name];
     if (existing_block) {
       definition.overriddenBlockDefinition = existing_block;
     }
-    const block = this.appManager
-      .get(EditorManager)
+    const block = this.projectContext
+      .get(EditorSubContext)
       .registerBlockType(plugin_content.content.definition);
     this._deactivateCallbacks.push(block.cancel);
   }
 
   private _activateField(plugin_content: PluginContentDescriptorField) {
-    const field = this.appManager
-      .get(EditorManager)
+    const field = this.projectContext
+      .get(EditorSubContext)
       .registerFieldType(plugin_content.content.controller);
     this._deactivateCallbacks.push(field.cancel);
   }
@@ -150,14 +153,14 @@ export default abstract class PluginControllerBase {
   private _activateExportSegment(
     plugin_content: PluginContentDescriptorExportSegment,
   ) {
-    const segment = this.appManager
-      .get(LocalFsSyncManager)
+    const segment = this.projectContext
+      .get(LocalFsSyncSubContext)
       .registerSegment(plugin_content.content);
     this._deactivateCallbacks.push(segment.cancel);
   }
 
   private async _activateModule(plugin_content: PluginContentDescriptorModule) {
-    const cancel = await plugin_content.content.activate(this.appManager);
+    const cancel = await plugin_content.content.activate(this.projectContext);
     this._deactivateCallbacks.push(cancel);
   }
 

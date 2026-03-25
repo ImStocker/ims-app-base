@@ -111,7 +111,7 @@ import type {
   PropsFormFieldDef,
   PropsFormState,
 } from '../../logic/types/PropsForm';
-import EditorManager from '../../logic/managers/EditorManager';
+import EditorSubContext from '../../logic/managers/EditorSubContext';
 import {
   type SetClickOutsideCancel,
   setImsClickOutside,
@@ -808,7 +808,7 @@ export default defineComponent({
       const field_prop_key = field?.propKey ?? '';
       let field_accepted_types: AssetPropValueType[] | null;
       const field_controller = field
-        ? this.$getAppManager().get(EditorManager).getFieldTypesMap()[
+        ? this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
             field.type ?? 'text'
           ]
         : null;

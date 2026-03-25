@@ -1,7 +1,7 @@
-import ExportFormatManager, {
+import ImportExportSubContext, {
   type ExportFormat,
-} from '../../managers/ExportFormatManager';
-import LocalFsSyncManager from '../../managers/LocalFsSyncManager';
+} from '#logic/project-sub-contexts/ImportExportSubContext';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
 import {
   castAssetPropValueToString,
   type AssetPropValue,
@@ -67,7 +67,7 @@ export default class JsonSyncExportSegment extends SyncExportSegment {
         : undefined;
 
       prepared_assets = await getPreparedAssets(
-        this.appManager,
+        this.projectContext,
         {
           where: {
             id: chunk.assetUpdatedIds,
@@ -84,8 +84,8 @@ export default class JsonSyncExportSegment extends SyncExportSegment {
       );
 
       if (jscode) {
-        prepared_assets = await this.appManager
-          .get(LocalFsSyncManager)
+        prepared_assets = await this.projectContext
+          .get(LocalFsSyncSubContext)
           .getUserCodeExecutorManager()
           .formatAssetsByCode(prepared_assets, jscode);
       }
@@ -130,8 +130,8 @@ export default class JsonSyncExportSegment extends SyncExportSegment {
   }
 
   private get _currentFormat(): ExportFormat | undefined {
-    const format = this.appManager
-      .get(ExportFormatManager)
+    const format = this.projectContext
+      .get(ImportExportSubContext)
       .getExportFormats()
       .find((el) => el.id === this.info.formatId);
     return format;

@@ -88,12 +88,9 @@ export type IProjectUserOwnRole = IProjectUserRole & {
   rolesAssign: number[] | null;
 };
 
-export type ProjectMember = {
+export type User = {
   id: number;
   name: string;
-};
-
-export type User = ProjectMember & {
   email: string;
 };
 
@@ -104,7 +101,11 @@ export enum Lang {
 
 export type LangStr = 'en' | 'ru';
 
-export type Member = User & {
+export type UserInProject = User & {
+  role: IProjectUserRole | null;
+};
+
+export type ProjectMember = User & {
   role: IProjectUserRole;
 };
 

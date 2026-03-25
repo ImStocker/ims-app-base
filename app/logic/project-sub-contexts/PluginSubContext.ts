@@ -1,16 +1,16 @@
-import { AppSubManagerBase } from '../IAppManager';
+import UiManager from '#logic/managers/UiManager';
+import type PluginControllerBase from '#logic/plugin/PluginControllerBase';
+import type { PluginDescriptor } from '#logic/plugin/PluginControllerBase';
+import PluginControllerInternal from '#logic/plugin/PluginControllerInternal';
 import {
-  type PluginListItemEntity,
-  type PluginInfo,
   PluginInstalledFrom,
-} from './PluginEntity';
-import UiManager from '../UiManager';
-import { assert } from '../../utils/typeUtils';
-import type { PluginDescriptor } from './PluginControllerBase';
-import PluginControllerInternal from './PluginControllerInternal';
-import type PluginControllerBase from './PluginControllerBase';
+  type PluginInfo,
+  type PluginListItemEntity,
+} from '#logic/plugin/PluginEntity';
+import { ProjectSubContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
-export default class PluginManager extends AppSubManagerBase {
+export default class PluginSubContext extends ProjectSubContext {
   protected _installedPlugins = new Map<string, PluginInfo>();
   _destroyed: boolean = false;
 
@@ -82,7 +82,7 @@ export default class PluginManager extends AppSubManagerBase {
     if (!plugin) {
       try {
         const plugin = new PluginControllerInternal(
-          this.appManager,
+          this.projectContext,
           pluginDescriptor,
         );
         const installed_plugin: PluginInfo = {
@@ -93,7 +93,7 @@ export default class PluginManager extends AppSubManagerBase {
         this._installedPlugins.set(pluginDescriptor.name, installed_plugin);
         await this._activatePlugin(pluginDescriptor.name);
       } catch (err: any) {
-        this.appManager
+        this.projectContext.appManager
           .get(UiManager)
           .showError(
             `Plugin activation failed for plugin ${pluginDescriptor.name}: ${err.message}`,
@@ -115,7 +115,7 @@ export default class PluginManager extends AppSubManagerBase {
       if (!plugin) return false;
       return await plugin.controller.deactivate();
     } catch (err: any) {
-      this.appManager
+      this.projectContext.appManager
         .get(UiManager)
         .showError(`Plugin deactivated ${plugin_name}: ${err.message}`);
       return false;

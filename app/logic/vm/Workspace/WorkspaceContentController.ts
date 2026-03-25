@@ -24,6 +24,7 @@ import type {
   UserViewProp,
   UserViewSort,
 } from '../../../components/Workspace/ViewOptions/viewUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export type WorkspaceContentControllerChangeItem = {
   assetId: string;
@@ -139,9 +140,9 @@ export class WorkspaceContentController {
 
   async getBaseAssetId(): Promise<string | null> {
     if (!this.workspaceId) return null;
-    const workspace = await this.appManager
-      .get(CreatorAssetManager)
-      .getWorkspaceById(this.workspaceId);
+    const workspace = await this.projectContext
+      .get(AssetSubContext)
+      .loadWorkspaceById(this.workspaceId);
     if (!workspace) return null;
     if (!workspace.props.asset) return null;
     return (workspace.props.asset as AssetPropValueAsset).AssetId ?? null;

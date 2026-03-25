@@ -57,7 +57,7 @@ import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import type { GalleryBlockItemObject } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
-import EditorManager from '#logic/managers/EditorManager';
+import EditorSubContext from '#logic/managers/EditorManager';
 
 export default defineComponent({
   name: 'GalleryBlockItem',
@@ -134,7 +134,7 @@ export default defineComponent({
           .doTask(async () => {
             if (!this.item.value) return;
             await this.$getAppManager()
-              .get(EditorManager)
+              .get(EditorSubContext)
               .downloadAttachment(file);
           });
       } else {

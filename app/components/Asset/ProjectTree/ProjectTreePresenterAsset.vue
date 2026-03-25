@@ -44,16 +44,16 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ProjectTreeItemPayload } from './ProjectTreePresenterBaseVM';
 import type { TreePresenterItem } from '../../Common/TreePresenter/TreePresenter';
 import type { AssetShort } from '../../../logic/types/AssetsType';
 import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
 import AssetLink from '../AssetLink.vue';
 import BlockWithMenu from '../../Common/BlockWithMenu.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../../logic/managers/ProjectManager';
-import EditorManager from '../../../logic/managers/EditorManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'ProjectTreePresenterAsset',
@@ -77,21 +77,33 @@ export default defineComponent({
     },
   },
   emits: ['contentRevealed'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    return {
+      projectContext,
+    };
+  },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext?.projectInfo;
     },
     asset() {
-      return this.$getAppManager()
-        .get(CreatorAssetManager)
+      if (!this.projectContext) {
+        return null;
+      }
+      return this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.item.payload.id);
     },
 
     isContentRevealed() {
+      if (!this.projectContext) {
+        return false;
+      }
       return (
         this.showAssetContent &&
-        !!this.$getAppManager()
-          .get(EditorManager)
+        !!this.projectContext
+          .get(EditorSubContext)
           .getRevealedContentIds(this.item.payload.id)
       );
     },

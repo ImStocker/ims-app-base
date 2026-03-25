@@ -1,19 +1,21 @@
-import { watch } from 'vue';
-import type PluginControllerExternal from '../managers/Plugin/PluginControllerExternal';
-import type { ResolvedAssetBlock } from '../utils/assets';
-import type { AssetChanger } from './AssetChanger';
-import { BlockTypeDefinition } from './BlockTypeDefinition';
+import type { AssetChanger } from '#logic/types/AssetChanger';
+import { BlockTypeDefinition } from '#logic/types/BlockTypeDefinition';
+import type {
+  AssetPropsPlainObjectValue,
+  AssetProps,
+  AssetPropsPlainObject,
+} from '#logic/types/Props';
 import {
-  assignPlainValueToAssetProps,
-  convertAssetPropsToPlainObject,
   extractAssetPropsSubObject,
+  sameAssetPropObjects,
   extractSubObjectAsPlainValue,
   makeBlockRef,
-  sameAssetPropObjects,
-  type AssetProps,
-  type AssetPropsPlainObject,
-  type AssetPropsPlainObjectValue,
-} from './Props';
+  assignPlainValueToAssetProps,
+  convertAssetPropsToPlainObject,
+} from '#logic/types/Props';
+import type { ResolvedAssetBlock } from '#logic/utils/assets';
+import { watch } from 'vue';
+import type PluginControllerExternal from './PluginControllerExternal';
 
 export type ExternalPluginComponentApi = {
   onMounted?: null | ((element: HTMLElement) => void);
