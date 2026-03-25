@@ -255,10 +255,6 @@ export default defineComponent({
   }
 }
 
-.FilePresenter-localFile {
-  max-width: 100%;
-}
-
 .FilePresenter-linkContent {
   display: flex;
   align-items: center;

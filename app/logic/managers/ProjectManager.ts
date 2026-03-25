@@ -7,6 +7,7 @@ import type {
   ChangesStreamRequest,
   ChangesStreamResponse,
   ApiResultListWithTotal,
+  Member,
 } from '../types/ProjectTypes';
 import CreatorAssetManager from './CreatorAssetManager';
 import Subscriber from '../types/Subscriber';
@@ -57,6 +58,13 @@ export default class ProjectManager extends AppSubManagerBase {
 
   getAllowAnonymUsers() {
     return false;
+  }
+
+  async getMembersList(): Promise<ApiResultListWithTotal<Member>> {
+    return {
+      list: [],
+      total: 0,
+    };
   }
 
   getWorkspaceByName(workspace_name: string) {

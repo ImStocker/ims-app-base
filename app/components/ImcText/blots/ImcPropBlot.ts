@@ -1,8 +1,5 @@
 import Embed from 'quill/blots/embed';
-import {
-  castAssetPropValueToString,
-  type AssetPropValue,
-} from '../../../logic/types/Props';
+import type { AssetPropValue } from '../../../logic/types/Props';
 
 export const IMC_PROP_BLOT_CLASS = 'ql-imc-prop';
 
@@ -25,7 +22,6 @@ export class ImcPropBlot extends Embed {
   private static _applyFormat(element: HTMLElement, data: ImcPropBlotData) {
     element.dataset.inline = data.inline ? '1' : '';
     element.dataset.value = JSON.stringify(data.value);
-    element.innerText = castAssetPropValueToString(data.value);
   }
 
   static override value(element: HTMLElement): ImcPropBlotData {

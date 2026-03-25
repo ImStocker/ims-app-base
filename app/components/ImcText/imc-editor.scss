@@ -384,6 +384,90 @@ body[data-theme="ims-dark"] {
     }
 }
 
+.ImcEditor-editor.ql-container .ql-imc-file,
+.ImcEditor-editor.state-sleep .ql-imc-file,
+.ImcPresenter-content .ql-imc-file {
+  .FilePresenter  {
+    // Copied from FilePresenter.vue
+    &.state-error {
+      color: var(--color-main-error);
+    }
+
+    &.state-empty {
+      display: none;
+    }
+
+    &.type-link {
+      display: inline-flex;
+      border: 1px solid var(--local-border-color);
+      padding: 5px 10px;
+      border-radius: 10px;
+
+      &:not(.state-isStatic) {
+        cursor: pointer;
+        &:hover {
+          border-color: var(--color-accent);
+        }
+      }
+      &.state-selected {
+        border-color: var(--color-accent);
+      }
+    }
+
+    .FilePresenter-icon {
+      margin-right: 5px;
+    }
+
+    .FilePresenter-linkContent {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .FilePresenter-basename {
+      flex: 1;
+      min-width: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    figure.FilePresenter {
+      margin: 0;
+    }
+
+    .FilePresenter-audio {
+      width: 100%;
+    }
+  }
+}
+
+.ImcEditor-editor.ql-container .ql-imc-prop,
+.ImcEditor-editor.state-sleep .ql-imc-prop,
+.ImcPresenter-content .ql-imc-prop {
+  .ImcTextProp {
+    &.type-inline {
+      display: inline;
+    }
+    .ImcTextPropAccount {
+      padding: 4px;
+      background-color: var(--local-link-bg-color);
+      color: var(--local-link-color);
+      border-radius: 4px;
+      font-weight: 500;
+
+      &.state-empty {
+        display: none;
+      }
+
+      &.state-error {
+        color: var(--color-main-error);
+      }
+    }
+  }
+  
+}
+
 .ImcEditor-editor.ql-container.ql-bubble:not(.ql-disabled) a.ql-imc-asset,
 .ImcEditor-editor.ql-container a.ql-imc-asset,
 .ImcEditor-editor.state-sleep a.ql-imc-asset,

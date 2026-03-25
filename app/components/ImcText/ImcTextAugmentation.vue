@@ -21,6 +21,9 @@ import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import { setNodeAssetIcon } from './utils';
 import { IMC_FORMULA_BLOT_CLASS } from './blots/ImcFormulaBlot';
 import ImcTextFormula from './ImcTextFormula.vue';
+import { IMC_PROP_BLOT_CLASS } from './blots/ImcPropBlot';
+import ImcTextProp from './ImcTextProp.vue';
+import type { AssetPropValue } from '../../logic/types/Props';
 
 export default defineComponent({
   name: 'ImcTextAugmentation',
@@ -66,6 +69,20 @@ export default defineComponent({
                   ? (e as HTMLAnchorElement).href
                   : null,
               },
+            };
+          },
+        ),
+      ),
+      propsRenderer: markRaw(
+        new InnerComponentRenderer(
+          `.${IMC_PROP_BLOT_CLASS}`,
+          ImcTextProp,
+          (e) => {
+            return {
+              propValue: JSON.parse(
+                e.dataset.value ?? 'null',
+              ) as AssetPropValue,
+              inline: e.dataset.inline === '1',
             };
           },
         ),
@@ -155,6 +172,7 @@ export default defineComponent({
   },
   unmounted() {
     this.filesRenderer.destroy();
+    this.propsRenderer.destroy();
     this.uploadJobsRenderer.destroy();
     this.assetLinksRenderer.destroy();
   },
@@ -163,6 +181,7 @@ export default defineComponent({
       if (!this.$el) return;
 
       this.filesRenderer.render(this.$.appContext, this.$el);
+      this.propsRenderer.render(this.$.appContext, this.$el);
       this.uploadJobsRenderer.render(this.$.appContext, this.$el);
       this.formulaRenderer.render(this.$.appContext, this.$el);
       if (!this.isEditor) {

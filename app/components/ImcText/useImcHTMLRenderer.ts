@@ -14,10 +14,7 @@ import {
   IMC_ASSET_BLOT_CLASS,
 } from './blots/ImcAssetBlot';
 import { type ImcFileBlotData, IMC_FILE_BLOT_CLASS } from './blots/ImcFileBlot';
-import {
-  castAssetPropValueToString,
-  type AssetPropValue,
-} from '../../logic/types/Props';
+import type { AssetPropValue } from '../../logic/types/Props';
 import { unpackQuillDeltaFromPropValue } from './ImcContent';
 import { useAppManager } from '../../composables/useAppManager';
 import { useFilePresenterRenderer } from '../File/FilePresenter';
@@ -39,6 +36,7 @@ import { useRouter } from '#app';
 import type { Router } from 'vue-router';
 import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
+import useImcTextPropRenderer from './useImcTextPropRenderer';
 
 export type ImcHTMLRenderer = (
   value: AssetPropValue,
@@ -57,6 +55,8 @@ export function useImcHTMLRenderer(
   project?: ProjectInfoForLink,
 ): ImcHTMLRenderer {
   const filePresenterRenderer = useFilePresenterRenderer();
+  const imcTextPropRenderer = useImcTextPropRenderer();
+
   return (value, options?): string => {
     const appManager = useAppManager();
     const $router = useRouter();
@@ -232,11 +232,15 @@ export function useImcHTMLRenderer(
           return `<span class='${IMC_ICON_BLOT_CLASS}'><i class='asset-icon-${validator.escape(icon_blot)}'></i></span>`;
         } else if (customOp.insert.type === 'prop') {
           const prop_blot = customOp.insert.value as ImcPropBlotData;
-          return `<span 
+          const attributes = `
             class='${IMC_PROP_BLOT_CLASS}'
             data-inline="${prop_blot.inline ? '1' : '0'}"
             data-value="${validator.escape(JSON.stringify(prop_blot.value))}"
-            >${validator.escape(castAssetPropValueToString(prop_blot.value))}</span>`;
+          `;
+          return `<span ${attributes}>${imcTextPropRenderer({
+            value: prop_blot.value,
+            inline: prop_blot.inline,
+          })}</span>`;
         } else if (customOp.insert.type === 'opref') {
           return `<!--op:${customOp.insert.value}-->`;
         } else {
