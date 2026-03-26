@@ -118,11 +118,10 @@
 </template>
 
 <script lang="ts" type="text/ecmascript-6">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../../logic/managers/DialogManager';
 import ProjectManager from '../../../logic/managers/ProjectManager';
-import TaskManager from '../../../logic/managers/TaskSubContext';
 import UiManager from '../../../logic/managers/UiManager';
 import { getProjectLinkHref } from '../../../logic/router/routes-helpers';
 import { clipboardCopyPlainText } from '../../../logic/utils/clipboard';
@@ -134,6 +133,10 @@ import { ProjectRightsInspectResponseRightType } from '../../../logic/types/Righ
 import ImsSelect from '../../Common/ImsSelect.vue';
 import CaptionString from '../../Common/CaptionString.vue';
 import { AssetRights } from '../../../logic/types/Rights';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { UsersSubContext } from '#logic/project-sub-contexts/UsersSubContext';
 
 type DialogProps = {
   assetId?: string;
@@ -156,6 +159,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       initialRights: [] as ProjectRightsInspectResponseRoleDTO[],
@@ -190,7 +200,7 @@ export default defineComponent({
       ];
     },
     currentUserRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
     currentRights() {
       const res = new Map<
@@ -244,8 +254,8 @@ export default defineComponent({
     this.$emit('dialog-parameters', {
       forbidClose: true,
     });
-    const res = await this.$getAppManager()
-      .get(ProjectManager)
+    const res = await this.projectContext
+      .get(UsersSubContext)
       .getRights(this.dialog.state.assetId, this.dialog.state.workspaceId);
     if (res) {
       this.initialRights = res.roleRights;
@@ -260,13 +270,11 @@ export default defineComponent({
     },
     async copyLink() {
       try {
-        const projectInfo = this.$getAppManager()
-          .get(ProjectManager)
-          .getProjectInfo();
+        const projectInfo = this.projectContext.projectInfo;
         let link = '';
         if (projectInfo && this.dialog.state.assetId) {
-          const taskNum = this.$getAppManager()
-            .get(TaskManager)
+          const taskNum = this.projectContext
+            .get(TaskSubContext)
             .getTaskViaCacheSync(this.dialog.state.assetId)?.num;
           link = getProjectLinkHref(
             this.$router,
@@ -336,8 +344,8 @@ export default defineComponent({
       try {
         if (this.dialog.state.workspaceId) {
           const workspace_id = this.dialog.state.workspaceId;
-          await this.$getAppManager()
-            .get(ProjectManager)
+          await this.projectContext
+            .get(UsersSubContext)
             .setWorkspaceRoleRightsList(
               this.changes.map((rs) => {
                 return {
@@ -350,17 +358,15 @@ export default defineComponent({
         }
         if (this.dialog.state.assetId) {
           const asset_id = this.dialog.state.assetId;
-          await this.$getAppManager()
-            .get(ProjectManager)
-            .setAssetRoleRightsList(
-              this.changes.map((rs) => {
-                return {
-                  assetId: asset_id,
-                  roleNum: rs.roleNum,
-                  rights: rs.rights,
-                };
-              }),
-            );
+          await this.projectContext.get(UsersSubContext).setAssetRoleRightsList(
+            this.changes.map((rs) => {
+              return {
+                assetId: asset_id,
+                roleNum: rs.roleNum,
+                rights: rs.rights,
+              };
+            }),
+          );
         }
         this.dialog.close();
         this.$getAppManager()

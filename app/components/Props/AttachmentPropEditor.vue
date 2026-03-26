@@ -32,7 +32,7 @@ import { isFilledAssetPropValue } from '../../logic/types/Props';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import FileAttachButton from '../File/FileAttachButton.vue';
 import FilePresenter from '../File/FilePresenter.vue';
-import type { UploadingJob } from '../../logic/managers/EditorSubContext';
+import type { UploadingJob } from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'AttachmentPropEditor',
@@ -92,7 +92,7 @@ export default defineComponent({
       if (!this.modelValue) {
         return;
       }
-      const res = await this.$getAppManager()
+      const res = await this.projectContext
         .get(DialogManager)
         .show(
           ConfirmDialog,

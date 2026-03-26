@@ -39,21 +39,26 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import FeedLoader from '../Common/FeedLoader.vue';
 import HistoryRow from './HistoryRow.vue';
 import { ProjectHistoryVM } from '../../logic/vm/ProjectHistoryVM';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 export default defineComponent({
   name: 'ChangesHistory',
   components: {
     FeedLoader,
     HistoryRow,
   },
-  data() {
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    const projectHistoryVM = new ProjectHistoryVM(projectContext);
     return {
-      projectHistoryVM: new ProjectHistoryVM(this.$getAppManager()),
+      projectContext,
+      projectHistoryVM,
     };
   },
   computed: {
@@ -61,9 +66,7 @@ export default defineComponent({
       return this.projectHistoryVM.getGlobalHistoryChanges();
     },
     daysLimit() {
-      const project_info = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project_info = this.projectContext.projectInfo;
       if (!project_info) return false;
       return project_info.license?.features.changeHistoryDays;
     },

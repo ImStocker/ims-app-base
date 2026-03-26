@@ -12,13 +12,16 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import {
   castAssetPropValueToString,
   type AssetPropValue,
 } from '../../logic/types/Props';
 import type { PropsFormState } from '../../logic/types/PropsForm';
-import type { IProjectContext } from '../../logic/types/IProjectContext';
+import {
+  injectedProjectContext,
+  type IProjectContext,
+} from '../../logic/types/IProjectContext';
 import { assert } from '../../logic/utils/typeUtils';
 import AssetLink from '../Asset/AssetLink.vue';
 import CaptionString from '../Common/CaptionString.vue';
@@ -29,7 +32,6 @@ export default defineComponent({
     AssetLink,
     CaptionString,
   },
-  inject: ['projectContext'],
   props: {
     modelValue: {
       type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
@@ -41,6 +43,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'blur', 'preEnter', 'enter', 'changeProps'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     projectContextComp() {
       assert(this.projectContext, 'projectContext is not provided');

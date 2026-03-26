@@ -20,7 +20,6 @@ import SelectionPropEditorInput from './SelectionPropEditorInput.vue';
 
 export default defineComponent({
   name: 'SelectionPropEditor',
-  // inject: ['projectContext'],
   components: {
     SelectionPropEditorInput,
   },

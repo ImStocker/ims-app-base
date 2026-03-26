@@ -14,7 +14,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineAsyncComponent, defineComponent } from 'vue';
+import { defineAsyncComponent, defineComponent, inject } from 'vue';
 import type { FieldTypeController } from '../../logic/types/FieldTypeController';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import type {
@@ -22,7 +22,9 @@ import type {
   PropsFormFieldDef,
   PropsFormState,
 } from '../../logic/types/PropsForm';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'FieldParamsEditor',
@@ -43,6 +45,13 @@ export default defineComponent({
     editMode: { type: Boolean, default: false },
   },
   emits: ['changeProps'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {};
   },
@@ -57,7 +66,7 @@ export default defineComponent({
     },
     forFieldTypeController(): FieldTypeController | null {
       return (
-        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
+        this.projectContext.get(EditorSubContext).getFieldTypesMap()[
           this.forFieldType
         ] ?? null
       );

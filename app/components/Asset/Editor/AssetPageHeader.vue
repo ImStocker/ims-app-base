@@ -87,7 +87,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AuthManager from '../../../logic/managers/AuthManager';
 import {
@@ -97,7 +97,10 @@ import {
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import { DISCUSSION_ASSET_ID, HUB_PID } from '../../../logic/constants';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import DialogManager from '../../../logic/managers/DialogManager';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import UiManager from '../../../logic/managers/UiManager';
@@ -111,7 +114,7 @@ import CaptionString from '../../Common/CaptionString.vue';
 import { calcResolvedBlocks } from '../../../logic/types/AssetFullInstance';
 import AssetCompletionCheckWidget from '../Completion/AssetCompletionCheckWidget.vue';
 import AssetPropsDialog from '../AssetPropsDialog.vue';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetPageHeader',
@@ -129,6 +132,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isRenaming: false,
@@ -142,11 +152,11 @@ export default defineComponent({
     },
     layoutDescriptor() {
       if (!this.currentAssetFull) {
-        return this.$getAppManager()
+        return this.projectContext
           .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentAssetFull);
     },
@@ -156,7 +166,7 @@ export default defineComponent({
         : false;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
@@ -234,7 +244,7 @@ export default defineComponent({
     },
     canChange() {
       return this.vm.asset
-        ? this.vm.rights >= MIN_ASSET_RIGHTS_TO_CHANGE
+        ? this.vm.asset.rights >= MIN_ASSET_RIGHTS_TO_CHANGE
         : false;
     },
     headerIcon() {
@@ -273,13 +283,11 @@ export default defineComponent({
         await this.$getAppManager()
           .get(UiManager)
           .doTask(async () => {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .deleteAssets({
-                where: {
-                  id: [element.id],
-                },
-              });
+            await this.projectContext.get(AssetSubContext).deleteAssets({
+              where: {
+                id: [element.id],
+              },
+            });
 
             if (this.projectInfo) {
               if (element.workspaceId) {
@@ -332,16 +340,14 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .changeAssets({
-              where: {
-                id: [asset.id],
-              },
-              set: {
-                title: new_name,
-              },
-            });
+          await this.projectContext.get(AssetSubContext).changeAssets({
+            where: {
+              id: [asset.id],
+            },
+            set: {
+              title: new_name,
+            },
+          });
         });
       this.isRenamingInProcNewTitle = null;
     },

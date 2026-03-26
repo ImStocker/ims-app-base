@@ -56,11 +56,12 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import DialogContent from '../Dialog/DialogContent.vue';
-import { defineComponent, type PropType } from 'vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ProjectImportResponseDTO } from '../../logic/types/ProjectTypes';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
 
 type DialogProps = {
   files: File[];
@@ -81,6 +82,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       importing: true,
@@ -90,7 +98,7 @@ export default defineComponent({
   },
   computed: {
     projectId() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo()?.id;
+      return this.projectContext.projectInfo?.id;
     },
     importResultProps() {
       return Object.keys(this.importResult ?? {}).filter((pr) => pr !== 'logs');
@@ -110,8 +118,8 @@ export default defineComponent({
         this.importResult = null;
 
         for (const file of this.dialog.state.files) {
-          const one_res = await this.$getAppManager()
-            .get(ProjectManager)
+          const one_res = await this.projectContext
+            .get(ImportExportSubContext)
             .importFile(file, file.name, this.dialog.state.workspaceId);
           if (!this.importResult) {
             this.importResult = {

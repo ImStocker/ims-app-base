@@ -10,15 +10,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import { openProjectLink } from '../../logic/router/routes-helpers';
 import type { AssetPageVM } from '../../logic/vm/AssetPageVM';
 import type { BreadCrumbsEntity } from '../../logic/types/BreadCrumbs';
 import type { AssetShort } from '../../logic/types/AssetsType';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
 import {
   BLOCK_NAME_LOCALE,
   BLOCK_NAME_PROPS,
@@ -29,6 +26,10 @@ import {
 } from '../../logic/constants';
 import DialogManager from '../../logic/managers/DialogManager';
 import AssetPropsDialog from '../Asset/AssetPropsDialog.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'GameDesignPage',
@@ -38,6 +39,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       assetEventsHandler: null as SubscriberHandler | null,
@@ -46,11 +54,11 @@ export default defineComponent({
   computed: {
     layoutDescriptor() {
       if (!this.currentAssetFull) {
-        return this.$getAppManager()
+        return this.projectContext
           .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentAssetFull);
     },
@@ -96,12 +104,12 @@ export default defineComponent({
         : null;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   mounted() {
-    this.$getAppManager().get(EditorSubContext).currentEditorPage = this;
-    const creatorsAssetManager = this.$getAppManager().get(CreatorAssetManager);
+    this.projectContext.get(EditorSubContext).currentEditorPage = this;
+    const creatorsAssetManager = this.projectContext.get(AssetSubContext);
     this.assetEventsHandler =
       creatorsAssetManager.projectContentEvents.subscribe(async (ev) => {
         if (!this.projectInfo) return;
@@ -134,16 +142,16 @@ export default defineComponent({
           }
 
           if (reload_asset) {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
+            await this.projectContext
+              .get(AssetSubContext)
               .getAssetInstance(current_asset.id, true);
           }
         }
 
         if (ev.aDelIds.includes(this.openedAssetId)) {
           // Check if deleted system base objects
-          const asset = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const asset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetInstance(this.openedAssetId, true);
           if (!asset) {
             openProjectLink(this.$getAppManager(), this.projectInfo, {
@@ -158,7 +166,7 @@ export default defineComponent({
       });
   },
   unmounted() {
-    const editor_manager = this.$getAppManager().get(EditorSubContext);
+    const editor_manager = this.projectContext.get(EditorSubContext);
     if (editor_manager.currentEditorPage === this) {
       editor_manager.currentEditorPage = null;
     }
@@ -174,8 +182,8 @@ export default defineComponent({
       _workspace_routes: BreadCrumbsEntity[] = [],
     ): BreadCrumbsEntity[] {
       const parents =
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .getParentWorkspacesListFromCacheSync(workspace_id) ?? [];
       return parents.map((workspace) => {
         return {
@@ -240,8 +248,8 @@ export default defineComponent({
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
-.GameDesignPage {
-  // --local-bg-color: var(--panel-bg-color);
-  // background-color: var(--local-bg-color);
-}
+//.GameDesignPage {
+// --local-bg-color: var(--panel-bg-color);
+// background-color: var(--local-bg-color);
+//}
 </style>

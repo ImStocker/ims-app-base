@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type {
   AssetPropValue,
   AssetPropValueAsset,
@@ -30,16 +30,19 @@ import type {
   AssetForSelection,
   AssetShort,
 } from '../../logic/types/AssetsType';
-import type { IProjectContext } from '../../logic/types/IProjectContext';
+import {
+  injectedProjectContext,
+  type IProjectContext,
+} from '../../logic/types/IProjectContext';
 import SelectAssetComboBox from '../Asset/SelectAssetComboBox.vue';
 import { assert } from '../../logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'AssetSelectorPropEditor',
   components: {
     SelectAssetComboBox,
   },
-  inject: ['projectContext'],
   props: {
     modelValue: {
       type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
@@ -58,6 +61,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: false,
@@ -78,9 +88,9 @@ export default defineComponent({
     },
     selectedAsset(): (AssetForSelection & { bad: boolean }) | null {
       if (this.modelValueAsset) {
-        const from_cache = this.projectContextComp.getAssetShortViaCacheSync(
-          this.modelValueAsset.AssetId,
-        );
+        const from_cache = this.projectContextComp
+          .get(AssetSubContext)
+          .getAssetShortViaCacheSync(this.modelValueAsset.AssetId);
         return {
           id: this.modelValueAsset.AssetId,
           title: this.modelValueAsset.Title,
@@ -105,17 +115,17 @@ export default defineComponent({
   watch: {
     modelValueAsset() {
       if (this.modelValueAsset) {
-        this.projectContextComp.requestAssetShortInCache(
-          this.modelValueAsset.AssetId,
-        );
+        this.projectContextComp
+          .get(AssetSubContext)
+          .requestAssetShortInCache(this.modelValueAsset.AssetId);
       }
     },
   },
   mounted() {
     if (this.modelValueAsset) {
-      this.projectContextComp.requestAssetShortInCache(
-        this.modelValueAsset.AssetId,
-      );
+      this.projectContextComp
+        .get(AssetSubContext)
+        .requestAssetShortInCache(this.modelValueAsset.AssetId);
     }
   },
   methods: {

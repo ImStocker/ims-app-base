@@ -1,9 +1,7 @@
 <template>
-  <span
-class="SelectionPropEditorExpr" :class="className"
-    ><template v-for="(p, i) of display"
-:key="i"
-      ><selection-prop-editor-expr
+  <span class="SelectionPropEditorExpr" :class="className">
+    <template v-for="(p, i) of display" :key="i">
+      <selection-prop-editor-expr
         v-if="p.expr"
         :expr="p.expr"
         :source="source"
@@ -36,7 +34,13 @@ type DisplaySchema = {
 
 export default defineComponent({
   name: 'SelectionPropEditorExpr',
-  // inject: ['projectContext'],
+  // setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   props: {
     source: {
       type: String,

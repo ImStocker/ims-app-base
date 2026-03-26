@@ -89,6 +89,7 @@ import FullyFilledPage from '../Common/FullyFilledPage.vue';
 import {
   defineAsyncComponent,
   defineComponent,
+  inject,
   type PropType,
   type UnwrapRef,
 } from 'vue';
@@ -115,10 +116,12 @@ import WorkspaceCollectionContent from './WorkspaceCollectionContent.vue';
 import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/WorkspaceCollectionPageVM';
 import ProjectLink from '../Common/ProjectLink.vue';
 import UiManager from '../../logic/managers/UiManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import RenamableText from '../Common/RenamableText.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'WorkspaceCollectionPage',
@@ -134,16 +137,18 @@ export default defineComponent({
     CreateFolderBox,
     CreateAssetBox,
   },
-  provide() {
-    return {
-      projectContext: this.vm,
-    };
-  },
   props: {
     vm: {
       type: Object as PropType<UnwrapRef<WorkspaceCollectionPageVM>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -182,7 +187,10 @@ export default defineComponent({
     },
     breadCrumbs(): BreadCrumbsEntity[] | null {
       if (this.workspaceId) {
-        const list = useWorkspaceBreadcrumbs(this.workspaceId);
+        const list = useWorkspaceBreadcrumbs(
+          this.projectContext,
+          this.workspaceId,
+        );
         return [...list];
       } else {
         return null;
@@ -216,7 +224,7 @@ export default defineComponent({
       );
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     workspaceIcon() {
       return this.vm.baseAsset?.icon
@@ -249,8 +257,8 @@ export default defineComponent({
         .doTask(async () => {
           this.isRenamingNewTitle = new_title;
           if (this.vm.workspace?.id) {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
+            await this.projectContext
+              .get(AssetSubContext)
               .changeWorkspace(this.vm.workspace?.id, {
                 title: new_title,
               });

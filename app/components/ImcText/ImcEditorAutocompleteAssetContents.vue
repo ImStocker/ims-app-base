@@ -36,11 +36,14 @@
   </div>
 </template>
 <script lang="ts">
-import { defineAsyncComponent, defineComponent } from 'vue';
-import type { EditorContextForAssetRequested } from '../../logic/managers/EditorSubContext';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import { defineAsyncComponent, defineComponent, inject } from 'vue';
 import type AssetContentTreePresenter from '../Asset/ProjectTree/AssetContentTreePresenter.vue';
 import type { BlockContentItem } from '../../logic/types/BlockTypeDefinition';
+import EditorSubContext, {
+  type EditorContextForAssetRequested,
+} from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ImcEditorAutocompleteAssetContents',
@@ -56,6 +59,13 @@ export default defineComponent({
     },
   },
   emits: ['select'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loaded: false,
@@ -118,7 +128,7 @@ export default defineComponent({
         this.editorContextForAssetRequest = null;
       }
       if (init) {
-        this.editorContextForAssetRequest = this.$getAppManager()
+        this.editorContextForAssetRequest = this.projectContext
           .get(EditorSubContext)
           .requestEditorContextForAsset(this.assetId);
         const assigned_request = this.editorContextForAssetRequest;

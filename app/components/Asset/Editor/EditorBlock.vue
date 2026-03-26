@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import type { AssetBlockChangable } from '../../../logic/types/BlocksType';
 import {
   convertTranslatedTitle,
@@ -152,8 +152,9 @@ import PromptDialog from '../../Common/PromptDialog.vue';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import CaptionString from '../../Common/CaptionString.vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../../logic/managers/TaskSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import {
   castAssetPropValueToString,
   makeBlockRef,
@@ -173,12 +174,13 @@ import type { MenuListItem } from '../../../logic/types/MenuList';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import NotificationIcon from '../ProjectTree/NotificationIcon.vue';
 import { isAssetUnreadAny } from '../../../logic/types/AssetUnread';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import EditorBlockContent from './EditorBlockContent.vue';
 import { isElementInteractive } from '../../utils/DomElementUtils';
 import { v4 as uuidv4 } from 'uuid';
 import AssetReferenceList from '../References/AssetReferenceList.vue';
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
 
 export default defineComponent({
   name: 'EditorBlock',
@@ -190,11 +192,6 @@ export default defineComponent({
     NotificationIcon,
     EditorBlockContent,
     AssetReferenceList,
-  },
-  provide() {
-    return {
-      projectContext: this.assetBlockEditor,
-    };
   },
   props: {
     assetBlockEditor: {
@@ -271,6 +268,13 @@ export default defineComponent({
     'show-chat',
     'update:isCollapsed',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       saving: false,
@@ -317,9 +321,9 @@ export default defineComponent({
       return this.$getAppManager().get(ProjectManager).canCreateTask();
     },
     menuList(): MenuListItem[] {
-      const gdd_folder = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceByName('gdd');
+      const gdd_folder = this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd');
 
       return [
         ...(this.isInherited
@@ -433,7 +437,7 @@ export default defineComponent({
       };
     },
     blockTypeDefinition() {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getBlockTypeDefinition(this.resolvedBlock.type);
     },
@@ -590,41 +594,37 @@ export default defineComponent({
       };
       const blockId = uuidv4();
       const blockRef = `@${blockId}`;
-      await this.$getAppManager()
-        .get(TaskManager)
-        .showCreateTaskDialog(
-          {
-            title:
-              convertTranslatedTitle(asset.title ?? '', (key) => this.$t(key)) +
-              ': ' +
-              castAssetPropValueToString(
-                this.resolvedBlock.title
-                  ? convertTranslatedTitle(this.resolvedBlock.title, (key) =>
-                      this.$t(key),
-                    )
-                  : this.resolvedBlock.name,
-              ),
-            blocks: {
-              [blockRef]: {
-                ...block,
-              },
+      await this.projectContext.get(TaskSubContext).showCreateTaskDialog(
+        {
+          title:
+            convertTranslatedTitle(asset.title ?? '', (key) => this.$t(key)) +
+            ': ' +
+            castAssetPropValueToString(
+              this.resolvedBlock.title
+                ? convertTranslatedTitle(this.resolvedBlock.title, (key) =>
+                    this.$t(key),
+                  )
+                : this.resolvedBlock.name,
+            ),
+          blocks: {
+            [blockRef]: {
+              ...block,
             },
           },
-          async (task) => {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .requestAssetInstanceInCache(asset.id);
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .createRef({
-                where: {
-                  id: [asset.id],
-                },
-                blockId: this.resolvedBlock.id,
-                targetAssetId: task.id,
-              });
-          },
-        );
+        },
+        async (task) => {
+          await this.projectContext
+            .get(AssetSubContext)
+            .requestAssetInstanceInCache(asset.id);
+          await this.projectContext.get(AssetSubContext).createRef({
+            where: {
+              id: [asset.id],
+            },
+            blockId: this.resolvedBlock.id,
+            targetAssetId: task.id,
+          });
+        },
+      );
     },
     async createRef() {
       const asset = this.assetBlockEditor.assetEdited;

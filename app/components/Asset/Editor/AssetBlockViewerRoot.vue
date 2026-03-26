@@ -5,10 +5,11 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
-import { useAppManager } from '../../../composables/useAppManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetBlockViewerRoot',
@@ -20,21 +21,23 @@ export default defineComponent({
     },
   },
   async setup(props) {
-    const appManager = useAppManager();
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
     const assetBlockEditor = AssetBlockEditorVM.CreateInstance(
-      appManager,
+      projectContext,
       props.assetFull,
     );
     await assetBlockEditor.init();
     return {
       assetBlockEditor,
+      projectContext,
     };
   },
   watch: {
     async assetFull() {
       if (this.assetBlockEditor) this.assetBlockEditor.destroy();
       this.assetBlockEditor = AssetBlockEditorVM.CreateInstance(
-        this.$getAppManager(),
+        this.projectContext,
         this.assetFull,
       );
       await this.assetBlockEditor.init();

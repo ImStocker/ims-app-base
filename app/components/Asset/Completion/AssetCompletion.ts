@@ -1,8 +1,8 @@
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import { BLOCK_NAME_META, TASK_ASSET_ID } from '../../../logic/constants';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import DialogManager from '../../../logic/managers/DialogManager';
-import type { IAppManager } from '../../../logic/managers/IAppManager';
-import TaskManager from '../../../logic/managers/TaskSubContext';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
 import type {
   AssetPropsParamsDTO,
@@ -41,7 +41,7 @@ export function readAssetMetaCompletionBlockProps(
 }
 
 async function requestAllChecklistTasksInCache(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   assetFulls: AssetFullInstanceR[],
 ) {
   const task_ids: string[] = [];
@@ -61,7 +61,7 @@ async function requestAllChecklistTasksInCache(
       }
     }
   }
-  await appManager.get(TaskManager).requestTasksInCache(task_ids);
+  await projectContext.get(TaskSubContext).requestTasksInCache(task_ids);
 }
 
 export function getCompletionDisplay(
@@ -94,12 +94,12 @@ export function getCompletionDisplay(
 }
 
 export async function setAssetCompleted(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   assetId: string,
   val: boolean,
 ) {
-  const asset_full = await appManager
-    .get(CreatorAssetManager)
+  const asset_full = await projectContext
+    .get(AssetSubContext)
     .getAssetInstance(assetId);
   if (!asset_full) return;
 
@@ -112,19 +112,25 @@ export async function setAssetCompleted(
   assert(asset_set.blocks);
 
   if (val && info.completeProgress !== null && info.completeProgress < 1) {
-    const res = await appManager.get(DialogManager).show(ConfirmDialog, {
-      withCancel: true,
-      header: appManager.$t('asset.completion.markAsCompletedConfirmHeader'),
-      message: appManager.$t('asset.completion.markAsCompletedConfirmMessage'),
-    });
+    const res = await projectContext.appManager
+      .get(DialogManager)
+      .show(ConfirmDialog, {
+        withCancel: true,
+        header: projectContext.appManager.$t(
+          'asset.completion.markAsCompletedConfirmHeader',
+        ),
+        message: projectContext.appManager.$t(
+          'asset.completion.markAsCompletedConfirmMessage',
+        ),
+      });
     if (res === null) return;
     if (res) {
-      await requestAllChecklistTasksInCache(appManager, [asset_full]);
+      await requestAllChecklistTasksInCache(projectContext, [asset_full]);
 
       const ref_assets = await Promise.all(
         asset_full.references.map((ref) => {
-          return appManager
-            .get(CreatorAssetManager)
+          return projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCache(ref.targetAssetId);
         }),
       );
@@ -136,7 +142,9 @@ export async function setAssetCompleted(
             })
             .map((ref_asset) => {
               return ref_asset
-                ? appManager.get(TaskManager).getTaskViaCache(ref_asset.id)
+                ? projectContext
+                    .get(TaskSubContext)
+                    .getTaskViaCache(ref_asset.id)
                 : null;
             }),
         )
@@ -157,8 +165,8 @@ export async function setAssetCompleted(
             let set_item_checked = true;
             if (checklist_item.task) {
               if (checklist_item.task.AssetId) {
-                const task = await appManager
-                  .get(TaskManager)
+                const task = await projectContext
+                  .get(TaskSubContext)
                   .getTaskViaCache(checklist_item.task.AssetId);
                 if (task) {
                   set_item_checked = false;
@@ -188,8 +196,8 @@ export async function setAssetCompleted(
         }
       }
       complete_progress = 1;
-      await appManager
-        .get(TaskManager)
+      await projectContext
+        .get(TaskSubContext)
         .setTasksAreCompleted(mark_tasks_done, true);
     }
   }
@@ -209,7 +217,7 @@ export async function setAssetCompleted(
     };
   }
 
-  await appManager.get(CreatorAssetManager).changeAssets({
+  await projectContext.get(AssetSubContext).changeAssets({
     where: {
       id: assetId,
     },

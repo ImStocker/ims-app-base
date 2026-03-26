@@ -40,22 +40,25 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetShort } from '../../logic/types/AssetsType';
 import type {
   AssetPropValue,
   AssetPropValueAsset,
 } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
-import type { IProjectContext } from '../../logic/types/IProjectContext';
+import {
+  injectedProjectContext,
+  type IProjectContext,
+} from '../../logic/types/IProjectContext';
 import { assert } from '../../logic/utils/typeUtils';
 import AssetLink from '../Asset/AssetLink.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'AssetLinkPropPresenter',
   components: { AssetLink },
-  inject: ['projectContext'],
   props: {
     modelValue: {
       type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
@@ -64,6 +67,13 @@ export default defineComponent({
     allowCustom: { type: Boolean, default: false },
   },
   emits: ['update:modelValue', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: false,
@@ -141,9 +151,9 @@ export default defineComponent({
         this.loading = true;
         const epoch = ++this.loadingEpoch;
         try {
-          const asset = await this.projectContextComp.getAssetShortViaCache(
-            this.valueParsed.assetId,
-          );
+          const asset = await this.projectContextComp
+            .get(AssetSubContext)
+            .getAssetShortViaCache(this.valueParsed.assetId);
           if (this.loadingEpoch === epoch) {
             this.loadedAsset = asset;
             this.loading = false;

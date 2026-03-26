@@ -150,11 +150,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import type { ProjectMember } from '../../logic/types/ProjectTypes';
 import type { AssetShort } from '../../logic/types/AssetsType';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import AssetSettings from './AssetSettings.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
@@ -186,7 +185,10 @@ import {
 } from '../../logic/constants';
 import { calcResolvedBlocks } from '../../logic/types/AssetFullInstance';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type DialogProps = {
   assetId: string;
@@ -214,6 +216,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     let mountPromiseResolve!: () => void;
     let mountPromiseReject!: (err: Error) => void;
@@ -226,7 +235,7 @@ export default defineComponent({
       members: [] as ProjectMember[],
       assetShorts: [] as AssetShort[],
       assetEditor: new AssetFullEditorVM(
-        this.$getAppManager(),
+        this.projectContext,
         this.dialog ? this.dialog.state.assetId : null,
       ),
       isRenamingMode: false,
@@ -289,7 +298,7 @@ export default defineComponent({
       return this.assetEditor.getIsReadonly();
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetLinkTo() {
       return {
@@ -300,7 +309,7 @@ export default defineComponent({
       };
     },
     canManageTasks() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
     assetCaption() {
       const asset_caption = this.currentAssetFull?.title
@@ -331,7 +340,7 @@ export default defineComponent({
   },
   async mounted() {
     try {
-      this.$getAppManager().get(EditorSubContext).currentEditorPage = this;
+      this.projectContext.get(EditorSubContext).currentEditorPage = this;
 
       await this.loadAsset();
       this.assetShorts = [];
@@ -339,8 +348,7 @@ export default defineComponent({
       (this.dialog as any).addBeforeCloseMethod(async () => {
         await new Promise((res) => setTimeout(res, 10));
       });
-      const creatorsAssetManager =
-        this.$getAppManager().get(CreatorAssetManager);
+      const creatorsAssetManager = this.projectContext.get(AssetSubContext);
       this.assetEventsHandler =
         creatorsAssetManager.projectContentEvents.subscribe(async (ev) => {
           if (!this.projectInfo) return;
@@ -393,7 +401,7 @@ export default defineComponent({
     }
   },
   unmounted() {
-    const editor_manager = this.$getAppManager().get(EditorSubContext);
+    const editor_manager = this.projectContext.get(EditorSubContext);
     if (editor_manager.currentEditorPage === this) {
       editor_manager.currentEditorPage = null;
     }
@@ -440,16 +448,14 @@ export default defineComponent({
     },
     async renameAsset(new_val: string) {
       this.saving = true;
-      await this.$getAppManager()
-        .get(CreatorAssetManager)
-        .changeAssets({
-          where: {
-            id: this.dialog.state.assetId,
-          },
-          set: {
-            title: new_val,
-          },
-        });
+      await this.projectContext.get(AssetSubContext).changeAssets({
+        where: {
+          id: this.dialog.state.assetId,
+        },
+        set: {
+          title: new_val,
+        },
+      });
       this.saving = false;
     },
     getRenamingValue() {
@@ -496,20 +502,16 @@ export default defineComponent({
           danger: true,
         });
       if (answer) {
-        await this.$getAppManager()
-          .get(UiManager)
-          .doTask(async () => {
-            await this.deleteRef(true);
-            if (this.assetEditor.openedAssetId) {
-              await this.$getAppManager()
-                .get(CreatorAssetManager)
-                .deleteAssets({
-                  where: {
-                    id: [this.assetEditor.openedAssetId],
-                  },
-                });
-            }
-          });
+        await this.projectContext.appManager.get(UiManager).doTask(async () => {
+          await this.deleteRef(true);
+          if (this.assetEditor.openedAssetId) {
+            await this.projectContext.get(AssetSubContext).deleteAssets({
+              where: {
+                id: [this.assetEditor.openedAssetId],
+              },
+            });
+          }
+        });
         this.choose();
       }
     },

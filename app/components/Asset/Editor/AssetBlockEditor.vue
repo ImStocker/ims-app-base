@@ -107,7 +107,12 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineAsyncComponent, defineComponent } from 'vue';
+import {
+  type PropType,
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+} from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import UiManager from '../../../logic/managers/UiManager';
 import SortableList from '../../Common/SortableList.vue';
@@ -126,10 +131,12 @@ import {
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
 import AssetBlockComment from './AssetBlockComment.vue';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import AssetBlockHideButton from './AssetBlockHideButton.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import type EditorBlock from './EditorBlock.vue';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export function getBlockIsHiddenPreferenceKey(
   projectId: string,
@@ -195,6 +202,13 @@ export default defineComponent({
     },
   },
   emits: ['update:is-dirty'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       saving: false,
@@ -219,7 +233,7 @@ export default defineComponent({
       return comments_count > 0;
     },
     blockTypes() {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
@@ -259,7 +273,7 @@ export default defineComponent({
       return this.assetBlockEditor.getRootCombinedReferences();
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     resolvedBlocksFilteredList(): ResolvedAssetBlock[] {
       let additional_hidden: string[] = [];

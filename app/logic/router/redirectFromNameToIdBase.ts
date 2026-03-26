@@ -1,10 +1,10 @@
 import type { RouteLocationNormalized } from 'vue-router';
-import CreatorAssetManager from '../managers/CreatorAssetManager';
-import type { IAppManager } from '../managers/IAppManager';
 import { createError } from '#app';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export async function redirectFromNameToIdBase(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   to: RouteLocationNormalized,
   type: 'workspace' | 'asset',
 ) {
@@ -12,13 +12,13 @@ export async function redirectFromNameToIdBase(
   let target_id: string | null = null;
 
   if (type === 'workspace') {
-    const workspace = await appManager
-      .get(CreatorAssetManager)
+    const workspace = await projectContext
+      .get(AssetSubContext)
       .getWorkspaceByNameViaCache(target_name);
     if (workspace) target_id = workspace.id;
   } else if (type === 'asset') {
-    const assets = await appManager
-      .get(CreatorAssetManager)
+    const assets = await projectContext
+      .get(AssetSubContext)
       .getAssetShortsList({
         where: {
           name: target_name,
@@ -33,7 +33,7 @@ export async function redirectFromNameToIdBase(
   if (!target_id) {
     throw createError({
       statusCode: 404,
-      message: appManager.$t('pages.pageNotFound'),
+      message: projectContext.appManager.$t('pages.pageNotFound'),
     });
   }
 

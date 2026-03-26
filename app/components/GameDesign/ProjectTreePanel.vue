@@ -11,12 +11,12 @@
 </template>
 <script lang="ts" setup>
 import GameDesignMenu from './GameDesignMenu.vue';
-import { useAppManager } from '../../composables/useAppManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { GameDesignMenuVM } from '../../logic/vm/GameDesignMenuVM';
 import { useProjectMenu } from '../useProjectMenu';
-import { onMounted, onUnmounted, useTemplateRef } from 'vue';
-const appManager = useAppManager();
+import { inject, onMounted, onUnmounted, useTemplateRef } from 'vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 const projectMenu = useProjectMenu();
 
 const gddMenuRef = useTemplateRef('gddMenu');
@@ -28,12 +28,14 @@ type ProjectTreePanelPropType = {
 const props = defineProps<{
   props: ProjectTreePanelPropType;
 }>();
+const projectContext = inject(injectedProjectContext);
 
 async function initVM(
   type: 'gdd' | 'discussions',
 ): Promise<GameDesignMenuVM | null> {
-  const rootWorkspace = await appManager
-    .get(CreatorAssetManager)
+  assert(projectContext, 'Project context not provided');
+  const rootWorkspace = await projectContext
+    .get(AssetSubContext)
     .getWorkspaceByNameViaCache(type);
   if (!rootWorkspace) return null;
 

@@ -19,11 +19,13 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineComponent } from 'vue';
-import TaskManager from '../../logic/managers/TaskSubContext';
+import { defineComponent, inject } from 'vue';
 import type { Workspace } from '../../logic/types/Workspaces';
 import ImsSelect from '../Common/ImsSelect.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   title: 'FormSelectBoard',
@@ -57,6 +59,13 @@ export default defineComponent({
     },
   },
   emits: ['input'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       editingValue: this.value,
@@ -76,7 +85,7 @@ export default defineComponent({
   },
   async mounted() {
     this.load = true;
-    this.options = await this.$getAppManager().get(TaskManager).getBoards();
+    this.options = await this.projectContext.get(TaskSubContext).getBoards();
     this.load = false;
   },
   methods: {

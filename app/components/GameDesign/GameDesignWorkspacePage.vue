@@ -220,9 +220,6 @@ export default defineComponent({
         this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT
       );
     },
-    projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
-    },
     gddVMSelection() {
       const gddVM = this.vm.gameDesignMenuVM;
       return gddVM ? gddVM.selection : [];

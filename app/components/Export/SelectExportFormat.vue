@@ -17,17 +17,18 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import ImsSelect from '../Common/ImsSelect.vue';
-import ExportFormatManager, {
-  type ExportFormatWithId,
-} from '../../logic/managers/ExportFormatManager';
 import DialogManager from '../../logic/managers/DialogManager';
 import EditFormatsDialog from './EditFormatsDialog.vue';
 import { getWorkspaceBaseAssetId } from '../Sync/getBaseAsset';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import { filterFormatsByAssetType } from './filterFormatsByAssetType';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
+import type { ExportFormatWithId } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'SelectExportFormat',
@@ -45,6 +46,13 @@ export default defineComponent({
     },
   },
   emits: ['update:model-value'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       formats: [] as ExportFormatWithId[],
@@ -73,14 +81,14 @@ export default defineComponent({
   },
   methods: {
     async load() {
-      this.formats = this.$getAppManager()
-        .get(ExportFormatManager)
+      this.formats = this.projectContext
+        .get(ImportExportSubContext)
         .getExportFormats();
       if (this.assetSelection) {
         let asset_id = null as null | string;
         if (typeof this.assetSelection.Where?.workspaceids === 'string') {
           asset_id = await getWorkspaceBaseAssetId(
-            this.$getAppManager(),
+            this.projectContext,
             this.assetSelection.Where.workspaceids,
           );
         }
@@ -88,21 +96,17 @@ export default defineComponent({
           asset_id = this.assetSelection.Where.typeids;
         }
         if (asset_id) {
-          const base_asset = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const base_asset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCache(asset_id);
           if (base_asset) {
-            this.formats = filterFormatsByAssetType(
-              this.$getAppManager(),
-              this.formats,
-              base_asset,
-            );
+            this.formats = filterFormatsByAssetType(this.formats, base_asset);
           }
         }
       }
     },
     async openFormatsSettings() {
-      const res = await this.$getAppManager()
+      const res = await this.projectContext.appManager
         .get(DialogManager)
         .show(EditFormatsDialog, {
           selectable: true,

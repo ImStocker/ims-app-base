@@ -1,7 +1,6 @@
 import { PageVMBase } from '../types/PageVMBase';
 import type { SubscriberHandler } from '../types/Subscriber';
 import { GameDesignMenuVM } from './GameDesignMenuVM';
-import ProjectManager from '../managers/ProjectManager';
 import { openProjectLink } from '../router/routes-helpers';
 import { assert } from '../utils/typeUtils';
 import type { AssetPropWhere } from '../types/PropsWhere';
@@ -90,7 +89,7 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
     change_res: ProjectContentChangeEventArg,
   ) {
     if (!this.workspaceId) return;
-    const projectInfo = this.appManager.get(ProjectManager).getProjectInfo();
+    const projectInfo = this.projectContext.projectInfo;
     assert(projectInfo, 'Project is not loaded');
 
     if (change_res.wDelIds.includes(this.workspaceId)) {

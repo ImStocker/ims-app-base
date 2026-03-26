@@ -106,7 +106,7 @@ export default defineComponent({
         : this.vm.workspaceViews;
     },
     userRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
   },
   methods: {

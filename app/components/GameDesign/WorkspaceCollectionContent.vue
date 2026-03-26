@@ -22,11 +22,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/WorkspaceCollectionPageVM';
 import CollectionContent from './CollectionContent.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import WorkspaceLink from '../Asset/WorkspaceLink.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'WorkspaceCollectionContent',
@@ -40,9 +41,16 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
 });

@@ -47,14 +47,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import UiManager from '../../../logic/managers/UiManager';
 import AssetHistoryRow from './AssetHistoryRow.vue';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 import { openProjectLink } from '#logic/router/routes-helpers';
 import { TASK_ASSET_ID } from '#logic/constants';
-import TaskManager from '#logic/managers/TaskSubContext';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetHistory',
@@ -72,16 +74,21 @@ export default defineComponent({
     },
   },
   emits: ['close'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     daysLimit() {
-      const project_info = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project_info = this.projectContext.projectInfo;
       if (!project_info) return false;
       return project_info.license?.features.changeHistoryDays;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   methods: {
@@ -103,8 +110,8 @@ export default defineComponent({
         },
       };
       if (copy_asset.typeIds && copy_asset.typeIds.includes(TASK_ASSET_ID)) {
-        const task_entity = this.$getAppManager()
-          .get(TaskManager)
+        const task_entity = this.projectContext
+          .get(TaskSubContext)
           .getTaskViaCacheSync(copy_asset.id);
         if (task_entity) {
           assetLinkTo = {

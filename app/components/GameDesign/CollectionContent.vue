@@ -52,14 +52,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ImcGridRow } from '../ImcGrid/ImcGrid';
 import ImcGrid from '../ImcGrid/ImcGrid.vue';
 import {
   applyPropsChange,
   castAssetPropValueToString,
 } from '../../logic/types/Props';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import CaptionString from '../Common/CaptionString.vue';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
 import type { AssetChangeDTO } from '../../logic/types/AssetsType';
@@ -74,6 +73,8 @@ import { gatherColumns } from './WorkspaceCollectionContent';
 import type { ICollectionBlockController } from '~ims-plugin-base/blocks/CollectionBlock/CollectionBlockController';
 import type { IAssetEditorToolbarVM } from '../../logic/vm/IAssetEditorToolbarVM';
 import { VIEW_TYPES_MAP } from '../Workspace/ViewOptions/viewUtils';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CollectionContent',
@@ -92,6 +93,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       assetEventsSubscriber: null as SubscriberHandler | null,
@@ -106,7 +114,7 @@ export default defineComponent({
       return VIEW_TYPES_MAP[this.currentViewType];
     },
     userRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
     gridColumns(): {
       list: WorkspaceCollectionColumn[];
@@ -133,7 +141,7 @@ export default defineComponent({
       if (base_asset) {
         columns = [
           ...columns,
-          ...gatherColumns(base_asset, this.$getAppManager()),
+          ...gatherColumns(base_asset, this.projectContext),
         ];
       }
 

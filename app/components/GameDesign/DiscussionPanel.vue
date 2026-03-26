@@ -17,14 +17,22 @@ import ApiManager from '#logic/managers/ApiManager';
 import { HttpMethods, Service } from '#logic/managers/ApiWorker';
 import AuthManager from '#logic/managers/AuthManager';
 import type { IProjectInfo } from '#logic/managers/ProjectManager';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import DiscussionPanelProject from './DiscussionPanelProject.vue';
-import ProjectManager from '#logic/managers/ProjectManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'DiscussionPanel',
   components: {
     DiscussionPanelProject,
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -37,7 +45,7 @@ export default defineComponent({
       return this.$getAppManager().get(AuthManager).getUserInfo();
     },
     currentProjectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   async mounted() {

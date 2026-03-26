@@ -57,7 +57,6 @@ import ImcGrid from '../ImcGrid/ImcGrid.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import DialogManager from '../../logic/managers/DialogManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
 import { AssetRights } from '../../logic/types/Rights';
 import type { SetClickOutsideCancel } from '../utils/ui';
@@ -91,7 +90,7 @@ export default defineComponent({
   },
   computed: {
     userRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
     hasChanges() {
       return this.vm.getHasChanges();

@@ -65,11 +65,15 @@
 </template>
 
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import UiManager from '../../logic/managers/UiManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import UbuntuRegular from '$style/fonts/Ubuntu/Ubuntu-Regular.ttf';
 import UbuntuBold from '$style/fonts/Ubuntu/Ubuntu-Bold.ttf';
 import UbuntuItalic from '$style/fonts/Ubuntu/Ubuntu-Italic.ttf';
@@ -79,7 +83,6 @@ import UbuntuBoldItalic from '$style/fonts/Ubuntu/Ubuntu-BoldItalic.ttf';
 import UbuntuLight from '$style/fonts/Ubuntu/Ubuntu-Light.ttf';
 import UbuntuMedium from '$style/fonts/Ubuntu/Ubuntu-Medium.ttf';
 import remixicon from 'remixicon/fonts/remixicon.ttf';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import {
   loadExportingContent,
   type ExportingContent,
@@ -87,6 +90,8 @@ import {
 } from '../../logic/utils/convertToPDF';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { openBlobFile } from '../../logic/utils/dataUtils';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DialogProps = {
   assetIds?: string[];
@@ -111,6 +116,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadingError: null as string | null,
@@ -128,7 +140,7 @@ export default defineComponent({
       return this.renderState.renderedBlocks >= this.renderState.totalBlocks;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     dialogHeader() {
       return this.$t('importExport.preview');
@@ -163,7 +175,7 @@ export default defineComponent({
       this.workspaceInfo = null;
       try {
         this.workspaceInfo = await loadExportingContent(
-          this.$getAppManager().get(CreatorAssetManager),
+          this.projectContext,
           this.dialog.state.assetIds ?? [],
           this.dialog.state.workspaceId ?? null,
         );

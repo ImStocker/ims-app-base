@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, markRaw, type PropType } from 'vue';
+import { defineComponent, inject, markRaw, type PropType } from 'vue';
 
 import { IMC_FILE_BLOT_CLASS } from './blots/ImcFileBlot';
 import ImcTextFile from './ImcTextFile.vue';
@@ -16,11 +16,12 @@ import { InnerComponentRenderer } from './InnerComponentRenderer';
 import { IMC_UPLOAD_JOB_BLOT_CLASS } from './blots/ImcUploadJobBlot';
 import ImcTextAssetLink from './ImcTextAssetLink.vue';
 import { IMC_ASSET_BLOT_CLASS } from './blots/ImcAssetBlot';
-import ProjectManager from '../../logic/managers/ProjectManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import { setNodeAssetIcon } from './utils';
 import { IMC_FORMULA_BLOT_CLASS } from './blots/ImcFormulaBlot';
 import ImcTextFormula from './ImcTextFormula.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'ImcTextAugmentation',
@@ -37,6 +38,13 @@ export default defineComponent({
       type: Object as PropType<ProjectInfoForLink | null>,
       default: null,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -135,19 +143,15 @@ export default defineComponent({
   },
   computed: {
     hasGddAccess() {
-      const role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const role = this.projectContext.user?.role;
       if (role) return true;
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       if (!project) return false;
       return project.isPublicGdd;
     },
     displayingProjectInfo() {
       if (this.projectInfo) return this.projectInfo;
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   mounted() {
@@ -180,8 +184,8 @@ export default defineComponent({
         const assetId = link.dataset.assetId;
         if (!assetId) continue;
 
-        const asset = this.$getAppManager()
-          .get(CreatorAssetManager)
+        const asset = this.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCacheSync(assetId);
         let assetIcon = link.dataset.assetIcon ?? null;
         let assetTitle = link.dataset.assetTitle;

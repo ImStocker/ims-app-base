@@ -59,8 +59,6 @@ import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockV
 import CaptionString from '../Common/CaptionString.vue';
 import AssetLink from '../Asset/AssetLink.vue';
 import FilePresenter from '../File/FilePresenter.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
@@ -80,7 +78,7 @@ export default defineComponent({
   },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetLink() {
       const title_column_index = this.columns.findIndex(

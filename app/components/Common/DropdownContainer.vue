@@ -169,6 +169,23 @@ export default defineComponent({
       return res;
     },
   },
+  watch: {
+    targetComp() {
+      if (this.$refs['container']) {
+        assignLogicalParent(
+          this.$refs['container'] as HTMLElement,
+          this.targetComp,
+        );
+      }
+      this._updateListeners(true);
+    },
+    attachToRect() {
+      this._updateListeners(true);
+    },
+    targetBoundingBoxComp() {
+      this.updateDropdownPosition();
+    },
+  },
   mounted() {
     this.originalParent = this.$el.parentElement;
     this.hostEl = this.getDropdownHost
@@ -436,23 +453,6 @@ export default defineComponent({
 
       this.resultPlacementPosition = place;
       return true;
-    },
-  },
-  watch: {
-    targetComp() {
-      if (this.$refs['container']) {
-        assignLogicalParent(
-          this.$refs['container'] as HTMLElement,
-          this.targetComp,
-        );
-      }
-      this._updateListeners(true);
-    },
-    attachToRect() {
-      this._updateListeners(true);
-    },
-    targetBoundingBoxComp() {
-      this.updateDropdownPosition();
     },
   },
 });

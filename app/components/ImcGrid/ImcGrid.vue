@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, shallowRef, type PropType } from 'vue';
+import { defineComponent, inject, shallowRef, type PropType } from 'vue';
 import {
   convertPastedToSelectionContent,
   convertSelectionDataToHTMLText,
@@ -103,7 +103,6 @@ import UiManager, {
   type UiFocusLockHandler,
 } from '../../logic/managers/UiManager.js';
 import { useImcHTMLRenderer } from '../ImcText/useImcHTMLRenderer';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ImcEditorQuillController } from '../ImcText/ImcEditorQuillController';
 import ImcEditor from '../ImcText/ImcEditor.vue';
 import { makeDeletePropKey } from '../../logic/types/makePropsChange';
@@ -111,14 +110,13 @@ import type {
   PropsFormFieldDef,
   PropsFormState,
 } from '../../logic/types/PropsForm';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
-import {
-  type SetClickOutsideCancel,
-  setImsClickOutside,
-} from '../utils/ui';
+import { type SetClickOutsideCancel, setImsClickOutside } from '../utils/ui';
 import { makeFormStateFromProps } from '../../logic/utils/assets';
 import { logicalTreeContains } from '../utils/logical-tree';
 import { isElementInteractive } from '../utils/DomElementUtils';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 function getClickedCellCoord(e: MouseEvent): ImcGridCoord | null {
   const target = e.target as HTMLElement;
@@ -181,6 +179,13 @@ export default defineComponent({
     'update:selectedRanges',
     'handleKey',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       focusedCell: null as null | ImcGridCoord,
@@ -200,7 +205,7 @@ export default defineComponent({
   },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     selectedCellsCount() {
       let count = 0;
@@ -808,7 +813,7 @@ export default defineComponent({
       const field_prop_key = field?.propKey ?? '';
       let field_accepted_types: AssetPropValueType[] | null;
       const field_controller = field
-        ? this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
+        ? this.projectContext.get(EditorSubContext).getFieldTypesMap()[
             field.type ?? 'text'
           ]
         : null;

@@ -30,14 +30,16 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import CaptionString from '../Common/CaptionString.vue';
 import MenuButton from '../Common/MenuButton.vue';
 import MenuList from '../Common/MenuList.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import TaskManager from '../../logic/managers/TaskSubContext';
 import type { AssetPropValueEnum } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   title: 'FormSelectCategory',
@@ -71,6 +73,13 @@ export default defineComponent({
     },
   },
   emits: ['input'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     menuList(): MenuListItem[] {
       const menu_list: MenuListItem[] = this.options.map((category) => {
@@ -99,7 +108,7 @@ export default defineComponent({
       return title ? convertTranslatedTitle(title, (key) => this.$t(key)) : '';
     },
     getCategoryIcon(name: string) {
-      return this.$getAppManager().get(TaskManager).getTaskCategoryIcon(name);
+      return this.projectContext.get(TaskSubContext).getTaskCategoryIcon(name);
     },
   },
 });

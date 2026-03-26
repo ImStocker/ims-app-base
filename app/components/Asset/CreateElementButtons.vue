@@ -63,7 +63,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import MenuButton from '../Common/MenuButton.vue';
 import CreateAssetBox from './CreateAssetBox.vue';
 import CreateFolderBox from './CreateFolderBox.vue';
@@ -72,8 +72,9 @@ import DialogManager from '../../logic/managers/DialogManager';
 import FastCreateAssetDialog from './FastCreateAssetDialog.vue';
 import { DISCUSSION_ASSET_ID } from '../../logic/constants';
 import { openProjectLink } from '../../logic/router/routes-helpers';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import CreateWorkspaceDialog from './CreateWorkspaceDialog.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CreateElementButtons',
@@ -86,9 +87,16 @@ export default defineComponent({
     rootWorkspaceId: { type: String, required: true },
     rootWorkspaceType: { type: String, default: null },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   methods: {

@@ -9,10 +9,12 @@
   </menu-button>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import MenuList from '../../Common/MenuList.vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import EditorSubContext from '../../../logic/project-sub-contexts/EditorSubContext';
+import { assert } from '#logic/utils/typeUtils';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
@@ -35,9 +37,16 @@ export default defineComponent({
     },
   },
   emits: ['click'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     blockTypes() {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);

@@ -47,20 +47,26 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type { ProjectInfoForLink } from '../../logic/router/routes-helpers';
 import ProjectLink from '../Common/ProjectLink.vue';
 import {
   convertTranslatedTitle,
   makeAnchorTagId,
 } from '../../logic/utils/assets';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { AssetLink } from '../../logic/types/AssetsType';
 import DropdownContainer from '../Common/DropdownContainer.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import AssetIcon from './AssetIcon.vue';
 import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import UiManager from '../../logic/managers/UiManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 const TOOLTIP_OFFSET_X = 10;
 const TOOLTIP_OFFSET_Y = 10;
@@ -89,6 +95,13 @@ export default defineComponent({
     tooltipShowPath: { type: Boolean, default: true },
   },
   emits: ['click'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       hoveredCoord: null as { x: number; y: number } | null,
@@ -117,24 +130,20 @@ export default defineComponent({
       return convertTranslatedTitle(asset_title ?? '', (key) => this.$t(key));
     },
     cachedAsset() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.asset.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetShortInCache(this.asset.id);
       }
       return cached;
     },
     hasGddAccess() {
-      const role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const role = this.projectContext.user?.role;
       if (role) return true;
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       if (!project) return false;
       return project.isPublicGdd;
     },
@@ -169,7 +178,7 @@ export default defineComponent({
       this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          this.$getAppManager()
+          this.projectContext
             .get(EditorSubContext)
             .openAsset(
               this.asset.id,

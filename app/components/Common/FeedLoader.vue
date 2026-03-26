@@ -40,6 +40,21 @@ export default defineComponent({
       isLoading: false,
     };
   },
+  watch: {
+    isIntersecting() {
+      if (this.isIntersecting) {
+        this.loadDelayed();
+      }
+    },
+    disabled() {
+      if (!this.disabled) {
+        this.loadDelayed();
+      }
+    },
+    isLoading() {
+      this.$emit('update:isLoading', this.isLoading);
+    },
+  },
   mounted() {
     this.loadDelayed();
   },
@@ -66,21 +81,6 @@ export default defineComponent({
           this.isLoading = false;
         }
       }
-    },
-  },
-  watch: {
-    isIntersecting() {
-      if (this.isIntersecting) {
-        this.loadDelayed();
-      }
-    },
-    disabled() {
-      if (!this.disabled) {
-        this.loadDelayed();
-      }
-    },
-    isLoading() {
-      this.$emit('update:isLoading', this.isLoading);
     },
   },
 });

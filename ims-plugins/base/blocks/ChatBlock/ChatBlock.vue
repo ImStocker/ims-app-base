@@ -210,7 +210,7 @@ export default defineComponent({
         : !this.commentContent;
     },
     isGuest(): boolean {
-      return !this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return !this.projectContext.user?.role;
     },
   },
   watch: {
@@ -311,9 +311,9 @@ export default defineComponent({
             );
             if (deleted_message_index !== -1) {
               if (this.messagesList.length === 0) {
-                const discussions_workspace_id = this.$getAppManager()
-                  .get(ProjectManager)
-                  .getWorkspaceIdByName(DISCUSSION_WORKSPACE_NAME);
+                const discussions_workspace_id = this.projectContext
+                  .get(AssetSubContext)
+                  .getWorkspaceByNameViaCache(DISCUSSION_WORKSPACE_NAME);
                 if (discussions_workspace_id) {
                   await this.$getAppManager()
                     .get(CreatorAssetManager)

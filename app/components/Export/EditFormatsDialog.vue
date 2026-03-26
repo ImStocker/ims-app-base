@@ -147,13 +147,10 @@
   </dialog-content>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import EditFormat from './EditFormat.vue';
-import ExportFormatManager, {
-  type ExportFormatWithId,
-} from '../../logic/managers/ExportFormatManager';
 import { v4 as uuidv4 } from 'uuid';
 import { generateNextUniqueNameNumber } from '../../logic/utils/stringUtils';
 import DialogManager from '../../logic/managers/DialogManager';
@@ -161,7 +158,6 @@ import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
 import FormSearch from '../Form/FormSearch.vue';
 import { getWorkspaceBaseAssetId } from '../Sync/getBaseAsset';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { AssetShort } from '../../logic/types/AssetsType';
 import {
   filterFormatsByAssetType,
@@ -169,6 +165,11 @@ import {
 } from './filterFormatsByAssetType';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
 import CaptionString from '../Common/CaptionString.vue';
+import type { ExportFormatWithId } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type DialogProps = {
   selectable?: boolean;
@@ -195,6 +196,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isLoading: false,
@@ -257,20 +265,18 @@ export default defineComponent({
     },
     async saveFormat(format: ExportFormatWithId) {
       this.isFormatSaving = true;
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          await this.$getAppManager()
-            .get(ExportFormatManager)
-            .saveExportFormat(format);
-          this.selectedFormat = format;
-        });
+      await this.projectContext.appManager.get(UiManager).doTask(async () => {
+        await this.projectContext
+          .get(ImportExportSubContext)
+          .saveExportFormat(format);
+        this.selectedFormat = format;
+      });
       this.isFormatSaving = false;
       if (this.creatingFormat) this.creatingFormat = null;
       await this.load();
     },
     async deleteFormat(id: string) {
-      const confirm = await this.$getAppManager()
+      const confirm = await this.projectContext.appManager
         .get(DialogManager)
         .show(ConfirmDialog, {
           header: this.$t('importExport.formats.deleteFormat'),
@@ -280,14 +286,12 @@ export default defineComponent({
         });
       if (!confirm) return;
       this.deletingFormatId = id;
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          await this.$getAppManager()
-            .get(ExportFormatManager)
-            .deleteExportFormat(id);
-          this.selectedFormat = null;
-        });
+      await this.projectContext.appManager.get(UiManager).doTask(async () => {
+        await this.projectContext
+          .get(ImportExportSubContext)
+          .deleteExportFormat(id);
+        this.selectedFormat = null;
+      });
       this.deletingFormatId = null;
 
       await this.load();
@@ -319,8 +323,8 @@ export default defineComponent({
       try {
         this.isLoading = true;
         this.loadError = null;
-        this.formats = this.$getAppManager()
-          .get(ExportFormatManager)
+        this.formats = this.projectContext
+          .get(ImportExportSubContext)
           .getExportFormats();
         if (!this.isBaseAssetFilterEnabled) return;
         if (this.dialog.state.assetSelection?.Where) {
@@ -333,7 +337,7 @@ export default defineComponent({
               ? this.dialog.state.assetSelection?.Where.workspaceids[0]
               : this.dialog.state.assetSelection?.Where.workspaceids;
             asset_id = await getWorkspaceBaseAssetId(
-              this.$getAppManager(),
+              this.projectContext,
               workspace_id as string,
             );
           }
@@ -344,12 +348,11 @@ export default defineComponent({
             asset_id = this.dialog.state.assetSelection?.Where.typeids;
           }
           if (asset_id) {
-            this.baseAsset = await this.$getAppManager()
-              .get(CreatorAssetManager)
+            this.baseAsset = await this.projectContext
+              .get(AssetSubContext)
               .getAssetShortViaCache(asset_id);
             if (this.baseAsset) {
               this.formats = filterFormatsByAssetType(
-                this.$getAppManager(),
                 this.formats,
                 this.baseAsset,
               );

@@ -5,10 +5,8 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import type { AssetFullEditorVM } from '../../logic/vm/AssetFullEditorVM';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../logic/managers/TaskSubContext';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import DialogManager from '../../logic/managers/DialogManager';
 import PromptDialog from '../Common/PromptDialog.vue';
@@ -28,7 +26,11 @@ import { clipboardCopyPlainText } from '../../logic/utils/clipboard';
 import SetUpAccessDialog from './Rights/SetUpAccessDialog.vue';
 import type { AssetPropValueAccount } from '../../logic/types/Props';
 import { castAssetPropValueToAccount } from '../../logic/types/Props';
-import ProjectContentManager from '../../logic/project-sub-contexts/ImportExportSubContext';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import ImportExportSubContext from '../../logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   name: 'AssetSettings',
@@ -43,12 +45,19 @@ export default defineComponent({
     },
   },
   emits: ['delete'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     isAdmin() {
       return this.$getAppManager().get(ProjectManager).isAdmin();
     },
     isGuest() {
-      return !this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return !this.projectContext.user?.role;
     },
     canCreateTask() {
       return this.$getAppManager().get(ProjectManager).canCreateTask();
@@ -59,7 +68,7 @@ export default defineComponent({
         : false;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
@@ -242,22 +251,22 @@ export default defineComponent({
     async exportToJSONAsset() {
       const asset = this.currentAssetFull;
       if (!asset) return;
-      await this.$getAppManager()
-        .get(ProjectContentManager)
+      await this.projectContext
+        .get(ImportExportSubContext)
         .exportToJSONAsset(asset);
     },
     exportWithCustomFormat() {
       const asset = this.currentAssetFull;
       if (!asset) return;
-      this.$getAppManager()
-        .get(ProjectContentManager)
+      this.projectContext
+        .get(ImportExportSubContext)
         .exportAssetWithCustomFormat(asset);
     },
     async exportToDocumentAsset(type: 'pdf' | 'md') {
       const asset = this.currentSingleAsset;
       if (!asset) return;
-      await this.$getAppManager()
-        .get(ProjectContentManager)
+      await this.projectContext
+        .get(ImportExportSubContext)
         .exportToDocumentAsset(asset, type);
     },
     async createInstance() {
@@ -293,27 +302,23 @@ export default defineComponent({
       const asset = this.currentAssetFull;
       if (!asset) return;
 
-      await this.$getAppManager()
-        .get(TaskManager)
-        .showCreateTaskDialog(
-          {
-            title:
-              convertTranslatedTitle(asset.title, (key) => this.$t(key)) + ': ',
-          },
-          async (task) => {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .requestAssetInstanceInCache(asset.id);
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .createRef({
-                where: {
-                  id: [asset.id],
-                },
-                targetAssetId: task.id,
-              });
-          },
-        );
+      await this.projectContext.get(TaskSubContext).showCreateTaskDialog(
+        {
+          title:
+            convertTranslatedTitle(asset.title, (key) => this.$t(key)) + ': ',
+        },
+        async (task) => {
+          await this.projectContext
+            .get(AssetSubContext)
+            .requestAssetInstanceInCache(asset.id);
+          await this.projectContext.get(AssetSubContext).createRef({
+            where: {
+              id: [asset.id],
+            },
+            targetAssetId: task.id,
+          });
+        },
+      );
     },
     async createRef() {
       if (!this.assetEditor.openedAssetId) {
@@ -340,12 +345,10 @@ export default defineComponent({
     },
     async copyLink() {
       try {
-        const projectInfo = this.$getAppManager()
-          .get(ProjectManager)
-          .getProjectInfo();
+        const projectInfo = this.projectContext.projectInfo;
         if (projectInfo && this.assetEditor.openedAssetId) {
-          const taskNum = this.$getAppManager()
-            .get(TaskManager)
+          const taskNum = this.projectContext
+            .get(TaskSubContext)
             .getTaskViaCacheSync(this.assetEditor.openedAssetId)?.num;
           const link = getProjectLinkHref(
             this.$router,
@@ -384,16 +387,14 @@ export default defineComponent({
         await this.$getAppManager()
           .get(UiManager)
           .doTask(async () => {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .changeAssets({
-                where: {
-                  id: [asset.id],
-                },
-                set: {
-                  title: new_name,
-                },
-              });
+            await this.projectContext.get(AssetSubContext).changeAssets({
+              where: {
+                id: [asset.id],
+              },
+              set: {
+                title: new_name,
+              },
+            });
           });
       }
     },

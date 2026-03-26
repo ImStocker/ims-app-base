@@ -3,7 +3,6 @@ import type {
   ApiResultListWithTotal,
   ProjectFullInfo,
 } from '../../types/ProjectTypes';
-import CreatorAssetManager from '../../managers/CreatorAssetManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
   type Workspace,
@@ -25,7 +24,6 @@ import type { IProjectContext } from '../../types/IProjectContext';
 import type { AssetShort, AssetQueryWhere } from '../../types/AssetsType';
 import ProjectManager from '../../managers/ProjectManager';
 import { assert } from '../../utils/typeUtils';
-import type { IAppManager } from '../../managers/IAppManager';
 import type { IAssetEditorToolbarVM } from '../IAssetEditorToolbarVM';
 import type { ExtendedMenuListItem } from '../../types/MenuList';
 import { WorkspaceChanger } from './WorkspaceChanger';
@@ -38,10 +36,12 @@ import {
 } from '../../../components/Workspace/ViewOptions/viewUtils';
 import type { ICollectionBlockController } from '../../../../ims-plugins/base/blocks/CollectionBlock/CollectionBlockController';
 import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { serializeAssetFullInstances } from '#logic/project-sub-contexts/Asset/serializeAssetFullInstances';
 
 export class WorkspaceCollectionPageVM
   extends WorkspacePageVM
-  implements IProjectContext, IAssetEditorToolbarVM, ICollectionBlockController
+  implements IAssetEditorToolbarVM, ICollectionBlockController
 {
   public baseAsset: AssetFullInstanceR | null = null;
 
@@ -57,11 +57,11 @@ export class WorkspaceCollectionPageVM
   private currentViewKey: string | null = null;
   private _unsavedViewData: { [key: string]: Partial<UserView> } = {};
 
-  constructor(appManager: IAppManager, params: WorkspacePageVMParams) {
-    super(appManager, params);
+  constructor(projectContext: IProjectContext, params: WorkspacePageVMParams) {
+    super(projectContext, params);
     this.searchQuery = params.searchQuery;
     this.assetsContent = new WorkspaceContentController(
-      this.appManager,
+      this.projectContext,
       this.changer,
       params,
     );
@@ -70,28 +70,28 @@ export class WorkspaceCollectionPageVM
   getWorkspacesList(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
   ): Promise<ApiResultListWithTotal<Workspace>> {
-    return this.appManager.get(CreatorAssetManager).getWorkspacesList(query);
+    return this.projectContext.get(AssetSubContext).getWorkspacesList(query);
   }
 
   getAssetInstancesList(
     query: ApiRequestList<AssetQueryWhere>,
   ): Promise<ApiResultListWithTotal<AssetFullInstanceR>> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getAssetInstancesList(query);
   }
 
   getWorkspaceByIdViaCacheSync(
     workspace_id: string,
   ): Workspace | null | undefined {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getWorkspaceByIdViaCacheSync(workspace_id);
   }
 
   getWorkspaceByIdViaCache(workspace_id: string): Promise<Workspace | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getWorkspaceByIdViaCache(workspace_id);
   }
 
@@ -173,8 +173,8 @@ export class WorkspaceCollectionPageVM
       if (workspace && workspace.props.type === WORKSPACE_TYPE_COLLECTION) {
         const asset_link = workspace.props.asset;
         if ((asset_link as AssetPropValueAsset).AssetId) {
-          this.baseAsset = await this.appManager
-            .get(CreatorAssetManager)
+          this.baseAsset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetInstance((asset_link as AssetPropValueAsset).AssetId);
         }
       }
@@ -194,7 +194,7 @@ export class WorkspaceCollectionPageVM
       this.subWorkspacesLoading = true;
       if (this.workspace) {
         this.subWorkspaces = (
-          await this.appManager.get(CreatorAssetManager).getWorkspacesList({
+          await this.projectContext.get(AssetSubContext).getWorkspacesList({
             where: {
               parentId: this.workspaceId,
             },
@@ -228,16 +228,16 @@ export class WorkspaceCollectionPageVM
   ) {
     super._handleWorkspacesEvents(change_res);
     for (const workspace_id of change_res.wUpsIds) {
-      const workspace = this.appManager
-        .get(CreatorAssetManager)
+      const workspace = this.projectContext
+        .get(AssetSubContext)
         .getWorkspaceByIdViaCacheSync(workspace_id);
       if (!workspace) {
         continue;
       }
       if ((workspace.props.asset as any)?.AssetId) {
         this.baseAsset =
-          (await this.appManager
-            .get(CreatorAssetManager)
+          (await this.projectContext
+            .get(AssetSubContext)
             .getAssetInstance((workspace.props.asset as any)?.AssetId)) ?? null;
       }
     }
@@ -246,9 +246,7 @@ export class WorkspaceCollectionPageVM
   override toJSON(): Record<string, any> {
     const base_json = super.toJSON();
     const asset_full_preserved = this.baseAsset
-      ? this.appManager
-          .get(CreatorAssetManager)
-          .serializeAssetFullInstances([this.baseAsset])
+      ? serializeAssetFullInstances(this.projectContext, [this.baseAsset])
       : null;
     return {
       ...base_json,
@@ -263,12 +261,12 @@ export class WorkspaceCollectionPageVM
 
   override loadJSON(data: Record<string, any>): void {
     super.loadJSON(data);
-    const creatorAssetManager = this.appManager.get(CreatorAssetManager);
+    const assetSubContext = this.projectContext.get(AssetSubContext);
 
     if (data.subWorkspaces) {
-      creatorAssetManager.updateWorkspacesCache(data.subWorkspaces);
+      assetSubContext.updateWorkspacesCache(data.subWorkspaces);
       this.subWorkspaces = data.subWorkspaces.map((w) =>
-        creatorAssetManager.getWorkspaceByIdViaCacheSync(w.id),
+        assetSubContext.getWorkspaceByIdViaCacheSync(w.id),
       );
     }
     this.subWorkspacesLoading = data.subWorkspacesLoading;
@@ -279,51 +277,51 @@ export class WorkspaceCollectionPageVM
     this.initialLoad = data.initialLoad;
 
     if (data.baseAssetResult && data.baseAssetResult.ids.length > 0) {
-      creatorAssetManager.updateFullInstanceCache(data.baseAssetResult);
+      assetSubContext.updateFullInstanceCache(data.baseAssetResult);
       this.baseAsset =
-        creatorAssetManager.getAssetInstanceViaCacheSync(
+        assetSubContext.getAssetInstanceViaCacheSync(
           data.baseAssetResult.ids[0],
         ) ?? null;
     }
   }
 
   getAssetShortViaCacheSync(assetId: string): AssetShort | null | undefined {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getAssetShortViaCacheSync(assetId);
   }
   getAssetShortViaCache(assetId: string): Promise<AssetShort | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getAssetShortViaCache(assetId);
   }
   requestAssetShortInCache(assetId: string): Promise<void> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .requestAssetShortInCache(assetId);
   }
   getAssetShortsList(
     query: ApiRequestList<AssetQueryWhere>,
   ): Promise<ApiResultListWithTotal<AssetShort>> {
-    return this.appManager.get(CreatorAssetManager).getAssetShortsList(query);
+    return this.projectContext.get(AssetSubContext).getAssetShortsList(query);
   }
   getAssetInstance(
     assetId: string,
     refresh?: boolean,
   ): Promise<AssetFullInstanceR | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getAssetInstance(assetId, refresh);
   }
 
   checkHasChildrenViaCache(assetId: string): Promise<boolean | null> {
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .checkHasChildrenViaCache(assetId);
   }
 
   get projectInfo(): ProjectFullInfo {
-    const project_info = this.appManager.get(ProjectManager).getProjectInfo();
+    const project_info = this.projectContext.projectInfo;
     assert(project_info);
     return project_info;
   }

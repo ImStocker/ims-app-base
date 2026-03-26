@@ -8,16 +8,16 @@
 </template>
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type {
-  ExportFormat,
-  ExportFormatField,
-} from '../../logic/managers/ExportFormatManager';
 import FormBuilderModelBindObject from '../Form/FormBuilderModelBindObject';
 import type { FormSchema } from '../Form/FormBuilderTypes';
 import EditFormatKind from './EditFormatKind.vue';
 import EditFormatFields from './EditFormatFields.vue';
 import FormBuilder from '../Form/FormBuilder.vue';
 import type { AssetPropsPlainObject } from '../../logic/types/Props';
+import type {
+  ExportFormat,
+  ExportFormatField,
+} from '#logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   name: 'EditFormatTemplate',

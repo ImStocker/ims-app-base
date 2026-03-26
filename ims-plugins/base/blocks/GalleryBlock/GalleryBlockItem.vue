@@ -87,7 +87,7 @@ export default defineComponent({
   },
   computed: {
     projectId() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo()?.id;
+      return this.projectContext.projectInfo?.id;
     },
     fileTooltip() {
       const file = this.item.value as AssetPropValueFile;

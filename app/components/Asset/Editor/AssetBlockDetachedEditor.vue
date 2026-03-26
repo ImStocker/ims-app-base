@@ -26,7 +26,12 @@
   </div>
 </template>
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import type EditorBlock from './EditorBlock.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
@@ -35,10 +40,15 @@ import ProjectManager from '../../../logic/managers/ProjectManager';
 import { AssetRights } from '../../../logic/types/Rights';
 import UiManager from '../../../logic/managers/UiManager';
 import SortableList from '../../Common/SortableList.vue';
-import { COLLECTION_PID, COLLECTION_GAME_ASSET_ID } from '../../../logic/constants';
+import {
+  COLLECTION_PID,
+  COLLECTION_GAME_ASSET_ID,
+} from '../../../logic/constants';
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetBlockDetachedEditor',
@@ -62,6 +72,13 @@ export default defineComponent({
     },
   },
   emits: ['update:is-dirty'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       editorRefs: new Map<
@@ -87,7 +104,7 @@ export default defineComponent({
       );
     },
     blockTypes() {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
@@ -105,7 +122,7 @@ export default defineComponent({
       return this.assetBlockEditor.assetFullsCount() > 0;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     resolvedBlock() {
       return this.resolvedBlocksFilteredList[0];

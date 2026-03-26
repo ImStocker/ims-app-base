@@ -48,15 +48,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { AssetShort, AssetsGraph } from '../../logic/types/AssetsType';
 import DialogContent from '../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import 'v-network-graph/lib/style.css';
 import VNetworkGraphContent from './AssetLinksDialogGraphs/VNetworkGraphContent.vue';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DialogProps = {
   assetIds: string[];
@@ -81,6 +82,13 @@ export default defineComponent({
       default: 'network',
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadingError: null as string | null,
@@ -98,7 +106,7 @@ export default defineComponent({
   },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetCount() {
       return this.dialog.state.assetIds.length;
@@ -126,8 +134,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          this.graph = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          this.graph = await this.projectContext
+            .get(AssetSubContext)
             .getAssetsListForGraph({
               where: {
                 id: nodeIds,

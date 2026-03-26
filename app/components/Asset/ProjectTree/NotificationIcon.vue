@@ -63,7 +63,4 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss">
-.NotificationIcon {
-}
-</style>
+<style lang="scss"></style>

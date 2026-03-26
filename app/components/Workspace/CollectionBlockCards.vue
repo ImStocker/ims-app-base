@@ -27,7 +27,6 @@ import AssetPreviewDialog from '../Asset/AssetPreviewDialog.vue';
 import FastCreateAssetDialog from '../Asset/FastCreateAssetDialog.vue';
 import WorkspaceCollectionCardsOne from './CollectionBlockCardsOne.vue';
 import DialogManager from '../../logic/managers/DialogManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/WorkspaceCollectionPageVM';
 import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
@@ -47,7 +46,7 @@ export default defineComponent({
   },
   computed: {
     userRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
   },
   methods: {

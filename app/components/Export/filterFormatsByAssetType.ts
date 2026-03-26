@@ -1,5 +1,4 @@
-import type { ExportFormatWithId } from '../../logic/managers/ExportFormatManager';
-import type { IAppManager } from '../../logic/managers/IAppManager';
+import type { ExportFormatWithId } from '#logic/project-sub-contexts/ImportExportSubContext';
 import type { AssetShort } from '../../logic/types/AssetsType';
 
 export function isFormatBelongToAsset(
@@ -15,7 +14,6 @@ export function isFormatBelongToAsset(
 }
 
 export function filterFormatsByAssetType(
-  appManager: IAppManager,
   formats: ExportFormatWithId[],
   baseAsset: AssetShort,
 ): ExportFormatWithId[] {

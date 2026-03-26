@@ -29,16 +29,17 @@
 </template>
 <script lang="ts">
 import { useProjectMenu } from '#components/useProjectMenu';
-import { defineComponent, useTemplateRef, type PropType } from 'vue';
+import { defineComponent, inject, useTemplateRef, type PropType } from 'vue';
 import GameDesignMenu from './GameDesignMenu.vue';
 import type { GameDesignMenuVM } from '#logic/vm/GameDesignMenuVM';
-import { makeProjectContextFromProjectInfo } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import ProjectManager from '#logic/managers/ProjectManager';
 import type {
   ProjectFullInfo,
   ProjectShortInfo,
 } from '#logic/types/ProjectTypes';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 const projectMenu = useProjectMenu();
 const gddMenuRef = useTemplateRef('gddMenu');
 
@@ -46,13 +47,6 @@ export default defineComponent({
   name: 'DiscussionPanelProject',
   components: {
     GameDesignMenu,
-  },
-  provide() {
-    return this.projectContext
-      ? {
-          projectContext: this.projectContext,
-        }
-      : {};
   },
   props: {
     projectInfo: {
@@ -63,6 +57,13 @@ export default defineComponent({
       type: Boolean,
       default: () => false,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -75,12 +76,7 @@ export default defineComponent({
   },
   computed: {
     currentProjectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
-    },
-    projectContext() {
-      return this.project
-        ? makeProjectContextFromProjectInfo(this.$getAppManager(), this.project)
-        : null;
+      return this.projectContext.projectInfo;
     },
   },
   watch: {
@@ -113,8 +109,9 @@ export default defineComponent({
   methods: {
     async initVM(): Promise<GameDesignMenuVM | null> {
       assert(this.projectContext, 'Project context is not provided');
-      const rootWorkspace =
-        await this.projectContext.getWorkspaceByNameViaCache('discussions');
+      const rootWorkspace = await this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCache('discussions');
       if (!rootWorkspace) return null;
 
       return projectMenu.initSubMenuGddVm(rootWorkspace.id);

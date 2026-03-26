@@ -143,7 +143,12 @@
   </some-editor-list-item>
 </template>
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type { AssetChanger } from '../../../logic/types/AssetChanger';
 import SomeEditorListItem from './SomeEditorListItem.vue';
 import RenamableText from '../../Common/RenamableText.vue';
@@ -165,11 +170,13 @@ import type {
 } from '../../../logic/types/PropsForm';
 import AttributeTypePropPresenter from '../../Props/AttributeTypePropPresenter.vue';
 import AttributeTypePropEditor from '../../Props/AttributeTypePropEditor.vue';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import type { FieldTypeController } from '../../../logic/types/FieldTypeController';
 import { extractPropsFormState } from '~ims-plugin-base/blocks/PropsBlock/PropsBlock';
 import StringPropEditor from '../../Props/StringPropEditor.vue';
 import CheckboxPropEditor from '../../Props/CheckboxPropEditor.vue';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'StructureEditorItem',
@@ -209,6 +216,13 @@ export default defineComponent({
     },
   },
   emits: ['delete'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       mainEditItem: { ...this.item },
@@ -233,7 +247,7 @@ export default defineComponent({
     typeController(): FieldTypeController | null {
       if (!this.item.type) return null;
       return (
-        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
+        this.projectContext.get(EditorSubContext).getFieldTypesMap()[
           this.item.type
         ] ?? null
       );

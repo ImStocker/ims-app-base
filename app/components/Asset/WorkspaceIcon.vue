@@ -14,18 +14,27 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineComponent, type PropType } from 'vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import { defineComponent, inject, type PropType } from 'vue';
 import {
   WORKSPACE_TYPE_COLLECTION,
   type Workspace,
 } from '../../logic/types/Workspaces';
 import type { AssetPropValueAsset } from '../../logic/types/Props';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'WorkspaceIcon',
   props: {
     workspace: { type: Object as PropType<Workspace>, required: true },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     isCollection() {
@@ -38,16 +47,16 @@ export default defineComponent({
 
       const asset_link = this.workspace.props.asset;
       if (asset_link && (asset_link as AssetPropValueAsset).AssetId) {
-        const asset = this.$getAppManager()
-          .get(CreatorAssetManager)
+        const asset = this.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCacheSync(
             (asset_link as AssetPropValueAsset).AssetId,
           );
         if (asset && asset.icon) {
           return 'asset-icon-' + asset.icon;
         } else if (asset === undefined) {
-          this.$getAppManager()
-            .get(CreatorAssetManager)
+          this.projectContext
+            .get(AssetSubContext)
             .requestAssetShortInCache(
               (asset_link as AssetPropValueAsset).AssetId,
             );

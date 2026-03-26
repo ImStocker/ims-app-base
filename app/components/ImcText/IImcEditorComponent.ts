@@ -2,6 +2,7 @@ import type Delta from 'quill-delta';
 import type { IAppManager } from '../../logic/managers/IAppManager';
 import type { AssetPropValue } from '../../logic/types/Props';
 import type { ImcLinkDrowdownInterface } from './ImcLinksModule';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export interface IImcEditorComponent {
   get $el(): HTMLElement | null;
@@ -22,4 +23,5 @@ export interface IImcEditorComponent {
   $getAppManager(): IAppManager;
   onTextChange(content: Delta): void;
   isFocused(): boolean;
+  projectContext: IProjectContext;
 }

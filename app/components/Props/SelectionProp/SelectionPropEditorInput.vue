@@ -50,7 +50,13 @@ import SelectionPropEditorExpr from './SelectionPropEditorExpr.vue';
 
 export default defineComponent({
   name: 'SelectionPropEditorInput',
-  // inject: ['projectContext'],
+  // setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   components: {
     SelectionPropEditorExpr,
   },

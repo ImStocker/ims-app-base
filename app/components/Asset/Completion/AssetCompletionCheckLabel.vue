@@ -24,11 +24,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+import { defineComponent, inject } from 'vue';
 import AssetCompletionMilestoneBadge from './AssetCompletionMilestoneBadge.vue';
 import type { AssetPreviewInfo } from '../../../logic/types/AssetsType';
 import { getCompletionDisplay } from './AssetCompletion';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetCompletionCheckLabel',
@@ -39,14 +41,21 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     info(): AssetPreviewInfo | null | undefined {
-      const info = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const info = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.assetId);
       if (info === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.assetId);
       }
       return info;

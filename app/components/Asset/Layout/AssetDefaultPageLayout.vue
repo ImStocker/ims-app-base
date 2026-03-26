@@ -57,9 +57,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import AssetFullEditor from '../Editor/AssetFullEditor.vue';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import WidthResizer from '../../Common/WidthResizer.vue';
 
@@ -80,14 +79,17 @@ import {
 import { DISCUSSION_ASSET_ID } from '../../../logic/constants';
 import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AssetPageHeader from '../Editor/AssetPageHeader.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import UiManager from '../../../logic/managers/UiManager';
 import type { BlockContentItem } from '../../../logic/types/BlockTypeDefinition';
 import AssetPageContentsTable from '../Editor/AssetPageContentsTable.vue';
+import { makeAnchorTagId } from '../../../logic/utils/assets';
 import EditorSubContext, {
   type EditorContextForAssetRequested,
-} from '../../../logic/managers/EditorSubContext';
-import { makeAnchorTagId } from '../../../logic/utils/assets';
+} from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'AssetsPageContent',
@@ -107,6 +109,13 @@ export default defineComponent({
       type: Array as PropType<BreadCrumbsEntity[]>,
       default: null,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -168,7 +177,7 @@ export default defineComponent({
       },
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     scrollableElement() {
       return getScrollParentNode(this.$el);
@@ -202,7 +211,7 @@ export default defineComponent({
       }
       if (init) {
         this.editorContextForAssetRequest = this.currentAssetFull
-          ? this.$getAppManager()
+          ? this.projectContext
               .get(EditorSubContext)
               .requestEditorContextForAsset(this.currentAssetFull.id)
           : null;
@@ -224,8 +233,8 @@ export default defineComponent({
           let target_workspace_id: string | null = null;
           const base_workspace = base_asset.workspaceId
             ? ((
-                await this.$getAppManager()
-                  .get(CreatorAssetManager)
+                await this.projectContext
+                  .get(AssetSubContext)
                   .getWorkspacesList({
                     where: {
                       ids: [base_asset.workspaceId],
@@ -236,19 +245,25 @@ export default defineComponent({
             : null;
 
           if (base_workspace && base_workspace.name) {
-            target_workspace_id = this.$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName(base_workspace.name);
+            target_workspace_id =
+              (
+                await this.projectContext
+                  .get(AssetSubContext)
+                  .getWorkspaceByNameViaCache(base_workspace.name)
+              )?.id ?? null;
           }
 
           if (!target_workspace_id) {
-            target_workspace_id = this.$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName('settings');
+            target_workspace_id =
+              (
+                await this.projectContext
+                  .get(AssetSubContext)
+                  .getWorkspaceByNameViaCache('settings')
+              )?.id ?? null;
           }
 
-          const result = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const result = await this.projectContext
+            .get(AssetSubContext)
             .createAsset({
               id: base_asset.id,
               set: {

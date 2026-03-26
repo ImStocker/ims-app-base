@@ -57,7 +57,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import ProjectTreeSearch from './ProjectTree/ProjectTreeSearch.vue';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
 import ProjectTreePresenter from './ProjectTree/ProjectTreePresenter.vue';
@@ -65,7 +65,6 @@ import {
   AssetPropWhereOpKind,
   type AssetPropWhere,
 } from '../../logic/types/PropsWhere';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import {
   ASSET_SELECTION_DIAGRAM,
   ASSET_SELECTION_ENUM,
@@ -87,7 +86,9 @@ import FastCreateAssetDialog from './FastCreateAssetDialog.vue';
 import { openProjectLink } from '../../logic/router/routes-helpers';
 import SelectAssetDialog from './SelectAssetDialog.vue';
 import { v4 as uuidv4 } from 'uuid';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CreateAssetBox',
@@ -100,17 +101,21 @@ export default defineComponent({
     rootWorkspaceId: { type: String, required: true },
     rootWorkspaceType: { type: String, default: null },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       searchValue: null as AssetPropValueSelection | null,
     };
   },
   computed: {
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     defaultOptions(): (AssetForSelection & { tooltip: string })[] {
       return [
@@ -131,7 +136,7 @@ export default defineComponent({
         .map((x) => {
           return {
             ...x,
-            tooltip: this.$t('asset.createTooltips.' + x.id),
+            tooltip: this.$t('asset.createTooltips.' + x?.id),
           };
         });
     },
@@ -143,9 +148,9 @@ export default defineComponent({
       ];
     },
     projectTreeWhere(): AssetPropWhere {
-      const gdd_id = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceIdByName('gdd');
+      const gdd_id = this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
       let res = gdd_id
         ? ({
             workspaceids: gdd_id,
@@ -188,9 +193,11 @@ export default defineComponent({
           .show(SelectAssetDialog, {
             where: {
               workspaceids:
-                this.$getAppManager()
-                  .get(ProjectManager)
-                  .getWorkspaceIdByName('gdd') ?? null,
+                (
+                  await this.projectContext
+                    .get(AssetSubContext)
+                    .getWorkspaceByNameViaCache('gdd')
+                )?.id ?? null,
             },
             additionalOptions: this.defaultOptionsInOther,
           });

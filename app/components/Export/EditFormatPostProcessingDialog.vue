@@ -55,10 +55,9 @@
   </dialog-content>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
-import LocalFsSyncSubContext from '../../logic/managers/LocalFsSyncSubContext';
 
 import { EditorState } from '@codemirror/state';
 import {
@@ -85,6 +84,9 @@ import {
 import { javascript } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
 import UiManager from '../../logic/managers/UiManager';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DialogProps = {
   sampleAsset: Record<string, any> | null;
@@ -107,6 +109,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       jscode: this.dialog.state.jscode,
@@ -195,7 +204,7 @@ export default defineComponent({
       try {
         this.preview = '';
         if (this.dialog.state.sampleAsset) {
-          const prepared_objs = await this.$getAppManager()
+          const prepared_objs = await this.projectContext
             .get(LocalFsSyncSubContext)
             .getUserCodeExecutorManager()
             .formatAssetsByCode([this.dialog.state.sampleAsset], this.jscode);

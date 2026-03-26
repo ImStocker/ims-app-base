@@ -11,14 +11,15 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
 import { AssetRights } from '../../../logic/types/Rights';
 import AssetEditorToolbarWidget from '../Editor/AssetEditorToolbarWidget.vue';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
-import { useAppManager } from '../../../composables/useAppManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetBlockEditorRoot',
@@ -41,14 +42,16 @@ export default defineComponent({
   },
   emits: ['close-history-mode'],
   async setup(props) {
-    const appManager = useAppManager();
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
     const assetBlockEditor = AssetBlockEditorVM.CreateInstance(
-      appManager,
+      projectContext,
       props.assetFull,
     );
     await assetBlockEditor.init();
     return {
       assetBlockEditor,
+      projectContext,
       globalKeydownHandler: null as ((e: KeyboardEvent) => void) | null,
     };
   },
@@ -58,7 +61,7 @@ export default defineComponent({
     },
     isActiveEditor() {
       return (
-        this.$getAppManager().get(EditorSubContext).activeEditor ===
+        this.projectContext.get(EditorSubContext).activeEditor ===
         this.assetBlockEditor
       );
     },
@@ -83,7 +86,7 @@ export default defineComponent({
     async assetFull() {
       if (this.assetBlockEditor) this.assetBlockEditor.destroy();
       this.assetBlockEditor = AssetBlockEditorVM.CreateInstance(
-        this.$getAppManager(),
+        this.projectContext,
         this.assetFull,
       );
       this.assetBlockEditor.historyModeVM = this.historyModeVM;

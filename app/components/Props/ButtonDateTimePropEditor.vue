@@ -26,7 +26,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetPropValue } from '../../logic/types/Props';
 import {
   castDateToAssetPropValueTimestamp,
@@ -37,6 +37,8 @@ import CaptionString from '../Common/CaptionString.vue';
 import DialogManager from '../../logic/managers/DialogManager';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ButtonDateTimePropEditor',
@@ -53,6 +55,13 @@ export default defineComponent({
     confirm: { type: Boolean, default: false },
   },
   emits: ['update:modelValue', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     isFilled() {
       return isFilledAssetPropValue(this.modelValue);
@@ -65,7 +74,7 @@ export default defineComponent({
         const action = this.caption
           ? convertTranslatedTitle(this.caption, (...args) => this.$t(...args))
           : this.$t('fields.setValue');
-        const confirmed = await this.$getAppManager()
+        const confirmed = await this.projectContext.appManager
           .get(DialogManager)
           .show(
             ConfirmDialog,
@@ -85,7 +94,7 @@ export default defineComponent({
     async resetValue() {
       if (this.confirm) {
         const action = this.$t('fields.resetValue');
-        const confirmed = await this.$getAppManager()
+        const confirmed = await this.projectContext.appManager
           .get(DialogManager)
           .show(
             ConfirmDialog,

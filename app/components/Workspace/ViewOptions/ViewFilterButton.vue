@@ -86,7 +86,7 @@ export default defineComponent({
   },
   computed: {
     userRole() {
-      return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return this.projectContext.user?.role;
     },
   },
   methods: {

@@ -34,9 +34,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import TaskCheckbox from '../../Common/TaskCheckbox.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import { getCompletionDisplay, setAssetCompleted } from './AssetCompletion';
 import UiManager from '../../../logic/managers/UiManager';
 import type { AssetPreviewInfo } from '../../../logic/types/AssetsType';
@@ -57,6 +60,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       dirtyCompleteSet: undefined as boolean | undefined,
@@ -67,12 +77,12 @@ export default defineComponent({
       return (this.info?.rights ?? AssetRights.NO) >= AssetRights.FILL_EMPTY;
     },
     info(): AssetPreviewInfo | null | undefined {
-      const info = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const info = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.assetId);
       if (info === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.assetId);
       }
       return info;
@@ -89,7 +99,7 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await setAssetCompleted(this.$getAppManager(), this.assetId, val);
+          await setAssetCompleted(this.projectContext, this.assetId, val);
         });
       if (val === this.dirtyCompleteSet) {
         this.dirtyCompleteSet = undefined;

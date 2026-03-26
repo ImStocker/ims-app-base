@@ -51,10 +51,11 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import DialogContent from '../Dialog/DialogContent.vue';
-import { defineComponent, type PropType } from 'vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
+import { defineComponent, inject, type PropType } from 'vue';
 import FormCheckBox from '../Form/FormCheckBox.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DialogProps = {};
 
@@ -73,6 +74,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: false,
@@ -82,7 +90,7 @@ export default defineComponent({
   },
   computed: {
     projectId() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo()?.id;
+      return this.projectContext.projectInfo?.id;
     },
     exportSettings() {
       return [

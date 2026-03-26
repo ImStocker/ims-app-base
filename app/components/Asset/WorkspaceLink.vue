@@ -41,19 +41,20 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ProjectInfoForLink } from '../../logic/router/routes-helpers';
 import ProjectLink from '../Common/ProjectLink.vue';
 import WorkspaceTooltip from './WorkspaceTooltip.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import DropdownContainer from '../Common/DropdownContainer.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
   type WorkspaceLink,
 } from '../../logic/types/Workspaces';
 import WorkspaceIcon from './WorkspaceIcon.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 const TOOLTIP_OFFSET_X = 10;
 const TOOLTIP_OFFSET_Y = 10;
@@ -84,6 +85,13 @@ export default defineComponent({
     tooltipShowPath: { type: Boolean, default: true },
   },
   emits: ['click'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       hoveredCoord: null as { x: number; y: number } | null,
@@ -112,24 +120,20 @@ export default defineComponent({
       return convertTranslatedTitle(asset_title ?? '', (key) => this.$t(key));
     },
     cachedWorkspace() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getWorkspaceByIdViaCacheSync(this.workspace.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestWorkspaceInCache(this.workspace.id);
       }
       return cached;
     },
     hasGddAccess() {
-      const role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const role = this.projectContext.user?.role;
       if (role) return true;
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       if (!project) return false;
       return project.isPublicGdd;
     },

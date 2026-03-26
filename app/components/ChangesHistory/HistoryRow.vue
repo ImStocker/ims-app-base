@@ -23,14 +23,15 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import { formatDateTime } from '../../logic/utils/format';
 import type { AssetGlobalHistoryDTO } from '../../logic/types/AssetHistory';
 import UiManager from '../../logic/managers/UiManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ProjectFullInfo } from '../../logic/types/ProjectTypes';
 import HistoryRowAsset from './HistoryRowAsset.vue';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'HistoryRow',
@@ -44,21 +45,22 @@ export default defineComponent({
     },
   },
   emits: ['rollbackChange', 'revertToState'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
     createdAt() {
       return formatDateTime(
         this.historyRow.createdAt,
         this.$getAppManager().get(UiManager).getLanguage(),
       );
     },
-    ProjectManager() {
-      return this.$getAppManager().get(ProjectManager);
-    },
     projectInfo(): ProjectFullInfo | null {
-      return this.ProjectManager.getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetIdsCount() {
       return this.historyRow.assetIds.length;
@@ -66,7 +68,9 @@ export default defineComponent({
   },
   methods: {
     getAssetShortById(asset_id: string) {
-      return this.creatorAssetManager.getAssetShortViaCacheSync(asset_id);
+      return this.projectContext
+        .get(AssetSubContext)
+        .getAssetShortViaCacheSync(asset_id);
     },
   },
 });

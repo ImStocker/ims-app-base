@@ -55,7 +55,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import type { AssetFullEditorVM } from '../../../logic/vm/AssetFullEditorVM';
 import AssetBlockEditor from './AssetBlockEditor.vue';
 import ProjectManager from '../../../logic/managers/ProjectManager';
@@ -67,9 +67,11 @@ import {
   BLOCK_TYPE_LOCALE,
   BLOCK_TYPE_PROPS,
 } from '../../../logic/constants';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import RightPanel from '#components/Common/RightPanel.vue';
 import AssetHistory from '../History/AssetHistory.vue';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetFullEditor',
@@ -94,22 +96,29 @@ export default defineComponent({
     },
   },
   emits: ['update:is-dirty'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {};
   },
   computed: {
     layoutDescriptor() {
       if (!this.currentSingleAsset) {
-        return this.$getAppManager()
+        return this.projectContext
           .get(EditorSubContext)
           .getDefaultLayoutDescriptor();
       }
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getLayoutDescriptorForAsset(this.currentSingleAsset);
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     commonParent() {
       return this.assetEditor.getCommonParent();

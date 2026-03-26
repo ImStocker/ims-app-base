@@ -25,10 +25,10 @@
 import { defineComponent, type PropType } from 'vue';
 import type { AssetPropsPlainObjectValue } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import type { ExportFormatField } from '../../logic/managers/ExportFormatManager';
 import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import EditFormatFieldsDialog from './EditFormatFieldsDialog.vue';
+import type { ExportFormatField } from '#logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   name: 'EditFormatFields',

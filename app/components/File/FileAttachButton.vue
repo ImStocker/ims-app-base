@@ -46,13 +46,15 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
-import type { UploadingJob } from '../../logic/managers/EditorSubContext';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import type { UploadingJob } from '#logic/project-sub-contexts/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'FileAttachButton',
@@ -67,6 +69,13 @@ export default defineComponent({
     disable: { type: Boolean, default: false },
   },
   emits: ['uploadedAll', 'uploadedOne', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       uploadingJob: null as UploadingJob | null,
@@ -108,7 +117,7 @@ export default defineComponent({
       this.uploadingTotal = files.length;
       const all_res: AssetPropValueFile[] = [];
       for (const file of files) {
-        this.uploadingJob = this.$getAppManager()
+        this.uploadingJob = this.projectContext
           .get(EditorSubContext)
           .attachFile(file, file.name);
         await this.uploadingJob.awaitResult().then(

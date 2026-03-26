@@ -26,10 +26,10 @@
 import { defineComponent, type PropType } from 'vue';
 import { JsonSyncExportSegmentFormatOptions } from '../../logic/local-fs-sync/segments/JsonSyncExportSegment';
 import ImsSelect from '../Common/ImsSelect.vue';
-import type { ExportFormat } from '../../logic/managers/ExportFormatManager';
 import type { AssetPropsPlainObject } from '../../logic/types/Props';
 import DialogManager from '../../logic/managers/DialogManager';
 import EditFormatPreviewDialog from './EditFormatPreviewDialog.vue';
+import type { ExportFormat } from '#logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   name: 'EditFormatKind',

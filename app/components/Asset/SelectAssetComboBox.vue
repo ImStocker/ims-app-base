@@ -84,12 +84,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import CaptionString from '../Common/CaptionString.vue';
 import MenuButton from '../Common/MenuButton.vue';
 import SelectAssetListBox from './SelectAssetListBox.vue';
 import UiManager from '../../logic/managers/UiManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { AssetPropWhere } from '../../logic/types/PropsWhere';
 import type {
   AssetForSelection,
@@ -98,6 +97,10 @@ import type {
 import DialogManager from '../../logic/managers/DialogManager';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import AssetIcon from './AssetIcon.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { matchAssetsWithWhere } from '#logic/project-sub-contexts/Asset/matchAssetsWithWhere';
 
 export default defineComponent({
   name: 'SelectAssetComboBox',
@@ -143,6 +146,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       dropdownShown: false,
@@ -172,8 +182,8 @@ export default defineComponent({
       if (!this.modelValue) {
         return null;
       }
-      const asset = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const asset = this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.modelValue.id);
       if (asset) {
         return {
@@ -199,8 +209,8 @@ export default defineComponent({
       if (!this.creatingTypeId) {
         return null;
       }
-      const type = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const type = this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.creatingTypeId);
       return type ?? null;
     },
@@ -231,16 +241,16 @@ export default defineComponent({
   watch: {
     creatingTypeId() {
       if (this.creatingTypeId) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetShortInCache(this.creatingTypeId);
       }
     },
   },
   mounted() {
     if (this.creatingTypeId) {
-      this.$getAppManager()
-        .get(CreatorAssetManager)
+      this.projectContext
+        .get(AssetSubContext)
         .requestAssetShortInCache(this.creatingTypeId);
     }
   },
@@ -295,16 +305,18 @@ export default defineComponent({
             id: string;
           };
           if (!event_dt_asset_parsed.id) return;
-          const drop_asset_short = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const drop_asset_short = await this.projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCache(event_dt_asset_parsed.id);
           if (!drop_asset_short) {
             throw new Error(this.$t('asset.assetNotFound'));
           }
           const match = this.where
-            ? await this.$getAppManager()
-                .get(CreatorAssetManager)
-                .matchAssetsWithWhere([drop_asset_short], this.where)
+            ? await matchAssetsWithWhere(
+                this.projectContext,
+                [drop_asset_short],
+                this.where,
+              )
             : [drop_asset_short];
           if (match.length === 0) {
             throw new Error(this.$t('asset.assetIsNotMatched'));

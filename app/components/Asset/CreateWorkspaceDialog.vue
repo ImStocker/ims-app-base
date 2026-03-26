@@ -83,12 +83,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import FormInput from '../Form/FormInput.vue';
 import UiManager from '../../logic/managers/UiManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
@@ -110,6 +108,8 @@ import {
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
 } from '../../logic/constants';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type WorkspaceTypeVariants = 'folder' | 'collection';
 
@@ -144,6 +144,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isLoading: false,
@@ -170,12 +177,6 @@ export default defineComponent({
     WORKSPACE_TYPE_COLLECTION() {
       return WORKSPACE_TYPE_COLLECTION;
     },
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
-    ProjectManager() {
-      return this.$getAppManager().get(ProjectManager);
-    },
     typeOptions(): {
       name: WorkspaceTypeVariants;
       icon: string | null;
@@ -198,9 +199,9 @@ export default defineComponent({
       });
     },
     collectionTypeWhere() {
-      const gdd_id = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceIdByName('gdd');
+      const gdd_id = this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
       return {
         workspaceids: gdd_id,
       };
@@ -221,8 +222,8 @@ export default defineComponent({
         this.dialog.state.props.asset &&
         (this.dialog.state.props.asset as AssetPropValueAsset).AssetId
       ) {
-        this.collectionType = await this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.collectionType = await this.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCache(
             (this.dialog.state.props.asset as AssetPropValueAsset).AssetId,
           );
@@ -263,8 +264,8 @@ export default defineComponent({
               },
             };
           }
-          const workspace = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const workspace = await this.projectContext
+            .get(AssetSubContext)
             .createWorkspace(req);
           this.dialog.close({
             entity: workspace,

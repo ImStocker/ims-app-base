@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import ProjectTreePresenter from './ProjectTree/ProjectTreePresenter.vue';
 import type { AssetForSelection } from '../../logic/types/AssetsType';
 import {
@@ -41,8 +41,11 @@ import type { AssetPropValueSelection } from '../../logic/types/Props';
 import type { ProjectTreeSelectedItem } from '../../logic/vm/IProjectTreePresenterVM';
 import type { TreePresenterItemEvent } from '../Common/TreePresenter/TreePresenter';
 import { getWorkspaceCollectionAsset } from '../GameDesign/workspaceUtils';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { ProjectTreeItemPayload } from './ProjectTree/ProjectTreePresenterBaseVM';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { matchAssetsWithWhere } from '#logic/project-sub-contexts/Asset/matchAssetsWithWhere';
 
 export default defineComponent({
   name: 'SelectAssetListBox',
@@ -78,6 +81,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'update:searchValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       searchValueOwn: this.searchValue,
@@ -133,8 +143,8 @@ export default defineComponent({
       if (e.target.item.payload.type !== 'workspace') {
         return;
       }
-      const workspace = await this.$getAppManager()
-        .get(CreatorAssetManager)
+      const workspace = await this.projectContext
+        .get(AssetSubContext)
         .getWorkspaceByIdViaCache(e.target.item.payload.id);
       if (!workspace) {
         return;
@@ -145,16 +155,14 @@ export default defineComponent({
         return;
       }
 
-      const asset = await this.$getAppManager()
-        .get(CreatorAssetManager)
+      const asset = await this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCache(workspace_collection_item.AssetId);
       if (!asset) {
         return;
       }
       const match = this.where
-        ? await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .matchAssetsWithWhere([asset], this.where)
+        ? await matchAssetsWithWhere(this.projectContext, [asset], this.where)
         : [asset];
       if (match.length === 0) {
         return;

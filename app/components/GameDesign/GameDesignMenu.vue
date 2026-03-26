@@ -74,9 +74,8 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { GameDesignMenuVM } from '../../logic/vm/GameDesignMenuVM';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import ProjectTreePresenter from '../Asset/ProjectTree/ProjectTreePresenter.vue';
 import {
   MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT,
@@ -84,7 +83,6 @@ import {
 } from '../../logic/types/Rights';
 import { HUB_PID } from '../../logic/constants';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import ProjectContentManager from '../../logic/project-sub-contexts/ImportExportSubContext';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
 import ProjectTreeSearch from '../Asset/ProjectTree/ProjectTreeSearch.vue';
 import CreateElementButtons from '../Asset/CreateElementButtons.vue';
@@ -95,6 +93,10 @@ import ContextMenuZone from '../Common/ContextMenuZone.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
 import { openProjectLink } from '../../logic/router/routes-helpers';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import ImportExportSubContext from '../../logic/project-sub-contexts/ImportExportSubContext';
 
 export default defineComponent({
   title: 'GameDesignMenu',
@@ -109,6 +111,13 @@ export default defineComponent({
   },
   props: {
     gddVM: { type: Object as PropType<GameDesignMenuVM>, required: true },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -132,9 +141,9 @@ export default defineComponent({
       return [];
     },
     gddWorkspace() {
-      return this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceByName('gdd');
+      return this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd');
     },
     whiteSpaceMenuList(): MenuListItem[] {
       return [
@@ -163,13 +172,9 @@ export default defineComponent({
       return this.$getAppManager().$appConfiguration.isDesktop;
     },
     menuAdditionalOptions(): MenuListItem[] {
-      const project_info = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project_info = this.projectContext.projectInfo;
       if (!project_info) return [];
-      const user_role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const user_role = this.projectContext.user?.role;
 
       const project_local_path = this.projectInfo?.localPath;
       return [
@@ -210,7 +215,7 @@ export default defineComponent({
       );
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     projectIsHub() {
       return !!(this.projectInfo
@@ -252,8 +257,8 @@ export default defineComponent({
           ? {
               title: this.$t('gddPage.import'),
               action: () =>
-                this.$getAppManager()
-                  .get(ProjectContentManager)
+                this.projectContext
+                  .get(ImportExportSubContext)
                   .importAsset(gdd_workspace),
               icon: 'import',
             }
@@ -266,22 +271,22 @@ export default defineComponent({
                 {
                   title: this.$t('gddPage.exportToMD'),
                   action: () =>
-                    this.$getAppManager()
-                      .get(ProjectContentManager)
+                    this.projectContext
+                      .get(ImportExportSubContext)
                       .exportWorkspaceToDocument(gdd_workspace, 'md'),
                 },
                 {
                   title: this.$t('gddPage.exportToPDF'),
                   action: () =>
-                    this.$getAppManager()
-                      .get(ProjectContentManager)
+                    this.projectContext
+                      .get(ImportExportSubContext)
                       .exportWorkspaceToDocument(gdd_workspace, 'pdf'),
                 },
                 {
                   title: this.$t('gddPage.exportToJSON'),
                   action: () =>
-                    this.$getAppManager()
-                      .get(ProjectContentManager)
+                    this.projectContext
+                      .get(ImportExportSubContext)
                       .exportWorkspaceToJSON(gdd_workspace),
                 },
               ],

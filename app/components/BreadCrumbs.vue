@@ -106,7 +106,7 @@ export default defineComponent({
       return this.$getAppManager().get(UiManager).getLanguage();
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
 });

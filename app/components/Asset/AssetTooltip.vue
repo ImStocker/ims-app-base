@@ -54,9 +54,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { AssetLink } from '../../logic/types/AssetsType';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import ImcPresenter from '../ImcText/ImcPresenter.vue';
 import {
   castAssetPropValueToText,
@@ -67,10 +66,12 @@ import {
 } from '../../logic/types/Props';
 import FilePresenter from '../File/FilePresenter.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { Workspace } from '../../logic/types/Workspaces';
 import AssetCompletionCheckLabel from './Completion/AssetCompletionCheckLabel.vue';
 import AssetIcon from './AssetIcon.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 const TRUNCATE_DESCRIPTION = 300;
 
@@ -85,6 +86,13 @@ export default defineComponent({
   props: {
     asset: { type: Object as PropType<AssetLink>, required: true },
     showPath: { type: Boolean, default: true },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     assetTitle() {
@@ -138,12 +146,12 @@ export default defineComponent({
       return cached_preview.mainImage.value as AssetPropValueFile;
     },
     cachedAssetShort() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.asset.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetShortInCache(this.asset.id);
       }
       return cached;
@@ -152,24 +160,20 @@ export default defineComponent({
       if (this.assetNotFound) {
         return null;
       }
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.asset.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.asset.id);
       }
       return cached;
     },
     hasGddAccess() {
-      const role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const role = this.projectContext.user?.role;
       if (role) return true;
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       if (!project) return false;
       return project.isPublicGdd;
     },
@@ -182,9 +186,10 @@ export default defineComponent({
         return [];
       }
       return cached_asset.workspaceId
-        ? (this.$getAppManager()
-            .get(CreatorAssetManager)
-            .getParentWorkspacesListFromCacheSync(cached_asset.workspaceId) ?? [])
+        ? (this.projectContext
+            .get(AssetSubContext)
+            .getParentWorkspacesListFromCacheSync(cached_asset.workspaceId) ??
+            [])
         : [];
     },
   },

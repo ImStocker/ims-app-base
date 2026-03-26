@@ -1,13 +1,12 @@
-import CreatorAssetManager from '../managers/CreatorAssetManager';
-import type { IAppManager } from '../managers/IAppManager';
-import ProjectManager from '../managers/ProjectManager';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type { AssetGlobalHistoryDTO } from '../types/AssetHistory';
 import type { IProjectHistoryVM } from './IProjectHistoryVM';
 
 const CHANGES_HISTORY_COUNT = 50;
 
 export class ProjectHistoryVM implements IProjectHistoryVM {
-  appManager: IAppManager;
+  projectContext: IProjectContext;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -16,15 +15,14 @@ export class ProjectHistoryVM implements IProjectHistoryVM {
   projectId: string;
   globalChanges: AssetGlobalHistoryDTO[];
 
-  constructor(appManager: IAppManager) {
-    this.appManager = appManager;
+  constructor(projectContext: IProjectContext) {
+    this.projectContext = projectContext;
     this.isLoading = true;
     this.isLoadingMore = false;
     this.loadError = null;
     this.loadMoreError = null;
     this.hasMore = false;
-    this.projectId =
-      this.appManager.get(ProjectManager).getProjectInfo()?.id ?? '';
+    this.projectId = this.projectContext.projectInfo.id ?? '';
     this.globalChanges = [];
   }
 
@@ -38,17 +36,18 @@ export class ProjectHistoryVM implements IProjectHistoryVM {
         ? this.globalChanges[this.globalChanges.length - 1].createdAt
         : undefined;
     const where: { dateTo?: string } = {};
-    const gdd_workspace_id = this.appManager
-      .get(ProjectManager)
-      .getWorkspaceIdByName('gdd');
+    const gdd_workspace_id = (
+      await this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCache('gdd')
+    )?.id;
     if (date_to) {
       where.dateTo = date_to;
     }
     if (gdd_workspace_id) {
-      const res = await this.appManager
-        .get(CreatorAssetManager)
+      const res = await this.projectContext
+        .get(AssetSubContext)
         .getGlobalHistory(
-          this.projectId,
           CHANGES_HISTORY_COUNT,
           { workspaceids: gdd_workspace_id },
           where,

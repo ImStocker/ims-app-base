@@ -61,7 +61,7 @@ export default defineComponent({
       return this.assetBlockEditor.resolveBlocks();
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     resolvedBlocksFilteredList(): ResolvedAssetBlock[] {
       let additional_hidden: string[] = [];

@@ -18,13 +18,15 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetPropValue } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import ImsSelect from '../Common/ImsSelect.vue';
 import type { FieldTypeController } from '../../logic/types/FieldTypeController';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type AttributeTypeOption = { title: string; value: string | null };
 
@@ -41,12 +43,19 @@ export default defineComponent({
     nullable: { type: Boolean, default: true },
   },
   emits: ['update:modelValue', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     fieldTypes() {
-      return this.$getAppManager().get(EditorSubContext).getFieldTypesList();
+      return this.projectContext.get(EditorSubContext).getFieldTypesList();
     },
     isDesktop() {
-      return this.$getAppManager().$appConfiguration.isDesktop;
+      return this.projectContext.appManager.$appConfiguration.isDesktop;
     },
     displayingFieldTypes() {
       if (this.$appConfiguration.name !== 'creators') {
@@ -108,7 +117,7 @@ export default defineComponent({
       }
       if (
         this.selectedValue &&
-        !this.$getAppManager()
+        !this.projectContext
           .get(EditorSubContext)
           .getFieldTypesMap()
           .hasOwnProperty(this.selectedValue)

@@ -13,14 +13,16 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type {
   AssetPropValue,
   AssetPropValueAsset,
 } from '../../logic/types/Props';
 import AssetSelectorPropEditor from './AssetSelectorPropEditor.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetPropWhere } from '../../logic/types/PropsWhere';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'GddElementSelectorPropEditor',
@@ -43,11 +45,18 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     gddWorkpaceId() {
-      return this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceIdByName('gdd');
+      return this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
     },
     selectorWhere() {
       const where: AssetPropWhere = {

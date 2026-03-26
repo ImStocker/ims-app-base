@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type {
   AssetSetDTO,
   AssetShort,
@@ -127,11 +127,9 @@ import type {
   WorkspaceForSelection,
 } from '../../logic/types/AssetsType';
 import DialogContent from '../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import FormInput from '../Form/FormInput.vue';
 import UiManager from '../../logic/managers/UiManager';
 import SelectAssetType from './FastCreateAssetDialogSelectType.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import SelectWorkspaceComboBox from './SelectWorkspaceComboBox.vue';
@@ -142,6 +140,9 @@ import {
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import ScrollableHorizontalContainer from '../Common/ScrollableHorizontalContainer.vue';
 import { TASK_ASSET_ID } from '../../logic/constants';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type DialogProps = {
   set?: AssetSetDTO;
@@ -169,6 +170,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadingError: null as string | null,
@@ -188,17 +196,13 @@ export default defineComponent({
     };
   },
   computed: {
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
     isTask() {
       return this.parentId === TASK_ASSET_ID;
     },
-    ProjectManager() {
-      return this.$getAppManager().get(ProjectManager);
-    },
     gddWorkspaceId() {
-      return this.ProjectManager.getWorkspaceIdByName('gdd');
+      return this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
     },
     disableChangeWorkspace() {
       return this.dialog.state.disableChangeWorkspace;
@@ -238,8 +242,8 @@ export default defineComponent({
       this.loadingDone = false;
       try {
         if (this.parentId) {
-          const asset = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const asset = await this.projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCache(this.parentId);
           this.parent = asset;
         }
@@ -269,7 +273,7 @@ export default defineComponent({
           .get(UiManager)
           .doTask(async () => {
             const res: AssetsFullResult & { limit?: boolean } =
-              await this.creatorAssetManager.createAsset(
+              await this.projectContext.get(AssetSubContext).createAsset(
                 {
                   set: {
                     ...(this.dialog.state.set ? this.dialog.state.set : {}),
@@ -284,8 +288,9 @@ export default defineComponent({
             else {
               const res_id = res.ids[0];
               if (!res_id) throw new Error('Asset was not created');
-              const instance =
-                this.creatorAssetManager.getAssetInstanceViaCacheSync(res_id);
+              const instance = this.projectContext
+                .get(AssetSubContext)
+                .getAssetInstanceViaCacheSync(res_id);
               if (!instance) throw new Error('Created asset not loaded');
               this.dialog.close(instance);
             }
@@ -298,12 +303,14 @@ export default defineComponent({
       }
     },
     async getWorkspaceById(workspaceId: string) {
-      return await this.creatorAssetManager.getWorkspaceByIdViaCache(
-        workspaceId,
-      );
+      return await this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByIdViaCache(workspaceId);
     },
     async getAssetParentById(parentId: string) {
-      return await this.creatorAssetManager.getAssetShortViaCache(parentId);
+      return await this.projectContext
+        .get(AssetSubContext)
+        .getAssetShortViaCache(parentId);
     },
     resolveTypeState(workspace: Workspace | null) {
       return workspace?.props.type === WORKSPACE_TYPE_COLLECTION;

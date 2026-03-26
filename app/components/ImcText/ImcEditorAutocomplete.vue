@@ -88,13 +88,11 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { ImcLinkOption, ImcLinksModule } from './ImcLinksModule';
 import './quill-init';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import DialogManager from '../../logic/managers/DialogManager';
 import SelectAssetDialog from '../Asset/SelectAssetDialog.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type Quill from 'quill';
 import type { ImcEditorModule } from './ImcEditorModule';
 import FastCreateAssetDialog from '../Asset/FastCreateAssetDialog.vue';
@@ -106,6 +104,9 @@ import { AssetContentTreePresenterVM } from '../Asset/ProjectTree/AssetContentTr
 import ImcEditorAutocompleteAssetContents from './ImcEditorAutocompleteAssetContents.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { QuillKeys } from './utils';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type ImcEditorAutocompleteOption =
   | ImcLinkOption
@@ -128,6 +129,13 @@ export default defineComponent({
     quill: { type: Object as PropType<Quill>, required: true },
   },
   emits: ['selected', 'buttonClicked'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       currentItem: 0,
@@ -187,9 +195,9 @@ export default defineComponent({
       await new Promise((res) => setTimeout(res, 1)); // NOTE: даем отработать мышке полностью, чтобы поместить курсор туда, куда нужно
 
       if (option.type === 'button') {
-        const gdd_workspace = this.$getAppManager()
-          .get(ProjectManager)
-          .getWorkspaceByName('gdd');
+        const gdd_workspace = await this.projectContext
+          .get(AssetSubContext)
+          .getWorkspaceByNameViaCache('gdd');
         if (!gdd_workspace) return;
 
         if (option.value === 'search-button') {
@@ -214,9 +222,9 @@ export default defineComponent({
               title: res.title,
               type: 'asset',
               value: res.id,
-              raw: this.$getAppManager()
-                .get(CreatorAssetManager)
-                .getAssetShortViaCacheSync(res.id),
+              raw: await this.projectContext
+                .get(AssetSubContext)
+                .getWorkspaceByNameViaCache(res.id),
             } as ImcLinkOption);
           }
         } else if (option.value === 'create-button') {
@@ -239,9 +247,9 @@ export default defineComponent({
               title: res.title,
               type: 'asset',
               value: res.id,
-              raw: this.$getAppManager()
-                .get(CreatorAssetManager)
-                .getAssetShortViaCacheSync(res.id),
+              raw: await this.projectContext
+                .get(AssetSubContext)
+                .getWorkspaceByNameViaCache(res.id),
             } as ImcLinkOption);
           }
         }

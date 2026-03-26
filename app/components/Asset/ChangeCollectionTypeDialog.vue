@@ -45,11 +45,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import UiManager from '../../logic/managers/UiManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
@@ -58,6 +56,8 @@ import {
 import SelectAssetComboBox from './SelectAssetComboBox.vue';
 import type { AssetForSelection } from '../../logic/types/AssetsType';
 import { assert } from '../../logic/utils/typeUtils';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type DialogProps = {
   workspaceId: string;
@@ -84,6 +84,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       buttonIsPressed: false,
@@ -91,16 +98,10 @@ export default defineComponent({
     };
   },
   computed: {
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
-    ProjectManager() {
-      return this.$getAppManager().get(ProjectManager);
-    },
     collectionTypeWhere() {
-      const gdd_id = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceIdByName('gdd');
+      const gdd_id = this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
       return {
         workspaceids: gdd_id,
       };
@@ -127,8 +128,8 @@ export default defineComponent({
         .get(UiManager)
         .doTask(async () => {
           assert(this.collectionType);
-          const nested_workspaces = await this.$getAppManager()
-            .get(CreatorAssetManager)
+          const nested_workspaces = await this.projectContext
+            .get(AssetSubContext)
             .getWorkspacesList({
               where: {
                 insideId: this.dialog.state.workspaceId,
@@ -151,21 +152,19 @@ export default defineComponent({
             ...nested_workspaces.list.map((w) => w.id),
           ];
           for (const workspace_id of changing_workspace_ids) {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
+            await this.projectContext
+              .get(AssetSubContext)
               .changeWorkspace(workspace_id, req);
           }
 
-          await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .changeAssets({
-              where: {
-                workspaceids: this.dialog.state.workspaceId,
-              },
-              set: {
-                parentIds: [this.collectionType.id],
-              },
-            });
+          await this.projectContext.get(AssetSubContext).changeAssets({
+            where: {
+              workspaceids: this.dialog.state.workspaceId,
+            },
+            set: {
+              parentIds: [this.collectionType.id],
+            },
+          });
 
           this.dialog.close({
             AssetId: this.collectionType.id,

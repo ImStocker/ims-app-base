@@ -6,11 +6,13 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetPropValue } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import EditorSubContext from '../../logic/managers/EditorSubContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AttributeTypePropPresenter',
@@ -22,9 +24,16 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     fieldTypesMap() {
-      return this.$getAppManager().get(EditorSubContext).getFieldTypesMap();
+      return this.projectContext.get(EditorSubContext).getFieldTypesMap();
     },
     displayingValue() {
       const type = castAssetPropValueToString(this.modelValue);

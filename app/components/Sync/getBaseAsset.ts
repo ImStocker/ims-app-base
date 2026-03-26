@@ -1,12 +1,11 @@
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import { getPreparedAssets } from '../../logic/local-fs-sync/getPreparedAsset';
 import type { JsonSyncExportSegmentFormatOptionsType } from '../../logic/local-fs-sync/segments/JsonSyncExportSegment';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import type { IAppManager } from '../../logic/managers/IAppManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetPropWhere } from '../../logic/types/PropsWhere';
 
 export async function getBaseAssetObject(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   assetFilter: AssetPropWhere | null,
   options:
     | {
@@ -21,10 +20,10 @@ export async function getBaseAssetObject(
         kind: JsonSyncExportSegmentFormatOptionsType;
       },
 ) {
-  const asset_id = await getBaseAssetId(appManager, assetFilter);
+  const asset_id = await getBaseAssetId(projectContext, assetFilter);
   if (!asset_id) return null;
   const prepared_assets = await getPreparedAssets(
-    appManager,
+    projectContext,
     {
       where: {
         id: [asset_id],
@@ -37,11 +36,11 @@ export async function getBaseAssetObject(
 }
 
 export async function getWorkspaceBaseAssetId(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   workspace_id: string,
 ) {
-  const workspace = await appManager
-    .get(CreatorAssetManager)
+  const workspace = await projectContext
+    .get(AssetSubContext)
     .getWorkspaceByIdViaCache(workspace_id);
   const asset_id = workspace?.props.asset
     ? (workspace?.props.asset['AssetId'] as string)
@@ -50,7 +49,7 @@ export async function getWorkspaceBaseAssetId(
   return asset_id;
 }
 export async function getBaseAssetId(
-  appManager: IAppManager,
+  projectContext: IProjectContext,
   assetFilter: AssetPropWhere | null,
 ) {
   if (assetFilter?.workspaceids) {
@@ -60,16 +59,16 @@ export async function getBaseAssetId(
         : assetFilter.workspaceids
     ) as string;
 
-    return getWorkspaceBaseAssetId(appManager, workspace_id);
+    return getWorkspaceBaseAssetId(projectContext, workspace_id);
   }
 
-  const gdd_workspace_id = appManager
-    .get(ProjectManager)
-    .getWorkspaceIdByName('gdd');
+  const gdd_workspace_id = await projectContext
+    .get(AssetSubContext)
+    .getWorkspaceByNameViaCache('gdd');
 
   return (
     (
-      await appManager.get(CreatorAssetManager).getAssetInstancesList({
+      await projectContext.get(AssetSubContext).getAssetInstancesList({
         where: {
           workspaceids: gdd_workspace_id,
           ...assetFilter,

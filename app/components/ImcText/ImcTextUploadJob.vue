@@ -11,10 +11,12 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import './quill-init';
 import type { UploadingJob } from '../../logic/project-sub-contexts/EditorSubContext';
 import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type UploadJobInfo = {
   uploadId: string;
@@ -34,9 +36,16 @@ export default defineComponent({
       default: false,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     uploadingJobObject(): UploadingJob | undefined {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getUploadJob(this.uploadJob.uploadId);
     },

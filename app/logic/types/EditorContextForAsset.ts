@@ -9,7 +9,6 @@ import type {
   BlockTypeDefinition,
 } from './BlockTypeDefinition';
 import type { BlockEditorController } from './BlockEditorController';
-import type { IAppManager } from '../managers/IAppManager';
 import EditorSubContext from '../project-sub-contexts/EditorSubContext';
 import type { AssetForEdit } from './AssetsType';
 import type { AssetBlockEditorVM } from '../vm/AssetBlockEditorVM';
@@ -202,7 +201,7 @@ export class EditorContextForAsset {
         .get(EditorSubContext)
         .getBlockTypeDefinition(block.type);
       const controller = definition
-        ? definition.createController(this.appManager, () => {
+        ? definition.createController(this.projectContext, () => {
             return this.resolvedBlocks.mapIds[block.id] ?? null;
           })
         : null;

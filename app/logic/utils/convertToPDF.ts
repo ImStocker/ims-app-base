@@ -1,5 +1,6 @@
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
-import type { IProjectContextApi } from '../types/IProjectContext';
 import type { Workspace } from '../types/Workspaces';
 
 export type ExportingContentAsset = {
@@ -18,21 +19,22 @@ export type ExportingContentRenderState = {
 };
 
 export async function loadExportingContent(
-  projectContext: IProjectContextApi,
+  projectContext: IProjectContext,
   assetIds: string[],
-  workpsaceId: string | null,
+  workspaceId: string | null,
 ): Promise<ExportingContent> {
   const exporting_content: ExportingContent = {
     workspace: null,
     assetInfos: [],
     workspaceInfos: [],
   };
-  if (workpsaceId) {
-    exporting_content.workspace =
-      await projectContext.getWorkspaceByIdViaCache(workpsaceId);
+  if (workspaceId) {
+    exporting_content.workspace = await projectContext
+      .get(AssetSubContext)
+      .getWorkspaceByIdViaCache(workspaceId);
     if (exporting_content.workspace) {
       const assets = (
-        await projectContext.getAssetInstancesList({
+        await projectContext.get(AssetSubContext).getAssetInstancesList({
           where: {
             workspaceId: exporting_content.workspace.id,
           },
@@ -40,7 +42,7 @@ export async function loadExportingContent(
       ).list;
       exporting_content.assetInfos = assets.map((a) => ({ assetFull: a }));
       const sub_workspaces = (
-        await projectContext.getWorkspacesList({
+        await projectContext.get(AssetSubContext).getWorkspacesList({
           where: {
             parentId: exporting_content.workspace.id,
           },
@@ -55,7 +57,7 @@ export async function loadExportingContent(
   }
   if (assetIds.length > 0) {
     const assets = (
-      await projectContext.getAssetInstancesList({
+      await projectContext.get(AssetSubContext).getAssetInstancesList({
         where: {
           id: assetIds,
         },

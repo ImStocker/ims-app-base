@@ -116,7 +116,12 @@
 </template>
 
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type {
   AssetsFullResult,
   AssetShort,
@@ -124,13 +129,11 @@ import type {
   AssetForSelection,
 } from '../../logic/types/AssetsType';
 import DialogContent from '../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import FormInput from '../Form/FormInput.vue';
 import AdvancedPropsSpoiler from '../Form/AdvancedPropsSpoiler.vue';
 import FormCheckIcon from '../Form/FormCheckIcon.vue';
 import UiManager from '../../logic/managers/UiManager';
 import FormCheckBox from '../Form/FormCheckBox.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import SelectParentAsset from './SelectParentAsset.vue';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import {
@@ -140,6 +143,9 @@ import {
   ASSET_SELECTION_GAME_MECHANICS,
   BLOCK_NAME_META,
 } from '../../logic/constants';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DialogProps = {
   assetIds: string[];
@@ -166,6 +172,13 @@ export default defineComponent({
       type: Object as PropType<DialogInterface<DialogProps, DialogResult>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -246,20 +259,20 @@ export default defineComponent({
       this.loadingDone = false;
       try {
         this.assets = (
-          await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .getAssetShortsList({
-              where: {
-                workspaceId: this.$getAppManager()
-                  .get(ProjectManager)
-                  .getWorkspaceIdByName('gdd'),
-              },
-            })
+          await this.projectContext.get(AssetSubContext).getAssetShortsList({
+            where: {
+              workspaceId: (
+                await this.projectContext
+                  .get(AssetSubContext)
+                  .getWorkspaceByNameViaCache('gdd')
+              )?.id,
+            },
+          })
         ).list;
         if (this.assetCount > 0) {
           const editing_assets = (
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
+            await this.projectContext
+              .get(AssetSubContext)
               .getAssetInstancesList({
                 where: {
                   id: this.dialog.state.assetIds,
@@ -338,8 +351,8 @@ export default defineComponent({
 
             let res: AssetsFullResult;
             if (this.assetCount > 0) {
-              res = await this.$getAppManager()
-                .get(CreatorAssetManager)
+              res = await this.projectContext
+                .get(AssetSubContext)
                 .changeAssets({
                   where: {
                     id: this.dialog.state.assetIds,
@@ -347,14 +360,12 @@ export default defineComponent({
                   set: changing_asset,
                 });
             } else {
-              res = await this.$getAppManager()
-                .get(CreatorAssetManager)
-                .createAsset({
-                  set: {
-                    ...changing_asset,
-                    title: this.asset.title ?? '',
-                  },
-                });
+              res = await this.projectContext.get(AssetSubContext).createAsset({
+                set: {
+                  ...changing_asset,
+                  title: this.asset.title ?? '',
+                },
+              });
             }
             this.dialog.close(res);
           });
@@ -376,8 +387,8 @@ export default defineComponent({
     getAssetByIdFromCache(
       assetId: string,
     ): AssetForSelection | null | undefined {
-      return this.$getAppManager()
-        .get(CreatorAssetManager)
+      return this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(assetId);
     },
   },

@@ -71,6 +71,7 @@ import {
   type ProjectWorkspacesPresenterVMOptions,
 } from './ProjectWorkspacesPresenterVM';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ProjectWorkspacesPresenter',
@@ -125,6 +126,7 @@ export default defineComponent({
   ],
   setup() {
     const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
     return {
       projectContext,
     };
@@ -134,7 +136,7 @@ export default defineComponent({
       treePresenterVM: this.externalVm
         ? this.externalVm
         : new ProjectWorkspacesPresenterVM(
-            this.projectContext!,
+            this.projectContext,
             this._getTreePresenterOptions(),
           ),
     };

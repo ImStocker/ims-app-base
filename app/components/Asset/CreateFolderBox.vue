@@ -2,14 +2,15 @@
   <menu-list :menu-list="menuList" class="CreateFolderBox"></menu-list>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import MenuList from '../Common/MenuList.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
 import DialogManager from '../../logic/managers/DialogManager';
 import CreateWorkspaceDialog from './CreateWorkspaceDialog.vue';
 import { WORKSPACE_TYPE_COLLECTION } from '../../logic/types/Workspaces';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import { openProjectLink } from '../../logic/router/routes-helpers';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CreateFolderBox',
@@ -20,6 +21,13 @@ export default defineComponent({
     rootWorkspaceId: { type: String, required: true },
     rootWorkspaceType: { type: String, default: null },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     where() {
       return {
@@ -27,7 +35,7 @@ export default defineComponent({
       };
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     menuList(): MenuListItem[] {
       return [

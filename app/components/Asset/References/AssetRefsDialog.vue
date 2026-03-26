@@ -53,11 +53,14 @@ import type {
   AssetReferencesResult,
 } from '../../../logic/types/AssetsType';
 import DialogContent from '../../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import UiManager from '../../../logic/managers/UiManager';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import SelectAssetComboBox from '../SelectAssetComboBox.vue';
 import type { DialogInterface } from '../../../logic/managers/DialogManager';
+import { inject } from 'vue';
 
 type ParentElement = {
   id: string;
@@ -85,6 +88,13 @@ export default defineComponent({
       required: true,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadingError: null as string | null,
@@ -106,15 +116,15 @@ export default defineComponent({
     selectAssetWhere() {
       return {
         workspaceids:
-          this.$getAppManager()
-            .get(ProjectManager)
-            .getWorkspaceIdByName('gdd') ?? null,
+          this.projectContext
+            .get(AssetSubContext)
+            .getWorkspaceByNameViaCacheSync('gdd')?.id ?? null,
       };
     },
     selectedAsset(): AssetForSelection | null {
       if (this.targetAssetId) {
-        const asset = this.$getAppManager()
-          .get(CreatorAssetManager)
+        const asset = this.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCacheSync(this.targetAssetId);
         if (asset)
           return {
@@ -145,8 +155,8 @@ export default defineComponent({
               const source_ids = reverse ? [this.targetAssetId] : this.assetIds;
               const target_ids = reverse ? this.assetIds : [this.targetAssetId];
               for (const target_id of target_ids) {
-                const ref_res = await this.$getAppManager()
-                  .get(CreatorAssetManager)
+                const ref_res = await this.projectContext
+                  .get(AssetSubContext)
                   .createRef({
                     where: {
                       id: source_ids,

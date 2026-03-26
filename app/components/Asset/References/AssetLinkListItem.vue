@@ -98,8 +98,9 @@ import type {
   AssetReferenceCommonEntity,
   AssetShort,
 } from '../../../logic/types/AssetsType';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import TaskManager from '../../../logic/managers/TaskSubContext';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import UiManager from '../../../logic/managers/UiManager';
 import DialogManager from '../../../logic/managers/DialogManager';
 import AssetPreviewDialog from '../AssetPreviewDialog.vue';
@@ -112,6 +113,8 @@ import MenuList from '../../Common/MenuList.vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import { assert } from '../../../logic/utils/typeUtils';
 import { TASK_ASSET_ID } from '../../../logic/constants';
+import { inject } from 'vue';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
 
 export default defineComponent({
   name: 'AssetLinkListItem',
@@ -137,6 +140,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -174,14 +184,14 @@ export default defineComponent({
       return this.targetAsset.typeIds.includes(TASK_ASSET_ID);
     },
     targetAsset() {
-      return this.$getAppManager()
-        .get(CreatorAssetManager)
+      return this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.targetAssetId);
     },
     targetAsTask() {
       if (!this.isTask) return null;
-      return this.$getAppManager()
-        .get(TaskManager)
+      return this.projectContext
+        .get(TaskSubContext)
         .getTaskViaCacheSync(this.targetAssetId);
     },
     taskColor() {
@@ -189,10 +199,10 @@ export default defineComponent({
       return getTaskColorValue(this.targetAsTask.color);
     },
     isGuest() {
-      return !this.$getAppManager().get(ProjectManager).getUserRoleInProject();
+      return !this.projectContext.user?.role;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetLinkTo() {
       if (this.targetAsTask?.num) {
@@ -230,12 +240,12 @@ export default defineComponent({
     async reload() {
       this.isLoading = true;
       try {
-        await this.$getAppManager()
-          .get(CreatorAssetManager)
+        await this.projectContext
+          .get(AssetSubContext)
           .requestAssetShortInCache(this.targetAssetId);
         if (this.isTask) {
-          await this.$getAppManager()
-            .get(TaskManager)
+          await this.projectContext
+            .get(TaskSubContext)
             .requestTaskInCache(this.targetAssetId);
         }
       } catch (err: any) {
@@ -253,8 +263,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(TaskManager)
+          await this.projectContext
+            .get(TaskSubContext)
             .setTaskIsCompleted(this.targetAssetId, val);
         });
       this.setCompletedAt = undefined;
@@ -272,8 +282,8 @@ export default defineComponent({
         );
       } else {
         if (this.isTask) {
-          await this.$getAppManager()
-            .get(TaskManager)
+          await this.projectContext
+            .get(TaskSubContext)
             .openTaskPreviewDialog(this.targetAssetId, {
               deleteRef: (silent?: boolean) => this.deleteLink(silent),
             });

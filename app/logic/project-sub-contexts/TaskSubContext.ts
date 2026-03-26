@@ -6,6 +6,7 @@ import {
   ProjectSubContext,
   type IProjectContext,
 } from '#logic/types/IProjectContext';
+import type { Workspace } from '#logic/types/Workspaces';
 
 export type TaskMilestoneForm = {
   title: string;
@@ -91,4 +92,8 @@ export default abstract class TaskSubContext extends ProjectSubContext {
   abstract getFirstColumnOfBoard(
     board_id: string,
   ): Promise<TaskBoardColumn | null>;
+
+  abstract getBoards(): Promise<Workspace[]>;
+
+  abstract getTaskCategoryIcon(name: string): string | null;
 }

@@ -38,14 +38,15 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import { DatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
 import { formatDate, formatDateTime } from '../../logic/utils/format';
 
 import dayjs from '../../lib/dayjs';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   title: 'FormCalendar',
@@ -88,6 +89,13 @@ export default defineComponent({
     },
   },
   emits: ['change'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       rawValueStr: '',
@@ -112,7 +120,7 @@ export default defineComponent({
       return formatDate(val, this.datePickerLocale);
     },
     getProjectInfo(): any {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
   watch: {

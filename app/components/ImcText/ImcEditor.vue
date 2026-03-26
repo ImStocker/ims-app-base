@@ -81,6 +81,7 @@
 import {
   defineAsyncComponent,
   defineComponent,
+  inject,
   type PropType,
   shallowRef,
 } from 'vue';
@@ -102,7 +103,6 @@ import {
 import UiManager, {
   type UiFocusLockHandler,
 } from '../../logic/managers/UiManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type Delta from 'quill-delta';
 import DropdownContainer from '../Common/DropdownContainer.vue';
 import { useImcHTMLRenderer } from './useImcHTMLRenderer';
@@ -116,6 +116,8 @@ import {
   checkYandexBrowser,
 } from '../utils/browser';
 import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 const BASE_TOOLBAR_OFFSET = 10;
 
@@ -161,6 +163,13 @@ export default defineComponent({
     'view-ready',
     'inputValue',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       autocomplete: {
@@ -233,12 +242,10 @@ export default defineComponent({
       };
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     staticHTML() {
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       return useImcHTMLRenderer()(this.modelValue, {
         project: project ?? undefined,
       });

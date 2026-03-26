@@ -29,7 +29,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import type {
   AssetPropValue,
@@ -38,8 +38,12 @@ import type {
 } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import CaptionString from '../Common/CaptionString.vue';
-import type { IProjectContext } from '../../logic/types/IProjectContext';
+import {
+  injectedProjectContext,
+  type IProjectContext,
+} from '../../logic/types/IProjectContext';
 import { assert } from '../../logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 type EnumRadioPropEditorOption = {
   Name: string | null;
@@ -51,7 +55,6 @@ export default defineComponent({
   components: {
     CaptionString,
   },
-  inject: ['projectContext'],
   props: {
     modelValue: {
       type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
@@ -64,6 +67,13 @@ export default defineComponent({
     nullable: { type: Boolean, default: true },
   },
   emits: ['update:modelValue', 'blur', 'preEnter', 'enter'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: false,
@@ -152,7 +162,9 @@ export default defineComponent({
 
       try {
         this.loading = true;
-        const type = await this.projectContextComp.getAssetInstance(type_id);
+        const type = await this.projectContextComp
+          .get(AssetSubContext)
+          .getAssetInstance(type_id);
         if (this.typeId === type_id) {
           this.loadedType = type;
           this.loading = false;

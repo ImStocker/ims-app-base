@@ -59,7 +59,7 @@ v-bind="slotData"
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import {
   getPreferenceKeyForBlock,
   type AssetDisplayMode,
@@ -72,8 +72,10 @@ import AsyncComponent from '../../Common/AsyncComponent.vue';
 import AssetBlockResizer from './AssetBlockResizer.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import { capitalizeFirstLetter } from '../../../logic/utils/stringUtils';
-import EditorSubContext from '../../../logic/managers/EditorSubContext';
 import type { IAssetBlockComponent } from '../../../logic/types/IAssetBlockComponent';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'EditorBlockContent',
@@ -112,6 +114,13 @@ export default defineComponent({
     },
   },
   emits: ['view-ready', 'sendMessage', 'show-chat', 'save'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     injectedBlockSlots() {
       return Object.keys(this.$slots)
@@ -156,7 +165,7 @@ export default defineComponent({
       );
     },
     blockTypeDefinition() {
-      return this.$getAppManager()
+      return this.projectContext
         .get(EditorSubContext)
         .getBlockTypeDefinition(this.resolvedBlock.type);
     },

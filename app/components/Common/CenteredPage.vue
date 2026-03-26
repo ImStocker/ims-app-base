@@ -32,11 +32,12 @@
   </centered-content-layout>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import CenteredContentLayout from './CenteredContentLayout.vue';
 import BreadCrumbs from '../BreadCrumbs.vue';
 import type { BreadCrumbsEntity } from '../../logic/types/BreadCrumbs';
-import ProjectManager from '../../logic/managers/ProjectManager';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CenteredPage',
@@ -51,6 +52,13 @@ export default defineComponent({
       default: null,
     },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     menuWidth() {
       return this.providedMenuWidth;
@@ -59,7 +67,7 @@ export default defineComponent({
       return 200;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
   },
 });

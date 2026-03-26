@@ -17,10 +17,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import AssetLink from '../Asset/AssetLink.vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { ProjectFullInfo } from '../../logic/types/ProjectTypes';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'HistoryRowAsset',
@@ -42,12 +44,18 @@ export default defineComponent({
     },
   },
   emits: ['rollbackChange', 'revertToState'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
-    creatorAssetManager() {
-      return this.$getAppManager().get(CreatorAssetManager);
-    },
     assetShort() {
-      return this.creatorAssetManager.getAssetShortViaCacheSync(this.assetId);
+      return this.projectContext
+        .get(AssetSubContext)
+        .getAssetShortViaCacheSync(this.assetId);
     },
   },
 });

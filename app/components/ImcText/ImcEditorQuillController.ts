@@ -7,8 +7,6 @@ import type {
   ImcEditorModuleOptions,
 } from './ImcEditorModule';
 import type { ImcLinkOption, ImcLinksModuleOptions } from './ImcLinksModule';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import Delta from 'quill-delta';
 import type { ImcAssetBlotData } from './blots/ImcAssetBlot';
 import UiManager from '../../logic/managers/UiManager';
@@ -17,6 +15,7 @@ import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
 import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import type { ImcClipboard } from './ImcClipboard';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export class ImcEditorQuillController {
   editorElement: HTMLElement | null = null;
@@ -176,8 +175,7 @@ export class ImcEditorQuillController {
     const new_content = new Delta();
     for (const op of content.ops) {
       if (op.insert && (op.insert as any)['upload-job']) {
-        const upload_job = this.component
-          .$getAppManager()
+        const upload_job = this.component.projectContext
           .get(EditorSubContext)
           .getUploadJob((op.insert as any)['upload-job'].uploadId);
         if (!upload_job || upload_job.result === null || upload_job.error) {
@@ -189,9 +187,8 @@ export class ImcEditorQuillController {
         op.attributes.asset &&
         (op.attributes.asset as ImcAssetBlotData).value?.AssetId
       ) {
-        const asset = this.component
-          .$getAppManager()
-          .get(CreatorAssetManager)
+        const asset = this.component.projectContext
+          .get(AssetSubContext)
           .getAssetShortViaCacheSync(
             (op.attributes.asset as ImcAssetBlotData).value?.AssetId,
           );
@@ -244,16 +241,16 @@ export class ImcEditorQuillController {
 
     let has_more = false;
     gather.push(async () => {
-      const assets = await this.component
-        .$getAppManager()
-        .get(CreatorAssetManager)
+      const assets = await this.component.projectContext
+        .get(AssetSubContext)
         .getAssetShortsList({
           where: {
             query: query,
-            workspaceids: this.component
-              .$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName('gdd'),
+            workspaceids: (
+              await this.component.projectContext
+                .get(AssetSubContext)
+                .getWorkspaceByNameViaCache('gdd')
+            )?.id,
           },
           count: take_count + 1,
         });
@@ -293,8 +290,7 @@ export class ImcEditorQuillController {
 
     for (const file of files) {
       const pos = quill.getSelection()?.index ?? 0;
-      const upload_job = this.component
-        .$getAppManager()
+      const upload_job = this.component.projectContext
         .get(EditorSubContext)
         .attachFile(file, file.name);
 
@@ -317,8 +313,7 @@ export class ImcEditorQuillController {
     const new_content = new Delta();
     for (const op of content.ops) {
       if (op.insert && (op.insert as any)['upload-job']) {
-        const upload_job = this.component
-          .$getAppManager()
+        const upload_job = this.component.projectContext
           .get(EditorSubContext)
           .getUploadJob((op.insert as any)['upload-job'].uploadId);
         if (!upload_job || upload_job.result === null || upload_job.error) {

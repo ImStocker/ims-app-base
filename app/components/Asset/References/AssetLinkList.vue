@@ -24,12 +24,7 @@
 </template>
 
 <script lang="ts">
-import {
-  defineAsyncComponent,
-  defineComponent,
-  type PropType,
-  type UnwrapRef,
-} from 'vue';
+import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
 import type {
   AssetReferenceCommonEntity,
   AssetShort,

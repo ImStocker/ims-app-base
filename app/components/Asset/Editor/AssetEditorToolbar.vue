@@ -126,13 +126,15 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import UiManager from '../../../logic/managers/UiManager';
-import LocalFsSyncSubContext from '../../../logic/managers/LocalFsSyncSubContext';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import type { ExtendedMenuListItem } from '../../../logic/types/MenuList';
 import type { IAssetEditorToolbarVM } from '../../../logic/vm/IAssetEditorToolbarVM';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetEditorToolbar',
@@ -155,6 +157,13 @@ export default defineComponent({
     },
   },
   emits: ['update:pinned'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     isSaveDisabled() {
       return this.toolbarVm.isSaving() || !this.toolbarVm.getHasChanges();
@@ -168,7 +177,8 @@ export default defineComponent({
     isSaving() {
       const saving = this.toolbarVm.isSaving();
       if (saving) return true;
-      return this.$getAppManager().get(LocalFsSyncSubContext).syncStatus.isSyncing;
+      return this.projectContext.get(LocalFsSyncSubContext).syncStatus
+        .isSyncing;
     },
     isUndoRedoBusy() {
       return this.toolbarVm.isUndoRedoBusy();

@@ -119,6 +119,7 @@ import type { Workspace } from '../../../logic/types/Workspaces';
 import type { ProjectTreeItemPayload } from './ProjectTreePresenterBaseVM';
 import ProjectTreePresenterContents from './ProjectTreePresenterContents.vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ProjectTreePresenter',
@@ -208,6 +209,7 @@ export default defineComponent({
   ],
   setup() {
     const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
     return {
       projectContext,
     };
@@ -217,7 +219,7 @@ export default defineComponent({
       treePresenterVM: this.externalVm
         ? this.externalVm
         : new ProjectTreePresenterVM(
-            this.projectContext!,
+            this.projectContext,
             this._getTreePresenterOptions(),
           ),
     };

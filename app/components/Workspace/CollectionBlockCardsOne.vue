@@ -56,8 +56,6 @@ import {
   castAssetPropValueToString,
   type AssetPropValueFile,
 } from '../../logic/types/Props';
-import ProjectManager from '../../logic/managers/ProjectManager';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import AssetLink from '../Asset/AssetLink.vue';
@@ -77,7 +75,7 @@ export default defineComponent({
   },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     assetLink() {
       const title_column_index = this.columns.findIndex(

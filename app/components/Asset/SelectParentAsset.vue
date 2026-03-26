@@ -11,10 +11,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import SelectAssetComboBox from './SelectAssetComboBox.vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetForSelection } from '../../logic/types/AssetsType';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'SelectParentAsset',
@@ -41,13 +43,20 @@ export default defineComponent({
     },
   },
   emits: ['select-parent'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     selectAssetWhere() {
       return {
         workspaceids:
-          this.$getAppManager()
-            .get(ProjectManager)
-            .getWorkspaceIdByName('gdd') ?? null,
+          this.projectContext
+            .get(AssetSubContext)
+            .getWorkspaceByNameViaCache('gdd') ?? null,
       };
     },
   },

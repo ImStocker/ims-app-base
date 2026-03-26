@@ -31,14 +31,16 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
-import ProjectManager from '../../logic/managers/ProjectManager';
+import { defineComponent, inject } from 'vue';
 import type { ProjectMember } from '../../logic/types/ProjectTypes';
 import type {
   AssetPropValue,
   AssetPropValueAccount,
 } from '../../logic/types/Props';
 import ImsSelect from '../Common/ImsSelect.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { UsersSubContext } from '#logic/project-sub-contexts/UsersSubContext';
 
 type ProjectUserPropEditorOption = AssetPropValueAccount;
 
@@ -58,6 +60,13 @@ export default defineComponent({
     placeholder: { type: String, default: '' },
   },
   emits: ['update:modelValue', 'blur', 'preEnter', 'enter'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: false,
@@ -108,8 +117,8 @@ export default defineComponent({
 
       try {
         this.loading = true;
-        const members = await this.$getAppManager()
-          .get(ProjectManager)
+        const members = await this.projectContext
+          .get(UsersSubContext)
           .getMembersList();
         let list = members.list;
         if (this.roleNums) {

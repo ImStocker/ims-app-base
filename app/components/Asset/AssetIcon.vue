@@ -18,10 +18,17 @@
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type { AssetLink } from '../../logic/types/AssetsType';
 import type { AssetPropValueFile } from '../../logic/types/Props';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetIcon',
@@ -34,17 +41,24 @@ export default defineComponent({
     asset: { type: Object as PropType<AssetLink>, required: true },
     useImage: { type: Boolean, default: true },
   },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     hasImage() {
       return !!this.cachedAsset?.hasImage;
     },
     cachedAsset() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetShortViaCacheSync(this.asset.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetShortInCache(this.asset.id);
       }
       return cached;
@@ -53,12 +67,12 @@ export default defineComponent({
       if (!this.cachedAsset) {
         return null;
       }
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.asset.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.asset.id);
       }
       return cached;

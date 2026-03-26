@@ -25,7 +25,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineAsyncComponent, defineComponent } from 'vue';
+import { defineAsyncComponent, defineComponent, inject } from 'vue';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import type {
   AssetPropValue,
@@ -36,10 +36,14 @@ import type {
   PropsFormFieldDef,
   PropsFormState,
 } from '../../logic/types/PropsForm';
-import type { IProjectContext } from '../../logic/types/IProjectContext';
+import {
+  injectedProjectContext,
+  type IProjectContext,
+} from '../../logic/types/IProjectContext';
 import { assert } from '../../logic/utils/typeUtils';
 import type { AssetDisplayMode } from '../../logic/utils/assets';
 import { extractStructFormFields } from '../Asset/SpecialTypes/StructEditor';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'StructPropEditor',
@@ -48,7 +52,7 @@ export default defineComponent({
       () => import('~ims-plugin-base/blocks/PropsBlock/PropsBlockSheet.vue'),
     ),
   },
-  inject: ['structPropEditorStructIds', 'projectContext'],
+  inject: ['structPropEditorStructIds'],
   provide() {
     const current = [...((this.structPropEditorStructIds as string[]) ?? [])];
     if (this.typeId) {
@@ -78,6 +82,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'blur', 'preEnter', 'enter', 'changeProps'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loading: true,
@@ -136,7 +147,9 @@ export default defineComponent({
 
       try {
         this.loading = true;
-        const type = await this.projectContextComp.getAssetInstance(type_id);
+        const type = await this.projectContextComp
+          .get(AssetSubContext)
+          .getAssetInstance(type_id);
         if (type) await type.resolveBlocks();
         if (this.typeId === type_id) {
           this.loadedType = type;

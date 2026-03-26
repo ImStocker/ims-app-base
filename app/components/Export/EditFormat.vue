@@ -22,17 +22,11 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import FormBuilder from '../Form/FormBuilder.vue';
 import type { FormSchema } from '../Form/FormBuilderTypes';
 import FormBuilderModelBindObject from '../Form/FormBuilderModelBindObject';
 import type { AssetQueryWhere, AssetShort } from '../../logic/types/AssetsType';
-import ProjectManager from '../../logic/managers/ProjectManager';
-import { makeProjectContextFromAppManager } from '../../logic/types/IProjectContext';
-import type {
-  ExportFormat,
-  ExportFormatField,
-} from '../../logic/managers/ExportFormatManager';
 import {
   castAssetPropValueToString,
   type AssetPropValue,
@@ -48,8 +42,6 @@ import { getPreparedAssets } from '../../logic/local-fs-sync/getPreparedAsset';
 import { AssetPropWhereOpKind } from '../../logic/types/PropsWhere';
 import type { UiNavigationGuardHandler } from '../../logic/managers/UiManager';
 import UiManager from '../../logic/managers/UiManager';
-import ExportFormatManager from '../../logic/managers/ExportFormatManager';
-import LocalFsSyncSubContext from '../../logic/managers/LocalFsSyncSubContext';
 import {
   ASSET_SELECTION_DIAGRAM,
   ASSET_SELECTION_ENUM,
@@ -60,18 +52,19 @@ import {
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
 } from '../../logic/constants';
+import { assert } from '#logic/utils/typeUtils';
+import ImportExportSubContext, {
+  type ExportFormat,
+  type ExportFormatField,
+} from '#logic/project-sub-contexts/ImportExportSubContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import LocalFsSyncSubContext from '#logic/project-sub-contexts/LocalFsSyncSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'EditFormat',
   components: {
     FormBuilder,
-  },
-  provide() {
-    const appManager = this.$getAppManager();
-
-    return {
-      projectContext: makeProjectContextFromAppManager(appManager),
-    };
   },
   props: {
     format: {
@@ -92,6 +85,13 @@ export default defineComponent({
     },
   },
   emits: ['change', 'cancel', 'dirty'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       formatState: this.getClearedFormatState(),
@@ -102,10 +102,10 @@ export default defineComponent({
   },
   computed: {
     segments() {
-      return this.$getAppManager().get(LocalFsSyncSubContext).getSegmentList();
+      return this.projectContext.get(LocalFsSyncSubContext).getSegmentList();
     },
     formats() {
-      return this.$getAppManager().get(ExportFormatManager).getExportFormats();
+      return this.projectContext.get(ImportExportSubContext).getExportFormats();
     },
     isSaveDisabled() {
       return (
@@ -123,9 +123,9 @@ export default defineComponent({
       return JSON.stringify(this.format) !== JSON.stringify(this.formatState);
     },
     gddWorkspaceId() {
-      return this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceIdByName('gdd');
+      return this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd')?.id;
     },
     includingAssetsTypeWhere() {
       return {
@@ -397,7 +397,7 @@ export default defineComponent({
   async mounted() {
     await this.load();
 
-    this.navigationGuardHandler = this.$getAppManager()
+    this.navigationGuardHandler = this.projectContext.appManager
       .get(UiManager)
       .setNavigationGuard(
         () => !this.isDirty,
@@ -435,7 +435,7 @@ export default defineComponent({
             ...this.includingAssetsTypeWhere,
           };
       const [base_asset] = await getPreparedAssets(
-        this.$getAppManager(),
+        this.projectContext,
         {
           where: initialWhere,
           count: 1,
@@ -452,7 +452,7 @@ export default defineComponent({
       if (this.formatAssetType?.AssetId) {
         return (
           await getPreparedAssets(
-            this.$getAppManager(),
+            this.projectContext,
             {
               where: {
                 id: [this.formatAssetType.AssetId],
@@ -481,7 +481,7 @@ export default defineComponent({
           (el) => el.title === this.formatState.title,
         );
         if (existing_format >= 0) {
-          this.$getAppManager()
+          this.projectContext.appManager
             .get(UiManager)
             .showError(this.$t('importExport.formats.formatAlreadyExists'));
           return;

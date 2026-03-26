@@ -155,9 +155,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../../Dialog/DialogContent.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 import UiManager from '../../../logic/managers/UiManager';
 import type { DialogInterface } from '../../../logic/managers/DialogManager';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
@@ -168,8 +171,6 @@ import type {
 import { getCompletionDisplay, setAssetCompleted } from './AssetCompletion';
 import TaskCheckbox from '../../Common/TaskCheckbox.vue';
 import FormBuilderFieldTooltip from '../../Form/FormBuilderFieldTooltip.vue';
-import type { TaskMilestone } from '../../../logic/managers/TaskSubContext';
-import TaskManager from '../../../logic/managers/TaskSubContext';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import type { MenuListItem } from '../../../logic/types/MenuList';
@@ -184,6 +185,8 @@ import AssetBlockEditor from '../Editor/AssetBlockEditor.vue';
 import { v4 as uuidv4 } from 'uuid';
 import { getNextIndexWithTimestamp } from '../Editor/blockUtils';
 import AssetReferenceList from '../References/AssetReferenceList.vue';
+import type { TaskMilestone } from '#logic/project-sub-contexts/TaskSubContext';
+import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
 
 type DialogProps = {
   assetId: string;
@@ -211,6 +214,14 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadingError: null as string | null,
@@ -230,19 +241,19 @@ export default defineComponent({
       return (this.info?.rights ?? AssetRights.NO) >= AssetRights.FILL_EMPTY;
     },
     info(): AssetPreviewInfo | null | undefined {
-      const info = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const info = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.dialog.state.assetId);
       if (info === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.dialog.state.assetId);
       }
       return info;
     },
     asset(): AssetFullInstanceR | null | undefined {
-      return this.$getAppManager()
-        .get(CreatorAssetManager)
+      return this.projectContext
+        .get(AssetSubContext)
         .getAssetInstanceViaCacheSync(this.dialog.state.assetId);
     },
     completion() {
@@ -250,7 +261,7 @@ export default defineComponent({
       return getCompletionDisplay(this.info, this.dirtyCompleteSet);
     },
     canEditMilestones() {
-      return !!this.$getAppManager().get(ProjectManager).getUserRoleInProject()
+      return !!this.projectContext.user?.role
         ?.isAdmin;
     },
     milestoneInfoSelected() {
@@ -285,7 +296,7 @@ export default defineComponent({
       return options;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     showAddChecklistButton() {
       if (!this.asset) return false;
@@ -298,8 +309,8 @@ export default defineComponent({
       const references: AssetReferenceEntity[] = [];
       if (this.asset) {
         for (const reference of this.asset.references) {
-          const ref_asset = this.$getAppManager()
-            .get(CreatorAssetManager)
+          const ref_asset = this.projectContext
+            .get(AssetSubContext)
             .getAssetShortViaCacheSync(reference.targetAssetId);
           if (ref_asset && ref_asset.typeIds.includes(TASK_ASSET_ID)) {
             references.push(reference);
@@ -338,22 +349,20 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .changeAssets({
-              where: {
-                id: this.dialog.state.assetId,
-              },
-              set: {
-                blocks: {
-                  [`@${new_block_id}`]: {
-                    type: 'checklist',
-                    title: this.$t('asset.completion.todoListTitle'),
-                    index: getNextIndexWithTimestamp(max_index),
-                  },
+          await this.projectContext.get(AssetSubContext).changeAssets({
+            where: {
+              id: this.dialog.state.assetId,
+            },
+            set: {
+              blocks: {
+                [`@${new_block_id}`]: {
+                  type: 'checklist',
+                  title: this.$t('asset.completion.todoListTitle'),
+                  index: getNextIndexWithTimestamp(max_index),
                 },
               },
-            });
+            },
+          });
         });
 
       this.checklistCreating = false;
@@ -366,22 +375,20 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .changeAssets({
-              where: {
-                id: this.dialog.state.assetId,
-              },
-              set: {
-                blocks: {
-                  [BLOCK_NAME_META]: {
-                    props: {
-                      plan_milestone: milestone ? milestone.value : null,
-                    },
+          await this.projectContext.get(AssetSubContext).changeAssets({
+            where: {
+              id: this.dialog.state.assetId,
+            },
+            set: {
+              blocks: {
+                [BLOCK_NAME_META]: {
+                  props: {
+                    plan_milestone: milestone ? milestone.value : null,
                   },
                 },
               },
-            });
+            },
+          });
         });
       this.milestoneSaving = false;
     },
@@ -389,11 +396,11 @@ export default defineComponent({
       this.loadingError = null;
       this.loadingDone = false;
       try {
-        await this.$getAppManager()
-          .get(CreatorAssetManager)
+        await this.projectContext
+          .get(AssetSubContext)
           .requestAssetInstanceInCache(this.dialog.state.assetId);
-        this.taskMilestones = await this.$getAppManager()
-          .get(TaskManager)
+        this.taskMilestones = await this.projectContext
+          .get(TaskSubContext)
           .getTaskMilestones();
       } catch (err: any) {
         this.loadingError = err.message;
@@ -409,7 +416,7 @@ export default defineComponent({
         .get(UiManager)
         .doTask(async () => {
           await setAssetCompleted(
-            this.$getAppManager(),
+            this.projectContext,
             this.dialog.state.assetId,
             val,
           );

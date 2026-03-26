@@ -9,7 +9,7 @@
   </is-panel>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import EnumEditor from './EnumEditor.vue';
@@ -51,7 +51,7 @@ export default defineComponent({
       return this.resolvedBlocks.mapNames['info'];
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     isReadonly() {
       return this.assetBlockEditor.getIsReadonly();

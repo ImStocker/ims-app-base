@@ -33,12 +33,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import { defineComponent, inject, type PropType } from 'vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { Workspace, WorkspaceLink } from '../../logic/types/Workspaces';
 import WorkspaceIcon from './WorkspaceIcon.vue';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'WorkspaceTooltip',
@@ -48,6 +49,13 @@ export default defineComponent({
   props: {
     workspace: { type: Object as PropType<WorkspaceLink>, required: true },
     showPath: { type: Boolean, default: true },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     workspaceTitle() {
@@ -69,25 +77,21 @@ export default defineComponent({
       }
     },
     cachedWorkspace() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getWorkspaceByIdViaCacheSync(this.workspace.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestWorkspaceInCache(this.workspace.id);
       }
       return cached;
     },
 
     hasGddAccess() {
-      const role = this.$getAppManager()
-        .get(ProjectManager)
-        .getUserRoleInProject();
+      const role = this.projectContext.user?.role;
       if (role) return true;
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
+      const project = this.projectContext.projectInfo;
       if (!project) return false;
       return project.isPublicGdd;
     },
@@ -100,9 +104,10 @@ export default defineComponent({
         return [];
       }
       return cached_workspace.parentId
-        ? (this.$getAppManager()
-            .get(CreatorAssetManager)
-            .getParentWorkspacesListFromCacheSync(cached_workspace.parentId) ?? [])
+        ? (this.projectContext
+            .get(AssetSubContext)
+            .getParentWorkspacesListFromCacheSync(cached_workspace.parentId) ??
+            [])
         : [];
     },
   },

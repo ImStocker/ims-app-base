@@ -71,7 +71,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineAsyncComponent, defineComponent } from 'vue';
+import { defineAsyncComponent, defineComponent, inject } from 'vue';
 import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type {
@@ -86,10 +86,11 @@ import { formatFileSize } from '../../logic/utils/format';
 import FilePresenterDialog from './FilePresenterDialog.vue';
 import { useFilePresenterParams } from './FilePresenter';
 import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ThumbParams } from '../../logic/utils/files';
 import { getSrcByFileId } from '../../logic/utils/files';
 import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'FilePresenter',
@@ -115,12 +116,19 @@ export default defineComponent({
     menuList: { type: Array<ExtendedMenuListItem>, default: () => [] },
   },
   emits: ['click', 'error'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
     },
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     localFilePath() {
       if (this.fileValue?.Store !== 'loc-project') return;
@@ -192,14 +200,12 @@ export default defineComponent({
   },
   methods: {
     async downloadFile() {
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          if (!this.fileValue) return;
-          await this.$getAppManager()
-            .get(EditorSubContext)
-            .downloadAttachment(this.fileValue);
-        });
+      await this.projectContext.appManager.get(UiManager).doTask(async () => {
+        if (!this.fileValue) return;
+        await this.projectContext
+          .get(EditorSubContext)
+          .downloadAttachment(this.fileValue);
+      });
     },
     async linkClick(ev: MouseEvent) {
       if (this.isStatic) return;
@@ -218,9 +224,11 @@ export default defineComponent({
       if (ev.ctrlKey || ev.metaKey || !this.fileInfo?.inlineType) {
         await this.downloadFile();
       } else {
-        this.$getAppManager().get(DialogManager).show(FilePresenterDialog, {
-          value: this.value,
-        });
+        this.projectContext.appManager
+          .get(DialogManager)
+          .show(FilePresenterDialog, {
+            value: this.value,
+          });
       }
     },
   },

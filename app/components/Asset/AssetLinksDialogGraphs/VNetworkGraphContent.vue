@@ -251,7 +251,7 @@ export default defineComponent({
   },
   computed: {
     projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+      return this.projectContext.projectInfo;
     },
     vNetworkGraphConfig() {
       return getVNetworkConfig(this.nodeRadius, this.nodeLabelFontSize);

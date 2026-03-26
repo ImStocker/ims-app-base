@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ImcToolbarTool } from './ImcToolbarTools';
 import ImcEditorToolbarButton from './ImcEditorToolbarButton.vue';
 import type Quill from 'quill';
@@ -108,10 +108,12 @@ import {
 import AssetLink from '../../Asset/AssetLink.vue';
 import DialogManager from '../../../logic/managers/DialogManager';
 import SelectAssetDialog from '../../Asset/SelectAssetDialog.vue';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { ImcEditorModule } from '../ImcEditorModule';
 import type { Router } from 'vue-router';
 import { getQueryAssetPropsSelection } from '../../../logic/expression/filter/filterExpression';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export type ImcEditorToolbarFormatOption = {
   value: string;
@@ -143,6 +145,13 @@ export default defineComponent({
     changeEpoch: { type: Number, default: 0 },
   },
   emits: ['used'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       activeLinkValue: null as null | string,
@@ -181,9 +190,9 @@ export default defineComponent({
       return null;
     },
     assetLinkRootWorkspace() {
-      const gdd_workspace = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceByName('gdd');
+      const gdd_workspace = this.projectContext
+        .get(AssetSubContext)
+        .getWorkspaceByNameViaCacheSync('gdd');
       return gdd_workspace;
     },
   },

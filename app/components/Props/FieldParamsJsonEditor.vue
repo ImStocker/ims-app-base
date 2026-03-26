@@ -50,7 +50,7 @@ export default defineComponent({
       try {
         parsed = JSON.parse(val);
       } catch (err: any) {
-        this.$getAppManager().get(UiManager).showError(err);
+        this.projectContext.get(UiManager).showError(err);
         return;
       }
       const key = `${this.field.propKey}`;
