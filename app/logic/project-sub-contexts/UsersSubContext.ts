@@ -1,5 +1,11 @@
-import { ProjectSubContext } from '#logic/types/IProjectContext';
-import type { ApiResultListWithTotal } from '#logic/types/ProjectTypes';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
+import type {
+  ApiResultListWithTotal,
+  ProjectMember,
+} from '#logic/types/ProjectTypes';
 import type {
   ProjectRightsInspectResponseDTO,
   RoleWorkspaceRightsChangeDTOOne,
@@ -7,7 +13,16 @@ import type {
   RoleAssetRightsChangeDTOOne,
 } from '#logic/types/RightsAndRoles';
 
-export class RightsSubContext extends ProjectSubContext {
+export class UsersSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
+  async getMembersList(): Promise<ApiResultListWithTotal<ProjectMember>> {
+    return {
+      list: [],
+      total: 0,
+    };
+  }
+
   async getRights(
     _asset_id?: string,
     _workspace_id?: string,

@@ -9,10 +9,15 @@ import type {
   SetLikeDTO,
 } from '../types/CommentTypes';
 import { Service, HttpMethods } from '../managers/ApiWorker';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import { AssetSubContext } from './AssetSubContext';
 
 export default class CommentSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   isLoaded = false;
 
   async init() {}

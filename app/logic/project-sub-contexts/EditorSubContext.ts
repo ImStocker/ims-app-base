@@ -12,7 +12,10 @@ import { makeAnchorTagId } from '../utils/assets';
 import type { AssetPropValueFile } from '../types/Props';
 import { getSrcByFileId } from '../utils/files';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import { AssetSubContext } from './AssetSubContext';
 
 export interface UploadingJob {
@@ -68,6 +71,8 @@ const AssetLayoutDefault = markRaw({
 });
 
 export default abstract class EditorSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   private _blockTypeEntities: BlockTypeDefinition[] = [];
   private _fieldTypeEntities: FieldTypeController[] = [];
   private _assetLayoutDescriptors: AssetLayoutDescriptor[] = [

@@ -7,10 +7,15 @@ import {
   type PluginInfo,
   type PluginListItemEntity,
 } from '#logic/plugin/PluginEntity';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 
 export default class PluginSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   protected _installedPlugins = new Map<string, PluginInfo>();
   _destroyed: boolean = false;
 

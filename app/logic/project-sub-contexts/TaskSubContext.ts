@@ -2,7 +2,10 @@ import type { TaskEntity, TaskQueryDTOWhere } from '../types/BoardTypes';
 import type { AssetPropValueAccount, AssetPropValueEnum } from '../types/Props';
 import type { AssetSetDTO } from '../types/AssetsType';
 import { TASK_COLUMN_ENUM } from '#logic/constants';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 
 export type TaskMilestoneForm = {
   title: string;
@@ -42,6 +45,8 @@ export function convertTaskBoardColumnToAssetValueEnum(
 }
 // TODO: remove from this package
 export default abstract class TaskSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   abstract getTaskViaCache(id: string): Promise<TaskEntity | null>;
 
   abstract getTaskViaCacheSync(id: string): TaskEntity | null | undefined;

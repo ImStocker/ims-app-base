@@ -9,11 +9,16 @@ import {
   type AssetPropsPlainObject,
 } from '../types/Props';
 import ProjectManager from '../managers/ProjectManager';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import { AssetSubContext } from './AssetSubContext';
 import { assert } from '#logic/utils/typeUtils';
 
 export default class SettingsSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   protected _projectSettings: ProjectSettings | null = null;
 
   async init() {}

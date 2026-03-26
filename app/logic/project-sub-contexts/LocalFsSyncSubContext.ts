@@ -27,7 +27,10 @@ import UiManager from '../managers/UiManager';
 import UiPreferenceManager from '../managers/UiPreferenceManager';
 import type UserCodeExecuteManager from '../local-fs-sync/UserCodeExecuteManager';
 import { MemorySyncTarget } from '../local-fs-sync/targets/MemorySyncTarget';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import { AssetSubContext } from './AssetSubContext';
 import ImportExportSubContext from './ImportExportSubContext';
 import SettingsSubContext from './SettingsSubContext';
@@ -96,6 +99,8 @@ export type SegmentEntity = {
 };
 
 export default class LocalFsSyncSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   private _syncWorkerId = Math.round(Math.random() * 10000000).toString();
   private _primarySyncWorkerId: string | null = null;
   private _broadcastChannel: BroadcastChannel | null = null;

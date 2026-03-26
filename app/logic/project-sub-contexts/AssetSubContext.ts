@@ -88,6 +88,8 @@ type AssetHasChildrenRecord = {
 };
 
 export class AssetSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   private _shortAssetsCache: EntityCache<AssetShort>;
   private _previewAssetsCache: EntityCache<AssetPreviewInfo>;
   private _hasChildrenAssetsCache: EntityCache<AssetHasChildrenRecord>;
@@ -494,17 +496,13 @@ export class AssetSubContext extends ProjectSubContext {
 
   async requestWorkspaceInCacheByNames(
     workspaceNames: string[],
-    options?: { pid?: string },
   ): Promise<void> {
-    await this.getWorkspacesList(
-      {
-        where: {
-          names: workspaceNames,
-          isSystem: false,
-        },
+    await this.getWorkspacesList({
+      where: {
+        names: workspaceNames,
+        isSystem: false,
       },
-      options,
-    );
+    });
   }
 
   async getWorkspaceByNameViaCache(workspace_name: string) {
@@ -952,7 +950,7 @@ export class AssetSubContext extends ProjectSubContext {
     try {
       for (let b = 0; b < ops.length; b++) {
         if (ops[b].delete) {
-          lastDeletetion = await this._deleteAssetsImpl(where, options);
+          lastDeletetion = await this._deleteAssetsImpl(where);
           if (lastDeletetion.changeId) {
             res.changeIds.push(lastDeletetion.changeId);
           }
@@ -964,7 +962,7 @@ export class AssetSubContext extends ProjectSubContext {
           }
           lastChangeRes = undefined;
         } else if (ops[b].restore) {
-          lastChangeRes = await this._restoreAssetsImpl(where, options);
+          lastChangeRes = await this._restoreAssetsImpl(where);
           if (lastChangeRes.changeId) {
             res.changeIds.push(lastChangeRes.changeId);
           }
@@ -977,7 +975,7 @@ export class AssetSubContext extends ProjectSubContext {
           lastDeletetion = undefined;
         } else {
           if (lastDeletetion) continue; // Ignore due to deletion
-          lastChangeRes = await this._changeAssetsImpl(where, ops[b], options);
+          lastChangeRes = await this._changeAssetsImpl(where, ops[b]);
           if (lastChangeRes.changeId) {
             res.changeIds.push(lastChangeRes.changeId);
           }
@@ -1042,14 +1040,11 @@ export class AssetSubContext extends ProjectSubContext {
     }
 
     if (reload_changed_assets.length > 0) {
-      await this.getAssetInstancesList(
-        {
-          where: {
-            id: reload_changed_assets,
-          },
+      await this.getAssetInstancesList({
+        where: {
+          id: reload_changed_assets,
         },
-        options,
-      );
+      });
       for (const reloaded_id of reload_changed_assets) {
         const instance = this.getAssetInstanceViaCacheSync(reloaded_id);
         if (instance) {
@@ -1076,13 +1071,10 @@ export class AssetSubContext extends ProjectSubContext {
     assert(this._projectDatabase, 'Not inited');
     return await this._expectMyEvents(
       async () => {
-        return await this._projectDatabase!.assetsChange(
-          {
-            where,
-            set,
-          },
-          options,
-        );
+        return await this._projectDatabase!.assetsChange({
+          where,
+          set,
+        });
       },
       (res) => {
         return {
@@ -1101,11 +1093,7 @@ export class AssetSubContext extends ProjectSubContext {
         touchedWIds: [],
       };
     }
-    const res = await this.makeAssetMultipleChange(
-      params.where,
-      [params.set],
-      options,
-    );
+    const res = await this.makeAssetMultipleChange(params.where, [params.set]);
     return {
       ...res.upsert,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,
@@ -1256,21 +1244,14 @@ export class AssetSubContext extends ProjectSubContext {
     );
   }
 
-  async deleteAssets(
-    params: {
-      where: AssetWhereParams;
-    },
-    options?: { pid?: string },
-  ): Promise<AssetDeleteResultDTO> {
-    const res = await this.makeAssetMultipleChange(
-      params.where,
-      [
-        {
-          delete: true,
-        },
-      ],
-      options,
-    );
+  async deleteAssets(params: {
+    where: AssetWhereParams;
+  }): Promise<AssetDeleteResultDTO> {
+    const res = await this.makeAssetMultipleChange(params.where, [
+      {
+        delete: true,
+      },
+    ]);
     return {
       ids: res.deletedIds,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,
@@ -1296,21 +1277,14 @@ export class AssetSubContext extends ProjectSubContext {
     );
   }
 
-  async restoreAssets(
-    params: {
-      where: AssetWhereParams;
-    },
-    options?: { pid?: string },
-  ): Promise<AssetsChangeResult> {
-    const res = await this.makeAssetMultipleChange(
-      params.where,
-      [
-        {
-          restore: true,
-        },
-      ],
-      options,
-    );
+  async restoreAssets(params: {
+    where: AssetWhereParams;
+  }): Promise<AssetsChangeResult> {
+    const res = await this.makeAssetMultipleChange(params.where, [
+      {
+        restore: true,
+      },
+    ]);
     return {
       ...res.upsert,
       changeId: res.changeIds.length > 0 ? res.changeIds[0] : null,

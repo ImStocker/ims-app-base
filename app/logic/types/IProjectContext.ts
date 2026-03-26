@@ -40,7 +40,11 @@ export const injectedProjectContext: InjectionKey<IProjectContext> =
   Symbol('projectContext');
 
 export abstract class ProjectSubContext {
-  constructor(public readonly projectContext: IProjectContext) {}
+  public readonly projectContext: IProjectContext;
+
+  constructor(projectContext: IProjectContext) {
+    this.projectContext = projectContext;
+  }
 }
 
 export type ProjectSubContextCtr<T extends ProjectSubContext> = abstract new (

@@ -44,7 +44,7 @@ export default class ProjectManager extends AppSubManagerBase {
 
   getCurrentProjectContext(): IProjectContext | null {}
 
-  loadProjectContext(projectId: string): Promise<IProjectContext | null> {}
+  getProjectContext(projectId: string): Promise<IProjectContext | null> {}
 
   setCurrentProjectInfo(
     project_info: ProjectFullInfo | null,

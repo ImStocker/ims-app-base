@@ -13,7 +13,10 @@ import type { SyncLocalRootSegment } from '../local-fs-sync/SyncLocalRoot';
 import LocalFsSyncSubContext from './LocalFsSyncSubContext';
 import { openBlobFile } from '../utils/dataUtils';
 import type { AssetShort } from '../types/AssetsType';
-import { ProjectSubContext } from '#logic/types/IProjectContext';
+import {
+  ProjectSubContext,
+  type IProjectContext,
+} from '#logic/types/IProjectContext';
 import ApiManager from '#logic/managers/ApiManager';
 import { HttpMethods, Service } from '#logic/managers/ApiWorker';
 import {
@@ -65,6 +68,8 @@ export type ExportFormatField = {
 };
 
 export default class ImportExportSubContext extends ProjectSubContext {
+  declare projectContext: IProjectContext; // To fix TS errors
+
   async exportWorkspace(
     workspace: Workspace,
     params?: Record<string, any>,
