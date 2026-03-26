@@ -3,9 +3,8 @@ import {
   ViewType,
   VIEW_TYPES_MAP,
 } from '#components/Workspace/ViewOptions/viewUtils';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
-import type { IAppManager } from '#logic/managers/IAppManager';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 import type { ExtendedMenuListItem } from '#logic/types/MenuList';
 import {
   normalizeAssetPropPart,
@@ -50,20 +49,20 @@ export class CollectionBlockEditorController
   private currentViewKey: string | null = null;
   private _unsavedViewData: { [key: string]: Partial<UserView> } = {};
   public assetsContent: WorkspaceContentController;
-  public appManager: IAppManager;
+  public projectContext: IProjectContext;
   public changer = new WorkspaceChanger();
   searchQuery: AssetPropWhere;
   views: { [key: string]: UserView };
 
   constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     params: CollectionBlockEditorControllerParams,
   ) {
-    this.appManager = appManager;
+    this.projectContext = projectContext;
     this.searchQuery = params.searchQuery ?? {};
     this.views = params.readViews();
     this.assetsContent = new WorkspaceContentController(
-      this.appManager,
+      projectContext,
       this.changer,
       {
         searchQuery: params.searchQuery,
@@ -166,7 +165,7 @@ export class CollectionBlockEditorController
     }
     if (res.length === 0) {
       const view_title = convertTranslatedTitle('[[t:Table]]', (...args) =>
-        this.appManager.$t(...args),
+        this.projectContext.appManager.$t(...args),
       );
       res.push({
         filter: null,
@@ -264,8 +263,8 @@ export class CollectionBlockEditorController
       ),
     ]);
 
-    await this.appManager
-      .get(CreatorAssetManager)
+    await this.projectContext
+      .get(AssetSubContext)
       .changeWorkspace(this.workspaceId, {
         props: change_res.props,
       });

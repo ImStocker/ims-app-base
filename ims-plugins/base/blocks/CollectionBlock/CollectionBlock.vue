@@ -30,6 +30,7 @@ import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { Workspace } from '#logic/types/Workspaces';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CollectionBlock',
@@ -112,8 +113,9 @@ export default defineComponent({
       .getWorkspaceByNameViaCache('gdd');
     if (!gdd_workspace) return;
 
+    assert(this.projectContext, 'Project context is not provided');
     this.collectionBlockEditorController = new CollectionBlockEditorController(
-      this.$getAppManager(),
+      this.projectContext,
       {
         searchQuery: {
           workspaceids: this.workspace ? this.workspace.id : gdd_workspace.id,

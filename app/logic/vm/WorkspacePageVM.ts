@@ -1,6 +1,4 @@
-import type { IAppManager } from '../managers/IAppManager';
 import { PageVMBase } from '../types/PageVMBase';
-import CreatorAssetManager from '../managers/CreatorAssetManager';
 import type { SubscriberHandler } from '../types/Subscriber';
 import { GameDesignMenuVM } from './GameDesignMenuVM';
 import ProjectManager from '../managers/ProjectManager';
@@ -8,6 +6,8 @@ import { openProjectLink } from '../router/routes-helpers';
 import { assert } from '../utils/typeUtils';
 import type { AssetPropWhere } from '../types/PropsWhere';
 import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export type WorkspacePageVMParams = {
   searchQuery: AssetPropWhere;
@@ -19,12 +19,14 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
   isLoading = true;
   loadError: string | null = null;
   searchQuery: AssetPropWhere;
+  projectContext: IProjectContext;
 
-  constructor(appManager: IAppManager, params: WorkspacePageVMParams) {
-    super(appManager, params);
+  constructor(projectContext: IProjectContext, params: WorkspacePageVMParams) {
+    super(projectContext.appManager, params);
+    this.projectContext = projectContext;
     this.searchQuery = params.searchQuery;
     this.gameDesignMenuVM = new GameDesignMenuVM(
-      appManager,
+      projectContext,
       this.workspaceId ?? null,
     );
   }
@@ -48,8 +50,8 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
 
   get workspace() {
     if (!this.workspaceId) return null;
-    return this.appManager
-      .get(CreatorAssetManager)
+    return this.projectContext
+      .get(AssetSubContext)
       .getWorkspaceByIdViaCacheSync(this.workspaceId);
   }
 
@@ -64,8 +66,8 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
       this.isLoading = true;
       await this.gameDesignMenuVM.load();
       if (this.workspaceId) {
-        await this.appManager
-          .get(CreatorAssetManager)
+        await this.projectContext
+          .get(AssetSubContext)
           .requestWorkspaceInCache(this.workspaceId);
       }
       this.isLoading = false;
@@ -77,8 +79,8 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
 
   async init() {
     this.gameDesignMenuVM.init();
-    this._workspaceEventsSubscriber = this.appManager
-      .get(CreatorAssetManager)
+    this._workspaceEventsSubscriber = this.projectContext
+      .get(AssetSubContext)
       .projectContentEvents.subscribe(
         async (change_res) => await this._handleWorkspacesEvents(change_res),
       );

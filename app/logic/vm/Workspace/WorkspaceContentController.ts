@@ -1,6 +1,4 @@
 import { debounceForThis } from '../../../components/utils/ComponentUtils';
-import CreatorAssetManager from '../../managers/CreatorAssetManager';
-import type { IAppManager } from '../../managers/IAppManager';
 import UiManager, {
   type UiNavigationGuardHandler,
 } from '../../managers/UiManager';
@@ -25,6 +23,7 @@ import type {
   UserViewSort,
 } from '../../../components/Workspace/ViewOptions/viewUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export type WorkspaceContentControllerChangeItem = {
   assetId: string;
@@ -53,7 +52,7 @@ export class WorkspaceContentController {
   private _props: UserViewProp[] = [];
   private _filter: AssetPropValueSelection | null = null;
   changer: WorkspaceChanger;
-  appManager: IAppManager;
+  projectContext: IProjectContext;
   workspaceId: string | null;
   addBusy: boolean = false;
   savingBusy: boolean = false;
@@ -78,11 +77,11 @@ export class WorkspaceContentController {
   }
 
   constructor(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     changer: WorkspaceChanger,
     params: WorkspaceContentParams,
   ) {
-    this.appManager = appManager;
+    this.projectContext = projectContext;
     this.workspaceId = this.getWorkspaceId(params.searchQuery);
     this.changer = changer;
     this.reloadDelayed = debounceForThis(function (this: any, reset = false) {
@@ -156,7 +155,7 @@ export class WorkspaceContentController {
 
   private _initNavigationGuard() {
     if (this._navigationGuardHandler) return;
-    this._navigationGuardHandler = this.appManager
+    this._navigationGuardHandler = this.projectContext.appManager
       .get(UiManager)
       .setNavigationGuard(
         () => this.dirtyChanges.size === 0,
@@ -168,8 +167,8 @@ export class WorkspaceContentController {
   }
 
   async init() {
-    this.assetEventsSubscriber = this.appManager
-      .get(CreatorAssetManager)
+    this.assetEventsSubscriber = this.projectContext
+      .get(AssetSubContext)
       .projectContentEvents.subscribe(async (change_res) => {
         const base_asset_id = await this.getBaseAssetId();
         const listen_asset_ids = new Set(this.items.map((item) => item.id));
@@ -291,13 +290,13 @@ export class WorkspaceContentController {
     this.loadingError = null;
     this.isLoading = true;
     try {
-      const data = await this.appManager
-        .get(CreatorAssetManager)
+      const data = await this.projectContext
+        .get(AssetSubContext)
         .getAssetsView(query);
       this.items = data.list;
       this.total = data.total;
-      this.appManager
-        .get(CreatorAssetManager)
+      this.projectContext
+        .get(AssetSubContext)
         .requestExternalEventListenFullAssetIds(
           this.items.map((i) => i.id as string),
         );
@@ -324,7 +323,7 @@ export class WorkspaceContentController {
         const exists_titles = new Set(
           this.items.map((item) => castAssetPropValueToString(item['title'])),
         );
-        const res = await this.appManager.get(CreatorAssetManager).createAsset({
+        const res = await this.projectContext.get(AssetSubContext).createAsset({
           id: add_data.assetId ? add_data.assetId : undefined,
           set: {
             title: generateNextUniqueNameNumber(
@@ -351,7 +350,7 @@ export class WorkspaceContentController {
           this.savingBusy = true;
           try {
             if (res.changeId) {
-              await this.appManager.get(CreatorAssetManager).changeAssetsUndo({
+              await this.projectContext.get(AssetSubContext).changeAssetsUndo({
                 changeId: res.changeId,
               });
               const asset_index = this.items.findIndex(
@@ -377,8 +376,8 @@ export class WorkspaceContentController {
     await this.changer.executeHistoryTask(async () => {
       this.savingBusy = true;
       try {
-        const delete_res = await this.appManager
-          .get(CreatorAssetManager)
+        const delete_res = await this.projectContext
+          .get(AssetSubContext)
           .deleteAssets({
             where: {
               id: deleting_asset_ids,
@@ -393,7 +392,7 @@ export class WorkspaceContentController {
           this.savingBusy = true;
           try {
             if (delete_res.changeId) {
-              await this.appManager.get(CreatorAssetManager).changeAssetsUndo({
+              await this.projectContext.get(AssetSubContext).changeAssetsUndo({
                 changeId: delete_res.changeId,
               });
               this.savingBusy = false;
@@ -460,8 +459,8 @@ export class WorkspaceContentController {
     await this.changer.executeHistoryTask(async () => {
       this.savingBusy = true;
       try {
-        const change_res = await this.appManager
-          .get(CreatorAssetManager)
+        const change_res = await this.projectContext
+          .get(AssetSubContext)
           .changeAssetsBatch({
             ops: [...save_assets.values()],
           });
@@ -473,7 +472,7 @@ export class WorkspaceContentController {
           this.savingBusy = true;
           try {
             if (change_res.changeId) {
-              await this.appManager.get(CreatorAssetManager).changeAssetsUndo({
+              await this.projectContext.get(AssetSubContext).changeAssetsUndo({
                 changeId: change_res.changeId,
               });
             }
