@@ -73,6 +73,17 @@
           </span>
         </div>
         <div
+          v-else-if="opt.type === 'user'"
+          class="ImcEditorAutocomplete-row-user"
+          @mouseenter="currentItem = opt_index"
+          @mousedown="selectOption(opt)"
+        >
+          <div class="ImcEditorAutocomplete-row-user-icon">
+            <i class="ri-user-line"></i>
+          </div>
+          {{ opt.title }}
+        </div>
+        <div
           v-else
           class="ImcEditorAutocomplete-row-other"
           :title="opt.title"
@@ -365,6 +376,13 @@ export default defineComponent({
 .ImcEditorAutocomplete-row-subitems {
   margin-left: 1px;
   min-width: 120px;
+}
+
+.ImcEditorAutocomplete-row-user {
+  display: flex;
+  padding-left: var(--ImcEditorAutocomplete-rowHorPadding);
+  padding-right: var(--ImcEditorAutocomplete-rowHorPadding);
+  gap: 5px;
 }
 
 .ImcEditorAutocomplete-row-button-icon {

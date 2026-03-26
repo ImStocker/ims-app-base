@@ -229,20 +229,14 @@ export class ImcEditorQuillController {
   }
 
   private async _loadOptions(
-    type: 'asset' | 'mention',
+    type: ImcLinkOption['type'],
     query: string,
   ): Promise<{ list: ImcLinkOption[]; more: boolean }> {
-    if (type === 'mention') {
-      return {
-        list: [],
-        more: false,
-      };
-    }
-
     const take_count = 10;
     const gather: (() => Promise<ImcLinkOption[]>)[] = [];
 
     let has_more = false;
+
     gather.push(async () => {
       const assets = await this.component
         .$getAppManager()
@@ -257,8 +251,8 @@ export class ImcEditorQuillController {
           },
           count: take_count + 1,
         });
-      has_more = has_more || assets.list.length > take_count;
-      return assets.list.slice(0, take_count).map((a) => {
+
+      const asset_options = assets.list.map((a) => {
         return {
           type: 'asset',
           title: a.title,
@@ -266,6 +260,34 @@ export class ImcEditorQuillController {
           raw: a,
         } as ImcLinkOption;
       });
+
+      let user_options: ImcLinkOption[] = [];
+      if (type === 'user') {
+        const users = await this.component
+          .$getAppManager()
+          .get(ProjectManager)
+          .getMembersList();
+
+        user_options = users.list
+          .filter((m) => m.name.includes(query))
+          .map((m) => {
+            return {
+              type: 'user',
+              title: m.name,
+              value: m.id.toString(),
+              raw: m,
+            } as ImcLinkOption;
+          });
+      }
+
+      const res_user_options = user_options.slice(0, take_count);
+      const remaining_slots = take_count - res_user_options.length;
+
+      const res_asset_options = asset_options.slice(0, remaining_slots);
+      const res = [...res_user_options, ...res_asset_options];
+
+      has_more = asset_options.length > res_asset_options.length;
+      return res;
     });
 
     return {

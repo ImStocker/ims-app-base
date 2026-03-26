@@ -15,7 +15,7 @@ export type ImcLinkOption = {
   anchor?: string;
 };
 
-type MentionType = 'asset' | 'mention';
+type MentionType = 'asset' | 'user';
 
 type MentionInput = {
   type: MentionType;
@@ -66,7 +66,7 @@ export class ImcLinksModule {
   private _showMentions: (mention: MentionInput) => void;
   private _cache = {
     asset: [] as CacheRecord[],
-    mention: [] as CacheRecord[],
+    user: [] as CacheRecord[],
   };
 
   constructor(quill: Quill, options: ImcLinksModuleOptions) {
@@ -134,13 +134,25 @@ export class ImcLinksModule {
       return true;
     });
     this.quill.keyboard.addBinding(
-      { key: ['#', '№', '@'], shiftKey: true },
+      { key: ['#', '№'], shiftKey: true },
       (range: Range, _context: Context) => {
         this.skipNextTextChange = true;
         this.cursorPos = range.index + 1;
         this._showMentions({
           text: '',
           type: 'asset',
+        });
+        return true;
+      },
+    );
+    this.quill.keyboard.addBinding(
+      { key: '@', shiftKey: true },
+      (range: Range, _context: Context) => {
+        this.skipNextTextChange = true;
+        this.cursorPos = range.index + 1;
+        this._showMentions({
+          text: '',
+          type: 'user',
         });
         return true;
       },
@@ -177,7 +189,19 @@ export class ImcLinksModule {
           icon: link.raw.icon,
         },
       });
+
       cursor_change += link.title.length;
+    } else if (link.type === 'user') {
+      delta.insert({
+        prop: {
+          value: {
+            AccountId: link.value,
+            Name: link.title,
+          },
+          inline: true,
+        },
+      });
+      cursor_change++;
     }
     delta.insert(' ');
     cursor_change++;
@@ -238,8 +262,10 @@ export class ImcLinksModule {
     ) {
       return null;
     }
+    const type = ch === '@' ? 'user' : 'asset';
+
     return {
-      type: 'asset',
+      type,
       text: textBeforeCursor.substring((last.index ?? 0) + 1),
     };
   }

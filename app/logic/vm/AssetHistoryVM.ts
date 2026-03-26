@@ -51,6 +51,10 @@ export class AssetHistoryVM {
     this._selectedVersionId = null;
   }
 
+  get assetFull() {
+    return this._assetFull;
+  }
+
   get openedAssetId() {
     return this._assetFull.id;
   }

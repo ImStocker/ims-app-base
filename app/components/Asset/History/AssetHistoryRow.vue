@@ -27,6 +27,8 @@ import { parseAssetNewBlockRef } from '../../../logic/types/Props';
 import MenuButton from '../../Common/MenuButton.vue';
 import UiManager from '../../../logic/managers/UiManager';
 import MenuList from '../../Common/MenuList.vue';
+import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
+import { TASK_ASSET_ID } from '#logic/constants';
 
 export default defineComponent({
   name: 'AssetHistoryRow',
@@ -37,6 +39,10 @@ export default defineComponent({
   props: {
     historyRow: {
       type: Object as PropType<AssetHistoryDTO>,
+      required: true,
+    },
+    assetFull: {
+      type: Object as PropType<AssetFullInstanceR>,
       required: true,
     },
   },
@@ -50,12 +56,16 @@ export default defineComponent({
           icon: 'ri-save-fill',
           action: () => this.restoreThisVersion(),
         },
-        {
-          name: 'saveAsCopy',
-          title: this.$t('gddPage.saveAsCopy'),
-          icon: 'ri-file-copy-fill',
-          action: () => this.saveAsCopy(),
-        },
+        ...(this.assetFull.typeIds.includes(TASK_ASSET_ID)
+          ? []
+          : [
+              {
+                name: 'saveAsCopy',
+                title: this.$t('gddPage.saveAsCopy'),
+                icon: 'ri-file-copy-fill',
+                action: () => this.saveAsCopy(),
+              },
+            ]),
       ];
     },
     createdAt() {

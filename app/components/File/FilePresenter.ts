@@ -124,7 +124,7 @@ export function useFilePresenterRenderer() {
     const displayAsLink = !params.inline || !fileInfo.inlineType;
     if (displayAsLink) {
       return `<span class="FilePresenter type-link is-interactive ${params.isStatic ? 'state-isStatic' : ''}">
-            <i class="${validator.escape(fileInfo.icon)}"></i>
+            <i class="FilePresenter-icon ${validator.escape(fileInfo.icon)}"></i>
             ${validator.escape(file.Title)}
         </span>`;
     }

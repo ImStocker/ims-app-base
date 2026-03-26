@@ -47,6 +47,7 @@ export default defineComponent({
       props.assetFull,
     );
     await assetBlockEditor.init();
+    assetBlockEditor.historyModeVM = props.historyModeVM;
     return {
       assetBlockEditor,
       globalKeydownHandler: null as ((e: KeyboardEvent) => void) | null,

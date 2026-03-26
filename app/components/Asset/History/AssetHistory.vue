@@ -28,6 +28,7 @@
               (ind === 0 && !assetHistory.selectedVersionId),
           }"
           :history-row="historyRow"
+          :asset-full="assetHistory.assetFull"
           @click="
             assetHistory.setSelectedVersionId(ind === 0 ? null : historyRow.id)
           "
@@ -53,8 +54,6 @@ import AssetHistoryRow from './AssetHistoryRow.vue';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 import { openProjectLink } from '#logic/router/routes-helpers';
-import { TASK_ASSET_ID } from '#logic/constants';
-import TaskManager from '#logic/managers/TaskManager';
 
 export default defineComponent({
   name: 'AssetHistory',
@@ -93,31 +92,23 @@ export default defineComponent({
       await this.assetHistory.restoreVersion(version_id);
     },
     async saveAsCopy(version_id: string) {
-      const copy_assets = await this.assetHistory.saveAsCopy(version_id);
-      if (!copy_assets) return;
-      const copy_asset = copy_assets.objects.assetFulls[copy_assets.ids[0]];
-      let assetLinkTo: any = {
-        name: 'project-asset-by-id',
-        params: {
-          assetId: copy_asset.id,
-        },
-      };
-      if (copy_asset.typeIds && copy_asset.typeIds.includes(TASK_ASSET_ID)) {
-        const task_entity = this.$getAppManager()
-          .get(TaskManager)
-          .getTaskViaCacheSync(copy_asset.id);
-        if (task_entity) {
-          assetLinkTo = {
-            name: 'project-tasks-task',
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          const copy_assets = await this.assetHistory.saveAsCopy(version_id);
+
+          if (!copy_assets) return;
+          const copy_asset = copy_assets.objects.assetFulls[copy_assets.ids[0]];
+          const assetLinkTo = {
+            name: 'project-asset-by-id',
             params: {
-              taskNum: task_entity.num,
+              assetId: copy_asset.id,
             },
           };
-        }
-      }
-      this.$emit('close');
-      if (!this.projectInfo) return;
-      openProjectLink(this.$getAppManager(), this.projectInfo, assetLinkTo);
+          this.$emit('close');
+          if (!this.projectInfo) return;
+          openProjectLink(this.$getAppManager(), this.projectInfo, assetLinkTo);
+        });
     },
   },
 });
@@ -137,7 +128,7 @@ export default defineComponent({
 }
 
 .AssetHistory-rows-short {
-  height: calc(100% - 250px);
+  height: calc(100% - 200px);
 }
 
 .AssetHistory-row {
@@ -156,15 +147,16 @@ export default defineComponent({
 .AssetHistory-main-proInfo {
   border: 1px dashed var(--color-accent);
   border-radius: 4px;
-  padding: 20px;
+  padding: 10px;
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: 10px;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   position: absolute;
   bottom: 0;
+  font-size: 12px;
 
   .is-button {
     flex-shrink: 0;
