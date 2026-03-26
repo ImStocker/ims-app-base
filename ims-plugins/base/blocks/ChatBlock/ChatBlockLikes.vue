@@ -7,25 +7,25 @@
     ></FormCheckSmile>
     <button v-else class="is-button loading PulsePost-manage-loading"></button>
     <button
-      v-for="like of likes"
-      :key="like.emoji"
+      v-for="emoji of emojis"
+      :key="emoji.emoji"
       :class="{
-        'PulsePost-like-of-user': emojiSelectedByCurrentUser(like.emoji),
+        'PulsePost-like-of-user': emojiSelectedByCurrentUser(emoji.emoji),
       }"
       class="is-button PulsePost-like"
-      @click="changeMyLike(like)"
+      @click="changeMyLike(emoji)"
     >
       <div class="PulsePost-like-content">
         <div
           class="PulsePost-like-content-emoji"
           :class="{
-            [`type-${like.emoji.toLowerCase()}`]: true,
+            [`type-${emoji.emoji.toLowerCase()}`]: true,
           }"
         >
-          {{ getLikeEmoji(like.emoji) }}
+          {{ getLikeEmoji(emoji.emoji) }}
         </div>
         <div class="PulsePost-like-content-counter">
-          {{ getLikeCount(like.emoji) }}
+          {{ getLikeCount(emoji.emoji) }}
         </div>
       </div>
     </button>
@@ -33,7 +33,7 @@
 </template>
 <script lang="ts">
 import AuthManager from '#logic/managers/AuthManager';
-import type { CommentLike } from '#logic/types/CommentTypes';
+import type { CommentReplyDTO } from '#logic/types/CommentTypes';
 import { type PropType, defineComponent } from 'vue';
 import FormCheckSmile from '#components/Form/FormCheckSmile.vue';
 import { getLikeEmoji } from '#logic/constants';
@@ -46,31 +46,28 @@ export default defineComponent({
     FormCheckSmile,
   },
   props: {
-    commentId: {
-      type: String,
+    message: {
+      type: Object as PropType<CommentReplyDTO>,
       required: true,
-    },
-    replyId: {
-      type: String,
-      required: true,
-    },
-    likes: {
-      type: Array as PropType<CommentLike[]>,
-      default: () => [],
     },
   },
   data() {
     return {
       smileIsBusy: false,
+      emojis: [...this.message.likes],
     };
   },
   computed: {
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
     },
+    isAuthor() {
+      if (!this.userInfo) return false;
+      return this.message.user.AccountId === this.userInfo.id.toString();
+    },
     likesDictionary() {
       const likes_dict = {};
-      this.likes.forEach((l) => {
+      this.emojis.forEach((l) => {
         likes_dict[l.emoji] = !!this.emojiSelectedByCurrentUser(l.emoji);
       });
       return likes_dict;
@@ -79,18 +76,29 @@ export default defineComponent({
   methods: {
     getLikeEmoji,
     getLikeCount(emoji: string) {
-      return this.likes.filter((l) => l.emoji === emoji).length;
+      return this.emojis.filter((l) => l.emoji === emoji).length;
     },
     emojiSelectedByCurrentUser(emoji: string) {
-      return this.likes.find(
+      return this.emojis.find(
         (l) =>
           l.user.AccountId === this.userInfo?.id.toString() &&
           l.emoji === emoji,
       );
     },
     async changeMyLike(emoji: any) {
-      const like_is_set = this.likes.find((l) => l.emoji === emoji);
-      await this.setLike(like_is_set ? null : emoji);
+      const like_is_set_ind = this.emojis.findIndex((l) => l.emoji === emoji);
+      await this.setLike(like_is_set_ind > -1 ? null : emoji);
+      if (like_is_set_ind > -1) {
+        this.emojis.splice(like_is_set_ind, 1);
+      } else if (this.userInfo) {
+        this.emojis.push({
+          user: {
+            AccountId: this.userInfo.id.toString(),
+            Name: this.userInfo.name,
+          },
+          emoji,
+        });
+      }
     },
     async setLike(emoji: string) {
       await this.$getAppManager()
@@ -98,7 +106,7 @@ export default defineComponent({
         .doTask(async () => {
           await this.$getAppManager()
             .get(CommentManager)
-            .setLike(this.commentId, this.replyId, {
+            .setLike(this.message.commentId, this.message.id, {
               like: emoji,
             });
         });

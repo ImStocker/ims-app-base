@@ -41,11 +41,7 @@
             <i v-else class="ri-check-fill" />
             <!-- <i class="ri-check-double-fill"></i> -->
           </div>
-          <chat-block-likes
-            :comment-id="message.commentId"
-            :reply-id="message.answerToId"
-            :like="message.likes"
-          ></chat-block-likes>
+          <chat-block-likes :message="message"></chat-block-likes>
         </div>
       </div>
     </div>
