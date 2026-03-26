@@ -50,7 +50,6 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
   private _options: ProjectWorkspacesPresenterVMOptions;
   private _externalUpdateByEventTask = Promise.resolve();
   private _loadedForProjectId: string | null = null;
-  private _changeProjectSubscriber: SubscriberHandler | null = null;
 
   private _inited: boolean = false;
 
@@ -377,26 +376,12 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
       this._workspaceEventsSubscriber.unsubscribe();
       this._workspaceEventsSubscriber = null;
     }
-    if (this._changeProjectSubscriber) {
-      this._changeProjectSubscriber.unsubscribe();
-      this._changeProjectSubscriber = null;
-    }
     if (init) {
       this._workspaceEventsSubscriber = this.projectContext
         .get(AssetSubContext)
         .projectContentEvents.subscribe((change_res) => {
           // Don't await
           this._handleWorkspacesEvents(change_res);
-        });
-      this._changeProjectSubscriber = this.projectContext.appManager
-        .get(ProjectManager)
-        .changeProjectSubscriber.subscribe(({ newProjectId }) => {
-          if (
-            this._loadedForProjectId &&
-            this._loadedForProjectId !== newProjectId
-          ) {
-            this.forgetChildren(TREE_PRESENTER_ROOT_STATE_ID);
-          }
         });
     }
     this._inited = init;

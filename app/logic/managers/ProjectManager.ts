@@ -1,31 +1,34 @@
-import { AppSubManagerBase } from './IAppManager';
+import { AppSubManagerBase, type IAppManager } from './IAppManager';
 import type {
   ProjectFullInfo,
   IProjectUserOwnRole,
+  UserInProject,
 } from '../types/ProjectTypes';
-import CreatorAssetManager from './CreatorAssetManager';
-import Subscriber from '../types/Subscriber';
 import { Service, HttpMethods } from './ApiWorker';
 import ApiManager from './ApiManager';
 import { EntityCache } from '#logic/types/EntityCache';
 import { assert } from '#logic/utils/typeUtils';
 import type { IProjectContext } from '#logic/types/IProjectContext';
-
-export type IProjectInfo = ProjectFullInfo;
+import type { ProjectContext } from '#logic/types/ProjectContext';
 
 export type ProjectChangeEventArg = {
   oldProjectId: string | null;
   newProjectId: string | null;
 };
 
+export type ProjectContextFabric = (
+  appManager: IAppManager,
+  projectInfo: ProjectFullInfo,
+  user: UserInProject | null,
+) => ProjectContext;
+
 export default class ProjectManager extends AppSubManagerBase {
-  private _projectInfo: ProjectFullInfo | null = null;
   private _userRole: IProjectUserOwnRole | null = null;
-  private _fullProjectsCache: EntityCache<ProjectFullInfo> | undefined;
+  private _projectContextFabric: ProjectContextFabric | null = null;
+  protected _fullProjectsCache: EntityCache<ProjectFullInfo> | undefined;
 
-  changeProjectSubscriber = new Subscriber<[ProjectChangeEventArg]>();
-
-  async init() {
+  async init(projectContextFabric: ProjectContextFabric) {
+    this._projectContextFabric = projectContextFabric;
     this._fullProjectsCache = new EntityCache<ProjectFullInfo>({
       key: 'id',
       ttl: 1000 * 60 * 10,
@@ -42,31 +45,7 @@ export default class ProjectManager extends AppSubManagerBase {
     });
   }
 
-  getCurrentProjectContext(): IProjectContext | null {}
-
   getProjectContext(projectId: string): Promise<IProjectContext | null> {}
-
-  setCurrentProjectInfo(
-    project_info: ProjectFullInfo | null,
-    user_role: IProjectUserOwnRole | null,
-  ) {
-    assert(this._fullProjectsCache, 'Not inited');
-    if (project_info) {
-      this._fullProjectsCache.addToCache(project_info);
-    }
-    const old_project_id = this._projectInfo ? this._projectInfo.id : null;
-    this._projectInfo = project_info;
-    this._userRole = user_role;
-    if (project_info) {
-      this.appManager
-        .get(CreatorAssetManager)
-        .updateWorkspacesCache(project_info.rootWorkspaces);
-    }
-    this.changeProjectSubscriber.notify({
-      oldProjectId: old_project_id,
-      newProjectId: project_info ? project_info.id : null,
-    });
-  }
 
   getAllowAnonymUsers() {
     return false;
@@ -84,27 +63,6 @@ export default class ProjectManager extends AppSubManagerBase {
 
   async requestProjectFullInfoInCache(projectId: string) {
     await this.getProjectFullInfoViaCache(projectId);
-  }
-
-  /*
-  getWorkspaceByName(workspace_name: string) {
-    const workspace = this.appManager
-      .get(CreatorAssetManager)
-      .getWorkspaceByNameViaCacheSync(workspace_name, false);
-    return workspace;
-  }
-
-  getWorkspaceIdByName(workspace_name: string) {
-    const workspace = this.getWorkspaceByName(workspace_name);
-    return workspace ? workspace.id : null;
-  }
-*/
-  getProjectInfo(): ProjectFullInfo | null {
-    return this._projectInfo;
-  }
-
-  getUserRoleInProject(): IProjectUserOwnRole | null {
-    return this._userRole;
   }
 
   canCreateTask(): boolean {

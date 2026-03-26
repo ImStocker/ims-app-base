@@ -8,13 +8,11 @@ import {
   useI18n,
   useNuxtApp,
   usePageHead,
-  usePageVM,
   useRoute,
   useTemplateRef,
 } from '#imports';
 import GameDesignPage from '../../../../../../components/GameDesign/GameDesignPage.vue';
 import { useProjectMenu } from '../../../../../../components/useProjectMenu';
-import ProjectManager from '../../../../../../logic/managers/ProjectManager';
 import UiManager from '../../../../../../logic/managers/UiManager';
 import { getCurrentUrl } from '../../../../../../logic/router/routes-helpers';
 import {
@@ -22,8 +20,8 @@ import {
   parseAnchorTagId,
 } from '../../../../../../logic/utils/assets';
 import { TITLE_CHAR_LIMIT } from '#logic/constants';
-import { assert } from '../../../../../../logic/utils/typeUtils';
 import { AssetPageVM } from '../../../../../../logic/vm/AssetPageVM';
+import { useProjectPageVM } from '~/composables/useProjectPageVM';
 const { t } = useI18n();
 const { $getAppManager } = useNuxtApp();
 const route = useRoute();
@@ -41,11 +39,8 @@ definePageMeta({
   ],
 });
 
-const projectInfo = $getAppManager().get(ProjectManager).getProjectInfo();
-assert(projectInfo, 'Project not loaded');
-
 const assetId = route.params.assetId.toString();
-const assetPageVM = await usePageVM(AssetPageVM, () => ({
+const assetPageVM = await useProjectPageVM(AssetPageVM, () => ({
   assetId,
   lang: $getAppManager().get(UiManager).getLanguage(),
 }));
@@ -85,7 +80,7 @@ usePageHead(() => ({
     caption.length > TITLE_CHAR_LIMIT
       ? caption.slice(0, TITLE_CHAR_LIMIT) + '...'
       : caption,
-    projectInfo.title,
+    assetPageVM.value.projectContext.projectInfo.title,
     'IMS Creators',
   ].join(' | '),
 }));

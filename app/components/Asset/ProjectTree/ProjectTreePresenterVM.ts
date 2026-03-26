@@ -78,7 +78,6 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
   private _externalUpdateByEventTask = Promise.resolve();
   private _inited: boolean = false;
   private _loadedForProjectId: string | null = null;
-  private _changeProjectSubscriber: SubscriberHandler | null = null;
 
   get inited() {
     return this._inited;
@@ -622,26 +621,12 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       this._projectContentEventsSubscriber.unsubscribe();
       this._projectContentEventsSubscriber = null;
     }
-    if (this._changeProjectSubscriber) {
-      this._changeProjectSubscriber.unsubscribe();
-      this._changeProjectSubscriber = null;
-    }
     if (init) {
       this._projectContentEventsSubscriber = this.projectContext
         .get(AssetSubContext)
         .projectContentEvents.subscribe((change_res) => {
           // Don't await
           this.handleProjectContentEvents(change_res);
-        });
-      this._changeProjectSubscriber = this.projectContext.appManager
-        .get(ProjectManager)
-        .changeProjectSubscriber.subscribe(({ newProjectId }) => {
-          if (
-            this._loadedForProjectId &&
-            this._loadedForProjectId !== newProjectId
-          ) {
-            this.forgetChildren(TREE_PRESENTER_ROOT_STATE_ID);
-          }
         });
     }
     this._inited = init;

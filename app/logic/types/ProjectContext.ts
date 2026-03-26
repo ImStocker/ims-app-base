@@ -1,9 +1,10 @@
 import type { IAppManager } from '#logic/managers/IAppManager';
 import { assert } from '#logic/utils/typeUtils';
-import type {
-  IProjectContext,
+import { reactive } from 'vue';
+import {
   ProjectSubContext,
-  ProjectSubContextCtr,
+  type IProjectContext,
+  type ProjectSubContextCtr,
 } from './IProjectContext';
 
 import type { ProjectFullInfo, UserInProject } from './ProjectTypes';
@@ -47,11 +48,27 @@ export class ProjectContext implements IProjectContext {
     assert(subcontext, 'Project sub context not registered');
     return subcontext as R;
   }
+
   register<T extends ProjectSubContext>(
     subcontext_interface: ProjectSubContextCtr<T>,
-    subcontext: ProjectSubContext,
+    subcontext: T,
+  ): void;
+  register<T extends ProjectSubContext>(subcontext: T): void;
+
+  register<T extends ProjectSubContext>(
+    subcontext_interface: ProjectSubContextCtr<T> | T,
+    subcontext?: T,
   ): void {
-    this._registeredSubContexts.set(subcontext_interface, subcontext);
+    let manager_id;
+    if (subcontext_interface instanceof ProjectSubContext) {
+      manager_id = subcontext_interface.constructor;
+      subcontext = subcontext_interface;
+    } else manager_id = subcontext_interface;
+    assert(subcontext, 'Manager is undefined');
+    this._registeredSubContexts.set(
+      manager_id,
+      reactive(subcontext) as unknown as ProjectSubContext,
+    );
   }
 
   addInitRoutine(init: () => Promise<void>) {

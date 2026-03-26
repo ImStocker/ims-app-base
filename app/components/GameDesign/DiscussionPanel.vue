@@ -16,7 +16,7 @@
 import ApiManager from '#logic/managers/ApiManager';
 import { HttpMethods, Service } from '#logic/managers/ApiWorker';
 import AuthManager from '#logic/managers/AuthManager';
-import type { IProjectInfo } from '#logic/managers/ProjectManager';
+import type { ProjectFullInfo } from '#logic/managers/ProjectManager';
 import { defineComponent, inject } from 'vue';
 import DiscussionPanelProject from './DiscussionPanelProject.vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
@@ -37,7 +37,7 @@ export default defineComponent({
   data() {
     return {
       isLoaded: false,
-      projects: [] as IProjectInfo[],
+      projects: [] as ProjectFullInfo[],
     };
   },
   computed: {
@@ -51,7 +51,7 @@ export default defineComponent({
   async mounted() {
     this.isLoaded = false;
     if (this.userInfo) {
-      const res: { list: IProjectInfo[]; total: number } =
+      const res: { list: ProjectFullInfo[]; total: number } =
         await this.$getAppManager()
           .get(ApiManager)
           .call(Service.CREATORS, HttpMethods.GET, 'app/projects', {

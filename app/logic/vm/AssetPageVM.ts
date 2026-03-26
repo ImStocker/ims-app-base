@@ -1,22 +1,19 @@
 import type { LangStr } from '../types/ProjectTypes';
-import { PageVMBase } from '../types/PageVMBase';
 import { AssetFullEditorVM } from './AssetFullEditorVM';
 import type { IProjectContext } from '#logic/types/IProjectContext';
+import { ProjectPageVMBase } from '#logic/types/ProjectPageVMBase';
 
 export type AssetPageVMParams = {
   assetId: string;
   lang: LangStr;
 };
 
-export class AssetPageVM extends PageVMBase<AssetPageVMParams> {
+export class AssetPageVM extends ProjectPageVMBase<AssetPageVMParams> {
   assetId: string;
   private _assetFullEditorVM: AssetFullEditorVM;
 
-  constructor(
-    public projectContext: IProjectContext,
-    params: AssetPageVMParams,
-  ) {
-    super(projectContext.appManager, params);
+  constructor(projectContext: IProjectContext, params: AssetPageVMParams) {
+    super(projectContext, params);
     this.assetId = params.assetId;
     this._assetFullEditorVM = new AssetFullEditorVM(
       projectContext,

@@ -9,7 +9,7 @@ export interface IPageVMBaseCtr<
 
 export abstract class PageVMBase<TParams extends object> {
   constructor(
-    public appManager: IAppManager,
+    public readonly appManager: IAppManager,
     protected _params: TParams,
   ) {}
 

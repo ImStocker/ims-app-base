@@ -164,6 +164,8 @@ export class AssetSubContext extends ProjectSubContext {
         return list;
       },
     });
+
+    this.updateWorkspacesCache(projectContext.projectInfo.rootWorkspaces);
   }
 
   async init(watchExternalEvents: boolean) {

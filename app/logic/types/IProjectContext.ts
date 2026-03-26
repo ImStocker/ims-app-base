@@ -60,10 +60,12 @@ export interface IProjectContext {
   get<R extends T, T extends ProjectSubContext = ProjectSubContext>(
     subcontext_interface: ProjectSubContextCtr<T>,
   ): R;
+
   register<T extends ProjectSubContext>(
     subcontext_interface: ProjectSubContextCtr<T>,
-    subcontext: ProjectSubContext,
+    subcontext: T,
   ): void;
+  register<T extends ProjectSubContext>(subcontext: T): void;
 
   init(): Promise<void>;
   destroy(): Promise<void>;
