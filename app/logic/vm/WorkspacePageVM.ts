@@ -1,4 +1,3 @@
-import { PageVMBase } from '../types/PageVMBase';
 import type { SubscriberHandler } from '../types/Subscriber';
 import { GameDesignMenuVM } from './GameDesignMenuVM';
 import { openProjectLink } from '../router/routes-helpers';
@@ -7,22 +6,21 @@ import type { AssetPropWhere } from '../types/PropsWhere';
 import type { ProjectContentChangeEventArg } from '#logic/types/IProjectDatabase';
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { ProjectPageVMBase } from '#logic/types/ProjectPageVMBase';
 
 export type WorkspacePageVMParams = {
   searchQuery: AssetPropWhere;
 };
 
-export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
+export class WorkspacePageVM extends ProjectPageVMBase<WorkspacePageVMParams> {
   protected _workspaceEventsSubscriber: SubscriberHandler | null = null;
   gameDesignMenuVM: GameDesignMenuVM;
   isLoading = true;
   loadError: string | null = null;
   searchQuery: AssetPropWhere;
-  projectContext: IProjectContext;
 
   constructor(projectContext: IProjectContext, params: WorkspacePageVMParams) {
-    super(projectContext.appManager, params);
-    this.projectContext = projectContext;
+    super(projectContext, params);
     this.searchQuery = params.searchQuery;
     this.gameDesignMenuVM = new GameDesignMenuVM(
       projectContext,

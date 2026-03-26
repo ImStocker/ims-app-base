@@ -1,5 +1,5 @@
 import type { Component } from 'vue';
-import type { IAppManager } from '../managers/IAppManager';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export type ProjectMenuItem = {
   name: string;
@@ -17,7 +17,7 @@ export class BaseAppConfiguration {
   saveOnBlockCommit = true;
   isDesktop = false;
 
-  getProjectMenu(_appManager: IAppManager): ProjectMenuItem[] {
+  getProjectMenu(_projectContext: IProjectContext): ProjectMenuItem[] {
     return [];
   }
 }

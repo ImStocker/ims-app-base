@@ -11,17 +11,15 @@ import {
   useRoute,
   useTemplateRef,
 } from '#imports';
-import GameDesignPage from '../../../../../../components/GameDesign/GameDesignPage.vue';
-import { useProjectMenu } from '../../../../../../components/useProjectMenu';
-import UiManager from '../../../../../../logic/managers/UiManager';
-import { getCurrentUrl } from '../../../../../../logic/router/routes-helpers';
-import {
-  convertTranslatedTitle,
-  parseAnchorTagId,
-} from '../../../../../../logic/utils/assets';
+import GameDesignPage from '#components/GameDesign/GameDesignPage.vue';
+import { useProjectMenu } from '#components/useProjectMenu';
+import UiManager from '#logic/managers/UiManager';
+import { getCurrentUrl } from '#logic/router/routes-helpers';
+import { convertTranslatedTitle, parseAnchorTagId } from '#logic/utils/assets';
 import { TITLE_CHAR_LIMIT } from '#logic/constants';
-import { AssetPageVM } from '../../../../../../logic/vm/AssetPageVM';
+import { AssetPageVM } from '#logic/vm/AssetPageVM';
 import { useProjectPageVM } from '~/composables/useProjectPageVM';
+import { useRouteProjectContextRequired } from '~/composables/useRouteProjectContext';
 const { t } = useI18n();
 const { $getAppManager } = useNuxtApp();
 const route = useRoute();
@@ -31,8 +29,9 @@ definePageMeta({
   middleware: [
     'check-asset-access',
     async (to) => {
+      const projectContext = await useRouteProjectContextRequired(to);
       const assetId = to.params.assetId.toString();
-      const projectMenu = useProjectMenu();
+      const projectMenu = useProjectMenu(projectContext);
       await projectMenu.revealProjectAsset(assetId);
       return true;
     },
@@ -51,8 +50,9 @@ if (asset) {
   caption = convertTranslatedTitle(asset.title, (key) => t(key));
 }
 if (!caption) {
-  const menu =
-    $getAppManager().$appConfiguration.getProjectMenu($getAppManager());
+  const menu = $getAppManager().$appConfiguration.getProjectMenu(
+    assetPageVM.value.projectContext,
+  );
   const gdd_menu_item = menu.find((x) => x.name.startsWith('project-'));
   caption = gdd_menu_item ? gdd_menu_item.title : '';
 }

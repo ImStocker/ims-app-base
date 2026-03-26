@@ -4,7 +4,7 @@ import type {
   IProjectPageVMBaseCtr,
   ProjectPageVMBase,
 } from '#logic/types/ProjectPageVMBase';
-import { useRouteProjectContext } from './useRouteProjectContext';
+import { useRouteProjectContextRequired } from './useRouteProjectContext';
 
 type GetParams<VM> = VM extends ProjectPageVMBase<infer T> ? T : never;
 
@@ -17,10 +17,7 @@ export async function useProjectPageVM<
   key?: string,
 ) {
   const { isHydrating } = useNuxtApp();
-  const projectContext = await useRouteProjectContext();
-  if (!projectContext) {
-    throw new Error('Project context not found');
-  }
+  const projectContext = await useRouteProjectContextRequired();
   const vm = ref<T>(new vmClass(projectContext, getParams()));
   if (import.meta.server || isHydrating) {
     let restoring = true;

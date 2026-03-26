@@ -14,31 +14,29 @@ import {
   useI18n,
   useNuxtApp,
   usePageHead,
-  usePageVM,
+  useProjectPageVM,
   useRoute,
   type Ref,
 } from '#imports';
-import GameDesignWorkspacePage from '../../../../../../components/GameDesign/GameDesignWorkspacePage.vue';
-import CollectionWorkspacePage from '../../../../../../components/GameDesign/WorkspaceCollectionPage.vue';
-import CreatorAssetManager from '../../../../../../logic/managers/CreatorAssetManager';
-import ProjectManager from '../../../../../../logic/managers/ProjectManager';
-import UiManager from '../../../../../../logic/managers/UiManager';
-import { convertTranslatedTitle } from '../../../../../../logic/utils/assets';
-import { assert } from '../../../../../../logic/utils/typeUtils';
-import { WorkspacePageVM } from '../../../../../../logic/vm/WorkspacePageVM';
-import { WORKSPACE_TYPE_COLLECTION } from '../../../../../../logic/types/Workspaces';
-import { WorkspaceCollectionPageVM } from '../../../../../../logic/vm/Workspace/WorkspaceCollectionPageVM';
+import GameDesignWorkspacePage from '#components/GameDesign/GameDesignWorkspacePage.vue';
+import CollectionWorkspacePage from '#components/GameDesign/WorkspaceCollectionPage.vue';
+import UiManager from '#logic/managers/UiManager';
+import { convertTranslatedTitle } from '#logic/utils/assets';
+import { WorkspacePageVM } from '#logic/vm/WorkspacePageVM';
+import { WORKSPACE_TYPE_COLLECTION } from '#logic/types/Workspaces';
+import { WorkspaceCollectionPageVM } from '#logic/vm/Workspace/WorkspaceCollectionPageVM';
 import type { UnwrapRef } from 'vue';
-import { useProjectMenu } from '../../../../../../components/useProjectMenu';
+import { useProjectMenu } from '#components/useProjectMenu';
+import { useRouteProjectContextRequired } from '~/composables/useRouteProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 const { t } = useI18n();
 const { $getAppManager } = useNuxtApp();
-const projectInfo = $getAppManager().get(ProjectManager).getProjectInfo();
-assert(projectInfo, 'Project not loaded');
+const projectContext = await useRouteProjectContextRequired();
 const route = useRoute();
 
 const workspaceId = (route.params.workspaceId ?? '').toString();
-const workspace = await $getAppManager()
-  .get(CreatorAssetManager)
+const workspace = await projectContext
+  .get(AssetSubContext)
   .getWorkspaceByIdViaCache(workspaceId);
 
 let workspacePageVM: Ref<UnwrapRef<WorkspacePageVM>> | null = null;
@@ -47,7 +45,7 @@ let workspaceCollectionPageVM: Ref<
 > | null = null;
 
 if (workspace && workspace.props.type === WORKSPACE_TYPE_COLLECTION) {
-  workspaceCollectionPageVM = await usePageVM(
+  workspaceCollectionPageVM = await useProjectPageVM(
     WorkspaceCollectionPageVM,
     () => ({
       lang: $getAppManager().get(UiManager).getLanguage(),
@@ -57,7 +55,7 @@ if (workspace && workspace.props.type === WORKSPACE_TYPE_COLLECTION) {
     }),
   );
 } else {
-  workspacePageVM = await usePageVM(WorkspacePageVM, () => ({
+  workspacePageVM = await useProjectPageVM(WorkspacePageVM, () => ({
     lang: $getAppManager().get(UiManager).getLanguage(),
     searchQuery: {
       workspaceids: route.params.workspaceId.toString(),
@@ -70,8 +68,9 @@ definePageMeta({
   middleware: [
     'check-workspace-access',
     async (to) => {
+      const projectContext = await useRouteProjectContextRequired(to);
       const workspaceId = (to.params.workspaceId ?? '').toString();
-      const projectMenu = useProjectMenu();
+      const projectMenu = useProjectMenu(projectContext);
       await projectMenu.revealProjectWorkspace(workspaceId);
       return true;
     },
@@ -82,7 +81,7 @@ usePageHead(() => ({
     workspace?.title
       ? convertTranslatedTitle(workspace.title, (key) => t(key))
       : t('translatedTitles.Items'),
-    projectInfo.title,
+    projectContext.projectInfo.title,
     'IMS Creators',
   ].join(' | '),
 }));

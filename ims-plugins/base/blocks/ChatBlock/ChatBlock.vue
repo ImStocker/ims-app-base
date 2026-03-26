@@ -88,11 +88,15 @@
 </template>
 
 <script lang="ts">
-import { type PropType, type RendererElement, defineComponent } from 'vue';
+import {
+  type PropType,
+  type RendererElement,
+  defineComponent,
+  inject,
+} from 'vue';
 import ImcEditor from '#components/ImcText/ImcEditor.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-import CommentSubContext from '#logic/managers/CommentSubContext';
 import {
   type AssetPropValue,
   type AssetPropValueFile,
@@ -109,10 +113,12 @@ import { v4 as uuidv4 } from 'uuid';
 import UiManager from '#logic/managers/UiManager';
 import DialogManager from '#logic/managers/DialogManager';
 import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
-import ProjectManager from '#logic/managers/ProjectManager';
 import FileAttachButton from '#components/File/FileAttachButton.vue';
 import { DISCUSSION_WORKSPACE_NAME } from '#logic/constants';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import CommentSubContext from '#logic/project-sub-contexts/CommentSubContext';
 
 export default defineComponent({
   name: 'ChatBlock',
@@ -144,6 +150,13 @@ export default defineComponent({
     },
   },
   emits: ['sendMessage', 'update:lastViewedAt'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       commentContent: {} as AssetPropValue,
@@ -283,7 +296,7 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
+          await this.projectContext
             .get(CommentSubContext)
             .setLike(message.commentId, message.replyId, {
               like,
@@ -311,12 +324,14 @@ export default defineComponent({
             );
             if (deleted_message_index !== -1) {
               if (this.messagesList.length === 0) {
-                const discussions_workspace_id = this.projectContext
-                  .get(AssetSubContext)
-                  .getWorkspaceByNameViaCache(DISCUSSION_WORKSPACE_NAME);
+                const discussions_workspace_id = (
+                  await this.projectContext
+                    .get(AssetSubContext)
+                    .getWorkspaceByNameViaCache(DISCUSSION_WORKSPACE_NAME)
+                )?.id;
                 if (discussions_workspace_id) {
-                  await this.$getAppManager()
-                    .get(CreatorAssetManager)
+                  await this.projectContext
+                    .get(AssetSubContext)
                     .getAssetInstancesList({
                       where: {
                         workspaceId: discussions_workspace_id,
@@ -325,7 +340,7 @@ export default defineComponent({
                 }
               }
             }
-            await this.$getAppManager()
+            await this.projectContext
               .get(CommentSubContext)
               .deleteReply(message.commentId, message.replyId);
             this.messages.splice(deleted_message_index, 1);
@@ -342,7 +357,7 @@ export default defineComponent({
       if (loading_branch_id) {
         this.$emit('update:lastViewedAt', new Date().toISOString());
         try {
-          const res = await this.$getAppManager()
+          const res = await this.projectContext
             .get(CommentSubContext)
             .getComments(loading_branch_id, {});
           if (loading_branch_id === this.chatCommentBranchId) {
@@ -408,7 +423,7 @@ export default defineComponent({
               this.$emit('update:lastViewedAt', new Date().toISOString());
               await this.scrollToBottom();
               this.commentContent = '';
-              const res = await this.$getAppManager()
+              const res = await this.projectContext
                 .get(CommentSubContext)
                 .addAnswer(this.chatCommentBranch.id, {
                   assetId: this.currentAsset.id,
@@ -443,7 +458,7 @@ export default defineComponent({
             } else {
               this.commentContent = '';
 
-              const res = await this.$getAppManager()
+              const res = await this.projectContext
                 .get(CommentSubContext)
                 .createComment({
                   assetId: this.currentAsset.id,
@@ -483,7 +498,7 @@ export default defineComponent({
             this.editMode = false;
             this.editingMessageId = null;
 
-            const res = await this.$getAppManager()
+            const res = await this.projectContext
               .get(CommentSubContext)
               .changeReply(
                 this.chatCommentBranch?.id,

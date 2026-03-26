@@ -1,12 +1,12 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#app';
-import { useAppManager } from '../composables/useAppManager';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import { getSignInLink } from '#logic/router/routes-helpers';
+import { useRouteProjectContextRequired } from '~/composables/useRouteProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const appManager = useAppManager();
-  const workspace = await appManager
-    .get(CreatorAssetManager)
+  const projectContext = await useRouteProjectContextRequired(to);
+  const workspace = await projectContext
+    .get(AssetSubContext)
     .getWorkspaceByIdViaCache(
       (to.params.workspaceId
         ? to.params.workspaceId
@@ -16,7 +16,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!workspace) {
     const sign_in_link = getSignInLink({
       redirect: to.fullPath,
-      error: appManager.$t('auth.noAccessToOpenPage'),
+      error: projectContext.appManager.$t('auth.noAccessToOpenPage'),
     });
     return navigateTo(sign_in_link, {
       external: typeof sign_in_link === 'string',

@@ -39,7 +39,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { AssetPropValueSelection } from '../../../logic/types/Props';
 import {
   convertFilterExprToPropWhere,
@@ -47,16 +47,11 @@ import {
 } from '../../../logic/expression/filter/filterExpression';
 import type { FilterExprStart } from '../../../logic/expression/filter/filterParser';
 import SelectionPropEditorExpr from './SelectionPropEditorExpr.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'SelectionPropEditorInput',
-  // setup() {
-    const projectContext = inject(injectedProjectContext);
-    assert(projectContext, 'Project context not provided');
-    return {
-      projectContext,
-    };
-  },
   components: {
     SelectionPropEditorExpr,
   },
@@ -71,6 +66,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     parsed(): {
       result: FilterExprStart | null;

@@ -29,7 +29,7 @@
 </template>
 <script lang="ts">
 import { useProjectMenu } from '#components/useProjectMenu';
-import { defineComponent, inject, useTemplateRef, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import GameDesignMenu from './GameDesignMenu.vue';
 import type { GameDesignMenuVM } from '#logic/vm/GameDesignMenuVM';
 import { assert } from '#logic/utils/typeUtils';
@@ -40,8 +40,6 @@ import type {
 } from '#logic/types/ProjectTypes';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
-const projectMenu = useProjectMenu();
-const gddMenuRef = useTemplateRef('gddMenu');
 
 export default defineComponent({
   name: 'DiscussionPanelProject',
@@ -63,6 +61,7 @@ export default defineComponent({
     assert(projectContext, 'Project context not provided');
     return {
       projectContext,
+      projectMenu: useProjectMenu(projectContext),
     };
   },
   data() {
@@ -91,12 +90,12 @@ export default defineComponent({
       await this.load();
     }
     if (this.currentProjectInfo?.id === this.project?.id) {
-      const revealed_item = projectMenu.getRevealedItem();
-      if (gddMenuRef.value && revealed_item) {
-        (gddMenuRef.value as any).focusMenuItem(
-          revealed_item.type,
-          revealed_item.id,
-        );
+      const revealed_item = this.projectMenu.getRevealedItem();
+      const gddMenu = this.$refs['gddMenu'] as
+        | InstanceType<typeof GameDesignMenu>
+        | undefined;
+      if (gddMenu && revealed_item) {
+        gddMenu.focusMenuItem(revealed_item.type, revealed_item.id);
       }
     }
   },
@@ -114,7 +113,7 @@ export default defineComponent({
         .getWorkspaceByNameViaCache('discussions');
       if (!rootWorkspace) return null;
 
-      return projectMenu.initSubMenuGddVm(rootWorkspace.id);
+      return this.projectMenu.initSubMenuGddVm(rootWorkspace.id);
     },
     async load() {
       try {

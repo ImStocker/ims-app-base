@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import CollectionBlockListOne from './CollectionBlockListOne.vue';
@@ -32,6 +32,9 @@ import UiManager from '../../logic/managers/UiManager';
 import FastCreateAssetDialog from '../Asset/FastCreateAssetDialog.vue';
 import DialogManager from '../../logic/managers/DialogManager';
 import AssetPreviewDialog from '../Asset/AssetPreviewDialog.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'CollectionBlockList',
@@ -46,6 +49,13 @@ export default defineComponent({
       type: Object as PropType<UnwrapRef<WorkspaceCollectionPageVM>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -69,8 +79,8 @@ export default defineComponent({
     async updateHasImages() {
       const previews = await Promise.all(
         this.rows.map((row) =>
-          this.$getAppManager()
-            .get(CreatorAssetManager)
+          this.projectContext
+            .get(AssetSubContext)
             .getAssetPreviewViaCache(row.id),
         ),
       );

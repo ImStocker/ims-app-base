@@ -54,7 +54,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import AssetLink from '../Asset/AssetLink.vue';
@@ -62,6 +62,9 @@ import FilePresenter from '../File/FilePresenter.vue';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import { castAssetPropValueToString } from '../../logic/types/Props';
 import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export default defineComponent({
   name: 'CollectionBlockListOne',
@@ -75,6 +78,13 @@ export default defineComponent({
     columns: { type: Array<ImcGridColumn>, required: true },
     row: { type: Object as PropType<ImcGridRow>, required: true },
     alwaysShowImageZone: { type: Boolean, default: false },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     projectInfo() {
@@ -109,12 +119,12 @@ export default defineComponent({
       return cached_preview.mainImage.value as AssetPropValueFile;
     },
     cachedAssetPreview() {
-      const cached = this.$getAppManager()
-        .get(CreatorAssetManager)
+      const cached = this.projectContext
+        .get(AssetSubContext)
         .getAssetPreviewViaCacheSync(this.row.id);
       if (cached === undefined) {
-        this.$getAppManager()
-          .get(CreatorAssetManager)
+        this.projectContext
+          .get(AssetSubContext)
           .requestAssetPreviewInCache(this.row.id);
       }
       return cached;

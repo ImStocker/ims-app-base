@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { HandleKeyEvent } from '../ImcGrid/ImcGrid.vue';
 import ImcGrid from '../ImcGrid/ImcGrid.vue';
 import CaptionString from '../Common/CaptionString.vue';
@@ -68,6 +68,8 @@ import type {
   ImcGridRow,
   ImcGridChangeCell,
 } from '../ImcGrid/ImcGrid';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'CollectionBlockGrid',
@@ -81,6 +83,13 @@ export default defineComponent({
     },
   },
   emits: ['column-click'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       clickOutside: null as SetClickOutsideCancel | null,

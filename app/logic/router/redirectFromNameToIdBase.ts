@@ -1,14 +1,16 @@
-import type { RouteLocationNormalized } from 'vue-router';
+import type { RouteParamsGeneric } from 'vue-router';
 import { createError } from '#app';
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export async function redirectFromNameToIdBase(
   projectContext: IProjectContext,
-  to: RouteLocationNormalized,
+  to: {
+    params?: RouteParamsGeneric;
+  },
   type: 'workspace' | 'asset',
 ) {
-  const target_name = to.params[type + 'Name'].toString();
+  const target_name = to.params ? to.params[type + 'Name'].toString() : '';
   let target_id: string | null = null;
 
   if (type === 'workspace') {

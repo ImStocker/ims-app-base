@@ -1,8 +1,6 @@
 import { computed, reactive, ref } from 'vue';
-import { useAppManager } from '../composables/useAppManager';
 import UiManager, { ScreenSize } from '../logic/managers/UiManager';
 import { useAppConfiguration } from '../composables/useAppConfiguration';
-import CreatorAssetManager from '../logic/managers/CreatorAssetManager';
 import {
   DISCUSSION_WORKSPACE_NAME,
   TASKS_WORKSPACE_NAME,
@@ -13,19 +11,20 @@ import {
 } from '../logic/utils/tasks';
 import { GameDesignMenuVM } from '../logic/vm/GameDesignMenuVM';
 import GlobalStateManager from '../logic/managers/GlobalStateManager';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 export const PROJECT_MENU_TAB = 'project-gdd';
 export const PROJECT_DISCUSSIONS_TAB = 'project-discussions';
 export const PROJECT_SETTINGS_TAB = 'project-settings-info';
 export const PROJECT_TASKS_TAB = 'project-tasks';
 
-export function useProjectMenu() {
-  const appManager = useAppManager();
+export function useProjectMenu(projectContext: IProjectContext) {
   const appConfiguration = useAppConfiguration();
 
   const state = ref(
-    appManager.get(GlobalStateManager).useGlobalState(
-      'projectMenu',
+    projectContext.appManager.get(GlobalStateManager).useGlobalState(
+      'projectMenu-' + projectContext.projectInfo.id,
       (saved) => {
         return {
           openedTab: saved ? (saved.openedTab as string | null) : null,
@@ -33,7 +32,7 @@ export function useProjectMenu() {
           gddVmByRootId: new Map<string, GameDesignMenuVM>(
             saved
               ? Object.entries(saved.gddVmByRootId).map(([id, data]) => {
-                  const vm = new GameDesignMenuVM(appManager, id);
+                  const vm = new GameDesignMenuVM(projectContext, id);
                   vm.loadJSON(data as Record<string, any>);
                   return [id, vm];
                 })
@@ -63,7 +62,7 @@ export function useProjectMenu() {
   );
 
   const isSubmenuExistsFor = (tab_name: string) => {
-    const projectMenu = appConfiguration.getProjectMenu(appManager);
+    const projectMenu = appConfiguration.getProjectMenu(projectContext);
     const tab = projectMenu.find((p) => p.name === tab_name);
     return !!tab && (tab.hasAdditionalMenu ?? true);
   };
@@ -75,7 +74,7 @@ export function useProjectMenu() {
   function initSubMenuGddVm(rootWorkspaceId: string): GameDesignMenuVM {
     let vm = state.value.gddVmByRootId.get(rootWorkspaceId);
     if (!vm) {
-      vm = reactive(new GameDesignMenuVM(appManager, rootWorkspaceId));
+      vm = reactive(new GameDesignMenuVM(projectContext, rootWorkspaceId));
       state.value.gddVmByRootId.set(rootWorkspaceId, vm);
     }
     return vm as GameDesignMenuVM;
@@ -95,8 +94,8 @@ export function useProjectMenu() {
 
   const revealProjectWorkspace = async (workspaceId: string) => {
     const revealed_workspaces =
-      (await appManager
-        .get(CreatorAssetManager)
+      (await projectContext
+        .get(AssetSubContext)
         .getParentWorkspaces(workspaceId)) ?? [];
     const revealed_workspace_ids = revealed_workspaces.map((w) => w.id);
     const first_workspace =
@@ -124,8 +123,8 @@ export function useProjectMenu() {
     };
   };
   const revealProjectAsset = async (assetId: string) => {
-    const asset = await appManager
-      .get(CreatorAssetManager)
+    const asset = await projectContext
+      .get(AssetSubContext)
       .getAssetShortViaCache(assetId);
     if (!asset || !asset.workspaceId) {
       state.value.openedTab = PROJECT_MENU_TAB;
@@ -140,7 +139,7 @@ export function useProjectMenu() {
 
   return {
     isMobileMenuOpened: computed(() => {
-      const is_mobile = appManager
+      const is_mobile = projectContext.appManager
         .get(UiManager)
         .isScreenSize(ScreenSize.NOT_PC);
       return state.value.mobile && is_mobile;
@@ -165,16 +164,16 @@ export function useProjectMenu() {
     revealProjectWorkspace,
     initSubMenuGddVm,
     hasMenu: (name: string) => {
-      const menu = appConfiguration.getProjectMenu(appManager);
+      const menu = appConfiguration.getProjectMenu(projectContext);
       return menu.some((m) => m.name === name);
     },
     getMenu: () => {
-      return appConfiguration.getProjectMenu(appManager);
+      return appConfiguration.getProjectMenu(projectContext);
     },
     init: async () => {
-      const menu = appConfiguration.getProjectMenu(appManager);
-      await appManager
-        .get(CreatorAssetManager)
+      const menu = appConfiguration.getProjectMenu(projectContext);
+      await projectContext
+        .get(AssetSubContext)
         .requestWorkspaceInCacheByNames(
           menu
             .map((m) => m.rightsRelatedWorkspaceName)

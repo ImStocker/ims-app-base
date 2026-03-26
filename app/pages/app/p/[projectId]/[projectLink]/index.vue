@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { navigateTo, useNuxtApp } from '#app';
-import { definePageMeta, useAppManager } from '#imports';
-import ProjectManager from '#logic/managers/ProjectManager';
-import { assert } from '#logic/utils/typeUtils';
+import { definePageMeta } from '#imports';
 import { getSignInLink } from '#logic/router/routes-helpers';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
+import { useRouteProjectContextRequired } from '~/composables/useRouteProjectContext';
+import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 
 definePageMeta({
   name: 'project-main',
@@ -14,17 +13,15 @@ definePageMeta({
   middleware: async (to) => {
     const { $appConfiguration } = useNuxtApp();
 
-    const appManager = useAppManager();
-    const projectInfo = appManager.get(ProjectManager).getProjectInfo();
-    assert(projectInfo, 'Project is not loaded');
+    const projectContext = await useRouteProjectContextRequired(to);
 
-    const userRole = appManager.get(ProjectManager).getUserRoleInProject();
+    const userRole = projectContext.user?.role;
     if (userRole) {
-      const app_menu = $appConfiguration.getProjectMenu(appManager);
+      const app_menu = $appConfiguration.getProjectMenu(projectContext);
       let available_workspace_name: any = null;
 
-      await appManager
-        .get(CreatorAssetManager)
+      await projectContext
+        .get(AssetSubContext)
         .requestWorkspaceInCacheByNames(
           app_menu
             .map((m) => m.rightsRelatedWorkspaceName)
@@ -34,13 +31,13 @@ definePageMeta({
         available_workspace_name = section.rightsRelatedWorkspaceName;
         if (!available_workspace_name) continue;
 
-        const workspace = appManager
-          .get(CreatorAssetManager)
+        const workspace = projectContext
+          .get(AssetSubContext)
           .getWorkspaceByNameViaCacheSync(available_workspace_name);
         if (workspace) {
           if (workspace.name === 'gdd') {
-            const index_asset = await appManager
-              .get(CreatorAssetManager)
+            const index_asset = await projectContext
+              .get(AssetSubContext)
               .getAssetShortsList({
                 where: {
                   workspaceid: workspace.id,
@@ -115,7 +112,7 @@ definePageMeta({
       } else {
         const sign_in_link = getSignInLink({
           redirect: to.fullPath,
-          error: appManager.$t('auth.noAccessToOpenPage'),
+          error: projectContext.appManager.$t('auth.noAccessToOpenPage'),
         });
         return navigateTo(sign_in_link, {
           external: typeof sign_in_link === 'string',

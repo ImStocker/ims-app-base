@@ -15,11 +15,13 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type {
   ExprLocation,
   FilterExpr,
 } from '../../../logic/expression/filter/filterParser';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 type DisplayPortion = {
   expr?: FilterExpr;
@@ -34,13 +36,6 @@ type DisplaySchema = {
 
 export default defineComponent({
   name: 'SelectionPropEditorExpr',
-  // setup() {
-    const projectContext = inject(injectedProjectContext);
-    assert(projectContext, 'Project context not provided');
-    return {
-      projectContext,
-    };
-  },
   props: {
     source: {
       type: String,
@@ -56,6 +51,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     className() {
       if (this.expr === null) return '';

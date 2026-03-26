@@ -17,7 +17,6 @@ import { inject, onMounted, onUnmounted, useTemplateRef } from 'vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
-const projectMenu = useProjectMenu();
 
 const gddMenuRef = useTemplateRef('gddMenu');
 
@@ -29,6 +28,9 @@ const props = defineProps<{
   props: ProjectTreePanelPropType;
 }>();
 const projectContext = inject(injectedProjectContext);
+assert(projectContext, 'Project context not provided');
+
+const projectMenu = useProjectMenu(projectContext);
 
 async function initVM(
   type: 'gdd' | 'discussions',
