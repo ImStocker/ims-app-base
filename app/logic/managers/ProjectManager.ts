@@ -45,7 +45,13 @@ export default class ProjectManager extends AppSubManagerBase {
     });
   }
 
-  getProjectContext(projectId: string): Promise<IProjectContext | null> {}
+  getCurrentProjectContextSync(): IProjectContext | null {
+    throw new Error('Not implemented');
+  }
+
+  getProjectContext(projectId: string): Promise<IProjectContext | null> {
+    throw new Error('Not implemented');
+  }
 
   getAllowAnonymUsers() {
     return false;

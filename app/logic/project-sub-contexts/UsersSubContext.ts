@@ -14,7 +14,13 @@ import type {
 } from '#logic/types/RightsAndRoles';
 
 export class UsersSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
+
+  // To fix TS errors in app projects
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(projectContext: IProjectContext) {
+    super(projectContext);
+  }
 
   async getMembersList(): Promise<ApiResultListWithTotal<ProjectMember>> {
     return {

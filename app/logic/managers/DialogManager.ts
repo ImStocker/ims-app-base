@@ -10,17 +10,17 @@ type DialogCloseStatus = {
   cancel: boolean;
 };
 
-type OpenerInstance = { $el: HTMLElement | null };
+export type DialogOpenerInstance = { $el: HTMLElement | null };
 
 export type DialogInterface<Props, Answer> = {
   state: Props;
   close: (res?: Answer, force?: boolean) => void;
 };
 
-type DialogComponent = abstract new (...args: any) => any;
+export type DialogComponent = abstract new (...args: any) => any;
 
 export type DialogHandler<T, Comp extends DialogComponent> = {
-  open: (opener?: OpenerInstance) => Promise<T | undefined>;
+  open: (opener?: DialogOpenerInstance) => Promise<T | undefined>;
   close: (res?: T, force?: boolean) => Promise<boolean>;
   getDialogInstance: () => Promise<InstanceType<Comp>>;
 };
@@ -33,7 +33,7 @@ export class Dialog {
   busy = false;
   pendingClose = false;
   dialogComponentInstance: any = null;
-  opener: OpenerInstance | null = null;
+  opener: DialogOpenerInstance | null = null;
   mountPromise: Promise<void>;
   private _mountPromiseResolve!: () => void;
 
@@ -124,9 +124,9 @@ export class Dialog {
   }
 }
 
-type GetCompProps<Comp> =
+export type DialogGetCompProps<Comp> =
   Comp extends DialogInterface<infer T, any> ? T : never;
-type GetAnswerProps<Comp> =
+export type DialogGetAnswerProps<Comp> =
   Comp extends DialogInterface<any, infer T> ? T : never;
 
 export default class DialogManager extends AppSubManagerBase {
@@ -144,8 +144,8 @@ export default class DialogManager extends AppSubManagerBase {
   // opener - компонент из которого был вызыван диалог (если не указан - глобальный диалог)
   create<
     Comp extends DialogComponent,
-    CompAnswer extends GetAnswerProps<InstanceType<Comp>['dialog']>,
-    CompProps extends GetCompProps<InstanceType<Comp>['dialog']>,
+    CompAnswer extends DialogGetAnswerProps<InstanceType<Comp>['dialog']>,
+    CompProps extends DialogGetCompProps<InstanceType<Comp>['dialog']>,
   >(component: Comp, state?: CompProps): DialogHandler<CompAnswer, Comp> {
     if (!state) state = {} as CompProps;
 
@@ -165,7 +165,7 @@ export default class DialogManager extends AppSubManagerBase {
       });
 
       handler = {
-        open: async (opener?: OpenerInstance) => {
+        open: async (opener?: DialogOpenerInstance) => {
           // Если указан компонент, от чьего имени открывается диалоговое окно, нужно найти соответвующий DOM элемент
           // и вставить диалог после него
           let which_dialog: Dialog | undefined = undefined;
@@ -206,12 +206,12 @@ export default class DialogManager extends AppSubManagerBase {
 
   async show<
     Comp extends DialogComponent,
-    CompAnswer extends GetAnswerProps<InstanceType<Comp>['dialog']>,
-    CompProps extends GetCompProps<InstanceType<Comp>['dialog']>,
+    CompAnswer extends DialogGetAnswerProps<InstanceType<Comp>['dialog']>,
+    CompProps extends DialogGetCompProps<InstanceType<Comp>['dialog']>,
   >(
     component: Comp,
     state?: CompProps,
-    opener?: OpenerInstance,
+    opener?: DialogOpenerInstance,
   ): Promise<CompAnswer | undefined> {
     const dialog = this.create<Comp, CompAnswer, CompProps>(component, state);
     return await dialog.open(opener);

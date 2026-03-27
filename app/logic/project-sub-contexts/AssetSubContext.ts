@@ -88,7 +88,7 @@ type AssetHasChildrenRecord = {
 };
 
 export class AssetSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
 
   private _shortAssetsCache: EntityCache<AssetShort>;
   private _previewAssetsCache: EntityCache<AssetPreviewInfo>;

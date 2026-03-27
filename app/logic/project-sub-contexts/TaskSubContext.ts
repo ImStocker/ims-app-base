@@ -46,8 +46,13 @@ export function convertTaskBoardColumnToAssetValueEnum(
 }
 // TODO: remove from this package
 export default abstract class TaskSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
 
+  // To fix TS errors in app projects
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(projectContext: IProjectContext) {
+    super(projectContext);
+  }
   abstract getTaskViaCache(id: string): Promise<TaskEntity | null>;
 
   abstract getTaskViaCacheSync(id: string): TaskEntity | null | undefined;

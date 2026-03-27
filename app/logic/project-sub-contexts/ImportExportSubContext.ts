@@ -68,7 +68,13 @@ export type ExportFormatField = {
 };
 
 export default class ImportExportSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
+
+  // To fix TS errors in app projects
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(projectContext: IProjectContext) {
+    super(projectContext);
+  }
 
   async exportWorkspace(
     workspace: Workspace,

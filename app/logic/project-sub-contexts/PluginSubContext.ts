@@ -14,7 +14,13 @@ import {
 import { assert } from '#logic/utils/typeUtils';
 
 export default class PluginSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
+
+  // To fix TS errors in app projects
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(projectContext: IProjectContext) {
+    super(projectContext);
+  }
 
   protected _installedPlugins = new Map<string, PluginInfo>();
   _destroyed: boolean = false;

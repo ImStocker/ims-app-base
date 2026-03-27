@@ -2,7 +2,6 @@ import * as node_path from 'path';
 import type { IAppManager } from '../managers/IAppManager';
 import type { AssetPropValueFile } from '../types/Props';
 import ProjectManager from '../managers/ProjectManager';
-import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export type ThumbParams = {
   width: number;
@@ -19,14 +18,17 @@ export enum SharpFit {
 }
 
 export function getSrcByFileId(
-  projectContext: IProjectContext,
+  appManager: IAppManager,
   file: AssetPropValueFile,
   thumb: ThumbParams | null = null,
 ): string {
   const store = file.Store;
   const fileId = file.FileId;
-  const projectLocalPath = projectContext.projectInfo.localPath;
   if (store === 'loc-project') {
+    const projectContext = appManager
+      .get(ProjectManager)
+      .getCurrentProjectContextSync();
+    const projectLocalPath = projectContext?.projectInfo?.localPath;
     return (
       'localfile://' +
       encodeURIComponent(
@@ -36,12 +38,11 @@ export function getSrcByFileId(
   }
   if (thumb) {
     return (
-      (projectContext.appManager.$env.FILE_STORAGE_API_HOST ?? '/') +
+      (appManager.$env.FILE_STORAGE_API_HOST ?? '/') +
       `file/${store}/${fileId}/thumb/${thumb.width}/${thumb.height}/${thumb.fit}`
     );
   }
   return (
-    (projectContext.appManager.$env.FILE_STORAGE_API_HOST ?? '/') +
-    `file/${store}/${fileId}`
+    (appManager.$env.FILE_STORAGE_API_HOST ?? '/') + `file/${store}/${fileId}`
   );
 }

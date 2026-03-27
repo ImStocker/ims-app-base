@@ -99,7 +99,13 @@ export type SegmentEntity = {
 };
 
 export default class LocalFsSyncSubContext extends ProjectSubContext {
-  declare projectContext: IProjectContext; // To fix TS errors
+  declare projectContext: IProjectContext; // To fix TS errors in app projects
+
+  // To fix TS errors in app projects
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(projectContext: IProjectContext) {
+    super(projectContext);
+  }
 
   private _syncWorkerId = Math.round(Math.random() * 10000000).toString();
   private _primarySyncWorkerId: string | null = null;
