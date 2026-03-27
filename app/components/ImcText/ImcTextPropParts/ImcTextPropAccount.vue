@@ -13,7 +13,6 @@ import {
   type AssetPropValue,
   type AssetPropValueAccount,
 } from '../../../logic/types/Props';
-import { formatImcTextPropAccount } from './ImcTextPropAccount';
 
 export default defineComponent({
   name: 'ImcTextPropAccount',
@@ -38,9 +37,7 @@ export default defineComponent({
       return castAssetPropValueToString(this.propValue);
     },
     formattedAccountName() {
-      return this.accountValue
-        ? formatImcTextPropAccount(this.accountValue)
-        : '';
+      return this.accountValue ? this.accountValue.Name : '';
     },
   },
 });

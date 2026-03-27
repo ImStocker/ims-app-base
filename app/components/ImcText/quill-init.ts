@@ -29,6 +29,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     ImcListItemBlotDep,
     ImcColorAttributorDep,
     ImcLinkBlotDep,
+    ImcMentionBlotDep,
     ImcFormulaBlotDep,
     ImcCalloutBlotDep,
   ] = await Promise.all([
@@ -45,6 +46,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     import('./blots/ImcListItemBlot'),
     import('./ImcColorAttributor'),
     import('./blots/ImcLinkBlot'),
+    import('./blots/ImcMentionBlot'),
     import('./blots/ImcFormulaBlot'),
     import('./blots/ImcCalloutBlot'),
   ]);
@@ -95,6 +97,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     QuillDep.default.register(ImcAssetBlotDep.ImcAssetBlot, true);
     QuillDep.default.register(ImcUploadJobBlotDep.ImcUploadJobBlot, true);
     QuillDep.default.register(ImcFileBlotDep.ImcFileBlot, true);
+    QuillDep.default.register(ImcMentionBlotDep.ImcMentionBlot, true);
     QuillDep.default.register(ImcIconBlotDep.ImcIconBlot, true);
     QuillDep.default.register(ImcPropBlotDep.ImcPropBlot, true);
     QuillDep.default.register(ImcListItemBlotDep.ListContainer, true);

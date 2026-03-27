@@ -8,7 +8,6 @@ import {
   type AssetPropValue,
   type AssetPropValueAccount,
 } from '../../logic/types/Props';
-import { formatImcTextPropAccount } from './ImcTextPropParts/ImcTextPropAccount';
 
 export default function useImcTextPropRenderer() {
   const appManager = useAppManager();
@@ -30,7 +29,7 @@ export default function useImcTextPropRenderer() {
           if (!account_value) {
             content = `<span class="ImcTextPropAccount state-error">${validator.escape($t('common.notFound'))}: ${validator.escape(string_value)}</span>`;
           } else {
-            content = `<span class="ImcTextPropAccount">${validator.escape(formatImcTextPropAccount(account_value))}</span>`;
+            content = `<span class="ImcTextPropAccount">${validator.escape(string_value)}</span>`;
           }
           break;
         }

@@ -24,6 +24,8 @@ import ImcTextFormula from './ImcTextFormula.vue';
 import { IMC_PROP_BLOT_CLASS } from './blots/ImcPropBlot';
 import ImcTextProp from './ImcTextProp.vue';
 import type { AssetPropValue } from '../../logic/types/Props';
+import { IMC_MENTION_BLOT_CLASS } from './blots/ImcMentionBlot';
+import ImcTextMention from './ImcTextMention.vue';
 
 export default defineComponent({
   name: 'ImcTextAugmentation',
@@ -148,6 +150,22 @@ export default defineComponent({
           },
         ),
       ),
+      mentionRenderer: markRaw(
+        new InnerComponentRenderer(
+          `.${IMC_MENTION_BLOT_CLASS}`,
+          ImcTextMention,
+          (e) => {
+            const accountId = e.dataset.accountId;
+            const name = e.dataset.name;
+            const id = e.dataset.id;
+            return {
+              accountId,
+              name,
+              id,
+            };
+          },
+        ),
+      ),
     };
   },
   computed: {
@@ -173,6 +191,7 @@ export default defineComponent({
   unmounted() {
     this.filesRenderer.destroy();
     this.propsRenderer.destroy();
+    this.mentionRenderer.destroy();
     this.uploadJobsRenderer.destroy();
     this.assetLinksRenderer.destroy();
   },
@@ -182,6 +201,7 @@ export default defineComponent({
 
       this.filesRenderer.render(this.$.appContext, this.$el);
       this.propsRenderer.render(this.$.appContext, this.$el);
+      this.mentionRenderer.render(this.$.appContext, this.$el);
       this.uploadJobsRenderer.render(this.$.appContext, this.$el);
       this.formulaRenderer.render(this.$.appContext, this.$el);
       if (!this.isEditor) {

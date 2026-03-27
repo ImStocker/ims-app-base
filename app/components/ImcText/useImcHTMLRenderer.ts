@@ -37,6 +37,10 @@ import type { Router } from 'vue-router';
 import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
 import useImcTextPropRenderer from './useImcTextPropRenderer';
+import {
+  IMC_MENTION_BLOT_CLASS,
+  type ImcMentionBlotData,
+} from './blots/ImcMentionBlot';
 
 export type ImcHTMLRenderer = (
   value: AssetPropValue,
@@ -227,6 +231,16 @@ export function useImcHTMLRenderer(
           return `<span ${attributes}>${formula}</span>`;
         } else if (customOp.insert.type === 'upload-job') {
           return '';
+        } else if (customOp.insert.type === 'mention') {
+          const mention_blot = customOp.insert.value as ImcMentionBlotData;
+          const attributes = `
+            class='${IMC_MENTION_BLOT_CLASS}'
+            data-name="${mention_blot.name ?? ''}"
+            data-id="${mention_blot.id ?? ''}"
+            data-accountId="${mention_blot.accountId ?? ''}"
+          `;
+
+          return `<span ${attributes}><span class="ImcTextMention">@${mention_blot.name}</span></span>`;
         } else if (customOp.insert.type === 'icon') {
           const icon_blot = customOp.insert.value as ImcIconBlotData;
           return `<span class='${IMC_ICON_BLOT_CLASS}'><i class='asset-icon-${validator.escape(icon_blot)}'></i></span>`;

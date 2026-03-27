@@ -5,6 +5,7 @@ import { QuillKeys, quillAddKeyboardBindingBeforeOthers } from './utils';
 import type { EmitterSource } from 'quill/core';
 import { Delta } from 'quill/core';
 import type { Context } from 'quill/modules/keyboard';
+import { v4 as uuidv4 } from 'uuid';
 
 export type ImcLinkOption = {
   type: 'asset' | 'user';
@@ -193,12 +194,10 @@ export class ImcLinksModule {
       cursor_change += link.title.length;
     } else if (link.type === 'user') {
       delta.insert({
-        prop: {
-          value: {
-            AccountId: link.value,
-            Name: link.title,
-          },
-          inline: true,
+        mention: {
+          id: uuidv4(),
+          name: link.title,
+          accountId: link.value,
         },
       });
       cursor_change++;

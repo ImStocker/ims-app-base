@@ -449,23 +449,18 @@ body[data-theme="ims-dark"] {
     &.type-inline {
       display: inline;
     }
-    .ImcTextPropAccount {
-      padding: 4px;
-      background-color: var(--local-link-bg-color);
-      color: var(--local-link-color);
-      border-radius: 4px;
-      font-weight: 500;
-
-      &.state-empty {
-        display: none;
-      }
-
-      &.state-error {
-        color: var(--color-main-error);
-      }
-    }
   }
-  
+}
+.ImcEditor-editor.ql-container .ql-imc-mention,
+.ImcEditor-editor.state-sleep .ql-imc-mention,
+.ImcPresenter-content .ql-imc-mention {
+  .ImcTextMention {
+    padding: 4px;
+    background-color: var(--local-link-bg-color);
+    color: var(--local-link-color);
+    border-radius: 4px;
+    font-weight: 500;
+  }
 }
 
 .ImcEditor-editor.ql-container.ql-bubble:not(.ql-disabled) a.ql-imc-asset,
