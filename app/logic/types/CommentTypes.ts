@@ -14,6 +14,7 @@ export type CommentReplyChangeDTO = {
 export type CommentCreateDTO = {
   assetId: string;
   content: AssetProps;
+  answerToReplyId?: string;
   blocks: CommentBlockDTO[];
 };
 

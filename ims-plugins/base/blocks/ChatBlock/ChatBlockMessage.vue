@@ -5,28 +5,6 @@
         {{ message.user.Name }}
       </div>
       <div class="ChatBlockMessage-comment-contentWrapper">
-        <menu-button v-if="isAuthor" class="DropdownMenuButton">
-          <menu-list :menu-list="menuList" />
-        </menu-button>
-        <div v-if="isAuthor && message.sended" class="ChatBlockMessage-manage">
-          <button
-            class="button ChatBlockMessage-deleteButton"
-            @click="
-              $emit('delete', {
-                commentId: message.commentId,
-                replyId: message.id,
-              })
-            "
-          >
-            <i class="ri-delete-bin-fill" />
-          </button>
-          <button
-            class="button ChatBlockMessage-editButton"
-            @click="$emit('edit', message.id)"
-          >
-            <i class="ri-pencil-fill" />
-          </button>
-        </div>
         <div class="ChatBlockMessage-comment-content">
           <imc-presenter
             class="ChatBlockMessage-comment-text"
@@ -39,9 +17,11 @@
             </div>
             <i v-if="!message.sended" class="ri-copper-coin-fill" />
             <i v-else class="ri-check-fill" />
-            <!-- <i class="ri-check-double-fill"></i> -->
           </div>
         </div>
+        <menu-button v-if="isAuthor" class="ChatBlockMessage-comment-menu">
+          <menu-list :menu-list="menuList" />
+        </menu-button>
       </div>
     </div>
   </div>
@@ -74,7 +54,7 @@ export default defineComponent({
       default: true,
     },
   },
-  emits: ['delete', 'edit'],
+  emits: ['delete', 'edit', 'reply'],
   computed: {
     dateText() {
       return (
@@ -98,6 +78,13 @@ export default defineComponent({
           title: this.$t('common.dialogs.edit'),
           icon: 'edit',
           action: () => this.$emit('edit', this.message.id),
+        },
+        {
+          title: this.$t('discussions.reply'),
+          icon: 'ri-reply-fill',
+          action: () => {
+            this.$emit('reply', this.message.id);
+          },
         },
         {
           title: this.$t('common.dialogs.delete'),
@@ -136,10 +123,8 @@ export default defineComponent({
   width: 100%;
 
   &:hover {
-    @include devices-mixins.device-type(pc) {
-      .ChatBlockMessage-manage {
-        display: flex !important;
-      }
+    .ChatBlockMessage-comment-menu {
+      opacity: 1;
     }
   }
 }
@@ -149,54 +134,6 @@ export default defineComponent({
   justify-content: flex-start;
   align-items: center;
   width: 100%;
-
-  @include devices-mixins.device-type(pc) {
-    .DropdownMenuButton {
-      display: none;
-    }
-  }
-}
-
-.ChatBlockMessage-manage {
-  gap: 5px;
-  margin: 0 5px 0 auto;
-  display: none;
-
-  .ChatBlockMessage-deleteButton,
-  .ChatBlockMessage-editButton {
-    position: relative;
-    padding: 5px;
-    border-radius: 5px;
-    font-size: var(--local-font-size);
-    width: 25px;
-    height: 25px;
-    color: var(--text-intense);
-    background-color: transparent;
-    transition:
-      background-color 0.2s,
-      color 0.2s;
-
-    i {
-      top: 50%;
-      right: 50%;
-      transform: translate(50%, -50%);
-      position: absolute;
-    }
-  }
-
-  .ChatBlockMessage-deleteButton {
-    &:hover {
-      color: var(--red);
-      background-color: rgba(207, 34, 46, 0.1);
-    }
-  }
-
-  .ChatBlockMessage-editButton {
-    &:hover {
-      color: var(--color-main-yellow);
-      background-color: rgba(238, 216, 17, 0.1);
-    }
-  }
 }
 
 .ChatBlockMessage-comment {
@@ -252,6 +189,15 @@ export default defineComponent({
     min-width: 30px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+.ChatBlockMessage-comment-menu {
+  position: absolute;
+  opacity: 0;
+
+  @include devices-mixins.device-type(not-pc) {
+    opacity: 1;
   }
 }
 

@@ -758,6 +758,8 @@ export default {
     delete: 'Delete message',
     deleteMessageConfirm: 'Are you sure you want to delete message?',
     editingMessage: 'Edit message',
+    replyTo: 'Reply to',
+    reply: 'Reply',
     editedMessage: 'Edited',
   },
   importExport: {

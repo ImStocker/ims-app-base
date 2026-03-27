@@ -769,7 +769,9 @@ export default {
     placeholder: 'Написать сообщение...',
     delete: 'Удалить сообщение',
     deleteMessageConfirm: 'Вы уверены, что хотите удалить сообщение?',
-    editingMessage: 'Редактирование сообщения',
+    editingMessage: 'Редактирование',
+    replyTo: 'В ответ',
+    reply: 'Ответить',
     editedMessage: 'Ред.',
   },
   importExport: {

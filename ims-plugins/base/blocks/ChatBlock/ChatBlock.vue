@@ -18,7 +18,8 @@
               :message="message"
               :show-username="showUsername(idx, unreadMessagesList)"
               @delete="deleteMessage($event)"
-              @edit="editMessage($event)"
+              @edit="startMessageEditing($event)"
+              @reply="replyMessage($event)"
             />
             <div
               v-if="unreadMessagesList.length > 0"
@@ -33,7 +34,8 @@
               :message="message"
               :show-username="showUsername(idx, readMessagesList)"
               @delete="deleteMessage($event)"
-              @edit="editMessage($event)"
+              @edit="startMessageEditing($event)"
+              @reply="replyMessage($event)"
             />
           </template>
         </div>
@@ -43,45 +45,12 @@
         :to="teleportMessageFormTo"
         :disabled="!teleportMessageFormTo"
       >
-        <div class="ChatBlock-sendForm-wrapper" :class="{ editMode: editMode }">
-          <slot name="additionalLeftButtons"></slot>
-          <div class="ChatBlock-sendForm-wrapper-common">
-            <div v-if="editMode" class="ChatBlock-sendForm-editMode">
-              <div class="ChatBlock-sendForm-editMode-content">
-                {{ $t('discussions.editingMessage') }}
-              </div>
-              <button
-                class="button ChatBlock-sendForm-editMode-manage"
-                @click="closeEditingMode()"
-              >
-                <i class="ri-close-fill" />
-              </button>
-            </div>
-            <div v-if="!readonly" class="ChatBlock-sendForm">
-              <file-attach-button
-                :multiple="true"
-                :display-mode="'icon'"
-                class="ChatBlock-sendForm-attachButton"
-                @uploaded-one="attachFile($event)"
-              />
-              <imc-editor
-                ref="editor"
-                class="ChatBlock-sendForm-input tiny-scrollbars"
-                :placeholder="$t('discussions.placeholder')"
-                :model-value="commentContent"
-                :max-height="200"
-                @update:model-value="commentContent = $event"
-                @enter="sendMessage()"
-              />
-              <button
-                class="button ChatBlock-sendForm-button"
-                @click="sendMessage()"
-              >
-                <i class="ri-send-plane-fill" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <slot name="additionalLeftButtons"></slot>
+        <chat-block-send
+          v-if="!readonly"
+          v-model:target-message="targetMessage"
+          @send="sendMessage($event)"
+        ></chat-block-send>
       </Teleport>
     </div>
   </div>
@@ -89,15 +58,9 @@
 
 <script lang="ts">
 import { type PropType, type RendererElement, defineComponent } from 'vue';
-import ImcEditor from '#components/ImcText/ImcEditor.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
 import CommentManager from '#logic/managers/CommentManager';
-import {
-  type AssetPropValue,
-  type AssetPropValueFile,
-  joinAssetPropValueTexts,
-} from '#logic/types/Props';
 import type {
   AssetCommentDTO,
   CommentBlockDTO,
@@ -105,21 +68,22 @@ import type {
 } from '#logic/types/CommentTypes';
 import AuthManager from '#logic/managers/AuthManager';
 import ChatBlockMessage from './ChatBlockMessage.vue';
-import { v4 as uuidv4 } from 'uuid';
 import UiManager from '#logic/managers/UiManager';
 import DialogManager from '#logic/managers/DialogManager';
 import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import ProjectManager from '#logic/managers/ProjectManager';
-import FileAttachButton from '#components/File/FileAttachButton.vue';
 import { DISCUSSION_WORKSPACE_NAME } from '#logic/constants';
+import ChatBlockSend from './ChatBlockSend.vue';
+import { v4 as uuidv4 } from 'uuid';
+import { TargetMessageActionTypes, type TargetMessage } from './ChatBlockSend';
+import type { AssetPropValue } from '../../../../app/logic/types/Props';
 
 export default defineComponent({
   name: 'ChatBlock',
   components: {
-    ImcEditor,
     ChatBlockMessage,
-    FileAttachButton,
+    ChatBlockSend,
   },
   props: {
     assetBlockEditor: {
@@ -146,13 +110,11 @@ export default defineComponent({
   emits: ['sendMessage', 'update:lastViewedAt'],
   data() {
     return {
-      commentContent: {} as AssetPropValue,
       messages: [] as CommentReplyDTO[],
       unsentMessages: [] as CommentReplyDTO[],
+      targetMessage: null as TargetMessage | null,
       loading: false as boolean,
       initialLoad: true,
-      editMode: false as boolean,
-      editingMessageId: null as string | null,
       reloadMessagesTimeout: null as any,
       reloadMessagesRun: false,
       isMounted: false,
@@ -204,11 +166,6 @@ export default defineComponent({
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
     },
-    messageIsEmpty() {
-      return typeof this.commentContent === 'object'
-        ? !Object.keys(this.commentContent as any).length
-        : !this.commentContent;
-    },
     isGuest(): boolean {
       return !this.$getAppManager().get(ProjectManager).getUserRoleInProject();
     },
@@ -232,14 +189,6 @@ export default defineComponent({
     this.stopReloadMessages();
   },
   methods: {
-    attachFile(file: AssetPropValueFile) {
-      if (!file) return;
-      let res = this.commentContent;
-      if (res) {
-        res = joinAssetPropValueTexts(res, file);
-      } else res = file;
-      this.commentContent = res;
-    },
     async scrollToBottom() {
       if (!this.loading) {
         const messagesField = this.$refs.messagesField as HTMLElement;
@@ -260,21 +209,28 @@ export default defineComponent({
         );
       }
     },
-    closeEditingMode() {
-      this.editMode = false;
-      this.commentContent = '';
-    },
-    async editMessage(message_id: string) {
-      this.editMode = true;
+
+    async startMessageEditing(message_id: string) {
       const editing_message =
         this.messages.find(
           (message: CommentReplyDTO) => message.id === message_id,
         ) ?? null;
       if (!editing_message) return;
-      this.commentContent = editing_message.content[''];
-      this.editingMessageId = editing_message.id;
-      await this.$nextTick();
-      (this.$refs.editor as InstanceType<typeof ImcEditor>).focusEnd();
+      this.targetMessage = {
+        actionType: TargetMessageActionTypes.EDIT,
+        message: editing_message,
+      };
+    },
+    async replyMessage(message_id: string) {
+      const editing_message =
+        this.messages.find(
+          (message: CommentReplyDTO) => message.id === message_id,
+        ) ?? null;
+      if (!editing_message) return;
+      this.targetMessage = {
+        message: editing_message,
+        actionType: TargetMessageActionTypes.REPLY,
+      };
     },
     async deleteMessage(message: { commentId: string; replyId: string }) {
       const answer = await this.$getAppManager()
@@ -286,9 +242,6 @@ export default defineComponent({
           danger: true,
         });
       if (answer) {
-        this.commentContent = '';
-        this.editMode = false;
-        this.editingMessageId = null;
         await this.$getAppManager()
           .get(UiManager)
           .doTask(async () => {
@@ -357,132 +310,128 @@ export default defineComponent({
       this.loading = false;
       this.initialLoad = false;
     },
-    async sendMessage() {
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          if (!this.currentAsset) {
-            return;
-          }
-          if (this.messageIsEmpty) {
-            return;
-          }
+    async sendMessage({ content }: { content: AssetPropValue }) {
+      if (!this.currentAsset) {
+        return;
+      }
+      this.$emit('sendMessage');
+      if (
+        !this.targetMessage ||
+        this.targetMessage.actionType !== TargetMessageActionTypes.EDIT
+      ) {
+        await this.createMessage(content, this.targetMessage?.message.id);
+      } else {
+        await this.editMessage(content);
+      }
+      this.targetMessage = null;
+    },
+    async editMessage(content: AssetPropValue) {
+      const comment_content_to_db: any =
+        typeof content === 'object' ? { ...content } : content;
+      const editing_message_index = this.messages.findIndex(
+        (el) => el.id === this.targetMessage?.message.id,
+      );
 
-          this.$emit('sendMessage');
-          if (!this.editMode) {
-            const comment_content_to_db: any =
-              typeof this.commentContent === 'object'
-                ? { ...this.commentContent }
-                : this.commentContent;
+      if (editing_message_index === -1) return;
 
-            if (this.chatCommentBranch && this.messages.length) {
-              const new_message_id = 'temp-' + uuidv4();
-              const new_message: CommentReplyDTO = {
-                id: new_message_id,
-                commentId: this.chatCommentBranch?.id ?? '',
-                answerToId: '',
-                user: {
-                  AccountId: this.userInfo ? this.userInfo.id.toString() : '0',
-                  Name: this.userInfo ? this.userInfo.name : '',
-                },
-                content: { '': this.commentContent },
-                createdAt: new Date().toString(),
-                updatedAt: new Date().toString(),
-                sended: false,
-              };
-              this.unsentMessages.unshift(new_message);
-              this.$emit('update:lastViewedAt', new Date().toISOString());
-              await this.scrollToBottom();
-              this.commentContent = '';
-              const res = await this.$getAppManager()
-                .get(CommentManager)
-                .addAnswer(this.chatCommentBranch.id, {
-                  assetId: this.currentAsset.id,
-                  content: { '': comment_content_to_db },
-                  blocks: [
-                    {
-                      id: this.resolvedBlock.id,
-                      anchor: { chat: true },
-                    },
-                  ],
-                });
-              this.$emit('update:lastViewedAt', new Date().toISOString());
-              if (res) {
-                const newMessageIndex = this.unsentMessages.findIndex(
-                  (message: CommentReplyDTO) => message.id === new_message_id,
-                );
-                if (newMessageIndex !== -1) {
-                  this.unsentMessages[newMessageIndex] = {
-                    ...res,
-                    sended: true,
-                  };
-                  const msg_index = this.messages.findIndex(
-                    (message: CommentReplyDTO) =>
-                      message.id === this.unsentMessages[newMessageIndex].id,
-                  );
-                  if (msg_index === -1) {
-                    this.messages.unshift(this.unsentMessages[newMessageIndex]);
-                  }
-                  this.unsentMessages.splice(newMessageIndex, 1);
-                }
-              }
-            } else {
-              this.commentContent = '';
+      this.messages[editing_message_index].content = {
+        '': comment_content_to_db,
+      };
+      this.messages[editing_message_index].sended = false;
 
-              const res = await this.$getAppManager()
-                .get(CommentManager)
-                .createComment({
-                  assetId: this.currentAsset.id,
-                  content: { '': comment_content_to_db },
-                  blocks: [
-                    {
-                      id: this.resolvedBlock.id,
-                      anchor: { chat: true },
-                    },
-                  ],
-                });
-              if (res) {
-                this.stopReloadMessages();
-                await this.reloadMessages();
-              }
-            }
-          } else {
-            if (!this.editingMessageId) return;
-            if (!this.chatCommentBranch) return;
-            const comment_content_to_db: any =
-              typeof this.commentContent === 'object'
-                ? { ...this.commentContent }
-                : this.commentContent;
-            const editing_message_index = this.messages.findIndex(
-              (message: CommentReplyDTO) =>
-                message.id === this.editingMessageId,
-            );
+      const res = await this.$getAppManager()
+        .get(CommentManager)
+        .changeReply(
+          this.chatCommentBranch?.id ?? '',
+          this.messages[editing_message_index].id,
+          {
+            content: { '': comment_content_to_db },
+          },
+        );
+      if (res) {
+        this.messages[editing_message_index] = {
+          ...res,
+          sended: true,
+        };
+      }
+    },
+    async createMessage(content: AssetPropValue, answerToId?: string) {
+      if (!this.currentAsset) {
+        return;
+      }
 
-            if (editing_message_index === -1) return;
+      const comment_content_to_db: any =
+        typeof content === 'object' ? { ...content } : content;
 
-            this.messages[editing_message_index].content = {
-              '': comment_content_to_db,
+      if (this.chatCommentBranch && this.messages.length) {
+        const new_message_id = 'temp-' + uuidv4();
+        const new_message: CommentReplyDTO = {
+          id: new_message_id,
+          commentId: this.chatCommentBranch?.id ?? '',
+          answerToId: answerToId ?? '',
+          user: {
+            AccountId: this.userInfo ? this.userInfo.id.toString() : '0',
+            Name: this.userInfo ? this.userInfo.name : '',
+          },
+          content: { '': content },
+          createdAt: new Date().toString(),
+          updatedAt: new Date().toString(),
+          sended: false,
+        };
+        this.unsentMessages.unshift(new_message);
+        this.$emit('update:lastViewedAt', new Date().toISOString());
+        await this.scrollToBottom();
+        const res = await this.$getAppManager()
+          .get(CommentManager)
+          .addAnswer(this.chatCommentBranch.id, {
+            assetId: this.currentAsset.id,
+            answerToReplyId: answerToId,
+            content: { '': comment_content_to_db },
+            blocks: [
+              {
+                id: this.resolvedBlock.id,
+                anchor: { chat: true },
+              },
+            ],
+          });
+        this.$emit('update:lastViewedAt', new Date().toISOString());
+        if (res) {
+          const newMessageIndex = this.unsentMessages.findIndex(
+            (message: CommentReplyDTO) => message.id === new_message_id,
+          );
+          if (newMessageIndex !== -1) {
+            this.unsentMessages[newMessageIndex] = {
+              ...res,
+              sended: true,
             };
-            this.messages[editing_message_index].sended = false;
-
-            this.commentContent = '';
-            this.editMode = false;
-            this.editingMessageId = null;
-
-            const res = await this.$getAppManager()
-              .get(CommentManager)
-              .changeReply(
-                this.chatCommentBranch?.id,
-                this.messages[editing_message_index].id,
-                {
-                  content: { '': comment_content_to_db },
-                },
-              );
-            if (res) {
-              this.messages[editing_message_index] = { ...res, sended: true };
+            const msg_index = this.messages.findIndex(
+              (message: CommentReplyDTO) =>
+                message.id === this.unsentMessages[newMessageIndex].id,
+            );
+            if (msg_index === -1) {
+              this.messages.unshift(this.unsentMessages[newMessageIndex]);
             }
+            this.unsentMessages.splice(newMessageIndex, 1);
           }
-        });
+        }
+      } else {
+        const res = await this.$getAppManager()
+          .get(CommentManager)
+          .createComment({
+            assetId: this.currentAsset.id,
+            content: { '': comment_content_to_db },
+            blocks: [
+              {
+                id: this.resolvedBlock.id,
+                anchor: { chat: true },
+              },
+            ],
+          });
+        if (res) {
+          this.stopReloadMessages();
+          await this.reloadMessages();
+        }
+      }
     },
     stopReloadMessages() {
       this.reloadMessagesRun = false;
@@ -497,7 +446,6 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @use '$style/devices-mixins.scss';
-@use '$style/scrollbars-mixins.scss';
 
 .ChatBlock {
   background-color: var(--local-bg-color);
@@ -522,121 +470,6 @@ export default defineComponent({
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.ChatBlock-sendForm-wrapper {
-  display: flex;
-  align-items: end;
-  position: relative;
-  flex-direction: row;
-  align-items: center;
-  background: var(--local-bg-color);
-
-  .ChatBlock-sendForm {
-    margin: auto 0 0;
-    border: 1px dotted #ccc;
-    display: flex;
-    padding: 0px 35px;
-    border-radius: 26px;
-    width: 100%;
-    position: relative;
-    background-color: transparent;
-    // max-height: 300px;
-    // overflow-y: auto;
-    // overflow-x: hidden;
-
-    // &::-webkit-scrollbar-track {
-    //   margin-top: 20px;
-    //   margin-bottom: 20px;
-    // }
-
-    .ChatBlock-sendForm-input {
-      width: 100%;
-      padding: 10px 0;
-
-      :deep(.ql-editor) {
-        @include scrollbars-mixins.tiny-scrollbars;
-      }
-    }
-
-    .ChatBlock-sendForm-button {
-      margin: auto 0 0 auto;
-      font-size: 18px;
-      right: 3px;
-      bottom: 3px;
-      box-shadow: none;
-      padding: 5px 10px;
-      position: absolute;
-      border-radius: 100%;
-      background-color: transparent;
-      transition:
-        background-color 0.2s,
-        color 0.2s;
-      color: var(--text-intense);
-
-      &:hover {
-        background-color: var(--color-main-yellow);
-        color: var(--local-bg-color);
-      }
-
-      @include devices-mixins.device-type(not-pc) {
-        &:hover {
-          background-color: transparent;
-          color: var(--text-intense);
-        }
-      }
-
-      i {
-        transform: translate(-1px, 1px);
-        display: block;
-      }
-    }
-
-    .ChatBlock-sendForm-attachButton {
-      position: absolute;
-      left: 3px;
-      bottom: 4px;
-      padding: 4px 10px;
-      display: block;
-
-      :deep(.FileAttachButton-attach-button) {
-        padding: 0 !important;
-        width: auto;
-        font-size: 18px;
-      }
-    }
-  }
-}
-.ChatBlock-sendForm-wrapper-common {
-  z-index: 2;
-  width: 100%;
-  padding-right: 5px;
-}
-.ChatBlock-sendForm-editMode {
-  background-color: rgba(238, 216, 17, 0.2);
-  color: var(--panel-bg-color);
-  top: 0;
-  width: fit-content;
-  padding: 0 10px;
-  margin-right: 18px;
-  margin-left: 18px;
-  border-radius: 4px 4px 0px 0px;
-  outline: 1px solid var(--color-main-yellow);
-  display: flex;
-  gap: 5px;
-  position: relative;
-  margin-top: -20px;
-
-  .ChatBlock-sendForm-editMode-content {
-    color: var(--color-main-yellow);
-  }
-
-  .ChatBlock-sendForm-editMode-manage {
-    padding: 0px;
-    background-color: transparent;
-    color: var(--color-main-yellow);
-    text-shadow: none;
-  }
 }
 
 .ChatBlock-chat-message {
