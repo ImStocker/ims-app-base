@@ -5,7 +5,6 @@
 import { defineComponent, inject } from 'vue';
 import MenuList from '../Common/MenuList.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import DialogManager from '../../logic/managers/DialogManager';
 import CreateWorkspaceDialog from './CreateWorkspaceDialog.vue';
 import { WORKSPACE_TYPE_COLLECTION } from '../../logic/types/Workspaces';
 import { openProjectLink } from '../../logic/router/routes-helpers';
@@ -56,8 +55,8 @@ export default defineComponent({
   },
   methods: {
     async createFolder(type: 'folder' | 'collection') {
-      const res = await this.$getAppManager()
-        .get(DialogManager)
+      const res = await this.projectContext
+        .get(DialogSubContext)
         .show(CreateWorkspaceDialog, {
           type,
           parentId: this.rootWorkspaceId,

@@ -101,7 +101,6 @@ import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import { assert } from '#logic/utils/typeUtils';
-import DialogManager from '../../../logic/managers/DialogManager';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import UiManager from '../../../logic/managers/UiManager';
 import { openProjectLink } from '../../../logic/router/routes-helpers';
@@ -115,6 +114,7 @@ import { calcResolvedBlocks } from '../../../logic/types/AssetFullInstance';
 import AssetCompletionCheckWidget from '../Completion/AssetCompletionCheckWidget.vue';
 import AssetPropsDialog from '../AssetPropsDialog.vue';
 import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'AssetPageHeader',
@@ -267,8 +267,8 @@ export default defineComponent({
     async deleteAsset() {
       const element = this.currentAssetFull;
       if (!element) return;
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('sourcePage.elements.delete') + '?',
           message: this.$t('sourcePage.elements.deleteElementConfirm', {
@@ -308,14 +308,14 @@ export default defineComponent({
       }
     },
     async openSetUpAccessDialog() {
-      await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
+      await this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
         assetId: this.vm.assetId,
       });
     },
     async openLocale() {
       const asset_full = this.vm.assetFullEditorVM.getOpenedAssetFull();
       if (!asset_full) return null;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'locale',
       });
@@ -323,7 +323,7 @@ export default defineComponent({
     async openProps() {
       const asset_full = this.vm.assetFullEditorVM.getOpenedAssetFull();
       if (!asset_full) return null;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'props',
       });

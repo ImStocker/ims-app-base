@@ -143,7 +143,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import {
   getClosestNodeBySelector,
   isElementInteractive,
@@ -191,8 +191,10 @@ import {
   type SetClickOutsideCancel,
   setImsClickOutside,
 } from '#components/utils/ui';
-import DialogManager from '#logic/managers/DialogManager';
 import AssetServiceNameDialog from '#components/Asset/AssetServiceNameDialog.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ValueTableBlock',
@@ -238,6 +240,13 @@ export default defineComponent({
     },
   },
   emits: ['save', 'discard'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       clickOutside: null as SetClickOutsideCancel | null,
@@ -640,27 +649,25 @@ export default defineComponent({
       }
     },
     async askChangeServiceNameColumn(column: ValueTableBlockColumn) {
-      const new_name_raw = await this.$getAppManager()
-        .get(DialogManager)
-        .show(
-          AssetServiceNameDialog,
-          {
-            header: this.$t('assetEditor.blockMenu.inputServiceName'),
-            yesCaption: this.$t('common.dialogs.rename'),
-            value: column.name,
-            validate: (val: string) => {
-              const new_name = normalizeAssetPropPart(val);
-              if (new_name !== column.name) {
-                const err = this.validateColumnName(new_name);
-                if (err) {
-                  throw new Error(err);
-                }
+      const new_name_raw = await this.projectContext.get(DialogSubContext).show(
+        AssetServiceNameDialog,
+        {
+          header: this.$t('assetEditor.blockMenu.inputServiceName'),
+          yesCaption: this.$t('common.dialogs.rename'),
+          value: column.name,
+          validate: (val: string) => {
+            const new_name = normalizeAssetPropPart(val);
+            if (new_name !== column.name) {
+              const err = this.validateColumnName(new_name);
+              if (err) {
+                throw new Error(err);
               }
-              return val;
-            },
+            }
+            return val;
           },
-          this,
-        );
+        },
+        this,
+      );
       if (new_name_raw === undefined || new_name_raw === null) return;
 
       const new_name = normalizeAssetPropPart(

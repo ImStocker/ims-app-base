@@ -58,7 +58,6 @@
 import { type PropType, defineComponent, inject } from 'vue';
 import type { AssetFullEditorVM } from '../../../logic/vm/AssetFullEditorVM';
 import AssetBlockEditor from './AssetBlockEditor.vue';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import AssetBlockEditorRoot from './AssetBlockEditorRoot.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
 import {

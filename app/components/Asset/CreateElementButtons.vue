@@ -68,7 +68,6 @@ import MenuButton from '../Common/MenuButton.vue';
 import CreateAssetBox from './CreateAssetBox.vue';
 import CreateFolderBox from './CreateFolderBox.vue';
 import UiManager from '../../logic/managers/UiManager';
-import DialogManager from '../../logic/managers/DialogManager';
 import FastCreateAssetDialog from './FastCreateAssetDialog.vue';
 import { DISCUSSION_ASSET_ID } from '../../logic/constants';
 import { openProjectLink } from '../../logic/router/routes-helpers';
@@ -104,8 +103,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          const new_disc = await this.$getAppManager()
-            .get(DialogManager)
+          const new_disc = await this.projectContext
+            .get(DialogSubContext)
             .show(FastCreateAssetDialog, {
               set: {
                 workspaceId: this.rootWorkspaceId,
@@ -130,8 +129,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          const res = await this.$getAppManager()
-            .get(DialogManager)
+          const res = await this.projectContext
+            .get(DialogSubContext)
             .show(CreateWorkspaceDialog, {
               parentId: this.rootWorkspaceId,
               type: 'folder',

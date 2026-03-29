@@ -106,7 +106,6 @@ import {
   type ProjectInfoForLink,
 } from '../../../logic/router/routes-helpers';
 import AssetLink from '../../Asset/AssetLink.vue';
-import DialogManager from '../../../logic/managers/DialogManager';
 import SelectAssetDialog from '../../Asset/SelectAssetDialog.vue';
 import type { ImcEditorModule } from '../ImcEditorModule';
 import type { Router } from 'vue-router';
@@ -114,6 +113,7 @@ import { getQueryAssetPropsSelection } from '../../../logic/expression/filter/fi
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export type ImcEditorToolbarFormatOption = {
   value: string;
@@ -263,18 +263,16 @@ export default defineComponent({
       if (!this.assetLinkRootWorkspace) return;
 
       const text = this.quill.getText(selection.index, selection.length);
-      const modal = this.$getAppManager()
-        .get(DialogManager)
-        .show(
-          SelectAssetDialog,
-          {
-            searchValue: getQueryAssetPropsSelection(text ? text.trim() : ''),
-            where: {
-              workspaceids: this.assetLinkRootWorkspace.id,
-            },
+      const modal = this.projectContext.get(DialogSubContext).show(
+        SelectAssetDialog,
+        {
+          searchValue: getQueryAssetPropsSelection(text ? text.trim() : ''),
+          where: {
+            workspaceids: this.assetLinkRootWorkspace.id,
           },
-          this,
-        );
+        },
+        this,
+      );
       imceditor.addModalPromise(modal);
       this.dropdownShown = false;
       const res = await modal;

@@ -1,5 +1,4 @@
 import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
-import DialogManager from '#logic/managers/DialogManager';
 import UiManager from '#logic/managers/UiManager';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { AssetHistoryDTO } from '#logic/types/AssetHistory';
@@ -19,6 +18,7 @@ import PromptDialog from '#components/Common/PromptDialog.vue';
 import type { AssetsFullResult } from '#logic/types/AssetsType';
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export class AssetHistoryVM {
   projectContext: IProjectContext;
@@ -114,8 +114,8 @@ export class AssetHistoryVM {
     const changed_asset = unref(changed_asset_version);
     if (!changed_asset) return;
     const full = copyAssetFullData(changed_asset);
-    const new_title = await this.projectContext.appManager
-      .get(DialogManager)
+    const new_title = await this.projectContext
+      .get(DialogSubContext)
       .show(PromptDialog, {
         header: this.projectContext.appManager.$t('gddPage.saveAsCopy', {
           element: convertTranslatedTitle(
@@ -160,8 +160,8 @@ export class AssetHistoryVM {
   async rollbackChange(change_id: string) {
     const historyRecord = this.history.list.find((r) => r.id === change_id);
     if (!historyRecord) return;
-    const confirm = await this.projectContext.appManager
-      .get(DialogManager)
+    const confirm = await this.projectContext
+      .get(DialogSubContext)
       .show(ConfirmDialog, {
         header: this.projectContext.appManager.$t('common.dialogs.confirm'),
         message: this.projectContext.appManager.$t(
@@ -184,8 +184,8 @@ export class AssetHistoryVM {
       (r) => r.id === change_id,
     );
     if (historyRecordIndex < 0) return;
-    const confirm = await this.projectContext.appManager
-      .get(DialogManager)
+    const confirm = await this.projectContext
+      .get(DialogSubContext)
       .show(ConfirmDialog, {
         header: this.projectContext.appManager.$t('common.dialogs.confirm'),
         message: this.projectContext.appManager.$t(

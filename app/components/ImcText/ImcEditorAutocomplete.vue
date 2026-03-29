@@ -91,7 +91,6 @@ import type { PropType } from 'vue';
 import { defineComponent, inject } from 'vue';
 import type { ImcLinkOption, ImcLinksModule } from './ImcLinksModule';
 import './quill-init';
-import DialogManager from '../../logic/managers/DialogManager';
 import SelectAssetDialog from '../Asset/SelectAssetDialog.vue';
 import type Quill from 'quill';
 import type { ImcEditorModule } from './ImcEditorModule';
@@ -107,6 +106,7 @@ import { QuillKeys } from './utils';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 type ImcEditorAutocompleteOption =
   | ImcLinkOption
@@ -201,20 +201,18 @@ export default defineComponent({
         if (!gdd_workspace) return;
 
         if (option.value === 'search-button') {
-          const modal = this.$getAppManager()
-            .get(DialogManager)
-            .show(
-              SelectAssetDialog,
-              {
-                searchValue: getQueryAssetPropsSelection(
-                  this.searchText ? this.searchText.trim() : '',
-                ),
-                where: {
-                  workspaceids: gdd_workspace.id,
-                },
+          const modal = this.projectContext.get(DialogSubContext).show(
+            SelectAssetDialog,
+            {
+              searchValue: getQueryAssetPropsSelection(
+                this.searchText ? this.searchText.trim() : '',
+              ),
+              where: {
+                workspaceids: gdd_workspace.id,
               },
-              this,
-            );
+            },
+            this,
+          );
           imceditor.addModalPromise(modal);
           const res = await modal;
           if (res) {
@@ -228,18 +226,16 @@ export default defineComponent({
             } as ImcLinkOption);
           }
         } else if (option.value === 'create-button') {
-          const modal = this.$getAppManager()
-            .get(DialogManager)
-            .show(
-              FastCreateAssetDialog,
-              {
-                set: {
-                  title: this.searchText ? this.searchText.trim() : '',
-                  workspaceId: gdd_workspace.id,
-                },
+          const modal = this.projectContext.get(DialogSubContext).show(
+            FastCreateAssetDialog,
+            {
+              set: {
+                title: this.searchText ? this.searchText.trim() : '',
+                workspaceId: gdd_workspace.id,
               },
-              this,
-            );
+            },
+            this,
+          );
           imceditor.addModalPromise(modal);
           const res = await modal;
           if (res) {

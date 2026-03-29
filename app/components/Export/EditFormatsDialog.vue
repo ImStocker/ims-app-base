@@ -170,6 +170,7 @@ import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 type DialogProps = {
   selectable?: boolean;
@@ -276,8 +277,8 @@ export default defineComponent({
       await this.load();
     },
     async deleteFormat(id: string) {
-      const confirm = await this.projectContext.appManager
-        .get(DialogManager)
+      const confirm = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('importExport.formats.deleteFormat'),
           message: this.$t('importExport.formats.deleteFormatConfirm'),

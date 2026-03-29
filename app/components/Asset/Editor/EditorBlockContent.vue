@@ -38,9 +38,9 @@
               v-for="slotName of Object.keys($slots)"
               :key="slotName"
               #[slotName]="slotData"
-              ><slot :name="slotName"
-v-bind="slotData"
-            /></template>
+            >
+              <slot :name="slotName" v-bind="slotData" />
+            </template>
           </component>
         </component>
       </template>

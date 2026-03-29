@@ -109,7 +109,6 @@ import {
 } from '../../logic/types/Rights';
 import RequestSignInBlock from '../Form/RequestSignInBlock.vue';
 import AuthManager from '../../logic/managers/AuthManager';
-import DialogManager from '../../logic/managers/DialogManager';
 import SetUpAccessDialog from '../Asset/Rights/SetUpAccessDialog.vue';
 import { useWorkspaceBreadcrumbs } from './workspaceUtils';
 import WorkspaceCollectionContent from './WorkspaceCollectionContent.vue';
@@ -122,6 +121,7 @@ import CreateAssetBox from '../Asset/CreateAssetBox.vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'WorkspaceCollectionPage',
@@ -267,7 +267,7 @@ export default defineComponent({
         });
     },
     async openSetUpAccessDialog() {
-      await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
+      await this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
         workspaceId: this.workspaceId,
       });
     },
@@ -279,16 +279,14 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(DialogManager)
-            .show(
-              defineAsyncComponent(
-                () => import('../Asset/AssetPreviewDialog.vue'),
-              ),
-              {
-                assetId: base_asset.id,
-              },
-            );
+          await this.projectContext.get(DialogSubContext).show(
+            defineAsyncComponent(
+              () => import('../Asset/AssetPreviewDialog.vue'),
+            ),
+            {
+              assetId: base_asset.id,
+            },
+          );
         });
     },
   },

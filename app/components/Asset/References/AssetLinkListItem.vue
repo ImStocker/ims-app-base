@@ -102,10 +102,8 @@ import type {
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import UiManager from '../../../logic/managers/UiManager';
-import DialogManager from '../../../logic/managers/DialogManager';
 import AssetPreviewDialog from '../AssetPreviewDialog.vue';
 import { getTaskColorValue } from '../../../logic/utils/tasks';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import { openProjectLink } from '../../../logic/router/routes-helpers';
 import ProjectLink from '../../Common/ProjectLink.vue';
 import MenuButton from '../../Common/MenuButton.vue';
@@ -115,6 +113,7 @@ import { assert } from '../../../logic/utils/typeUtils';
 import { TASK_ASSET_ID } from '../../../logic/constants';
 import { inject } from 'vue';
 import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'AssetLinkListItem',
@@ -288,8 +287,8 @@ export default defineComponent({
               deleteRef: (silent?: boolean) => this.deleteLink(silent),
             });
         } else {
-          await this.$getAppManager()
-            .get(DialogManager)
+          await this.projectContext
+            .get(DialogSubContext)
             .create(AssetPreviewDialog, {
               assetId: this.targetAssetId,
               deleteRef: (silent?: boolean) => this.deleteLink(silent),

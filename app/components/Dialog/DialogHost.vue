@@ -16,8 +16,11 @@
 </template>
 
 <script type="text/ecmascript-6">
-import DialogManager from '../../logic/managers/DialogManager';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { inject } from 'vue';
 import DialogHostOneDialog from './DialogHostDialog.vue';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 // Список классов, которые позволяют игнорировать требования нахождения внутри активного диалога, чтобы сфокусироваться
 const allowed_focus_classes = [];
@@ -63,6 +66,13 @@ export default {
     },
     // eslint-disable-next-line vue/require-prop-types
     props: [ 'dialogs' ],
+    setup() {
+      const projectContext = inject(injectedProjectContext);
+      assert(projectContext, 'Project context not provided');
+      return {
+        projectContext,
+      };
+    },
     computed:{
         hasDialogs(){
             return this.dialogs && this.dialogs.length > 0;
@@ -85,7 +95,7 @@ export default {
         },
     },
     mounted(){
-        this.$getAppManager().get(DialogManager).dialogHost = this;
+        this.projectContext.get(DialogSubContext).dialogHost = this;
     },
     unmounted(){
         if (this._focus_guard_handler) {

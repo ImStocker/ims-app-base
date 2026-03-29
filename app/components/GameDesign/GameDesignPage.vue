@@ -24,12 +24,12 @@ import {
   TASK_ASSET_ID,
   TASK_LIST_ASSET_ID,
 } from '../../logic/constants';
-import DialogManager from '../../logic/managers/DialogManager';
 import AssetPropsDialog from '../Asset/AssetPropsDialog.vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'GameDesignPage',
@@ -230,7 +230,7 @@ export default defineComponent({
     async openLocale() {
       const asset_full = this.vm.assetFullEditorVM.getOpenedAssetFull();
       if (!asset_full) return null;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'locale',
       });
@@ -238,7 +238,7 @@ export default defineComponent({
     async openProps() {
       const asset_full = this.vm.assetFullEditorVM.getOpenedAssetFull();
       if (!asset_full) return null;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'props',
       });

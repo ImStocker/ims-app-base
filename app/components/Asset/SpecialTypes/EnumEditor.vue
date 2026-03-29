@@ -30,7 +30,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
 import type { AssetChanger } from '../../../logic/types/AssetChanger';
 import {
@@ -41,8 +41,10 @@ import type { EnumItem } from './EnumEditor';
 import EnumEditorItem from './EnumEditorItem.vue';
 import SortableList from '../../Common/SortableList.vue';
 import { generateNextUniqueNameNumber } from '../../../logic/utils/stringUtils';
-import DialogManager from '../../../logic/managers/DialogManager';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'EnumEditor',
@@ -63,6 +65,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     enumItems(): EnumItem[] {
@@ -124,8 +133,8 @@ export default defineComponent({
       }
     },
     async deleteElement(item: EnumItem) {
-      const confirm = await this.$getAppManager()
-        .get(DialogManager)
+      const confirm = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('assetEditor.enum.deleteElement'),
           message: this.$t('assetEditor.enum.deleteElementConfirm'),

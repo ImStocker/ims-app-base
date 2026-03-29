@@ -147,7 +147,6 @@ import RenamableText from '../../Common/RenamableText.vue';
 import UiManager, {
   type DoTaskResult,
 } from '../../../logic/managers/UiManager';
-import DialogManager from '../../../logic/managers/DialogManager';
 import PromptDialog from '../../Common/PromptDialog.vue';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import CaptionString from '../../Common/CaptionString.vue';
@@ -181,6 +180,7 @@ import AssetReferenceList from '../References/AssetReferenceList.vue';
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'EditorBlock',
@@ -526,8 +526,8 @@ export default defineComponent({
       return res;
     },
     async deleteBlock() {
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('assetEditor.blockMenu.delete'),
           message: this.$t('assetEditor.blockMenu.deleteConfirm'),
@@ -554,8 +554,8 @@ export default defineComponent({
       this.startRenaming();
     },
     async setServiceName() {
-      const new_name = await this.$getAppManager()
-        .get(DialogManager)
+      const new_name = await this.projectContext
+        .get(DialogSubContext)
         .show(PromptDialog, {
           header: this.$t('common.dialogs.rename'),
           message: this.$t('profilePage.inputServiceBlockName'),
@@ -632,8 +632,8 @@ export default defineComponent({
       this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          await this.$getAppManager()
-            .get(DialogManager)
+          await this.projectContext
+            .get(DialogSubContext)
             .show(AssetRefsDialog, {
               assetIds: [asset.id],
               blockId: this.resolvedBlock.id,
@@ -641,8 +641,8 @@ export default defineComponent({
         });
     },
     async restoreInitialValues() {
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('assetEditor.blockMenu.restoreInitialValues'),
           message: this.$t('assetEditor.blockMenu.restoreInitialValuesConfirm'),

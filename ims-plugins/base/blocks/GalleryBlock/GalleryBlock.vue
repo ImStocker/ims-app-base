@@ -89,12 +89,9 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import UiManager from '#logic/managers/UiManager';
-import type {
-  AssetDisplayMode,
-  ResolvedAssetBlock,
-} from '#logic/utils/assets';
+import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import {
   extractGalleryBlockEntries,
   type GalleryBlockExtractedEntries,
@@ -107,7 +104,6 @@ import {
   normalizeAssetPropPart,
 } from '#logic/types/Props';
 import MenuButton from '#components/Common/MenuButton.vue';
-import DialogManager from '#logic/managers/DialogManager';
 import { nodeContainsElement } from '#components/utils/DomElementUtils';
 import SortableList from '#components/Common/SortableList.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
@@ -116,9 +112,13 @@ import MenuList from '#components/Common/MenuList.vue';
 import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import ScreenshotRenderer from '#components/Common/ScreenshotRenderer.vue';
-import type { UploadingJob } from '#logic/managers/EditorManager';
-import EditorSubContext from '#logic/managers/EditorManager';
 import { getNextIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import EditorSubContext, {
+  type UploadingJob,
+} from '#logic/project-sub-contexts/EditorSubContext';
 
 const AllowedExtensions = new Set(['jpg', 'jpeg', 'png', 'bmp', 'svg', 'gif']);
 
@@ -154,6 +154,13 @@ export default defineComponent({
     },
   },
   emits: ['save', 'view-ready'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       dragEffect: 0,
@@ -208,7 +215,7 @@ export default defineComponent({
       return this.realEntries.list;
     },
     projectId() {
-      return this.assetBlockEditor.projectInfo.id;
+      return this.projectContext.projectInfo.id;
     },
     uploadProgressPercent() {
       if (this.uploadTotal <= 0) {
@@ -220,7 +227,7 @@ export default defineComponent({
       return Math.round(val * 100);
     },
     getProjectInfo(): any {
-      return this.assetBlockEditor.projectInfo;
+      return this.projectContext.projectInfo;
     },
   },
   watch: {
@@ -278,7 +285,7 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          this.uploadJob = this.$getAppManager()
+          this.uploadJob = this.projectContext
             .get(EditorSubContext)
             .attachFile(blob, file_name);
           const res = await this.uploadJob.awaitResult();
@@ -358,8 +365,8 @@ export default defineComponent({
         });
     },
     async addVideoLink() {
-      const video = await this.$getAppManager()
-        .get(DialogManager)
+      const video = await this.projectContext
+        .get(DialogSubContext)
         .show(ExternalLinkDialog, {
           yesCaption: this.$t('common.dialogs.save'),
           header: this.$t('assetEditor.galleryBlockAddVideoLinkMessage'),
@@ -386,8 +393,8 @@ export default defineComponent({
       }
     },
     async addImageLink() {
-      const image = await this.$getAppManager()
-        .get(DialogManager)
+      const image = await this.projectContext
+        .get(DialogSubContext)
         .show(ExternalLinkDialog, {
           yesCaption: this.$t('common.dialogs.save'),
           fileType: 'image',

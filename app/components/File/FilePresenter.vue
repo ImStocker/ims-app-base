@@ -72,7 +72,6 @@
 <script lang="ts">
 import type { PropType } from 'vue';
 import { defineAsyncComponent, defineComponent, inject } from 'vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type {
   AssetPropValue,
@@ -91,6 +90,7 @@ import { getSrcByFileId } from '../../logic/utils/files';
 import EditorSubContext from '../../logic/project-sub-contexts/EditorSubContext';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'FilePresenter',
@@ -224,11 +224,9 @@ export default defineComponent({
       if (ev.ctrlKey || ev.metaKey || !this.fileInfo?.inlineType) {
         await this.downloadFile();
       } else {
-        this.projectContext.appManager
-          .get(DialogManager)
-          .show(FilePresenterDialog, {
-            value: this.value,
-          });
+        this.projectContext.get(DialogSubContext).show(FilePresenterDialog, {
+          value: this.value,
+        });
       }
     },
   },

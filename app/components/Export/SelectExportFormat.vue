@@ -19,7 +19,6 @@
 <script lang="ts">
 import { defineComponent, inject, type PropType } from 'vue';
 import ImsSelect from '../Common/ImsSelect.vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import EditFormatsDialog from './EditFormatsDialog.vue';
 import { getWorkspaceBaseAssetId } from '../Sync/getBaseAsset';
 import { filterFormatsByAssetType } from './filterFormatsByAssetType';
@@ -29,6 +28,7 @@ import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'SelectExportFormat',
@@ -106,8 +106,8 @@ export default defineComponent({
       }
     },
     async openFormatsSettings() {
-      const res = await this.projectContext.appManager
-        .get(DialogManager)
+      const res = await this.projectContext
+        .get(DialogSubContext)
         .show(EditFormatsDialog, {
           selectable: true,
           assetSelection: this.assetSelection,

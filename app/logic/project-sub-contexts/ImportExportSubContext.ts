@@ -1,6 +1,5 @@
 import { defineAsyncComponent } from 'vue';
 import type { Workspace } from '../types/Workspaces';
-import DialogManager from '../managers/DialogManager';
 import UiManager, { ToastTypes } from '../managers/UiManager';
 import {
   DEFAULT_PROJECT_EXPORT_SETTINGS,
@@ -28,6 +27,7 @@ import {
 } from '#logic/types/Props';
 import { AssetSubContext } from './AssetSubContext';
 import SettingsSubContext from './SettingsSubContext';
+import { DialogSubContext } from './DialogSubContext';
 
 export function getExportFormatFieldRef({
   block_name,
@@ -233,8 +233,8 @@ export default class ImportExportSubContext extends ProjectSubContext {
       const ProjectImportDialog = defineAsyncComponent(
         () => import('../../components/Project/ProjectImportDialog.vue'),
       );
-      await this.projectContext.appManager
-        .get(DialogManager)
+      await this.projectContext
+        .get(DialogSubContext)
         .show(ProjectImportDialog, {
           files,
           workspaceId: target_workspace_id,
@@ -260,8 +260,8 @@ export default class ImportExportSubContext extends ProjectSubContext {
           const ConfirmDialog = defineAsyncComponent(
             () => import('../../components/Common/ConfirmDialog.vue'),
           );
-          const answer = await this.projectContext.appManager
-            .get(DialogManager)
+          const answer = await this.projectContext
+            .get(DialogSubContext)
             .show(ConfirmDialog, {
               header: this.projectContext.appManager.$t(
                 'importExport.importAsset',
@@ -287,8 +287,8 @@ export default class ImportExportSubContext extends ProjectSubContext {
       const ExportToDocumentDialog = defineAsyncComponent(
         () => import('../../components/Asset/ExportToDocumentDialog.vue'),
       );
-      const dialog = this.projectContext.appManager
-        .get(DialogManager)
+      const dialog = this.projectContext
+        .get(DialogSubContext)
         .create(ExportToDocumentDialog, {
           workspaceId: workspace.id,
           type,
@@ -324,8 +324,8 @@ export default class ImportExportSubContext extends ProjectSubContext {
       const ExportToDocumentDialog = defineAsyncComponent(
         () => import('../../components/Asset/ExportToDocumentDialog.vue'),
       );
-      await this.projectContext.appManager
-        .get(DialogManager)
+      await this.projectContext
+        .get(DialogSubContext)
         .show(ExportToDocumentDialog, {
           assetIds: [asset.id],
           type,
@@ -367,8 +367,8 @@ export default class ImportExportSubContext extends ProjectSubContext {
     const EditFormatsDialog = defineAsyncComponent(
       () => import('../../components/Export/EditFormatsDialog.vue'),
     );
-    const res = await this.projectContext.appManager
-      .get(DialogManager)
+    const res = await this.projectContext
+      .get(DialogSubContext)
       .show(EditFormatsDialog, {
         selectable: true,
         // TODO: fix types

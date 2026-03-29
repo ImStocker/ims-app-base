@@ -22,8 +22,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
-import DialogManager from '../../logic/managers/DialogManager';
+import { defineComponent, inject } from 'vue';
 import type {
   AssetPropValue,
   AssetPropValueFile,
@@ -33,6 +32,9 @@ import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import FileAttachButton from '../File/FileAttachButton.vue';
 import FilePresenter from '../File/FilePresenter.vue';
 import type { UploadingJob } from '#logic/project-sub-contexts/EditorSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AttachmentPropEditor',
@@ -50,6 +52,13 @@ export default defineComponent({
     disable: { type: Boolean, default: false },
   },
   emits: ['update:modelValue', 'blur'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       uploadingJob: null as UploadingJob | null,
@@ -92,17 +101,15 @@ export default defineComponent({
       if (!this.modelValue) {
         return;
       }
-      const res = await this.projectContext
-        .get(DialogManager)
-        .show(
-          ConfirmDialog,
-          {
-            header: this.$t('file.dettachFile'),
-            message: this.$t('file.dettachFileConfirmation'),
-            danger: true,
-          },
-          this,
-        );
+      const res = await this.projectContext.get(DialogSubContext).show(
+        ConfirmDialog,
+        {
+          header: this.$t('file.dettachFile'),
+          message: this.$t('file.dettachFileConfirmation'),
+          danger: true,
+        },
+        this,
+      );
       if (res) {
         this.$emit('update:modelValue', null);
       }

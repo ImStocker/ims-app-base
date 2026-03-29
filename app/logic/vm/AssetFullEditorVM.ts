@@ -1,6 +1,5 @@
 import type { AssetsFullResult, AssetShort } from '../types/AssetsType';
 import AssetSettingsDialog from '../../components/Asset/AssetSettingsDialog.vue';
-import DialogManager from '../managers/DialogManager';
 import UiManager from '../managers/UiManager';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
 import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.vue';
@@ -11,6 +10,7 @@ import { AssetHistoryVM } from './AssetHistoryVM';
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import { serializeAssetFullInstances } from '#logic/project-sub-contexts/Asset/serializeAssetFullInstances';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export class AssetFullEditorVM {
   projectContext: IProjectContext;
@@ -140,12 +140,11 @@ export class AssetFullEditorVM {
 
   async changeAsset(assetIds: string[]) {
     await this.projectContext.appManager.get(UiManager).doTask(async () => {
-      const res: AssetsFullResult | undefined =
-        await this.projectContext.appManager
-          .get(DialogManager)
-          .show(AssetSettingsDialog, {
-            assetIds,
-          });
+      const res: AssetsFullResult | undefined = await this.projectContext
+        .get(DialogSubContext)
+        .show(AssetSettingsDialog, {
+          assetIds,
+        });
       if (res) {
         await this.load();
       }
@@ -154,8 +153,8 @@ export class AssetFullEditorVM {
 
   async openAssetPreviewDialog(assetId: string) {
     this.projectContext.appManager.get(UiManager).doTask(async () => {
-      const _res = await this.projectContext.appManager
-        .get(DialogManager)
+      const _res = await this.projectContext
+        .get(DialogSubContext)
         .show(AssetPreviewDialog, {
           assetId,
         });
@@ -170,11 +169,9 @@ export class AssetFullEditorVM {
       const AssetLinksDialog = (
         await import('../../components/Asset/AssetLinksDialog.vue')
       ).default;
-      await this.projectContext.appManager
-        .get(DialogManager)
-        .show(AssetLinksDialog, {
-          assetIds,
-        });
+      await this.projectContext.get(DialogSubContext).show(AssetLinksDialog, {
+        assetIds,
+      });
     });
   }
 
@@ -182,12 +179,10 @@ export class AssetFullEditorVM {
     if (!this.openedAssetId) return;
     const asset_id = this.openedAssetId;
     await this.projectContext.appManager.get(UiManager).doTask(async () => {
-      await this.projectContext.appManager
-        .get(DialogManager)
-        .show(AssetRefsDialog, {
-          assetIds: [asset_id],
-          reverse,
-        });
+      await this.projectContext.get(DialogSubContext).show(AssetRefsDialog, {
+        assetIds: [asset_id],
+        reverse,
+      });
     });
   }
 

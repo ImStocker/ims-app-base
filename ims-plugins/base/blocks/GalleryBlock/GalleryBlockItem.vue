@@ -43,9 +43,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
-import DialogManager from '#logic/managers/DialogManager';
-import ProjectManager from '#logic/managers/ProjectManager';
+import { type PropType, defineComponent, inject } from 'vue';
 import UiManager from '#logic/managers/UiManager';
 import {
   type AssetPropValueFile,
@@ -57,7 +55,10 @@ import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import type { GalleryBlockItemObject } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
-import EditorSubContext from '#logic/managers/EditorManager';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 
 export default defineComponent({
   name: 'GalleryBlockItem',
@@ -79,6 +80,13 @@ export default defineComponent({
     },
   },
   emits: ['save', 'delete'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       loadDone: false,
@@ -116,13 +124,11 @@ export default defineComponent({
       ];
     },
     extimageClick() {
-      this.$getAppManager()
-        .get(DialogManager)
-        .show(FilePresenterDialog, {
-          value: this.itemValueAsString,
-          files: this.files.map((el) => el.value),
-          type: this.item.type,
-        });
+      this.projectContext.get(DialogSubContext).show(FilePresenterDialog, {
+        value: this.itemValueAsString,
+        files: this.files.map((el) => el.value),
+        type: this.item.type,
+      });
     },
     async fileClick(ev: MouseEvent) {
       const file = this.item.value as AssetPropValueFile;
@@ -133,17 +139,15 @@ export default defineComponent({
           .get(UiManager)
           .doTask(async () => {
             if (!this.item.value) return;
-            await this.$getAppManager()
+            await this.projectContext
               .get(EditorSubContext)
               .downloadAttachment(file);
           });
       } else {
-        this.$getAppManager()
-          .get(DialogManager)
-          .show(FilePresenterDialog, {
-            value: file,
-            files: this.files.map((el) => el.value),
-          });
+        this.projectContext.get(DialogSubContext).show(FilePresenterDialog, {
+          value: file,
+          files: this.files.map((el) => el.value),
+        });
       }
     },
   },

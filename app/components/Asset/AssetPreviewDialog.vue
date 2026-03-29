@@ -159,9 +159,7 @@ import CaptionString from '../Common/CaptionString.vue';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import RenamableText from '../Common/RenamableText.vue';
-import DialogManager, {
-  type DialogInterface,
-} from '../../logic/managers/DialogManager';
+import type { DialogInterface } from '../../logic/managers/DialogManager';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
 import ProjectLink from '../Common/ProjectLink.vue';
@@ -189,6 +187,7 @@ import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 type DialogProps = {
   assetId: string;
@@ -424,7 +423,7 @@ export default defineComponent({
     async openProps() {
       const asset_full = this.assetEditor.getOpenedAssetFull();
       if (!asset_full) return;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'props',
       });
@@ -442,7 +441,7 @@ export default defineComponent({
       }
     },
     async openSetUpAccessDialog() {
-      await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
+      await this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
         assetId: this.dialog.state.assetId,
       });
     },
@@ -488,8 +487,8 @@ export default defineComponent({
       this.dialog.close(this.currentAssetFull);
     },
     async deleteAsset() {
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('sourcePage.elements.delete') + '?',
           message: this.$t('sourcePage.elements.deleteElementConfirm', {
@@ -556,7 +555,7 @@ export default defineComponent({
     async openLocale() {
       const asset_full = this.currentAssetFull;
       if (!asset_full) return null;
-      await this.$getAppManager().get(DialogManager).show(AssetPropsDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPropsDialog, {
         assetFull: asset_full,
         propName: 'locale',
       });

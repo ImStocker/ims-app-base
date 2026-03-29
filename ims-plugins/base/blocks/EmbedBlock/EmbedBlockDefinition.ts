@@ -1,7 +1,7 @@
 import { BlockTypeDefinition } from '#logic/types/BlockTypeDefinition';
-import type { IAppManager } from '#logic/managers/IAppManager';
 import type { AssetProps } from '#logic/types/Props';
-import DialogManager from '#logic/managers/DialogManager';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export class EmbedBlockDefinition extends BlockTypeDefinition {
   name = 'embed';
@@ -10,15 +10,17 @@ export class EmbedBlockDefinition extends BlockTypeDefinition {
 
   override focusOnAdded = false;
   override async beforeBlockCreate(
-    appManager: IAppManager,
+    projectContext: IProjectContext,
     params: { title: string },
   ): Promise<{ title: string; props?: AssetProps } | undefined> {
     const AddEmbedDialog = (await import('./AddEmbedDialog.vue')).default;
-    const res = await appManager.get(DialogManager).show(AddEmbedDialog, {
-      link: '',
-      title: params.title,
-      canRename: true,
-    });
+    const res = await projectContext
+      .get(DialogSubContext)
+      .show(AddEmbedDialog, {
+        link: '',
+        title: params.title,
+        canRename: true,
+      });
     if (!res) return undefined;
     return {
       title: params.title,

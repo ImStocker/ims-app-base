@@ -175,7 +175,6 @@ import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import type { MenuListItem } from '../../../logic/types/MenuList';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import CaptionString from '../../Common/CaptionString.vue';
 import { BLOCK_NAME_META, TASK_ASSET_ID } from '../../../logic/constants';
 import { AssetRights } from '../../../logic/types/Rights';
@@ -261,8 +260,7 @@ export default defineComponent({
       return getCompletionDisplay(this.info, this.dirtyCompleteSet);
     },
     canEditMilestones() {
-      return !!this.projectContext.user?.role
-        ?.isAdmin;
+      return !!this.projectContext.user?.role?.isAdmin;
     },
     milestoneInfoSelected() {
       if (this.info?.planMilestone) {

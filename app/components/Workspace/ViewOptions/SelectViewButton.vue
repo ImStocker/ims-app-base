@@ -51,10 +51,8 @@
   </menu-button>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { ICollectionBlockController } from '~ims-plugin-base/blocks/CollectionBlock/CollectionBlockController';
-import DialogManager from '../../../logic/managers/DialogManager';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import UiManager from '../../../logic/managers/UiManager';
 import { normalizeAssetPropPart } from '../../../logic/types/Props';
 import { getNextIndexWithTimestamp } from '../../Asset/Editor/blockUtils';
@@ -64,6 +62,9 @@ import CaptionString from '../../Common/CaptionString.vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import SelectViewBox from './SelectViewBox.vue';
 import ViewSettingsDialog from './ViewSettingsDialog.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'SelectViewButton',
@@ -79,6 +80,13 @@ export default defineComponent({
     },
   },
   emits: ['selectView'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       dropdownShown: false,
@@ -147,8 +155,8 @@ export default defineComponent({
           let new_view_key: string;
 
           if (view) {
-            const changed_user_view = await this.$getAppManager()
-              .get(DialogManager)
+            const changed_user_view = await this.projectContext
+              .get(DialogSubContext)
               .show(ViewSettingsDialog, {
                 header: this.$t('viewSettings.changeView'),
                 buttonTitle: this.$t('viewSettings.saveView'),
@@ -166,8 +174,8 @@ export default defineComponent({
               };
             }
           } else {
-            const new_view = await this.$getAppManager()
-              .get(DialogManager)
+            const new_view = await this.projectContext
+              .get(DialogSubContext)
               .show(ViewSettingsDialog, {
                 header: this.$t('viewSettings.createView'),
                 buttonTitle: this.$t('viewSettings.saveView'),

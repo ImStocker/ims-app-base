@@ -81,7 +81,6 @@ import type {
   AssetSetDTO,
 } from '../../logic/types/AssetsType';
 import CaptionString from '../Common/CaptionString.vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import FastCreateAssetDialog from './FastCreateAssetDialog.vue';
 import { openProjectLink } from '../../logic/router/routes-helpers';
 import SelectAssetDialog from './SelectAssetDialog.vue';
@@ -188,8 +187,8 @@ export default defineComponent({
     async createAsset(parent_id?: string, title: string | null = null) {
       this.dispatchMenuActionExecutedEvent();
       if (!parent_id) {
-        const parent_asset = await this.$getAppManager()
-          .get(DialogManager)
+        const parent_asset = await this.projectContext
+          .get(DialogSubContext)
           .show(SelectAssetDialog, {
             where: {
               workspaceids:
@@ -223,8 +222,8 @@ export default defineComponent({
         set.title = title;
       }
 
-      const new_asset = await this.$getAppManager()
-        .get(DialogManager)
+      const new_asset = await this.projectContext
+        .get(DialogSubContext)
         .show(FastCreateAssetDialog, {
           set: { ...set },
           parentId: parent_id,

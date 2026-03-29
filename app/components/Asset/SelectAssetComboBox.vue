@@ -94,13 +94,13 @@ import type {
   AssetForSelection,
   AssetShort,
 } from '../../logic/types/AssetsType';
-import DialogManager from '../../logic/managers/DialogManager';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import AssetIcon from './AssetIcon.vue';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import { matchAssetsWithWhere } from '#logic/project-sub-contexts/Asset/matchAssetsWithWhere';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'SelectAssetComboBox',
@@ -203,7 +203,7 @@ export default defineComponent({
       return this.modelValue ? 'file-fill' : null;
     },
     dialogManager() {
-      return this.$getAppManager().get(DialogManager);
+      return this.projectContext.get(DialogSubContext);
     },
     creatingType(): AssetShort | null {
       if (!this.creatingTypeId) {

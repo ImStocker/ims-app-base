@@ -62,8 +62,8 @@ import {
 } from '#logic/types/AssetFullInstance';
 import { AssetRights } from '#logic/types/Rights';
 import type { EditorBlockHandler } from '#components/Asset/Editor/EditorBlock';
-import DialogManager from '#logic/managers/DialogManager';
 import AssetPreviewDialog from '#components/Asset/AssetPreviewDialog.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'BlockMirrorBlock',
@@ -168,7 +168,7 @@ export default defineComponent({
   methods: {
     async enterEditMode() {
       if (!this.asset) return;
-      await this.$getAppManager().get(DialogManager).show(AssetPreviewDialog, {
+      await this.projectContext.get(DialogSubContext).show(AssetPreviewDialog, {
         assetId: this.asset.AssetId,
       });
     },

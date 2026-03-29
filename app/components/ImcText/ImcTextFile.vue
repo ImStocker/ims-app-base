@@ -48,15 +48,17 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import FilePresenter from '../File/FilePresenter.vue';
 import type { ImcFileBlotData } from '../ImcText/blots/ImcFileBlot';
 import './quill-init';
 import { IMC_FILE_BLOT_CLASS } from './blots/ImcFileBlot';
-import DialogManager from '../../logic/managers/DialogManager';
 import FilePresenterDialog from '../File/FilePresenterDialog.vue';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import { useFilePresenterParams } from '../File/FilePresenter';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'ImcTextFile',
@@ -72,6 +74,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -144,7 +153,7 @@ export default defineComponent({
           });
         }
 
-        this.$getAppManager().get(DialogManager).show(FilePresenterDialog, {
+        this.projectContext.get(DialogSubContext).show(FilePresenterDialog, {
           value: this.file.value,
           files: same_content_id_files,
         });

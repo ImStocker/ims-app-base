@@ -7,8 +7,6 @@ import { defineAsyncComponent, markRaw, reactive, unref } from 'vue';
 import type { IEditorVM } from '../vm/IEditorVM';
 import { openProjectLink } from '../router/routes-helpers';
 import UiManager from '../managers/UiManager';
-import DialogManager from '../managers/DialogManager';
-import { makeAnchorTagId } from '../utils/assets';
 import type { AssetPropValueFile } from '../types/Props';
 import { getSrcByFileId } from '../utils/files';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
@@ -17,6 +15,8 @@ import {
   type IProjectContext,
 } from '#logic/types/IProjectContext';
 import { AssetSubContext } from './AssetSubContext';
+import { DialogSubContext } from './DialogSubContext';
+import { makeAnchorTagId } from '#logic/utils/assets';
 
 export interface UploadingJob {
   result: AssetPropValueFile | null | undefined;
@@ -241,8 +241,8 @@ export default abstract class EditorSubContext extends ProjectSubContext {
     if (target === 'popup') {
       opened = import('../../components/Asset/AssetPreviewDialog.vue').then(
         async (dialogComponent) => {
-          const dialog = this.projectContext.appManager
-            .get(DialogManager)
+          const dialog = this.projectContext
+            .get(DialogSubContext)
             .create(dialogComponent.default, {
               assetId,
             });

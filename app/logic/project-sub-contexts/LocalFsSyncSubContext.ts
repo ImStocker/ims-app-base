@@ -22,7 +22,6 @@ import {
 import { AssetPropWhereOpKind, type AssetPropWhere } from '../types/PropsWhere';
 import type { WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import { assert } from '../utils/typeUtils';
-import DialogManager from '../managers/DialogManager';
 import UiManager from '../managers/UiManager';
 import UiPreferenceManager from '../managers/UiPreferenceManager';
 import type UserCodeExecuteManager from '../local-fs-sync/UserCodeExecuteManager';
@@ -34,6 +33,7 @@ import {
 import { AssetSubContext } from './AssetSubContext';
 import ImportExportSubContext from './ImportExportSubContext';
 import SettingsSubContext from './SettingsSubContext';
+import { DialogSubContext } from './DialogSubContext';
 
 const SYNC_CHUNK_SIZE = 50;
 
@@ -440,8 +440,8 @@ export default class LocalFsSyncSubContext extends ProjectSubContext {
         JSON.stringify(context.segments.map((s) => s.info)) !==
         JSON.stringify(rootInfo.index.segments)
       ) {
-        const confirm = await this.projectContext.appManager
-          .get(DialogManager)
+        const confirm = await this.projectContext
+          .get(DialogSubContext)
           .show(ConfirmDialog, {
             header: this.projectContext.appManager.$t('fsSync.synchronization'),
             message: this.projectContext.appManager.$t(

@@ -111,7 +111,6 @@ import AuthManager from '#logic/managers/AuthManager';
 import ChatBlockMessage from './ChatBlockMessage.vue';
 import { v4 as uuidv4 } from 'uuid';
 import UiManager from '#logic/managers/UiManager';
-import DialogManager from '#logic/managers/DialogManager';
 import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import FileAttachButton from '#components/File/FileAttachButton.vue';
 import { DISCUSSION_WORKSPACE_NAME } from '#logic/constants';
@@ -119,6 +118,7 @@ import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import CommentSubContext from '#logic/project-sub-contexts/CommentSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'ChatBlock',
@@ -304,8 +304,8 @@ export default defineComponent({
         });
     },
     async deleteMessage(message: { commentId: string; replyId: string }) {
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('discussions.delete') + '?',
           message: this.$t('discussions.deleteMessageConfirm'),

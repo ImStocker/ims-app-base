@@ -44,7 +44,6 @@ import { getCompletionDisplay, setAssetCompleted } from './AssetCompletion';
 import UiManager from '../../../logic/managers/UiManager';
 import type { AssetPreviewInfo } from '../../../logic/types/AssetsType';
 import AssetCompletionMilestoneBadge from './AssetCompletionMilestoneBadge.vue';
-import DialogManager from '../../../logic/managers/DialogManager';
 import AssetCompletionDialog from './AssetCompletionDialog.vue';
 import { AssetRights } from '../../../logic/types/Rights';
 
@@ -106,8 +105,8 @@ export default defineComponent({
       }
     },
     async openCompletionDialog() {
-      await this.$getAppManager()
-        .get(DialogManager)
+      await this.projectContext
+        .get(DialogSubContext)
         .show(AssetCompletionDialog, {
           assetId: this.assetId,
         });

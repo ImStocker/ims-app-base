@@ -50,7 +50,6 @@
 import { defineComponent, inject, type PropType } from 'vue';
 import UiManager from '../../../logic/managers/UiManager';
 import AssetHistoryRow from './AssetHistoryRow.vue';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 import { openProjectLink } from '#logic/router/routes-helpers';
 import { TASK_ASSET_ID } from '#logic/constants';

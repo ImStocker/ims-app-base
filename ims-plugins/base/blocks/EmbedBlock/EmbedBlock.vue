@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import UiPreferenceManager from '#logic/managers/UiPreferenceManager';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import {
@@ -42,7 +42,6 @@ import {
   isPropInherited,
   makeBlockRef,
 } from '#logic/types/Props';
-import DialogManager from '#logic/managers/DialogManager';
 import AddEmbedDialog from './AddEmbedDialog.vue';
 import AssetBlockResizer from '#components/Asset/Editor/AssetBlockResizer.vue';
 import {
@@ -52,6 +51,9 @@ import {
 } from '#logic/utils/assets';
 import { detectEmbedKind } from './detectEmbedKind';
 import type { AssetChanger } from '#logic/types/AssetChanger';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'EmbedBlock',
@@ -79,6 +81,13 @@ export default defineComponent({
     },
   },
   emits: ['save', 'discard'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {};
   },
@@ -140,8 +149,8 @@ export default defineComponent({
       if (this.readonly) return;
       if (this.editMode) return;
       this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
-      const res = await this.$getAppManager()
-        .get(DialogManager)
+      const res = await this.projectContext
+        .get(DialogSubContext)
         .show(AddEmbedDialog, {
           link: this.current.value,
           title: '',

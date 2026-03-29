@@ -15,12 +15,16 @@
   </div>
 </template>
 <script lang="ts">
-import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
+import {
+  defineAsyncComponent,
+  defineComponent,
+  inject,
+  type PropType,
+} from 'vue';
 import type EditorBlock from './EditorBlock.vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import { AssetRights } from '../../../logic/types/Rights';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import type { AssetPropValueEnum } from '../../../logic/types/Props';
 import {
   COLLECTION_PID,
@@ -29,6 +33,8 @@ import {
   BLOCK_NAME_META,
   BLOCK_TYPE_LOCALE,
 } from '../../../logic/constants';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetBlockFullHeightEditor',
@@ -50,6 +56,13 @@ export default defineComponent({
     },
   },
   emits: ['delete', 'update:is-dirty'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       saving: false,

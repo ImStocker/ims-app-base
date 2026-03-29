@@ -34,11 +34,11 @@ import {
 } from '../../logic/types/Props';
 import DateTimePropPresenter from './DateTimePropPresenter.vue';
 import CaptionString from '../Common/CaptionString.vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'ButtonDateTimePropEditor',
@@ -74,18 +74,16 @@ export default defineComponent({
         const action = this.caption
           ? convertTranslatedTitle(this.caption, (...args) => this.$t(...args))
           : this.$t('fields.setValue');
-        const confirmed = await this.projectContext.appManager
-          .get(DialogManager)
-          .show(
-            ConfirmDialog,
-            {
-              header: this.$t('common.dialogs.needConfirm'),
-              message: this.$t('common.dialogs.confirmationMessage', {
-                action,
-              }),
-            },
-            this,
-          );
+        const confirmed = await this.projectContext.get(DialogSubContext).show(
+          ConfirmDialog,
+          {
+            header: this.$t('common.dialogs.needConfirm'),
+            message: this.$t('common.dialogs.confirmationMessage', {
+              action,
+            }),
+          },
+          this,
+        );
         if (!confirmed) return;
       }
       const now = new Date();
@@ -94,18 +92,16 @@ export default defineComponent({
     async resetValue() {
       if (this.confirm) {
         const action = this.$t('fields.resetValue');
-        const confirmed = await this.projectContext.appManager
-          .get(DialogManager)
-          .show(
-            ConfirmDialog,
-            {
-              header: this.$t('common.dialogs.needConfirm'),
-              message: this.$t('common.dialogs.confirmationMessage', {
-                action,
-              }),
-            },
-            this,
-          );
+        const confirmed = await this.projectContext.get(DialogSubContext).show(
+          ConfirmDialog,
+          {
+            header: this.$t('common.dialogs.needConfirm'),
+            message: this.$t('common.dialogs.confirmationMessage', {
+              action,
+            }),
+          },
+          this,
+        );
         if (!confirmed) return;
       }
       this.$emit('update:modelValue', null);

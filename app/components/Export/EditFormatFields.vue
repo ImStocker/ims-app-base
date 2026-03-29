@@ -22,13 +22,15 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { AssetPropsPlainObjectValue } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import EditFormatFieldsDialog from './EditFormatFieldsDialog.vue';
 import type { ExportFormatField } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'EditFormatFields',
@@ -43,6 +45,13 @@ export default defineComponent({
     },
   },
   emits: ['update:model-value'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   computed: {
     ownModelValue: {
       get() {
@@ -59,8 +68,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          const res = await this.$getAppManager()
-            .get(DialogManager)
+          const res = await this.projectContext
+            .get(DialogSubContext)
             .show(EditFormatFieldsDialog, {
               assetId: this.assetId,
               fields: this.ownModelValue,

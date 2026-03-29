@@ -97,7 +97,7 @@
 
 <script lang="ts">
 import CenteredPage from '../Common/CenteredPage.vue';
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import ProjectTreePresenter from '../Asset/ProjectTree/ProjectTreePresenter.vue';
 import UiPreferenceManager from '../../logic/managers/UiPreferenceManager';
 import {
@@ -118,13 +118,15 @@ import {
 } from '../../logic/types/Rights';
 import RequestSignInBlock from '../Form/RequestSignInBlock.vue';
 import AuthManager from '../../logic/managers/AuthManager';
-import DialogManager from '../../logic/managers/DialogManager';
 import SetUpAccessDialog from '../Asset/Rights/SetUpAccessDialog.vue';
 import { useWorkspaceBreadcrumbs } from './workspaceUtils';
 import UiManager, { ScreenSize } from '../../logic/managers/UiManager';
 import CreateElementButtons from '../Asset/CreateElementButtons.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'GameDesignWorkspacePage',
@@ -145,6 +147,13 @@ export default defineComponent({
       type: Object as PropType<UnwrapRef<WorkspacePageVM>>,
       required: true,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   data() {
     return {
@@ -187,7 +196,10 @@ export default defineComponent({
     },
     breadCrumbs(): BreadCrumbsEntity[] | null {
       if (this.workspaceId) {
-        const list = useWorkspaceBreadcrumbs(this.workspaceId);
+        const list = useWorkspaceBreadcrumbs(
+          this.projectContext,
+          this.workspaceId,
+        );
         return [...list];
       } else {
         return null;
@@ -250,7 +262,7 @@ export default defineComponent({
       }
     },
     async openSetUpAccessDialog() {
-      await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
+      await this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
         workspaceId: this.workspaceId,
       });
     },

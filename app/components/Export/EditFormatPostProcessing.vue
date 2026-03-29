@@ -17,10 +17,12 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type { AssetPropsPlainObject } from '../../logic/types/Props';
 import UiManager from '../../logic/managers/UiManager';
-import DialogManager from '../../logic/managers/DialogManager';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'EditFormatPostProcessing',
@@ -42,6 +44,13 @@ export default defineComponent({
     },
   },
   emits: ['update:model-value'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isLoading: false,
@@ -62,8 +71,8 @@ export default defineComponent({
             ? await this.getSampleAsset()
             : null;
 
-          const res = await this.$getAppManager()
-            .get(DialogManager)
+          const res = await this.projectContext
+            .get(DialogSubContext)
             .show(EditFormatPostProcessingDialog.default, {
               jscode: this.modelValue ?? '',
               sampleAsset: sample_asset,

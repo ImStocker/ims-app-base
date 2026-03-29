@@ -1,8 +1,8 @@
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 import TaskSubContext from '#logic/project-sub-contexts/TaskSubContext';
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { BLOCK_NAME_META, TASK_ASSET_ID } from '../../../logic/constants';
-import DialogManager from '../../../logic/managers/DialogManager';
 import type { AssetFullInstanceR } from '../../../logic/types/AssetFullInstance';
 import type {
   AssetPropsParamsDTO,
@@ -112,17 +112,15 @@ export async function setAssetCompleted(
   assert(asset_set.blocks);
 
   if (val && info.completeProgress !== null && info.completeProgress < 1) {
-    const res = await projectContext.appManager
-      .get(DialogManager)
-      .show(ConfirmDialog, {
-        withCancel: true,
-        header: projectContext.appManager.$t(
-          'asset.completion.markAsCompletedConfirmHeader',
-        ),
-        message: projectContext.appManager.$t(
-          'asset.completion.markAsCompletedConfirmMessage',
-        ),
-      });
+    const res = await projectContext.get(DialogSubContext).show(ConfirmDialog, {
+      withCancel: true,
+      header: projectContext.appManager.$t(
+        'asset.completion.markAsCompletedConfirmHeader',
+      ),
+      message: projectContext.appManager.$t(
+        'asset.completion.markAsCompletedConfirmMessage',
+      ),
+    });
     if (res === null) return;
     if (res) {
       await requestAllChecklistTasksInCache(projectContext, [asset_full]);

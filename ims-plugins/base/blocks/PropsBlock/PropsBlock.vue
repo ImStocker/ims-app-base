@@ -41,7 +41,7 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import PropsBlockSheet from './PropsBlockSheet.vue';
 import type { PropsBlockExtractedEntries2 } from './PropsBlock';
 import {
@@ -89,6 +89,9 @@ import {
   isElementInteractive,
   getClosestNodeBySelector,
 } from '#components/utils/DomElementUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'PropsBlock',
@@ -129,6 +132,13 @@ export default defineComponent({
     },
   },
   emits: ['save', 'discard'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       clickOutside: null as SetClickOutsideCancel | null,
@@ -204,8 +214,8 @@ export default defineComponent({
         !!(await this.assetBlockEditor.checkHasChildrenViaCache(asset.id));
       if (!this.allowChildrenChange) {
         if (has_children) {
-          this.allowChildrenChange = !!(await this.$getAppManager()
-            .get(DialogManager)
+          this.allowChildrenChange = !!(await this.projectContext
+            .get(DialogSubContext)
             .show(
               ConfirmDialog,
               {
@@ -293,27 +303,22 @@ export default defineComponent({
     async changeServiceName(key: string, name?: string) {
       const entry = this.entries.list.find((e) => e.propKey === key);
       if (!entry) return;
-      const new_name_raw = await this.$getAppManager()
-        .get(DialogManager)
-        .show(
-          AssetServiceNameDialog,
-          {
-            header: this.$t('assetEditor.blockMenu.inputServiceName'),
-            yesCaption: this.$t('common.dialogs.rename'),
-            value: name ?? entry.propName,
-            validate: (val: string) => {
-              const err = this.validatePropName(
-                key,
-                normalizeAssetPropPart(val),
-              );
-              if (err) {
-                throw new Error(err);
-              }
-              return val;
-            },
+      const new_name_raw = await this.projectContext.get(DialogSubContext).show(
+        AssetServiceNameDialog,
+        {
+          header: this.$t('assetEditor.blockMenu.inputServiceName'),
+          yesCaption: this.$t('common.dialogs.rename'),
+          value: name ?? entry.propName,
+          validate: (val: string) => {
+            const err = this.validatePropName(key, normalizeAssetPropPart(val));
+            if (err) {
+              throw new Error(err);
+            }
+            return val;
           },
-          this,
-        );
+        },
+        this,
+      );
       if (new_name_raw === undefined || new_name_raw === null) return;
 
       const new_name = normalizeAssetPropPart(new_name_raw);

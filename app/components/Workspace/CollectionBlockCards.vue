@@ -26,12 +26,12 @@ import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import AssetPreviewDialog from '../Asset/AssetPreviewDialog.vue';
 import FastCreateAssetDialog from '../Asset/FastCreateAssetDialog.vue';
 import WorkspaceCollectionCardsOne from './CollectionBlockCardsOne.vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/WorkspaceCollectionPageVM';
 import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'CollectionBlockCards',
@@ -66,8 +66,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          const created = await this.$getAppManager()
-            .get(DialogManager)
+          const created = await this.projectContext
+            .get(DialogSubContext)
             .show(FastCreateAssetDialog, {
               set: {
                 parentIds: this.vm.baseAsset?.id ? [this.vm.baseAsset.id] : [],
@@ -78,8 +78,8 @@ export default defineComponent({
 
           if (!created) return;
 
-          await this.$getAppManager()
-            .get(DialogManager)
+          await this.projectContext
+            .get(DialogSubContext)
             .show(AssetPreviewDialog, {
               assetId: created.id,
             });

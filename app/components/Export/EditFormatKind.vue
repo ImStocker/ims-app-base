@@ -23,13 +23,15 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import { JsonSyncExportSegmentFormatOptions } from '../../logic/local-fs-sync/segments/JsonSyncExportSegment';
 import ImsSelect from '../Common/ImsSelect.vue';
 import type { AssetPropsPlainObject } from '../../logic/types/Props';
-import DialogManager from '../../logic/managers/DialogManager';
 import EditFormatPreviewDialog from './EditFormatPreviewDialog.vue';
 import type { ExportFormat } from '#logic/project-sub-contexts/ImportExportSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'EditFormatKind',
@@ -53,6 +55,13 @@ export default defineComponent({
     },
   },
   emits: ['update:model-value'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isLoading: false,
@@ -89,8 +98,8 @@ export default defineComponent({
         const sample_asset = this.getSampleAsset
           ? await this.getSampleAsset(this.ownModelValue)
           : null;
-        await this.$getAppManager()
-          .get(DialogManager)
+        await this.projectContext
+          .get(DialogSubContext)
           .show(EditFormatPreviewDialog, {
             sampleAsset: sample_asset,
           });

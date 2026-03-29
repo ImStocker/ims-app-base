@@ -9,7 +9,6 @@ import type {
   AssetShort,
   AssetWhereParams,
 } from '../types/AssetsType';
-import DialogManager from '../managers/DialogManager';
 import UiManager from '../managers/UiManager';
 import PromptDialog from '../../components/Common/PromptDialog.vue';
 import FastCreateAssetDialog from '../../components/Asset/FastCreateAssetDialog.vue';
@@ -57,6 +56,7 @@ import type { ProjectTreeItemPayload } from '../../components/Asset/ProjectTree/
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import ImportExportSubContext from '#logic/project-sub-contexts/ImportExportSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export class GameDesignMenuVM extends ProjectTreePresenterVM {
   private _searchValue: AssetPropValueSelection | null = null;
@@ -229,11 +229,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       assetActions.push({
         title: this.projectContext.appManager.$t('gddPage.setUpAccess'),
         action: () =>
-          this.projectContext.appManager
-            .get(DialogManager)
-            .show(SetUpAccessDialog, {
-              assetId: asset.id,
-            }),
+          this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
+            assetId: asset.id,
+          }),
         icon: 'ri-lock-fill',
       });
     }
@@ -244,11 +242,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         title: this.projectContext.appManager.$t('gddPage.settings'),
         icon: 'settings',
         action: () =>
-          this.projectContext.appManager
-            .get(DialogManager)
-            .show(AssetSettingsDialog, {
-              assetIds: [asset.id],
-            }),
+          this.projectContext.get(DialogSubContext).show(AssetSettingsDialog, {
+            assetIds: [asset.id],
+          }),
       });
     }
     if (asset.rights >= MIN_ASSET_RIGHTS_TO_READ) {
@@ -256,11 +252,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         title: this.projectContext.appManager.$t('gddPage.showLinks'),
         icon: 'links',
         action: () =>
-          this.projectContext.appManager
-            .get(DialogManager)
-            .show(AssetLinksDialog, {
-              assetIds: [asset.id],
-            }),
+          this.projectContext.get(DialogSubContext).show(AssetLinksDialog, {
+            assetIds: [asset.id],
+          }),
       });
     }
     if (
@@ -395,11 +389,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       workspaceActions.push({
         title: this.projectContext.appManager.$t('gddPage.setUpAccess'),
         action: () =>
-          this.projectContext.appManager
-            .get(DialogManager)
-            .show(SetUpAccessDialog, {
-              workspaceId: workspace.id,
-            }),
+          this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
+            workspaceId: workspace.id,
+          }),
         icon: 'ri-lock-fill',
       });
     }
@@ -496,10 +488,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       });
       if (
         workspace.props.type === WORKSPACE_TYPE_COLLECTION &&
-        !isWorkspaceInsideCollection(
-          this.projectContext.appManager,
-          workspace.id,
-        )
+        !isWorkspaceInsideCollection(this.projectContext, workspace.id)
       ) {
         workspaceActions.push({
           title: this.projectContext.appManager.$t(
@@ -613,8 +602,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       let fast_create_dialog;
       if (this.type === 'gdd') {
         fast_create_dialog = markRaw(
-          this.projectContext.appManager
-            .get(DialogManager)
+          this.projectContext
+            .get(DialogSubContext)
             .create(FastCreateAssetDialog, {
               set: {
                 workspaceId: parent_workspace_id,
@@ -624,8 +613,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         );
       } else {
         fast_create_dialog = markRaw(
-          this.projectContext.appManager
-            .get(DialogManager)
+          this.projectContext
+            .get(DialogSubContext)
             .create(FastCreateAssetDialog, {
               set: {
                 workspaceId: parent_workspace_id,
@@ -668,8 +657,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   async copyElement(asset: AssetShort) {
     let title = asset.title ?? '';
     if (title) title += ' - 2';
-    const new_title = await this.projectContext.appManager
-      .get(DialogManager)
+    const new_title = await this.projectContext
+      .get(DialogSubContext)
       .show(PromptDialog, {
         header: this.projectContext.appManager.$t('sourcePage.elements.copy', {
           element: convertTranslatedTitle(asset.title ?? '', (...args) =>
@@ -693,8 +682,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   }
 
   async renameElement(asset: AssetShort) {
-    const new_title = await this.projectContext.appManager
-      .get(DialogManager)
+    const new_title = await this.projectContext
+      .get(DialogSubContext)
       .show(PromptDialog, {
         header: this.projectContext.appManager.$t(
           'sourcePage.elements.rename',
@@ -725,8 +714,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   }
 
   async deleteAssetMenu(asset: AssetShort) {
-    const answer = await this.projectContext.appManager
-      .get(DialogManager)
+    const answer = await this.projectContext
+      .get(DialogSubContext)
       .show(ConfirmDialog, {
         header:
           this.projectContext.appManager.$t('sourcePage.elements.delete') + '?',
@@ -770,8 +759,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
           .get(AssetSubContext)
           .getWorkspaceByNameViaCache('gdd')
       )?.id;
-    const res = await this.projectContext.appManager
-      .get(DialogManager)
+    const res = await this.projectContext
+      .get(DialogSubContext)
       .show(CreateWorkspaceDialog, {
         ...(options ?? {}),
         parentId,
@@ -800,8 +789,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     this.deleteItemInState(`workspace:${workspace_id}`);
   }
   async deleteWorkspaceMenu(workspace: Workspace) {
-    const answer = await this.projectContext.appManager
-      .get(DialogManager)
+    const answer = await this.projectContext
+      .get(DialogSubContext)
       .show(ConfirmDialog, {
         header:
           this.projectContext.appManager.$t('sourcePage.folders.delete') + '?',
@@ -826,8 +815,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     return false;
   }
   async setServiceName(workspace: Workspace) {
-    const new_name = await this.projectContext.appManager
-      .get(DialogManager)
+    const new_name = await this.projectContext
+      .get(DialogSubContext)
       .show(PromptDialog, {
         header: this.projectContext.appManager.$t('sourcePage.folders.edit', {
           workspace: convertTranslatedTitle(workspace.title ?? '', (...args) =>
@@ -851,8 +840,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     }
   }
   async renameWorkspace(workspace: Workspace) {
-    const new_title = await this.projectContext.appManager
-      .get(DialogManager)
+    const new_title = await this.projectContext
+      .get(DialogSubContext)
       .show(PromptDialog, {
         header: this.projectContext.appManager.$t('sourcePage.folders.edit', {
           workspace: convertTranslatedTitle(workspace.title ?? '', (...args) =>
@@ -891,8 +880,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         };
       }
     }
-    await this.projectContext.appManager
-      .get(DialogManager)
+    await this.projectContext
+      .get(DialogSubContext)
       .show(ChangeCollectionTypeDialog, {
         workspaceId: workspace.id,
         collectionType: current_type,

@@ -61,20 +61,22 @@
   </dialog-content>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../../Dialog/DialogContent.vue';
 import ValueSwitcher from '../../Common/ValueSwitcher.vue';
 import ImsInput from '../../Common/ImsInput.vue';
 import CaptionString from '../../Common/CaptionString.vue';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
 import type { DialogInterface } from '../../../logic/managers/DialogManager';
-import DialogManager from '../../../logic/managers/DialogManager';
 import UiManager from '../../../logic/managers/UiManager';
 import { normalizeAssetPropPart } from '../../../logic/types/Props';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import { generateNextUniqueNameNumber } from '../../../logic/utils/stringUtils';
 import type { UserView } from './viewUtils';
 import { ViewType, VIEW_TYPES, VIEW_TYPES_MAP } from './viewUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import assert from 'node:assert';
 
 type DialogProps = {
   header: string;
@@ -104,6 +106,13 @@ export default defineComponent({
     },
   },
   emits: ['dialog-parameters'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       isLoading: false,
@@ -172,8 +181,8 @@ export default defineComponent({
       }
     },
     async deleteView() {
-      const answer = await this.$getAppManager()
-        .get(DialogManager)
+      const answer = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('viewSettings.deleteView') + '?',
           message: this.$t('viewSettings.deleteViewConfirm'),

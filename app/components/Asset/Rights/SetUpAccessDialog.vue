@@ -121,7 +121,6 @@
 import { defineComponent, inject, type PropType } from 'vue';
 import DialogContent from '../../Dialog/DialogContent.vue';
 import type { DialogInterface } from '../../../logic/managers/DialogManager';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import UiManager from '../../../logic/managers/UiManager';
 import { getProjectLinkHref } from '../../../logic/router/routes-helpers';
 import { clipboardCopyPlainText } from '../../../logic/utils/clipboard';

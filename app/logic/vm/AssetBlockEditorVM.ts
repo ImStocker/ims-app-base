@@ -1,5 +1,4 @@
 import type { AssetForEdit, AssetReferenceEntity } from '../types/AssetsType';
-import DialogManager from '../managers/DialogManager';
 import type { UiNavigationGuardHandler } from '../managers/UiManager';
 import UiManager from '../managers/UiManager';
 import type { ResolvedAssetBlock, ResolvedAssetBlocks } from '../utils/assets';
@@ -36,6 +35,7 @@ import type { EditorContextForAssetRequested } from '#logic/project-sub-contexts
 import type { IProjectContext } from '#logic/types/IProjectContext';
 import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 type CopiedBlock = {
   title: string | null;
@@ -177,8 +177,8 @@ export class AssetBlockEditorVM implements IEditorVM {
             await this.saveChanges();
             return true;
           } else {
-            const confirm = await this.projectContext.appManager
-              .get(DialogManager)
+            const confirm = await this.projectContext
+              .get(DialogSubContext)
               .show(ConfirmDialog, {
                 message: this.projectContext.appManager.$t(
                   'common.dialogs.unsavedChanges',
@@ -472,8 +472,8 @@ export class AssetBlockEditorVM implements IEditorVM {
     const asset_id = this.assetFull.id;
     const asset_short_ids: string[] = [];
     await this.projectContext.appManager.get(UiManager).doTask(async () => {
-      const refs_result = await this.projectContext.appManager
-        .get(DialogManager)
+      const refs_result = await this.projectContext
+        .get(DialogSubContext)
         .show(AssetRefsDialog, {
           assetIds: [asset_id],
           reverse,
@@ -498,20 +498,18 @@ export class AssetBlockEditorVM implements IEditorVM {
   ): Promise<boolean> {
     const answer = silent
       ? silent
-      : await this.projectContext.appManager
-          .get(DialogManager)
-          .show(ConfirmDialog, {
-            header: this.projectContext.appManager.$t(
-              'assetEditor.blockMenu.deleteLink',
-            ),
-            message: this.projectContext.appManager.$t(
-              'assetEditor.blockMenu.deleteLinkConfirm',
-            ),
-            yesCaption: this.projectContext.appManager.$t(
-              'common.dialogs.delete',
-            ),
-            danger: true,
-          });
+      : await this.projectContext.get(DialogSubContext).show(ConfirmDialog, {
+          header: this.projectContext.appManager.$t(
+            'assetEditor.blockMenu.deleteLink',
+          ),
+          message: this.projectContext.appManager.$t(
+            'assetEditor.blockMenu.deleteLinkConfirm',
+          ),
+          yesCaption: this.projectContext.appManager.$t(
+            'common.dialogs.delete',
+          ),
+          danger: true,
+        });
     if (answer) {
       await this.projectContext.appManager.get(UiManager).doTask(async () => {
         await this.projectContext.get(AssetSubContext).deleteRef({

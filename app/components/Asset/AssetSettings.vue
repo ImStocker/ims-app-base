@@ -8,7 +8,6 @@
 import { type PropType, defineComponent, inject } from 'vue';
 import type { AssetFullEditorVM } from '../../logic/vm/AssetFullEditorVM';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import DialogManager from '../../logic/managers/DialogManager';
 import PromptDialog from '../Common/PromptDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
 import { MIN_ASSET_RIGHTS_TO_HISTORY } from '../../logic/types/Rights';
@@ -31,6 +30,7 @@ import { AssetSubContext } from '#logic/project-sub-contexts/AssetSubContext';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
 import ImportExportSubContext from '../../logic/project-sub-contexts/ImportExportSubContext';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'AssetSettings',
@@ -275,8 +275,8 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          const fast_create_dialog = this.$getAppManager()
-            .get(DialogManager)
+          const fast_create_dialog = this.projectContext
+            .get(DialogSubContext)
             .create(FastCreateAssetDialog, {
               set: {
                 workspaceId: asset.workspaceId,
@@ -333,7 +333,7 @@ export default defineComponent({
       await this.assetEditor.changeAsset([this.assetEditor.openedAssetId]);
     },
     async openSetUpAccessDialog() {
-      await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
+      await this.projectContext.get(DialogSubContext).show(SetUpAccessDialog, {
         assetId: this.currentSingleAsset?.id,
       });
     },
@@ -375,8 +375,8 @@ export default defineComponent({
       const asset = this.assetEditor.getOpenedAssetFull();
       if (!asset) return;
 
-      const new_name = await this.$getAppManager()
-        .get(DialogManager)
+      const new_name = await this.projectContext
+        .get(DialogSubContext)
         .show(PromptDialog, {
           header: this.$t('common.dialogs.rename'),
           message: this.$t('asset.inputTitle'),

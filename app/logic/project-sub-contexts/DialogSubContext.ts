@@ -5,7 +5,6 @@ import type {
   DialogHandler,
   DialogOpenerInstance,
 } from '#logic/managers/DialogManager';
-import DialogManager from '#logic/managers/DialogManager';
 import {
   ProjectSubContext,
   type IProjectContext,
@@ -29,9 +28,7 @@ export class DialogSubContext extends ProjectSubContext {
     CompAnswer extends DialogGetAnswerProps<InstanceType<Comp>['dialog']>,
     CompProps extends DialogGetCompProps<InstanceType<Comp>['dialog']>,
   >(component: Comp, state?: CompProps): DialogHandler<CompAnswer, Comp> {
-    return this.projectContext.appManager
-      .get(DialogManager)
-      .create(component, state);
+    return this.projectContext.get(DialogSubContext).create(component, state);
   }
 
   async show<

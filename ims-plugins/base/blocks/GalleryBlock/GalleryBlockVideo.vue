@@ -22,9 +22,11 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
-import DialogManager from '#logic/managers/DialogManager';
+import { type PropType, defineComponent, inject } from 'vue';
 import GalleryBlockVideoDialog from './GalleryBlockVideoDialog.vue';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'GalleryBlockVideo',
@@ -38,6 +40,13 @@ export default defineComponent({
       type: String as PropType<'extvideo' | 'youtube' | 'vkvideo' | 'rutube'>,
       default: 'youtube',
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
   },
   computed: {
     extvideoTitle() {
@@ -88,10 +97,12 @@ export default defineComponent({
       if (ev.ctrlKey || ev.metaKey) {
         window.open(this.link, '_blank');
       } else {
-        this.$getAppManager().get(DialogManager).show(GalleryBlockVideoDialog, {
-          code: this.code,
-          type: this.type,
-        });
+        this.projectContext
+          .get(DialogSubContext)
+          .show(GalleryBlockVideoDialog, {
+            code: this.code,
+            type: this.type,
+          });
       }
     },
   },

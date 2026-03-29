@@ -167,13 +167,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import type {
   AssetShort,
   AssetsGraph,
   AssetsGraphItem,
 } from '../../../logic/types/AssetsType';
-import ProjectManager from '../../../logic/managers/ProjectManager';
 import {
   VNetworkGraph,
   VEdgeLabel,
@@ -187,6 +186,8 @@ import 'v-network-graph/lib/style.css';
 import { getVNetworkConfig } from './VNetworkGraphConfig';
 import { getProjectLinkHref } from '../../../logic/router/routes-helpers';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 interface LinkInfo {
   [key: string]: {
@@ -229,6 +230,13 @@ export default defineComponent({
     },
   },
   emits: ['node-selected', 'loading-done'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       currentKey: 0,

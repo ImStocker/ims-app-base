@@ -56,7 +56,6 @@ import type { HandleKeyEvent } from '../ImcGrid/ImcGrid.vue';
 import ImcGrid from '../ImcGrid/ImcGrid.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import { AssetRights } from '../../logic/types/Rights';
 import type { SetClickOutsideCancel } from '../utils/ui';
@@ -183,20 +182,18 @@ export default defineComponent({
         if (deleting_asset_ids.size === 0) return;
         event.handled = true;
 
-        const answer = await this.$getAppManager()
-          .get(DialogManager)
-          .show(
-            ConfirmDialog,
-            {
-              header: this.$t('sourcePage.elements.deleteElements') + '?',
-              message: this.$t('sourcePage.elements.deleteElementsConfirm', {
-                count: deleting_asset_ids.size,
-              }),
-              yesCaption: this.$t('common.dialogs.delete'),
-              danger: true,
-            },
-            this,
-          );
+        const answer = await this.projectContext.get(DialogSubContext).show(
+          ConfirmDialog,
+          {
+            header: this.$t('sourcePage.elements.deleteElements') + '?',
+            message: this.$t('sourcePage.elements.deleteElementsConfirm', {
+              count: deleting_asset_ids.size,
+            }),
+            yesCaption: this.$t('common.dialogs.delete'),
+            danger: true,
+          },
+          this,
+        );
         if (!answer) return;
 
         await this.$getAppManager()

@@ -47,7 +47,6 @@
 <script lang="ts">
 import type { PropType } from 'vue';
 import { defineComponent, inject } from 'vue';
-import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
 import type { AssetPropValueFile } from '../../logic/types/Props';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
@@ -55,6 +54,7 @@ import type { UploadingJob } from '#logic/project-sub-contexts/EditorSubContext'
 import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
 import { assert } from '#logic/utils/typeUtils';
+import { DialogSubContext } from '#logic/project-sub-contexts/DialogSubContext';
 
 export default defineComponent({
   name: 'FileAttachButton',
@@ -141,8 +141,8 @@ export default defineComponent({
       if (!this.uploadingJob) {
         return;
       }
-      const res = await this.$getAppManager()
-        .get(DialogManager)
+      const res = await this.projectContext
+        .get(DialogSubContext)
         .show(ConfirmDialog, {
           header: this.$t('file.cancelUpload'),
           message: this.$t('file.cancelUploadConfirmation'),
