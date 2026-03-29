@@ -336,6 +336,7 @@ export default {
     clickToIncrease: 'Кликните дважды, чтобы увеличить',
     dblClickToRename: 'Кликните дважды, чтобы переименовать',
     setUpAccess: 'Настроить доступ',
+    setUpNotifications: 'Настроить уведомления',
     localization: 'Локализация',
     properties: 'Свойства',
     share: 'Поделиться',
@@ -926,6 +927,15 @@ export default {
     anyoneWhoHasLink: 'Все, у кого есть ссылка',
     rightsInheritedParent: 'Права унаследованы от родительской папки',
     rightsDefault: 'Права по умолчанию',
+  },
+  setUpNotificationDialog: {
+    my: 'Мои',
+    roles: 'Роли',
+    notifyAboutChanges: 'Оповещать об изменениях',
+    notifyAboutComments: 'Оповещать о комментариях',
+    notifications: 'Оповещения',
+    changes: 'Изменения',
+    comments: 'Комментарии',
   },
   errorPage: {
     goBack: 'Вернуться',

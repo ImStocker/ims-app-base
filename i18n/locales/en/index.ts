@@ -326,6 +326,7 @@ export default {
     clickToIncrease: 'Double click to increase',
     dblClickToRename: 'Double click to rename',
     setUpAccess: 'Set up access',
+    setUpNotifications: 'Set up notifications',
     localization: 'Localization',
     properties: 'Properties',
     share: 'Share',
@@ -913,6 +914,15 @@ export default {
     anyoneWhoHasLink: 'Anyone who has link',
     rightsInheritedParent: 'Rights are inherited from parent folder',
     rightsDefault: 'Default rights',
+  },
+  setUpNotificationDialog: {
+    my: 'My',
+    roles: 'Roles',
+    notifyAboutChanges: 'Notify about changes',
+    notifyAboutComments: 'Notify about comments',
+    notifications: 'Notifications',
+    changes: 'Changes',
+    comments: 'Comments',
   },
   errorPage: {
     goBack: 'Go back home',
