@@ -38,6 +38,7 @@ export type AssetLayoutDescriptor = {
   name: string;
   pageComponent: Component;
   editorComponent: Component;
+  popupComponent?: Component;
   props: {
     toolbarShowBlockCopyPaste?: boolean;
     headerLocaleButton?: boolean;
@@ -64,6 +65,9 @@ const AssetLayoutDefault = markRaw({
   ),
   editorComponent: defineAsyncComponent(
     () => import('../../components/Asset/Editor/AssetBlockEditor.vue'),
+  ),
+  popupComponent: defineAsyncComponent(
+    () => import('../../components/Asset/AssetPreviewDialog.vue'),
   ),
   props: {},
 });
@@ -232,25 +236,37 @@ export default abstract class EditorManager extends AppSubManagerBase {
       throw new Error('Project is not set');
     }
     if (target === 'popup') {
-      opened = import('../../components/Asset/AssetPreviewDialog.vue').then(
-        async (dialogComponent) => {
+      opened = this.appManager
+        .get(CreatorAssetManager)
+        .getAssetInstance(assetId)
+        .then((res) => {
+          let popup;
+          if (res) {
+            const layout = this.getLayoutDescriptorForAsset(res);
+            popup = layout.popupComponent;
+          }
+          return popup ?? AssetLayoutDefault.popupComponent;
+        })
+        .then(async (dialogComponent) => {
           const dialog = this.appManager
             .get(DialogManager)
-            .create(dialogComponent.default, {
+            .create(dialogComponent, {
               assetId,
             });
           dialog.open();
+
           const [instance] = await Promise.all([
             dialog.getDialogInstance(),
             new Promise((r) => setTimeout(r, 500)), // Await for dialog appearing animation
           ]);
-          instance.awaitMount();
+
+          if (instance?.awaitMount) instance.awaitMount(); // TODO: fix instance is undefined
+
           return {
             success: true,
             navigated: false,
           };
-        },
-      );
+        });
     } else if (target === 'self') {
       if (
         project_info &&

@@ -55,6 +55,21 @@
           ></imc-editor-autocomplete-asset-contents>
         </menu-button>
         <div
+          v-else-if="opt.type === 'task'"
+          class="ImcEditorAutocomplete-row-item"
+        >
+          <asset-link
+            class="ImcEditorAutocomplete-row-asset"
+            :project="project"
+            :asset="opt.raw"
+            :tooltip-show-path="true"
+            @mouseenter="currentItem = opt_index"
+            @mousedown="selectOption(opt)"
+          >
+            {{ getTaskTitle(opt.value) }}
+          </asset-link>
+        </div>
+        <div
           v-else-if="opt.type === 'button'"
           class="ImcEditorAutocomplete-row-button"
           @mouseenter="currentItem = opt_index"
@@ -117,6 +132,7 @@ import { AssetContentTreePresenterVM } from '../Asset/ProjectTree/AssetContentTr
 import ImcEditorAutocompleteAssetContents from './ImcEditorAutocompleteAssetContents.vue';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { QuillKeys } from './utils';
+import TaskManager from '../../logic/managers/TaskManager';
 
 type ImcEditorAutocompleteOption =
   | ImcLinkOption
@@ -178,6 +194,16 @@ export default defineComponent({
     },
   },
   methods: {
+    getTaskTitle(id: string) {
+      const task = this.$getAppManager()
+        .get(TaskManager)
+        .getTaskViaCacheSync(id);
+      if (!task) {
+        return null;
+      } else {
+        return `#${task.num} ${convertTranslatedTitle(task.title ?? '', (key) => this.$t(key))}`;
+      }
+    },
     moveCursor(dy: number) {
       let new_index = this.currentItem + dy;
       if (new_index < 0) new_index = 0;

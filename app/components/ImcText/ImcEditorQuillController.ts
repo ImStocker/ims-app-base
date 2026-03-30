@@ -17,6 +17,10 @@ import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
 import EditorManager from '../../logic/managers/EditorManager';
 import type { ImcClipboard } from './ImcClipboard';
+import TaskManager from '../../logic/managers/TaskManager';
+import { AssetPropWhereOpKind } from '../../logic/types/PropsWhere';
+import { TASK_ASSET_ID } from '../../logic/constants';
+import type { TaskEntity } from '../../logic/types/BoardTypes';
 
 export class ImcEditorQuillController {
   editorElement: HTMLElement | null = null;
@@ -235,7 +239,26 @@ export class ImcEditorQuillController {
     const take_count = 10;
     const gather: (() => Promise<ImcLinkOption[]>)[] = [];
 
+    let prepared_query: any = query;
+
     let has_more = false;
+
+    if (parseInt(query)) {
+      prepared_query = {
+        op: AssetPropWhereOpKind.OR,
+        v: [
+          {
+            query: query,
+          },
+          {
+            'basic|num': {
+              op: AssetPropWhereOpKind.LIKE,
+              v: query,
+            },
+          },
+        ],
+      };
+    }
 
     gather.push(async () => {
       const assets = await this.component
@@ -243,19 +266,62 @@ export class ImcEditorQuillController {
         .get(CreatorAssetManager)
         .getAssetShortsList({
           where: {
-            query: query,
-            workspaceids: this.component
-              .$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName('gdd'),
+            query: prepared_query,
+            'info|archivedat': {
+              op: AssetPropWhereOpKind.EQUAL,
+              v: null,
+            },
+            workspaceids: [
+              this.component
+                .$getAppManager()
+                .get(ProjectManager)
+                .getWorkspaceIdByName('gdd'),
+              this.component
+                .$getAppManager()
+                .get(ProjectManager)
+                .getWorkspaceIdByName('discussions'),
+              this.component
+                .$getAppManager()
+                .get(ProjectManager)
+                .getWorkspaceIdByName('tasks'),
+            ],
           },
           count: take_count + 1,
         });
 
+      const task_ids: string[] = [];
+      for (const asset_short of assets.list) {
+        if (asset_short.typeIds.includes(TASK_ASSET_ID)) {
+          task_ids.push(asset_short.id);
+        }
+      }
+      let tasks: TaskEntity[] = [];
+      if (task_ids.length) {
+        tasks = (
+          await this.component
+            .$getAppManager()
+            .get(TaskManager)
+            .getTasks({
+              where: {
+                id: task_ids,
+              },
+            })
+        ).list;
+      }
+
       const asset_options = assets.list.map((a) => {
+        let title = a.title;
+        let type = 'asset';
+        if (task_ids.includes(a.id)) {
+          const task = tasks.find((t) => t.id === a.id);
+          if (task) {
+            title = `#${task.num}`;
+            type = 'task';
+          }
+        }
         return {
-          type: 'asset',
-          title: a.title,
+          type,
+          title,
           value: a.id,
           raw: a,
         } as ImcLinkOption;

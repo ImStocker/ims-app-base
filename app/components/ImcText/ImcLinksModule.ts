@@ -8,7 +8,7 @@ import type { Context } from 'quill/modules/keyboard';
 import { v4 as uuidv4 } from 'uuid';
 
 export type ImcLinkOption = {
-  type: 'asset' | 'user';
+  type: 'asset' | 'user' | 'task';
   value: string;
   title: string;
   raw: any;
@@ -177,7 +177,7 @@ export class ImcLinksModule {
     const delta = new Delta();
     let cursor_change = this.cursorPos;
     delta.retain(this.cursorPos);
-    if (link.type === 'asset') {
+    if (link.type === 'asset' || link.type === 'task') {
       delta.insert(link.title, {
         asset: {
           value: {

@@ -3,6 +3,10 @@ import type { TaskEntity, TaskQueryDTOWhere } from '../types/BoardTypes';
 import type { AssetPropValueAccount, AssetPropValueEnum } from '../types/Props';
 import type { AssetSetDTO } from '../types/AssetsType';
 import { TASK_COLUMN_ENUM } from '#logic/constants';
+import type {
+  ApiRequestList,
+  ApiResultListWithTotal,
+} from '../types/ProjectTypes';
 
 export type TaskMilestoneForm = {
   title: string;
@@ -62,6 +66,12 @@ export default abstract class TaskManager extends AppSubManagerBase {
   async getTaskMilestones(): Promise<TaskMilestone[]> {
     return [];
   }
+
+  abstract getTasks(query: ApiRequestList<TaskQueryDTOWhere>): Promise<
+    ApiResultListWithTotal<TaskEntity> & {
+      totalByColumn: { [column: string]: number };
+    }
+  >;
 
   abstract openTaskPreviewDialog(
     taskId: string,
