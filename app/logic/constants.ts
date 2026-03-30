@@ -123,3 +123,51 @@ export const ASSET_SELECTION_LEVEL: AssetForSelection = {
 };
 
 export const TASK_COLUMNS_ID = '00000000-0000-0000-0000-000000000038';
+
+export const likeIcons = [
+  'good',
+  'wow',
+  'fire',
+  'smile',
+  'sweet',
+  'love',
+  'heart',
+  'laugh',
+  'congratulations',
+  'balloon',
+  'eyes',
+  'cool',
+  'ok',
+];
+
+export function getLikeEmoji(icon: string | undefined) {
+  if (!icon) return '';
+  switch (icon.toUpperCase()) {
+    case 'GOOD':
+      return '👍';
+    case 'WOW':
+      return '😀';
+    case 'FIRE':
+      return '🔥';
+    case 'SMILE':
+      return '⚡';
+    case 'SWEET':
+      return '😊';
+    case 'LOVE':
+      return '😍';
+    case 'HEART':
+      return '❤';
+    case 'LAUGH':
+      return '🤣';
+    case 'CONGRATULATIONS':
+      return '🎉';
+    case 'BALLOON':
+      return '🎈';
+    case 'EYES':
+      return '👀';
+    case 'COOL':
+      return '😎';
+    case 'OK':
+      return '😉';
+  }
+}

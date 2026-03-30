@@ -29,6 +29,7 @@ import SetUpAccessDialog from './Rights/SetUpAccessDialog.vue';
 import type { AssetPropValueAccount } from '../../logic/types/Props';
 import { castAssetPropValueToAccount } from '../../logic/types/Props';
 import ProjectContentManager from '../../logic/managers/ProjectContentManager';
+import SetUpNotificationsDialog from './Rights/SetUpNotificationsDialog.vue';
 
 export default defineComponent({
   name: 'AssetSettings',
@@ -112,6 +113,17 @@ export default defineComponent({
               title: this.$t('gddPage.setUpAccess'),
               icon: 'ri-lock-fill',
               action: this.openSetUpAccessDialog,
+            }
+          : null,
+        !this.isDiscussion &&
+          !this.isArticle &&
+          !this.isGuest &&
+          !this.isSystemAsset &&
+          !this.isDesktop
+          ? {
+              title: this.$t('gddPage.setUpNotifications'),
+              icon: 'ri-notification-fill',
+              action: this.openSetUpNotificationsDialog,
             }
           : null,
         !this.isDiscussion && !this.isArticle && !this.isGuest
@@ -331,6 +343,13 @@ export default defineComponent({
       await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {
         assetId: this.currentSingleAsset?.id,
       });
+    },
+    async openSetUpNotificationsDialog() {
+      await this.$getAppManager()
+        .get(DialogManager)
+        .show(SetUpNotificationsDialog, {
+          assetId: this.currentSingleAsset?.id,
+        });
     },
     async openLinksDialog() {
       if (!this.assetEditor.openedAssetId) {

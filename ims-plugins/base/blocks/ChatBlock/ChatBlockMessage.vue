@@ -18,6 +18,7 @@
             <i v-if="!message.sended" class="ri-copper-coin-fill" />
             <i v-else class="ri-check-fill" />
           </div>
+          <chat-block-likes :message="message"></chat-block-likes>
         </div>
         <menu-button v-if="isAuthor" class="ChatBlockMessage-comment-menu">
           <menu-list :menu-list="menuList" />
@@ -36,6 +37,7 @@ import { formatDateTime } from '#logic/utils/format';
 import UiManager from '#logic/managers/UiManager';
 import MenuButton from '#components/Common/MenuButton.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import ChatBlockLikes from './ChatBlockLikes.vue';
 
 export default defineComponent({
   name: 'ChatBlockMessage',
@@ -43,6 +45,7 @@ export default defineComponent({
     ImcPresenter,
     MenuButton,
     MenuList,
+    ChatBlockLikes,
   },
   props: {
     message: {

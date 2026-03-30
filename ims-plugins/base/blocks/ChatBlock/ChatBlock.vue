@@ -377,6 +377,7 @@ export default defineComponent({
           createdAt: new Date().toString(),
           updatedAt: new Date().toString(),
           sended: false,
+          likes: [],
         };
         this.unsentMessages.unshift(new_message);
         this.$emit('update:lastViewedAt', new Date().toISOString());
