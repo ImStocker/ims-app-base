@@ -53,19 +53,17 @@ import { defineComponent, type PropType } from 'vue';
 import FileAttachButton from '../../../../app/components/File/FileAttachButton.vue';
 import ImcEditor from '../../../../app/components/ImcText/ImcEditor.vue';
 import {
-  castAssetPropValueToText,
   joinAssetPropValueTexts,
   type AssetPropType,
-  truncateAssetPropValueText,
   type AssetPropValue,
   type AssetPropValueFile,
-  type AssetPropValueText,
+  castAssetPropValueToString,
 } from '../../../../app/logic/types/Props';
 
 import { TargetMessageActionTypes, type TargetMessage } from './ChatBlockSend';
 import ImcPresenter from '../../../../app/components/ImcText/ImcPresenter.vue';
 
-const TRUNCATE_TARGET_MESSAGE = 30;
+const TRUNCATE_TARGET_MESSAGE = 50;
 
 export default defineComponent({
   name: 'ChatBlockSend',
@@ -102,21 +100,10 @@ export default defineComponent({
       if (!this.targetMessage) {
         return null;
       }
-      const tr = truncateAssetPropValueText(
-        castAssetPropValueToText(this.targetMessage.message.content['']),
-        TRUNCATE_TARGET_MESSAGE,
+      const res = castAssetPropValueToString(
+        this.targetMessage.message.content[''],
       );
-      let res: AssetPropValueText;
-      if (tr.truncated) {
-        res = joinAssetPropValueTexts(
-          tr.result,
-          castAssetPropValueToText('...'),
-        );
-      } else res = tr.result;
-      if (!res.Str.trim()) {
-        return null;
-      }
-      return res;
+      return res.substring(0, TRUNCATE_TARGET_MESSAGE).replace(/\s+/g, ' ');
     },
   },
   watch: {
