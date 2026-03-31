@@ -107,21 +107,20 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent } from 'vue';
+import { type PropType, defineComponent, inject } from 'vue';
 import {
   type AssetPropValue,
   convertAssetPropsToPlainObject,
 } from '#logic/types/Props';
-import type {
-  PropsFormFieldDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import FormBuilderFieldTooltip from '#components/Form/FormBuilderFieldTooltip.vue';
 import StringPropPresenter from '#components/Props/StringPropPresenter.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';
 import type { FieldTypeController } from '#logic/types/FieldTypeController';
-import EditorSubContext from '#logic/managers/EditorManager';
 import AsyncComponent from '#components/Common/AsyncComponent.vue';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetEditorPropsBlockValue',
@@ -165,6 +164,13 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'enter', 'changeProps', 'inputProps', 'input'],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {
       changeDifferent: false,
@@ -196,7 +202,7 @@ export default defineComponent({
     } {
       const type = this.field.type ? this.field.type : 'text';
       const hint = this.field.hint;
-      const map = this.$getAppManager().get(EditorSubContext).getFieldTypesMap();
+      const map = this.projectContext.get(EditorSubContext).getFieldTypesMap();
       const controller = map.hasOwnProperty(type) ? map[type] : undefined;
       return {
         loading: false,
