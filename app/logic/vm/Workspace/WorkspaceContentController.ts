@@ -169,15 +169,16 @@ export class WorkspaceContentController {
   async init() {
     this.assetEventsSubscriber = this.appManager
       .get(CreatorAssetManager)
-      .assetEvents.subscribe(async (change_res) => {
+      .projectContentEvents.subscribe(async (change_res) => {
         const base_asset_id = await this.getBaseAssetId();
         const listen_asset_ids = new Set(this.items.map((item) => item.id));
         if (base_asset_id) {
           listen_asset_ids.add(base_asset_id);
         }
         const need_reload =
-          change_res.deletedIds.some((id) => listen_asset_ids.has(id)) ||
-          change_res.upsert.ids.some((id) => listen_asset_ids.has(id));
+          change_res.aDelIds.some((id) => listen_asset_ids.has(id)) ||
+          change_res.aUpsIds.some((id) => listen_asset_ids.has(id)) ||
+          (this.workspaceId && change_res.wTchIds.includes(this.workspaceId));
 
         if (need_reload) {
           await this.reload(false, true);
@@ -294,6 +295,11 @@ export class WorkspaceContentController {
         .getAssetsView(query);
       this.items = data.list;
       this.total = data.total;
+      this.appManager
+        .get(CreatorAssetManager)
+        .requestExternalEventListenFullAssetIds(
+          this.items.map((i) => i.id as string),
+        );
       this._loadedQuery = query;
     } catch (err: any) {
       this.loadingError = err.message;

@@ -22,6 +22,7 @@ export class DeltaInsertOp {
 
   isContainerBlock() {
     return (
+      this.isCallout() ||
       this.isBlockquote() ||
       this.isList() ||
       this.isTable() ||
@@ -39,6 +40,10 @@ export class DeltaInsertOp {
 
   isBlockquote(): boolean {
     return !!this.attributes.blockquote;
+  }
+
+  isCallout(): boolean {
+    return !!this.attributes.callout;
   }
 
   isHeader(): boolean {

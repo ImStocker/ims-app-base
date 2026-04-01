@@ -10,43 +10,14 @@
             </button>
         </div>
         -->
-    <div class="AssetEditorToolbar-section">
+    <div v-if="historyIsOpened" class="AssetEditorToolbar-section">
       <button
         class="is-button is-button-toolbar"
-        :title="$t('assetEditor.toolbarUndo')"
-        :disabled="!canUndo || !!isUndoRedoBusy"
-        :class="{
-          loading: isUndoRedoBusy === 'undo',
-        }"
-        @click="undo"
+        :title="$t('gddPage.restoreThisVersion')"
+        @click="restoreThisVersion()"
       >
-        <i class="ri-arrow-go-back-line AssetEditorToolbar-button-icon"></i>
-      </button>
-      <button
-        class="is-button is-button-toolbar"
-        :title="$t('assetEditor.toolbarRedo')"
-        :disabled="!canRedo || !!isUndoRedoBusy"
-        :class="{
-          loading: isUndoRedoBusy === 'redo',
-        }"
-        @click="redo"
-      >
-        <i class="ri-arrow-go-forward-line AssetEditorToolbar-button-icon"></i>
-      </button>
-    </div>
-    <div
-      v-if="blockButtonsMain.length > 0 || blockButtonsMenu.length > 0"
-      class="AssetEditorToolbar-section"
-    >
-      <button
-        v-for="button of blockButtonsMain"
-        :key="button.name"
-        class="is-button is-button-toolbar"
-        :title="button.title"
-        :disabled="button.disabled"
-        @click="button.action"
-      >
-        <i class="AssetEditorToolbar-button-icon" :class="button.icon"></i>
+        <i class="ri-save-fill AssetEditorToolbar-button-icon"></i>
+        {{ $t('gddPage.restoreThisVersion') }}
       </button>
       <menu-button v-if="blockButtonsMenu.length > 0">
         <template #button="{ toggle }">
@@ -64,28 +35,86 @@
         ></menu-list>
       </menu-button>
     </div>
-    <div
-      v-if="!hideActions.includes('save')"
-      class="AssetEditorToolbar-section"
-    >
-      <button
-        class="is-button is-button-toolbar"
-        :disabled="isSaveDisabled"
-        :title="
-          isSaving
-            ? $t('assetEditor.toolbarSaving')
-            : isSaveDisabled
-              ? ''
-              : $t('assetEditor.toolbarSaveChanges')
-        "
-        :class="{
-          loading: isSaving,
-        }"
-        @click="saveChanges"
+    <template v-else>
+      <div class="AssetEditorToolbar-section">
+        <button
+          class="is-button is-button-toolbar"
+          :title="$t('assetEditor.toolbarUndo')"
+          :disabled="!canUndo || !!isUndoRedoBusy"
+          :class="{
+            loading: isUndoRedoBusy === 'undo',
+          }"
+          @click="undo"
+        >
+          <i class="ri-arrow-go-back-line AssetEditorToolbar-button-icon"></i>
+        </button>
+        <button
+          class="is-button is-button-toolbar"
+          :title="$t('assetEditor.toolbarRedo')"
+          :disabled="!canRedo || !!isUndoRedoBusy"
+          :class="{
+            loading: isUndoRedoBusy === 'redo',
+          }"
+          @click="redo"
+        >
+          <i
+            class="ri-arrow-go-forward-line AssetEditorToolbar-button-icon"
+          ></i>
+        </button>
+      </div>
+      <div
+        v-if="blockButtonsMain.length > 0 || blockButtonsMenu.length > 0"
+        class="AssetEditorToolbar-section"
       >
-        <i class="ri-save-fill AssetEditorToolbar-button-icon"></i>
-      </button>
-    </div>
+        <button
+          v-for="button of blockButtonsMain"
+          :key="button.name"
+          class="is-button is-button-toolbar"
+          :title="button.title"
+          :disabled="button.disabled"
+          @click="button.action"
+        >
+          <i class="AssetEditorToolbar-button-icon" :class="button.icon"></i>
+        </button>
+        <menu-button v-if="blockButtonsMenu.length > 0">
+          <template #button="{ toggle }">
+            <button
+              class="is-button AssetEditorToolbar-button-more"
+              :disabled="blockButtonsMenu.every((m) => m.disabled)"
+              @click="toggle"
+            >
+              <i class="ri-arrow-drop-down-fill"></i>
+            </button>
+          </template>
+          <menu-list
+            class="AssetEditorToolbar-menu"
+            :menu-list="blockButtonsMenu"
+          ></menu-list>
+        </menu-button>
+      </div>
+      <div
+        v-if="!hideActions.includes('save')"
+        class="AssetEditorToolbar-section"
+      >
+        <button
+          class="is-button is-button-toolbar"
+          :disabled="isSaveDisabled"
+          :title="
+            isSaving
+              ? $t('assetEditor.toolbarSaving')
+              : isSaveDisabled
+                ? ''
+                : $t('assetEditor.toolbarSaveChanges')
+          "
+          :class="{
+            loading: isSaving,
+          }"
+          @click="saveChanges"
+        >
+          <i class="ri-save-fill AssetEditorToolbar-button-icon"></i>
+        </button>
+      </div>
+    </template>
     <div class="AssetEditorToolbar-section">
       <button
         class="is-button is-button-toolbar"
@@ -154,8 +183,14 @@ export default defineComponent({
         .getToolbarActions()
         .filter((a) => !a.isMain && !this.hideActions.includes(a.name ?? ''));
     },
+    historyIsOpened() {
+      return !!this.blockButtonsMenu.find((item) => item.name === 'history');
+    },
   },
   methods: {
+    async restoreThisVersion() {
+      await this.toolbarVm.saveChanges();
+    },
     saveChanges() {
       return this.$getAppManager()
         .get(UiManager)

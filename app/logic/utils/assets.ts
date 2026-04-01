@@ -155,6 +155,7 @@ export type ResolvedAssetBlocks = {
 };
 
 export type AssetDisplayMode = 'normal' | 'page' | 'print';
+export type AssetHistoryMode = 'history' | 'usual';
 
 export type AssetLocalizableField = {
   propKey: string;

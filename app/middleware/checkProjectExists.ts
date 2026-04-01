@@ -1,10 +1,10 @@
 import { defineNuxtRouteMiddleware, navigateTo, useNuxtApp } from '#app';
-import ProjectManager from '../logic/managers/ProjectManager';
+import ProjectManager from '#logic/managers/ProjectManager';
 import {
   getSignInLink,
   checkMainDomainRoutesAreUsing,
-} from '../logic/router/routes-helpers';
-import { getProjectSlug } from '../logic/utils/creators';
+  getProjectSlug,
+} from '#logic/router/routes-helpers';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { $getAppManager } = useNuxtApp();

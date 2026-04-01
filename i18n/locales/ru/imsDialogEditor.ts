@@ -171,6 +171,8 @@ export default {
       noVariablesYet: 'У вас пока нет переменных',
       name: 'Название',
       type: 'Тип',
+      defaultValue: 'Значение по умолчанию',
+      variables: 'Переменные',
       description: 'Описание',
       enterName: 'Введите название',
       enterType: 'Выберите тип',

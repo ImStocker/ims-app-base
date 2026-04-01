@@ -9,6 +9,7 @@
     :model-value="selectedAsset"
     :has-create-new-option="hasCreateNewOption"
     :where="where"
+    :additional-options="additionalOptions"
     @update:model-value="onSelected($event)"
   ></select-asset-combo-box>
 </template>
@@ -50,6 +51,10 @@ export default defineComponent({
     hasCreateNewOption: {
       type: Boolean,
       default: false,
+    },
+    additionalOptions: {
+      type: Array<AssetForSelection>,
+      default: () => [],
     },
   },
   emits: ['update:modelValue'],

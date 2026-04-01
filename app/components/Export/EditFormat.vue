@@ -26,15 +26,9 @@ import { defineComponent, type PropType } from 'vue';
 import FormBuilder from '../Form/FormBuilder.vue';
 import type { FormSchema } from '../Form/FormBuilderTypes';
 import FormBuilderModelBindObject from '../Form/FormBuilderModelBindObject';
-import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import type { ApiRequestList } from '../../logic/types/ProjectTypes';
 import type { AssetQueryWhere, AssetShort } from '../../logic/types/AssetsType';
 import ProjectManager from '../../logic/managers/ProjectManager';
-import { assert } from '../../logic/utils/typeUtils';
-import {
-  makeProjectContextFromAppManager,
-  type IProjectContext,
-} from '../../logic/types/IProjectContext';
+import { makeProjectContextFromAppManager } from '../../logic/types/IProjectContext';
 import type {
   ExportFormat,
   ExportFormatField,
@@ -56,6 +50,16 @@ import type { UiNavigationGuardHandler } from '../../logic/managers/UiManager';
 import UiManager from '../../logic/managers/UiManager';
 import ExportFormatManager from '../../logic/managers/ExportFormatManager';
 import LocalFsSyncManager from '../../logic/managers/LocalFsSyncManager';
+import {
+  ASSET_SELECTION_DIAGRAM,
+  ASSET_SELECTION_ENUM,
+  ASSET_SELECTION_GAME_MECHANICS,
+  ASSET_SELECTION_GAME_OBJECT,
+  ASSET_SELECTION_LEVEL,
+  ASSET_SELECTION_MARKDOWN,
+  ASSET_SELECTION_SCRIPT,
+  ASSET_SELECTION_STRUCTURE,
+} from '../../logic/constants';
 
 export default defineComponent({
   name: 'EditFormat',
@@ -264,6 +268,24 @@ export default defineComponent({
         };
       });
     },
+    baseAssetOptions() {
+      const base_assets = [
+        this.$appConfiguration.isDesktop ? ASSET_SELECTION_MARKDOWN : null,
+        ASSET_SELECTION_GAME_OBJECT,
+        ASSET_SELECTION_GAME_MECHANICS,
+        ASSET_SELECTION_DIAGRAM,
+        ASSET_SELECTION_SCRIPT,
+        ASSET_SELECTION_LEVEL,
+      ]
+        .filter((x) => x)
+        .map((x) => {
+          return {
+            ...x!,
+            tooltip: this.$t('asset.createTooltips.' + x!.id),
+          };
+        });
+      return [...base_assets, ASSET_SELECTION_STRUCTURE, ASSET_SELECTION_ENUM];
+    },
     formSchema(): FormSchema {
       return [
         {
@@ -276,6 +298,7 @@ export default defineComponent({
           editor: AssetSelectorPropEditor,
           prop: 'formatAssetType',
           editorProps: {
+            additionalOptions: this.baseAssetOptions,
             where: this.includingAssetsTypeWhere,
             placeholder: this.$t('importExport.formats.settings.assetsAll'),
           },

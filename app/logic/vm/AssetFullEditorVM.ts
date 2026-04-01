@@ -9,6 +9,8 @@ import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.v
 import AssetPreviewDialog from '../../components/Asset/AssetPreviewDialog.vue';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
+import type { AssetHistoryMode } from '#logic/utils/assets';
+import { AssetHistoryVM } from './AssetHistoryVM';
 
 export class AssetFullEditorVM {
   appManager: IAppManager;
@@ -18,6 +20,7 @@ export class AssetFullEditorVM {
   loadDone: boolean;
   loadError: string | null;
   openedAssetId: string | null;
+  historyModeVM: AssetHistoryVM | null = null;
 
   constructor(appManager: IAppManager, asset_id: string | null) {
     this.appManager = appManager;
@@ -76,6 +79,15 @@ export class AssetFullEditorVM {
     return opened ? opened.rights < 2 : true;
   }
 
+  async init() {}
+
+  destroy() {
+    if (this.historyModeVM) {
+      this.historyModeVM.destroy();
+      this.historyModeVM = null;
+    }
+  }
+
   async load() {
     try {
       this.loadError = null;
@@ -96,6 +108,32 @@ export class AssetFullEditorVM {
       this.loadDone = true;
     } catch (err: any) {
       this.loadError = err.message.toString();
+    }
+  }
+
+  get mode(): AssetHistoryMode {
+    if (this.historyModeVM) {
+      return 'history';
+    } else {
+      return 'usual';
+    }
+  }
+
+  async changeMode(mode: AssetHistoryMode) {
+    const full_asset = this.openedAssetId
+      ? this.getAssetFull(this.openedAssetId)
+      : null;
+    if (mode === 'history') {
+      if (full_asset) {
+        this.historyModeVM = new AssetHistoryVM(this.appManager, full_asset);
+        await this.historyModeVM.init();
+        await this.historyModeVM.load();
+      }
+    } else {
+      if (this.historyModeVM) {
+        this.historyModeVM.destroy();
+        this.historyModeVM = null;
+      }
     }
   }
 

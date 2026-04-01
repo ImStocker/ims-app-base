@@ -60,3 +60,10 @@ export function generateNextUniqueNameNumber(
     if (checkIsAvail(next_name + suffix)) return next_name + suffix;
   }
 }
+
+export function getAccountShortAbbr(name: string) {
+  if (!name) return '*';
+  const expl = name.split(' ', 2);
+  if (expl.length === 2 && expl[0] && expl[1]) return expl[0][0] + expl[1][0];
+  else return name.substring(0, 2);
+}

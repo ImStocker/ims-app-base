@@ -1,43 +1,14 @@
-import type { IAppManager } from '../IAppManager';
-
-import type { FieldTypeController } from '../../types/FieldTypeController';
-import type { BlockTypeDefinition } from '../../types/BlockTypeDefinition';
+import { convertTranslatedTitle } from '../../utils/assets';
 import EditorManager from '../EditorManager';
-import LocalFsSyncManager, { type SegmentEntity } from '../LocalFsSyncManager';
-
-type PluginContentDescriptorBlockContent = {
-  controller: BlockTypeDefinition;
-};
-
-type PluginContentDescriptorBlock = PluginContentDescriptorBase<
-  'block',
-  PluginContentDescriptorBlockContent
->;
-
-type PluginContentDescriptorFieldContent = {
-  controller: FieldTypeController;
-};
-
-type PluginContentDescriptorField = PluginContentDescriptorBase<
-  'field',
-  PluginContentDescriptorFieldContent
->;
-
-type PluginContentDescriptorExportSegmentContent = SegmentEntity;
-
-type PluginContentDescriptorExportSegment = PluginContentDescriptorBase<
-  'segment',
-  PluginContentDescriptorExportSegmentContent
->;
-
-type PluginContentDescriptorModuleContent = {
-  activate(appManager: IAppManager): Promise<() => Promise<void>>;
-};
-
-type PluginContentDescriptorModule = PluginContentDescriptorBase<
-  'module',
-  PluginContentDescriptorModuleContent
->;
+import type { IAppManager } from '../IAppManager';
+import LocalFsSyncManager from '../LocalFsSyncManager';
+import UiManager from '../UiManager';
+import type {
+  PluginContentDescriptorBlock,
+  PluginContentDescriptorExportSegment,
+  PluginContentDescriptorField,
+  PluginContentDescriptorModule,
+} from './PluginControllerInternal';
 
 export type PluginContentDescriptor =
   | PluginContentDescriptorBlock
@@ -64,7 +35,7 @@ export type PluginDescriptor = WithPluginDescriptorLocale & {
   tags?: string[];
 };
 
-type PluginContentDescriptorBase<TypeName, Content> =
+export type PluginContentDescriptorBase<TypeName, Content> =
   WithPluginDescriptorLocale & {
     type: TypeName;
     name?: string;
@@ -78,10 +49,62 @@ type WithPluginDescriptorLocale = {
   locale?: PluginDescriptorLocale;
 };
 
+export function convertTranslatedPluginTitle(
+  title: string,
+  appManager: IAppManager,
+  locale: PluginDescriptorLocale | null,
+) {
+  return convertTranslatedTitle(title, (key: string, params?: any) => {
+    const current_lang = appManager.get(UiManager).getLanguage();
+    if (key === 'localeName') {
+      return current_lang;
+    }
+    if (!locale) {
+      return appManager.$t(key, params);
+    }
+
+    const title_key = key.substring('translatedTitles.'.length);
+
+    const locales_for_search: PluginDescriptorLocale[] = [
+      locale[current_lang],
+      locale['en'],
+      ...Object.values(locale).filter(
+        (locale) => locale !== locale[current_lang] && locale !== locale['en'],
+      ),
+    ];
+
+    let res_title;
+    for (const locale_obj of locales_for_search) {
+      const val = getObjectValueByPath(locale_obj, title_key);
+      if (val !== undefined && typeof val === 'string') {
+        res_title = val;
+        break;
+      }
+    }
+
+    if (res_title === undefined) {
+      res_title = appManager.$t(key, params);
+    }
+    return res_title;
+  });
+}
+
+function getObjectValueByPath<T extends Record<string, any>>(
+  obj: T,
+  path: string,
+) {
+  if (!obj || typeof obj !== 'object') return undefined;
+
+  return path.split('.').reduce<T>((o, key) => {
+    if (!o) return undefined;
+    return o[key];
+  }, obj);
+}
+
 export default abstract class PluginControllerBase {
-  private _pluginDescriptor: PluginDescriptor;
-  private _activated: boolean = false;
-  private _activationLock = Promise.resolve();
+  protected _pluginDescriptor: PluginDescriptor | null = null;
+  protected _activated: boolean = false;
+  protected _activationLock = Promise.resolve();
   protected _deactivateCallbacks: (() => any)[] = [];
   appManager: IAppManager;
 
@@ -89,23 +112,31 @@ export default abstract class PluginControllerBase {
     return this._activated;
   }
 
-  isDev() {
-    return false;
-  }
-
-  constructor(appManager: IAppManager, pluginDescriptor: PluginDescriptor) {
-    this.appManager = appManager;
-    this._pluginDescriptor = pluginDescriptor;
-  }
-
   get descriptor() {
     return this._pluginDescriptor;
   }
 
+  isDev() {
+    return false;
+  }
+
+  async load(): Promise<void> {}
+
+  constructor(appManager: IAppManager) {
+    this.appManager = appManager;
+  }
+
   private _activateBlock(plugin_content: PluginContentDescriptorBlock) {
+    const definition = plugin_content.content.definition;
+    const blocks_map = this.appManager.get(EditorManager).getBlockTypesMap();
+
+    const existing_block = blocks_map[definition.name];
+    if (existing_block) {
+      definition.overriddenBlockDefinition = existing_block;
+    }
     const block = this.appManager
       .get(EditorManager)
-      .registerBlockType(plugin_content.content.controller);
+      .registerBlockType(plugin_content.content.definition);
     this._deactivateCallbacks.push(block.cancel);
   }
 
@@ -134,7 +165,8 @@ export default abstract class PluginControllerBase {
     const promise = this._activationLock.then(async () => {
       if (this._activated) return false;
 
-      const plugin = this.descriptor;
+      const plugin = this._pluginDescriptor;
+      if (!plugin) return false;
       for (const plugin_content of plugin.content) {
         switch (plugin_content.type) {
           case 'block':

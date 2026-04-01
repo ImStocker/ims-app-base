@@ -9,6 +9,18 @@
 
 body[data-theme="ims-light"] {
   @include meta.load-css("highlight.js/styles/github");
+
+  .ql-callout {
+    &[data-type='error'] {
+      --callout-color: 233, 49, 71 !important;
+    }
+    &[data-type='warning'] {
+      --callout-color: 236, 117, 0 !important;
+    }
+    &[data-type='solution'] {
+      --callout-color: 8, 185, 78 !important;
+    }
+  }
 }
 body[data-theme="ims-dark"] {
   @include meta.load-css("highlight.js/styles/github-dark");
@@ -54,6 +66,27 @@ body[data-theme="ims-dark"] {
       border-left: 4px solid #ccc;
       padding-left: 16px;
       margin: 0;
+    }
+
+    .ql-callout {
+      border-left: 4px solid rgb(var(--callout-color));
+      color: rgb(var(--callout-color));
+      padding-left: 16px;
+      --callout-color: #ccc;
+      background-color: rgba(var(--callout-color), .2);
+
+      &[data-type='info'] {
+        --callout-color: 29, 153, 255;
+      }
+      &[data-type='error'] {
+        --callout-color: 255, 83, 83;
+      }
+      &[data-type='warning'] {
+        --callout-color: 255, 182, 26;
+      }
+      &[data-type='solution'] {
+        --callout-color: 85, 203, 81;
+      }
     }
     
     ol,

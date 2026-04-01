@@ -35,8 +35,10 @@ export default defineComponent({
     menuList() {
       return this.blockTypes.map((block) => {
         return {
-          title: this.$t('blockTypes.titles.' + block.name),
-          icon: 'ri-' + block.icon,
+          title: block.title
+            ? block.title
+            : this.$t('blockTypes.titles.' + block.name),
+          icon: block.icon.startsWith('ri-') ? block.icon : 'ri-' + block.icon,
           action: () => this.$emit('create-block', block.name),
         };
       });

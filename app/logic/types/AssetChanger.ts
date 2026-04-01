@@ -23,6 +23,7 @@ import {
   type AssetPropValue,
 } from './Props';
 import { v4 as uuidv4 } from 'uuid';
+import { AssetRights } from './Rights';
 
 type HistoryAction = AssetChangeContent | (() => any);
 
@@ -66,7 +67,7 @@ export type BlockCursor = {
   offset: number;
 };
 
-export class AssetChanger {
+export abstract class AssetChanger {
   private _history: HistoryRecord[] = [];
   private _historyPointer = 0;
   private _savePointer = 0;
@@ -83,17 +84,9 @@ export class AssetChanger {
   private _isSaving = false;
   private _isUndoRedoBusy: false | 'undo' | 'redo' = false;
 
-  private _saveChangesImpl: (
+  protected abstract _saveChangesImpl(
     request: HistorySaveRequest[],
-  ) => Promise<HistorySaveResponse>;
-
-  constructor(
-    saveChangesImpl: (
-      request: HistorySaveRequest[],
-    ) => Promise<HistorySaveResponse>,
-  ) {
-    this._saveChangesImpl = saveChangesImpl;
-  }
+  ): Promise<HistorySaveResponse>;
 
   discard() {
     if (this._cutUndoForSaved.length > 0) {
@@ -682,6 +675,7 @@ export class AssetChanger {
               name: block_ch.name !== undefined ? block_ch.name : null,
               title: block_ch.title !== undefined ? block_ch.title : null,
               type: block_ch.type,
+              rights: AssetRights.FULL_ACCESS,
             };
             blocks_map.set(block_id, exists_block);
             resultAsset.blocks.push(exists_block);

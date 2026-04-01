@@ -27,6 +27,7 @@
             :block-controller="blockController"
             :resolved-block="resolvedBlock"
             :request-toolbar-target="requestToolbarTarget"
+            :block-type-definition="blockTypeDefinition"
             @save="$emit('save', $event)"
             @view-ready="$emit('view-ready', $event)"
             @send-message="$emit('sendMessage')"

@@ -30,7 +30,9 @@
                   ]"
                   class="EditFormatsDialog-content-filter-caption-icon"
                 ></i>
-                {{ baseAsset.title }}
+                <caption-string
+                  :value="baseAsset.title ?? undefined"
+                ></caption-string>
               </span>
             </span>
             <button
@@ -73,6 +75,7 @@
               </button>
               <div class="EditFormatsDialog-content-list-item-options">
                 <button
+                  v-if="creatingFormat?.id !== format.id"
                   class="is-button is-button-icon-small"
                   :class="{ loading: deletingFormatId === format.id }"
                   :disabled="deletingFormatId === format.id"
@@ -157,7 +160,6 @@ import DialogManager from '../../logic/managers/DialogManager';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
 import FormSearch from '../Form/FormSearch.vue';
-import type { AssetPropWhere } from '../../logic/types/PropsWhere';
 import { getWorkspaceBaseAssetId } from '../Sync/getBaseAsset';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { AssetShort } from '../../logic/types/AssetsType';
@@ -165,10 +167,12 @@ import {
   filterFormatsByAssetType,
   isFormatBelongToAsset,
 } from './filterFormatsByAssetType';
+import type { AssetPropValueSelection } from '../../logic/types/Props';
+import CaptionString from '../Common/CaptionString.vue';
 
 type DialogProps = {
   selectable?: boolean;
-  assetTypeFilter?: AssetPropWhere | null;
+  assetSelection?: AssetPropValueSelection | null;
   actionType?: 'export' | 'import';
 };
 
@@ -182,6 +186,7 @@ export default defineComponent({
     DialogContent,
     EditFormat,
     FormSearch,
+    CaptionString,
   },
   props: {
     dialog: {
@@ -201,7 +206,7 @@ export default defineComponent({
       formats: [] as ExportFormatWithId[],
       deletingFormatId: null as string | null,
       baseAsset: null as null | AssetShort,
-      isBaseAssetFilterEnabled: !!this.dialog.state.assetTypeFilter,
+      isBaseAssetFilterEnabled: !!this.dialog.state.assetSelection,
       isFormatUnsaved: false,
     };
   },
@@ -318,23 +323,25 @@ export default defineComponent({
           .get(ExportFormatManager)
           .getExportFormats();
         if (!this.isBaseAssetFilterEnabled) return;
-        if (this.dialog.state.assetTypeFilter) {
+        if (this.dialog.state.assetSelection?.Where) {
           let asset_id = null as null | string;
 
-          if (this.dialog.state.assetTypeFilter?.workspaceids) {
+          if (this.dialog.state.assetSelection?.Where?.workspaceids) {
             const workspace_id = Array.isArray(
-              this.dialog.state.assetTypeFilter.workspaceids,
+              this.dialog.state.assetSelection?.Where.workspaceids,
             )
-              ? this.dialog.state.assetTypeFilter.workspaceids[0]
-              : this.dialog.state.assetTypeFilter.workspaceids;
+              ? this.dialog.state.assetSelection?.Where.workspaceids[0]
+              : this.dialog.state.assetSelection?.Where.workspaceids;
             asset_id = await getWorkspaceBaseAssetId(
               this.$getAppManager(),
               workspace_id as string,
             );
           }
 
-          if (typeof this.dialog.state.assetTypeFilter?.typeids === 'string') {
-            asset_id = this.dialog.state.assetTypeFilter.typeids;
+          if (
+            typeof this.dialog.state.assetSelection?.Where?.typeids === 'string'
+          ) {
+            asset_id = this.dialog.state.assetSelection?.Where.typeids;
           }
           if (asset_id) {
             this.baseAsset = await this.$getAppManager()
@@ -441,6 +448,8 @@ export default defineComponent({
 
     .EditFormatsDialog-content-filter-caption-asset {
       white-space: nowrap;
+      display: flex;
+      gap: 2px;
     }
   }
 }

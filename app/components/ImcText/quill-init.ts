@@ -30,6 +30,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     ImcColorAttributorDep,
     ImcLinkBlotDep,
     ImcFormulaBlotDep,
+    ImcCalloutBlotDep,
   ] = await Promise.all([
     import('quill'),
     import('./ImcLinksModule'),
@@ -45,6 +46,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     import('./ImcColorAttributor'),
     import('./blots/ImcLinkBlot'),
     import('./blots/ImcFormulaBlot'),
+    import('./blots/ImcCalloutBlot'),
   ]);
 
   if (!(QuillDep.default as any).imcInited) {
@@ -97,6 +99,7 @@ export async function initQuillClientSide(): Promise<QuillInitedInterface> {
     QuillDep.default.register(ImcPropBlotDep.ImcPropBlot, true);
     QuillDep.default.register(ImcListItemBlotDep.ListContainer, true);
     QuillDep.default.register(ImcListItemBlotDep.ListItem, true);
+    QuillDep.default.register(ImcCalloutBlotDep.ImcCalloutItem, true);
     QuillDep.default.register(
       'modules/clipboard',
       ImcClipboardDep.ImcClipboard as any,

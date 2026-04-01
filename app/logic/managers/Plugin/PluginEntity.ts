@@ -4,9 +4,9 @@ import type PluginControllerBase from './PluginControllerBase';
 export type PluginSavedDescription = {
   name: string;
   from: PluginInstalledFrom;
-  hash: string;
+  // hash: string;
   activated: boolean;
-  disabledContent: string[];
+  // disabledContent: string[];
   devPluginPath?: string;
   error?: string;
   properties?: Record<string, any>;
@@ -15,16 +15,17 @@ export type PluginSavedDescription = {
 export type PluginInfo = {
   name: string;
   // hasUpdates: PluginOnlineDescriptor | null;
-  // installedFrom: PluginInstalledFrom;
+  installedFrom: PluginInstalledFrom;
   controller: PluginControllerBase;
   // hash: string;
   // disabledContent: string[];
 };
 
 export enum PluginInstalledFrom {
+  INTERNAL = 'internal',
   LOCAL = 'local',
-  ONLINE = 'online',
   DEV = 'dev',
+  // ONLINE = 'online',
 }
 
 export type PluginListItemEntity = {
@@ -32,7 +33,7 @@ export type PluginListItemEntity = {
   entity: PluginDescriptor;
   activated: boolean;
   // hasUpdates: PluginOnlineDescriptor | null;
-  // from: PluginInstalledFrom;
+  from: PluginInstalledFrom;
   // disabledContent: string[];
   error?: string;
 };

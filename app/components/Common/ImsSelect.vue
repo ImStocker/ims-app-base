@@ -100,7 +100,7 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: [Object, String, Number] as PropType<any>,
+      type: [Object, String, Number, Boolean] as PropType<any>,
       default: null,
     },
     placeholder: {

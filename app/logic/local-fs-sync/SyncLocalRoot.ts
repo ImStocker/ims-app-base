@@ -1,10 +1,10 @@
-import type { AssetPropWhere } from '../types/PropsWhere';
+import type { AssetPropValueSelection } from '../types/Props';
 
 export type SyncLocalRootSegment = {
   id: string;
   saveAs: string;
   index: number;
-  assetFilter: AssetPropWhere | null;
+  assetSelection: AssetPropValueSelection | null;
   formatId: string;
 };
 

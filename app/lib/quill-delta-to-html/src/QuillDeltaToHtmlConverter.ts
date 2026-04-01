@@ -113,7 +113,6 @@ export class QuillDeltaToHtmlConverter {
 
   getGroupedOps(): TDataGroup[] {
     const deltaOps = InsertOpsConverter.convert(this.rawDeltaOps, this.options);
-
     const pairedOps = Grouper.pairOpsWithTheirBlock(deltaOps);
 
     const groupedSameStyleBlocks = Grouper.groupConsecutiveSameStyleBlocks(

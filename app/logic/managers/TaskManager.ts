@@ -75,13 +75,13 @@ export default abstract class TaskManager extends AppSubManagerBase {
     account: AssetPropValueAccount | null,
   ): Promise<void>;
 
-  abstract getBacklogWorkspaceId(): string | null;
+  abstract getBacklogWorkspaceId(): Promise<string | null>;
 
   abstract moveTasksToArchive(
     where: TaskQueryDTOWhere,
     setArchived?: boolean,
   ): Promise<void>;
-  abstract getTaskBoardsWorkspaceId(): string | null;
+  abstract getTaskBoardsWorkspaceId(): Promise<string | null>;
 
   abstract getFirstColumnOfBoard(
     board_id: string,

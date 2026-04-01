@@ -18,6 +18,7 @@ import { AssetRights } from '../../../logic/types/Rights';
 import AssetEditorToolbarWidget from '../Editor/AssetEditorToolbarWidget.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
 import { useAppManager } from '../../../composables/useAppManager';
+import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
 
 export default defineComponent({
   name: 'AssetBlockEditorRoot',
@@ -33,7 +34,12 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    historyModeVM: {
+      type: [Object, null] as PropType<AssetHistoryVM | null>,
+      default: null,
+    },
   },
+  emits: ['close-history-mode'],
   async setup(props) {
     const appManager = useAppManager();
     const assetBlockEditor = AssetBlockEditorVM.CreateInstance(
@@ -41,6 +47,7 @@ export default defineComponent({
       props.assetFull,
     );
     await assetBlockEditor.init();
+    assetBlockEditor.historyModeVM = props.historyModeVM;
     return {
       assetBlockEditor,
       globalKeydownHandler: null as ((e: KeyboardEvent) => void) | null,
@@ -61,15 +68,32 @@ export default defineComponent({
         ? []
         : ['blockCopy', 'blockPaste', 'blockCopyAsMirror'];
     },
+    assetBlockEditorHistoryMode() {
+      return this.assetBlockEditor.historyModeVM;
+    },
   },
   watch: {
+    assetBlockEditorHistoryMode() {
+      if (
+        this.assetBlockEditorHistoryMode !== this.historyModeVM &&
+        !this.assetBlockEditorHistoryMode
+      ) {
+        this.$emit('close-history-mode');
+      }
+    },
     async assetFull() {
       if (this.assetBlockEditor) this.assetBlockEditor.destroy();
       this.assetBlockEditor = AssetBlockEditorVM.CreateInstance(
         this.$getAppManager(),
         this.assetFull,
       );
+      this.assetBlockEditor.historyModeVM = this.historyModeVM;
       await this.assetBlockEditor.init();
+    },
+    historyModeVM() {
+      if (this.assetBlockEditorHistoryMode !== this.historyModeVM) {
+        this.assetBlockEditor.historyModeVM = this.historyModeVM;
+      }
     },
   },
   async mounted() {

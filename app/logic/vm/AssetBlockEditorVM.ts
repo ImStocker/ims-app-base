@@ -12,7 +12,6 @@ import UiManager from '../managers/UiManager';
 import type { ResolvedAssetBlock, ResolvedAssetBlocks } from '../utils/assets';
 import {
   calcResolvedBlocks,
-  copyAssetFullData,
   type AssetFullInstanceR,
 } from '../types/AssetFullInstance';
 import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.vue';
@@ -23,11 +22,7 @@ import {
   type AssetProps,
 } from '../types/Props';
 import { AssetRights } from '../types/Rights';
-import {
-  AssetChanger,
-  type BlockCursor,
-  type HistorySaveResponse,
-} from '../types/AssetChanger';
+import type { AssetChanger, BlockCursor } from '../types/AssetChanger';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
@@ -52,7 +47,13 @@ import {
 import type { Workspace, WorkspaceQueryDTOWhere } from '../types/Workspaces';
 import type { IEditorVM } from './IEditorVM';
 import type { IAssetBlockComponent } from '../types/IAssetBlockComponent';
-import { GAME_INFO_ASSET_ID, MARKDOWN_ASSET_ID } from '../constants';
+import {
+  GAME_INFO_ASSET_ID,
+  MARKDOWN_ASSET_ID,
+  TASK_ASSET_ID,
+} from '../constants';
+import type { AssetHistoryVM } from './AssetHistoryVM';
+import { AssetChangerDefault } from '../types/AssetChangerDefault';
 
 type CopiedBlock = {
   title: string | null;
@@ -65,7 +66,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   assetFull: AssetFullInstanceR | null;
   assetEditedComp!: ComputedRef<AssetForEdit | null>;
   saveOnBlockCommit: boolean;
-  assetChanger: AssetChanger;
+  private _assetChanger: AssetChanger;
   copiedBlock: CopiedBlock | null = null;
   private _navigationGuardHandler: UiNavigationGuardHandler | null = null;
   private _projectInfo: ProjectFullInfo | null;
@@ -73,6 +74,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   editingBlockId: string | null = null;
   editorContextForAssetRequest: EditorContextForAssetRequested | null = null;
   private _mountedComponents = new Map<string, IAssetBlockComponent>();
+  historyModeVM: AssetHistoryVM | null = null;
 
   static CreateInstance(
     appManager: IAppManager,
@@ -114,25 +116,11 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     this.assetFull = asset;
     this.saveOnBlockCommit =
       this.appManager.$appConfiguration.saveOnBlockCommit;
-    this.assetChanger = new AssetChanger(async (requests) => {
-      const response: HistorySaveResponse = {
-        originals: [],
-      };
-      if (!this.assetFull) return response;
-      for (const request of requests) {
-        if (request.assetId !== this.assetFull.id) continue;
-        const original = copyAssetFullData(this.assetFull);
-        response.originals.push(original);
-        await this.appManager.get(CreatorAssetManager).makeAssetMultipleChange(
-          {
-            id: [original.id],
-          },
-          request.changes,
-          this.projectInfo ? { pid: this.projectInfo.id } : {},
-        );
-      }
-      return response;
-    });
+    this._assetChanger = new AssetChangerDefault(
+      this.appManager,
+      asset,
+      projectInfo?.id ?? null,
+    );
     this._projectInfo = projectInfo ?? null;
 
     if (
@@ -152,6 +140,20 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       }
     }
   }
+
+  async saveHistoryCopy(): Promise<void> {
+    await this.historyModeVM?.saveAsCopy(this.historyModeVM.selectedVersionId);
+    this.historyModeVM = null;
+  }
+
+  get assetChanger(): AssetChanger {
+    if (this.historyModeVM) {
+      return this.historyModeVM.assetChanger;
+    } else {
+      return this._assetChanger;
+    }
+  }
+
   getWorkspacesList(
     query: ApiRequestList<WorkspaceQueryDTOWhere>,
   ): Promise<ApiResultListWithTotal<Workspace>> {
@@ -221,6 +223,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       .setNavigationGuard(
         () => !this.getHasChanges(),
         async () => {
+          if (this.getIsReadonly()) {
+            return true;
+          }
           if (this.saveOnBlockCommit) {
             await this.saveChanges();
             return true;
@@ -343,7 +348,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       };
     }
     this.assetFull.activate();
-    return calcResolvedBlocks(this.assetEdited);
+    return reactive(calcResolvedBlocks(this.assetEdited));
   }
 
   async refreshAssets() {
@@ -390,7 +395,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return false;
     }
-    return await this.assetChanger.saveChanges();
+    const res = await this.assetChanger.saveChanges();
+    this.historyModeVM = null;
+    return res;
   }
 
   async changeBlockServiceName(
@@ -612,10 +619,14 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return true;
     }
+    if (this.historyModeVM) return true;
     return this.assetFull.rights < 2;
   }
 
   canDragBlocks(): boolean {
+    if (this.getIsReadonly()) {
+      return false;
+    }
     if (!this.assetFull) {
       return false;
     }
@@ -623,6 +634,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   }
 
   canAddBlocks(): boolean {
+    if (this.getIsReadonly()) {
+      return false;
+    }
     if (!this.assetFull) {
       return false;
     }
@@ -638,6 +652,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   }
 
   canCommentBlocks(): boolean {
+    if (this.getIsReadonly()) {
+      return false;
+    }
     if (!this.assetFull) {
       return false;
     }
@@ -769,6 +786,20 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   }
 
   getToolbarActions(): ExtendedMenuListItem[] {
+    if (this.historyModeVM) {
+      return [
+        {
+          name: 'history',
+          title: this.appManager.$t('gddPage.saveAsCopy'),
+          icon: 'ri-file-copy-fill',
+          action: async () => await this.saveHistoryCopy(),
+          type: 'button',
+          disabled: !!(
+            this.assetFull && this.assetFull.typeIds.includes(TASK_ASSET_ID)
+          ),
+        },
+      ];
+    }
     return [
       {
         name: 'blockCopy',
@@ -783,7 +814,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       {
         name: 'blockPaste',
         isMain: true,
-        title: this.appManager.$t('assetEditor.toolbarCopyBlock'),
+        title: this.appManager.$t('assetEditor.toolbarPasteBlock'),
         disabled: false,
         icon: 'ri-clipboard-fill',
         action: () => {

@@ -207,7 +207,7 @@ export default defineComponent({
 
 .ChatBlockMessage-comment-userName {
   font-weight: 500;
-  color: #ccc;
+  color: var(--local-sub-text-color);
   font-size: var(--local-font-size);
   text-align: left;
   padding: 0 0 0 20px;

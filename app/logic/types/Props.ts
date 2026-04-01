@@ -88,6 +88,8 @@ export type AssetPropValueWorkspace = {
 };
 
 export type AssetPropValueSelection = {
+  Select: any;
+  Group: any;
   Str: string;
   Where: AssetPropWhere;
   Order?: AssetPropsSelectionOrder[];
@@ -815,8 +817,13 @@ export function compareAssetPropValues(
         const ac = a as number[];
         const bc = b as number[];
         if (ac.length === bc.length) {
-          // NOTE: При сравнении одиночных значений мы не можем проверить равенство массивов
-          return -1;
+          // NOTE: При сравнении одиночных значений мы не можем проверить равенство массивов -> проверяются только индексы
+          for (let i = 0; i < ac.length; i++) {
+            if (ac[i] !== bc[i]) {
+              return ac[i] - bc[i];
+            }
+          }
+          return 0;
         } else {
           return ac.length - bc.length;
         }
@@ -1022,8 +1029,8 @@ export function extractAssetPropsSubObject(
   for (const [key, val] of Object.entries(props)) {
     if (key === root) {
       nested_props[''] = val;
-    } else if (key.startsWith(root + '\\')) {
-      const rest_key = key.substring(root.length + 1);
+    } else if (key.startsWith(root + '\\') || root === '') {
+      const rest_key = root === '' ? key : key.substring(root.length + 1);
       const is_array_key = /^-?\d+(.\d+)?(\\|$)/.test(rest_key);
       const sub_key = (is_array_key ? '\\' : '') + rest_key;
       nested_props[sub_key] = val;
@@ -1845,4 +1852,32 @@ export function extractRemapParentProps(props: AssetProps): {
     normalProps: computed_props,
     remapParentProps: remap_parent_props,
   };
+}
+export function diffAssetPropObjects(
+  source: AssetProps,
+  target: AssetProps,
+): AssetProps[] {
+  // флаг, есть ли хотя бы 1 изменение. Если нет, то отправляю пустой массив
+  let has_changes = false;
+  const difference: AssetProps = {};
+  for (const key of Object.keys(target)) {
+    if (source[key] !== undefined) {
+      const res = compareAssetPropValues(source[key], target[key], true);
+      if (res !== 0) {
+        has_changes = true;
+        difference[key] = source[key];
+      }
+    } else {
+      has_changes = true;
+      difference['~' + key] = null;
+    }
+  }
+  // напомнить про массивы
+  for (const key of Object.keys(source)) {
+    if (!target.hasOwnProperty(key)) {
+      has_changes = true;
+      difference[key] = source[key];
+    }
+  }
+  return has_changes ? [difference] : [];
 }

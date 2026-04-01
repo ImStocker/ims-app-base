@@ -153,7 +153,15 @@ export class ApiWorker {
       ...data,
     };
     const cookies = this._getTokenStorage();
-    await cookies.save(this._tokenMainSavedData, refreshToken);
+    await cookies.save(
+      // Note: convert to plain object (not proxy)
+      {
+        accessToken: this._tokenMainSavedData.accessToken,
+        remember: this._tokenMainSavedData.remember,
+        userId: this._tokenMainSavedData.userId,
+      },
+      refreshToken,
+    );
   }
 
   private async _clearTokens() {

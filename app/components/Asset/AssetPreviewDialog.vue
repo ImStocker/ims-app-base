@@ -1,5 +1,12 @@
 <template>
-  <dialog-content class="AssetPreviewDialog" @escape-press="choose()">
+  <dialog-content
+    class="AssetPreviewDialog"
+    :class="{
+      'AssetPreviewDialog-forHistory':
+        assetEditor.mode === 'history' && assetEditor.historyModeVM,
+    }"
+    @escape-press="choose()"
+  >
     <div
       v-if="assetEditor.loadError || !assetEditor.loadDone"
       class="AssetPreviewDialog-loading-wrapper"
@@ -334,9 +341,10 @@ export default defineComponent({
       (this.dialog as any).addBeforeCloseMethod(async () => {
         await new Promise((res) => setTimeout(res, 10));
       });
-      this.assetEventsHandler = this.$getAppManager()
-        .get(CreatorAssetManager)
-        .assetEvents.subscribe(async (ev) => {
+      const creatorsAssetManager =
+        this.$getAppManager().get(CreatorAssetManager);
+      this.assetEventsHandler =
+        creatorsAssetManager.projectContentEvents.subscribe(async (ev) => {
           if (!this.projectInfo) return;
           if (!this.currentAssetFull) return;
 
@@ -351,11 +359,13 @@ export default defineComponent({
           ).value;
           if (current_asset_tracking) {
             let reload_asset = false;
-            for (const upserted_id of ev.upsert.ids) {
-              const upserted_asset: AssetShort | undefined = ev.upsert.objects
-                .assetFulls[upserted_id]
-                ? ev.upsert.objects.assetFulls[upserted_id]
-                : ev.upsert.objects.assetShorts[upserted_id];
+            for (const upserted_id of ev.aUpsIds) {
+              const upserted_asset: AssetShort | null =
+                creatorsAssetManager.getAssetInstanceViaCacheSync(
+                  upserted_id,
+                ) ??
+                creatorsAssetManager.getAssetShortViaCacheSync(upserted_id) ??
+                null;
               if (!upserted_asset) continue;
               if (!upserted_asset.typeIds.includes(TASK_ASSET_ID)) {
                 continue;
@@ -367,13 +377,14 @@ export default defineComponent({
             }
 
             if (reload_asset) {
-              await this.$getAppManager()
-                .get(CreatorAssetManager)
-                .getAssetInstance(current_asset.id, true);
+              await creatorsAssetManager.getAssetInstance(
+                current_asset.id,
+                true,
+              );
             }
           }
 
-          if (ev.deletedIds.includes(current_asset.id)) {
+          if (ev.aDelIds.includes(current_asset.id)) {
             this.dialog.close();
             return;
           }
@@ -564,6 +575,9 @@ export default defineComponent({
   padding: 0px 0px 20px 0px;
 
   --local-bg-color: var(--editor-bg-color);
+}
+.AssetPreviewDialog-forHistory {
+  margin-left: -170px;
 }
 .AssetPreviewDialog-loading-wrapper {
   display: flex;

@@ -10,6 +10,8 @@
       :toolbar-show-block-copy-paste="
         layoutDescriptor.props.toolbarShowBlockCopyPaste ?? true
       "
+      :history-mode-v-m="assetEditor.historyModeVM"
+      @close-history-mode="assetEditor.changeMode('usual')"
     >
       <template #default="{ assetBlockEditor }">
         <slot
@@ -31,6 +33,15 @@
         </slot>
       </template>
     </asset-block-editor-root>
+    <right-panel
+      v-if="assetEditor.mode === 'history' && assetEditor.historyModeVM"
+      class="RightHistoryPanel"
+    >
+      <asset-history
+        :asset-history="assetEditor.historyModeVM"
+        @close="closeHistory"
+      ></asset-history>
+    </right-panel>
   </div>
   <div v-else-if="assetEditor.loadDone" class="PageError">
     {{ $t('common.notFound') }}
@@ -57,12 +68,16 @@ import {
   BLOCK_TYPE_PROPS,
 } from '../../../logic/constants';
 import EditorManager from '../../../logic/managers/EditorManager';
+import RightPanel from '#components/Common/RightPanel.vue';
+import AssetHistory from '../History/AssetHistory.vue';
 
 export default defineComponent({
   name: 'AssetFullEditor',
   components: {
     AssetBlockEditor,
     AssetBlockEditorRoot,
+    RightPanel,
+    AssetHistory,
   },
   props: {
     assetEditor: {
@@ -107,6 +122,9 @@ export default defineComponent({
     },
   },
   methods: {
+    async closeHistory() {
+      await this.assetEditor.changeMode('usual');
+    },
     async saveChanges() {
       if (!this.$refs['editorRoot']) return;
       await (

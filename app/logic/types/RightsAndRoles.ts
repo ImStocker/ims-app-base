@@ -1,3 +1,4 @@
+import type { AssetProps } from './Props';
 import type { AssetRights } from './Rights';
 import type { UserWithNameDTO } from './UserType';
 
@@ -30,6 +31,13 @@ export type WorkspaceDTO = {
   createdAt: Date;
   updatedAt: Date;
   index: number | null;
+};
+export type ChangeWorkspaceDTO = {
+  parentId?: string | null;
+  title?: string;
+  name?: string | null;
+  index?: number | null;
+  props?: AssetProps | null;
 };
 export type RoleWorkspaceRightsGetDTO = {
   workspace: WorkspaceDTO;

@@ -4,17 +4,16 @@
       <div class="AssetHistoryRow-date">
         {{ createdAt }}
       </div>
-      <div class="AssetHistoryRow-content">
-        {{ changeContent }}
-      </div>
-      <div class="AssetHistoryRow-user">
-        <i class="ri-user-fill"></i>
-        {{ historyRow.user.Name }}
-      </div>
-      <div class="AssetHistoryRow-menu">
-        <menu-button class="AssetHistoryRow-menu-button">
-          <menu-list :menu-list="menuList"></menu-list>
-        </menu-button>
+      <div class="AssetHistoryRow-info">
+        <div class="AssetHistoryRow-user">
+          <i class="ri-user-fill"></i>
+          {{ historyRow.user.Name }}
+        </div>
+        <div class="AssetHistoryRow-menu">
+          <menu-button class="AssetHistoryRow-menu-button">
+            <menu-list :menu-list="menuList"></menu-list>
+          </menu-button>
+        </div>
       </div>
     </div>
   </div>
@@ -28,6 +27,8 @@ import { parseAssetNewBlockRef } from '../../../logic/types/Props';
 import MenuButton from '../../Common/MenuButton.vue';
 import UiManager from '../../../logic/managers/UiManager';
 import MenuList from '../../Common/MenuList.vue';
+import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
+import { TASK_ASSET_ID } from '#logic/constants';
 
 export default defineComponent({
   name: 'AssetHistoryRow',
@@ -40,21 +41,31 @@ export default defineComponent({
       type: Object as PropType<AssetHistoryDTO>,
       required: true,
     },
+    assetFull: {
+      type: Object as PropType<AssetFullInstanceR>,
+      required: true,
+    },
   },
-  emits: ['rollbackChange', 'revertToState'],
+  emits: ['restoreVersion', 'saveAsCopy'],
   computed: {
     menuList() {
       return [
         {
-          title: this.$t('assetHistory.rollbackChange'),
-          icon: 'history',
-          action: this.rollbackChange,
+          name: 'restoreVersion',
+          title: this.$t('gddPage.restoreThisVersion'),
+          icon: 'ri-save-fill',
+          action: () => this.restoreThisVersion(),
         },
-        // TODO: IMPLEMENT THIS:
-        // {
-        //   title: this.$t('assetHistory.revertToState'),
-        //   action: this.revertToState
-        // }
+        ...(this.assetFull.typeIds.includes(TASK_ASSET_ID)
+          ? []
+          : [
+              {
+                name: 'saveAsCopy',
+                title: this.$t('gddPage.saveAsCopy'),
+                icon: 'ri-file-copy-fill',
+                action: () => this.saveAsCopy(),
+              },
+            ]),
       ];
     },
     createdAt() {
@@ -150,11 +161,11 @@ export default defineComponent({
     },
   },
   methods: {
-    rollbackChange() {
-      this.$emit('rollbackChange', this.historyRow.id);
+    restoreThisVersion() {
+      this.$emit('restoreVersion', this.historyRow.id);
     },
-    revertToState() {
-      this.$emit('revertToState', this.historyRow.id);
+    saveAsCopy() {
+      this.$emit('saveAsCopy', this.historyRow.id);
     },
   },
 });
@@ -168,6 +179,12 @@ export default defineComponent({
 }
 
 .AssetHistoryRow-header {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.AssetHistoryRow-info {
   display: flex;
   gap: 10px;
 }

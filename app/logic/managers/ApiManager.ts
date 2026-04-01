@@ -123,9 +123,9 @@ export default class ApiManager extends AppSubManagerBase {
     return this._apiWorker.download(service, method, endpoint, params);
   }
 
-  getAccessToken(): string | undefined {
+  getTokenOrRefresh(): Promise<string | undefined> {
     assert(this._apiWorker, 'ApiWorker was not inited');
-    return this._apiWorker.getAccessToken();
+    return this._apiWorker.getTokenOrRefresh();
   }
 
   async getRefreshToken(): Promise<string | undefined> {
@@ -155,11 +155,6 @@ export default class ApiManager extends AppSubManagerBase {
   async removeToken() {
     assert(this._apiWorker, 'ApiWorker was not inited');
     return this._apiWorker.removeToken();
-  }
-
-  async getTokenOrRefresh(): Promise<string | undefined> {
-    assert(this._apiWorker, 'ApiWorker was not inited');
-    return this._apiWorker.getTokenOrRefresh();
   }
 
   getTokenInfo(): AuthTokenInfo | undefined {

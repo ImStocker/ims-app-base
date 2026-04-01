@@ -1,4 +1,5 @@
-import { AssetChanger } from './AssetChanger';
+import type { AssetChanger } from './AssetChanger';
+import { AssetChangerDummy } from './AssetChangerDummy';
 import type { AssetProps } from './Props';
 import { AssetRights } from './Rights';
 
@@ -9,9 +10,7 @@ export class FormDummyAssetChanger {
   originalState: AssetProps;
 
   constructor(originalState: AssetProps) {
-    this.changer = new AssetChanger(async () => {
-      return { originals: [] };
-    });
+    this.changer = new AssetChangerDummy();
     this.originalState = originalState;
   }
 
@@ -32,6 +31,7 @@ export class FormDummyAssetChanger {
           title: '',
           type: 'props',
           updatedAt: '',
+          rights: AssetRights.FULL_ACCESS,
         },
       ],
       createdAt: '',

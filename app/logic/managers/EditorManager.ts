@@ -87,7 +87,12 @@ export default abstract class EditorManager extends AppSubManagerBase {
   private _registerEntity<
     T extends BlockTypeDefinition | FieldTypeController | AssetLayoutDescriptor,
   >(list: T[], entity: T) {
-    list.push(entity);
+    const existing_entity_index = list.findIndex((e) => e.name === entity.name);
+    if (existing_entity_index >= 0) {
+      list[existing_entity_index] = entity;
+    } else {
+      list.push(entity);
+    }
     return {
       cancel: () => {
         const ind = list.indexOf(entity);

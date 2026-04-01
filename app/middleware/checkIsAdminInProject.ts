@@ -1,7 +1,7 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#app';
 import { useAppManager } from '../composables/useAppManager';
-import ProjectManager from '../logic/managers/ProjectManager';
-import { getSignInLink } from '../logic/router/routes-helpers';
+import ProjectManager from '#logic/managers/ProjectManager';
+import { getSignInLink } from '#logic/router/routes-helpers';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const appManager = useAppManager();

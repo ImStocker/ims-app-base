@@ -14,8 +14,6 @@ import DialogManager from '../../logic/managers/DialogManager';
 import PromptDialog from '../Common/PromptDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
 import { MIN_ASSET_RIGHTS_TO_HISTORY } from '../../logic/types/Rights';
-import AssetHistoryDialog from './History/AssetHistoryDialog.vue';
-import { assert } from '../../logic/utils/typeUtils';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import {
   getProjectLinkHref,
@@ -401,10 +399,7 @@ export default defineComponent({
     },
     async showHistory() {
       if (!this.historyShown) return;
-      assert(this.currentSingleAsset);
-      await this.$getAppManager().get(DialogManager).show(AssetHistoryDialog, {
-        assetId: this.currentSingleAsset.id,
-      });
+      await this.assetEditor.changeMode('history');
     },
   },
 });
