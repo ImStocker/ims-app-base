@@ -181,7 +181,7 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
-@use '~ims-app-base/components/ImcText/Toolbar/ImcEditorToolbar.scss';
+@use '../../ImcText/Toolbar/ImcEditorToolbar.scss';
 
 .AssetEditorToolbar {
   display: flex;
