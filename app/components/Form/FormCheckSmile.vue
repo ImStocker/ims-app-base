@@ -49,11 +49,16 @@ export default defineComponent({
       default: () => ({}),
     },
   },
-  emits: ['input'],
+  emits: ['input', 'change-dropdown-state'],
   data() {
     return {
       dropdownShown: false,
     };
+  },
+  watch: {
+    dropdownShown() {
+      this.$emit('change-dropdown-state', this.dropdownShown);
+    },
   },
   methods: {
     onSelected(item: string) {

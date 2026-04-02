@@ -295,6 +295,7 @@ export default defineComponent({
               }
             });
             this.messages = [...messages];
+            // this.allMessages = словарь со всеми реплаями вида id: value и его нужно передавать в компонент message
           }
         } catch (err) {
           if (this.initialLoad) {
