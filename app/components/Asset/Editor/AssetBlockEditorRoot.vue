@@ -114,7 +114,25 @@ export default defineComponent({
         this.globalKeydownHandler = (ev) => {
           if (this.isActiveEditor) {
             if (ev.code === 'KeyS' && (ev.ctrlKey || ev.metaKey)) {
+              ev.preventDefault();
               this.assetBlockEditor.saveChanges();
+            } else if (
+              (ev.code === 'KeyZ' || ev.code === 'KeyY') &&
+              (ev.ctrlKey || ev.metaKey)
+            ) {
+              const isTextInput =
+                ev.target instanceof HTMLElement &&
+                (ev.target.tagName === 'INPUT' ||
+                  ev.target.tagName === 'TEXTAREA' ||
+                  ev.target.isContentEditable);
+
+              if (isTextInput) {
+                // text input history
+                return;
+              }
+              ev.preventDefault();
+              if (ev.code === 'KeyZ') this.assetBlockEditor.undo();
+              else this.assetBlockEditor.redo();
             }
           }
         };
