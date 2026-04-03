@@ -38,6 +38,10 @@
           ></asset-link>
         </div>
       </div>
+      <div v-if="vm.asset?.name" class="AssetPageHeader-assetName">
+        <i class="ri-price-tag-3-fill"></i>
+        {{ vm.asset.name }}
+      </div>
       <div
         v-if="toolbarRequested"
         ref="toolbar"
@@ -422,5 +426,13 @@ export default defineComponent({
 }
 .AssetPageHeader-requestSignIn {
   margin-top: 15px;
+}
+.AssetPageHeader-assetName {
+  font-size: var(--local-font-size);
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--local-sub-text-color);
 }
 </style>
