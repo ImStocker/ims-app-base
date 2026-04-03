@@ -13,7 +13,8 @@
       :class="{ 'active-button': hasChanges && !commentWasOpened }"
       @click="openChat()"
     >
-      <i v-if="hasMessages" class="ri-chat-4-fill"></i>
+      <i v-if="blockComment?.hasMention" class="ri-chat-unread-fill"></i>
+      <i v-else-if="hasMessages" class="ri-chat-4-fill"></i>
       <i v-else class="ri-chat-new-fill"></i>
     </button>
     <div

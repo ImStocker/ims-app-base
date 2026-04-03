@@ -56,14 +56,11 @@ export default defineComponent({
         },
         [AssetUnreadFlag.MENTION]: {
           title: this.$t('assetUnreadFlags.mention'),
-          icon: 'ri-at-fill',
+          icon: 'ri-at-line',
         },
       };
     },
   },
 });
 </script>
-<style lang="scss">
-.NotificationIcon {
-}
-</style>
+<style lang="scss"></style>
