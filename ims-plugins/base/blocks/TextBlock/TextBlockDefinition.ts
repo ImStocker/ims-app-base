@@ -6,9 +6,9 @@ import type {
 } from '#logic/utils/assets';
 import { AssetPropType } from '#logic/types/Props';
 import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
-import type { IAppManager } from '#logic/managers/IAppManager';
 import { TextBlockController } from './TextBlockController';
 import type { BlockEditorController } from '#logic/types/BlockEditorController';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export class TextBlockDefinition extends BlockTypeDefinition {
   name = 'text';
@@ -40,7 +40,7 @@ export class TextBlockDefinition extends BlockTypeDefinition {
   override getBlockProvidedVariables(
     asset: AssetFullInstanceR,
     resolved_block: ResolvedAssetBlock,
-    _app_manager: IAppManager,
+    _projectContext: IProjectContext,
   ): BlockProvidedVariable[] {
     if (!resolved_block.name && !resolved_block.title) return [];
     return [
@@ -87,9 +87,9 @@ export class TextBlockDefinition extends BlockTypeDefinition {
   }
 
   override createController(
-    appManager: IAppManager,
+    _projectContext: IProjectContext,
     getResolvedBlock: () => ResolvedAssetBlock | null,
   ): BlockEditorController {
-    return new TextBlockController(appManager, getResolvedBlock);
+    return new TextBlockController(_projectContext, getResolvedBlock);
   }
 }

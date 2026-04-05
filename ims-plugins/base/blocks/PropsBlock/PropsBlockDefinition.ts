@@ -1,6 +1,4 @@
 import { extractPropsBlockEntries2 } from './PropsBlock';
-import EditorSubContext from '#logic/managers/EditorManager';
-import type { IAppManager } from '#logic/managers/IAppManager';
 import type {
   AssetLocalizableField,
   ResolvedAssetBlock,
@@ -11,6 +9,8 @@ import {
   type BlockProvidedVariable,
 } from '#logic/types/BlockTypeDefinition';
 import type { PropsFormFieldDef } from '#logic/types/PropsForm';
+import type { IProjectContext } from '#logic/types/IProjectContext';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
 
 function gatherPropsColumns(
   asset: AssetFullInstanceR,
@@ -34,13 +34,13 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
   override getBlockProvidedVariables(
     asset: AssetFullInstanceR,
     resolved_block: ResolvedAssetBlock,
-    app_manager: IAppManager,
+    projectContext: IProjectContext,
   ): BlockProvidedVariable[] {
     const fields = gatherPropsColumns(asset, resolved_block);
     const variables: BlockProvidedVariable[] = [];
     for (const field of fields) {
       const field_controller = field.type
-        ? app_manager.get(EditorSubContext).getFieldTypesMap()[field.type]
+        ? projectContext.get(EditorSubContext).getFieldTypesMap()[field.type]
         : undefined;
 
       if (!field.propTitle) continue;

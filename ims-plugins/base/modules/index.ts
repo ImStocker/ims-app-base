@@ -1,18 +1,20 @@
 import { defineAsyncComponent } from 'vue';
-import EditorSubContext from '#logic/managers/EditorManager';
-import type { IAppManager } from '#logic/managers/IAppManager';
 import { STRUCT_ASSET_ID, ENUM_ASSET_ID } from '#logic/constants';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { assert } from '#logic/utils/typeUtils';
+import type { IProjectContext } from '#logic/types/IProjectContext';
 
 export default function () {
   return [
     {
       type: 'module',
       content: {
-        async activate(appManager: IAppManager) {
+        async activate(projectContext: IProjectContext) {
           const cancel_callbacks: { cancel: () => void }[] = [];
+          assert(projectContext, 'Project context not provided');
 
           cancel_callbacks.push(
-            appManager.get(EditorSubContext).registerAssetLayout({
+            projectContext.get(EditorSubContext).registerAssetLayout({
               name: 'full',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -33,7 +35,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorSubContext).registerAssetLayout({
+            projectContext.get(EditorSubContext).registerAssetLayout({
               name: 'detached',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -50,7 +52,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorSubContext).registerAssetLayout({
+            projectContext.get(EditorSubContext).registerAssetLayout({
               name: 'enum',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -69,7 +71,7 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager.get(EditorSubContext).registerAssetLayout({
+            projectContext.get(EditorSubContext).registerAssetLayout({
               name: 'struct',
               pageComponent: defineAsyncComponent(
                 () =>
@@ -88,13 +90,13 @@ export default function () {
           );
 
           cancel_callbacks.push(
-            appManager
+            projectContext
               .get(EditorSubContext)
               .registerAssetLayoutBind(STRUCT_ASSET_ID, 'struct'),
           );
 
           cancel_callbacks.push(
-            appManager
+            projectContext
               .get(EditorSubContext)
               .registerAssetLayoutBind(ENUM_ASSET_ID, 'enum'),
           );
