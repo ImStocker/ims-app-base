@@ -49,26 +49,12 @@ export default class ProjectManager extends AppSubManagerBase {
     throw new Error('Not implemented');
   }
 
-  getProjectContext(projectId: string): Promise<IProjectContext | null> {
+  requestProjectContext(projectId: string): Promise<IProjectContext | null> {
     throw new Error('Not implemented');
   }
 
   getAllowAnonymUsers() {
     return false;
-  }
-
-  getProjectFullInfoViaCache(projectId: string) {
-    assert(this._fullProjectsCache, 'Not inited');
-    return this._fullProjectsCache.getElement(projectId);
-  }
-
-  getProjectFullInfoViaCacheSync(projectId: string) {
-    assert(this._fullProjectsCache, 'Not inited');
-    return this._fullProjectsCache.getElementSync(projectId);
-  }
-
-  async requestProjectFullInfoInCache(projectId: string) {
-    await this.getProjectFullInfoViaCache(projectId);
   }
 
   canCreateTask(): boolean {

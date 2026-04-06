@@ -33,7 +33,6 @@ import { defineComponent, inject, type PropType } from 'vue';
 import GameDesignMenu from './GameDesignMenu.vue';
 import type { GameDesignMenuVM } from '#logic/vm/GameDesignMenuVM';
 import { assert } from '#logic/utils/typeUtils';
-import ProjectManager from '#logic/managers/ProjectManager';
 import type {
   ProjectFullInfo,
   ProjectShortInfo,
@@ -120,9 +119,7 @@ export default defineComponent({
         this.isLoading = true;
         this.loadError = null;
         if (!this.project) {
-          this.project = await this.$getAppManager()
-            .get(ProjectManager)
-            .getProjectFullInfoViaCache(this.projectInfo.id);
+          this.project = await this.projectContext.projectInfo;
         }
         if (this.project && this.projectContext) {
           this.gddVM = await this.initVM();
