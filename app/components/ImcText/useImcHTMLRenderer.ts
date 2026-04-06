@@ -26,7 +26,6 @@ import {
   sanitizeProjectUrl,
   type ProjectInfoForLink,
 } from '../../logic/router/routes-helpers';
-import ProjectManager from '../../logic/managers/ProjectManager';
 import { IMC_ICON_BLOT_CLASS, type ImcIconBlotData } from './blots/ImcIconBlot';
 import type { Op } from 'quill-delta';
 import { type ImcPropBlotData, IMC_PROP_BLOT_CLASS } from './blots/ImcPropBlot';
@@ -39,6 +38,8 @@ import { useRouter } from '#app';
 import type { Router } from 'vue-router';
 import hljs from 'highlight.js';
 import { ImcTextCodeLangs } from './imc-text-code-langs';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { inject } from 'vue';
 
 export type ImcHTMLRenderer = (
   value: AssetPropValue,
@@ -60,11 +61,13 @@ export function useImcHTMLRenderer(
   return (value, options?): string => {
     const appManager = useAppManager();
     const $router = useRouter();
+    const projectContext = inject(injectedProjectContext);
+    const project_info = projectContext?.projectInfo;
     const project_for_link: ProjectInfoForLink | null = options?.project
       ? options?.project
       : project
         ? project
-        : appManager.get(ProjectManager).getProjectInfo();
+        : (project_info ?? null);
 
     let html: string;
     const get_header_anchor = options?.getHeaderAnchor;

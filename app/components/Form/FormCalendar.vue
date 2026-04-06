@@ -119,9 +119,6 @@ export default defineComponent({
       }
       return formatDate(val, this.datePickerLocale);
     },
-    getProjectInfo(): any {
-      return this.projectContext.projectInfo;
-    },
   },
   watch: {
     compRawValueStr() {

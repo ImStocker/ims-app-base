@@ -6,5 +6,7 @@ export async function useProjectContext(
   projectId: string,
 ): Promise<IProjectContext | null> {
   const { $getAppManager } = useNuxtApp();
-  return $getAppManager().get(ProjectManager).getProjectContext(projectId);
+  return await $getAppManager()
+    .get(ProjectManager)
+    .requestProjectContext(projectId);
 }

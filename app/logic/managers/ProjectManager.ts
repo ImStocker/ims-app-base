@@ -3,6 +3,7 @@ import type {
   ProjectFullInfo,
   IProjectUserOwnRole,
   UserInProject,
+  AppLoadProject,
 } from '../types/ProjectTypes';
 import { Service, HttpMethods } from './ApiWorker';
 import ApiManager from './ApiManager';
@@ -26,6 +27,8 @@ export default class ProjectManager extends AppSubManagerBase {
   private _userRole: IProjectUserOwnRole | null = null;
   private _projectContextFabric: ProjectContextFabric | null = null;
   protected _fullProjectsCache: EntityCache<ProjectFullInfo> | undefined;
+  private _projects: Map<string, IProjectContext> = new Map();
+  private _currentProjectId: string | null = null;
 
   async init(projectContextFabric: ProjectContextFabric) {
     this._projectContextFabric = projectContextFabric;
@@ -46,11 +49,46 @@ export default class ProjectManager extends AppSubManagerBase {
   }
 
   getCurrentProjectContextSync(): IProjectContext | null {
-    throw new Error('Not implemented');
+    if (!this._currentProjectId) return null;
+    return this._projects.get(this._currentProjectId) ?? null;
   }
 
-  requestProjectContext(projectId: string): Promise<IProjectContext | null> {
-    throw new Error('Not implemented');
+  setCurrentProjectId(new_project_id: string | null) {
+    this._currentProjectId = new_project_id;
+  }
+
+  async requestProjectContext(
+    projectId: string,
+  ): Promise<IProjectContext | null> {
+    const project_context: IProjectContext | null =
+      this._projects.get(projectId) ?? null;
+    if (project_context) {
+      return project_context;
+    } else {
+      const loaded_project: AppLoadProject = await this.appManager
+        .get(ApiManager)
+        .call<AppLoadProject>(
+          Service.CREATORS,
+          HttpMethods.GET,
+          'project/load',
+          {
+            pid: projectId,
+          },
+        );
+      return await this.initLoadedProject(loaded_project);
+    }
+  }
+
+  async initLoadedProject(loadedProject: AppLoadProject) {
+    if (!this._projectContextFabric) return null;
+
+    const project_context = this._projectContextFabric(
+      this.appManager,
+      loadedProject.project,
+      loadedProject.user,
+    );
+    await project_context.init();
+    return project_context;
   }
 
   getAllowAnonymUsers() {

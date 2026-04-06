@@ -52,4 +52,8 @@ export class UsersSubContext extends ProjectSubContext {
       success: true,
     };
   }
+
+  getRenamedMemberNameById(_user_id: string): string | undefined {
+    return undefined;
+  }
 }

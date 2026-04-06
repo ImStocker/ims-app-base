@@ -5,10 +5,11 @@
   <slot></slot>
 </template>
 <script setup lang="ts">
+import { useProjectMenu } from '#components/useProjectMenu';
 import { provide, useAppManager } from '#imports';
 import ProjectManager from '#logic/managers/ProjectManager';
 import { injectedProjectContext } from '#logic/types/IProjectContext';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const appManager = useAppManager();
 const props = defineProps({
@@ -28,6 +29,12 @@ try {
   }
 
   provide(injectedProjectContext, projectContext);
+
+  onMounted(async () => {
+    await projectContext.initClient();
+  });
+  const menu = useProjectMenu(projectContext);
+  await menu.init();
 } catch (err: any) {
   loadError.value = err.message;
 }

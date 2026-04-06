@@ -102,7 +102,7 @@ export enum Lang {
 export type LangStr = 'en' | 'ru';
 
 export type UserInProject = User & {
-  role: IProjectUserRole | null;
+  role: IProjectUserOwnRole | null;
 };
 
 export type ProjectMember = User & {
@@ -122,9 +122,15 @@ export type SubscribersInfo = {
   isSubscribed: boolean;
 };
 
+export type AppLoadProject = {
+  project: ProjectFullInfo;
+  user: UserInProject | null;
+};
+
 export type AppLoadResult = {
   projects: ProjectShortInfo[];
   project: ProjectFullInfo | null;
+  user: UserInProject | null;
   role: IProjectUserOwnRole | null;
   subscribers: SubscribersInfo | null;
   invitations: InvitationInfo[];

@@ -89,7 +89,6 @@
 <script lang="ts">
 import { defineComponent, inject, type PropType, type UnwrapRef } from 'vue';
 import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
-import AuthManager from '../../../logic/managers/AuthManager';
 import {
   MIN_ASSET_RIGHTS_TO_CHANGE,
   MIN_ASSET_RIGHTS_TO_RENAME,
@@ -169,7 +168,7 @@ export default defineComponent({
       return this.projectContext.projectInfo;
     },
     userInfo() {
-      return this.$getAppManager().get(AuthManager).getUserInfo();
+      return this.projectContext?.user;
     },
     allowAnonymUsers() {
       return this.$getAppManager().get(ProjectManager).getAllowAnonymUsers();

@@ -226,9 +226,6 @@ export default defineComponent({
         this.uploadTotal;
       return Math.round(val * 100);
     },
-    getProjectInfo(): any {
-      return this.projectContext.projectInfo;
-    },
   },
   watch: {
     viewReady() {

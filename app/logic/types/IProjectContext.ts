@@ -34,6 +34,7 @@ export interface IProjectContext {
   register<T extends ProjectSubContext>(subcontext: T): void;
 
   init(): Promise<void>;
+  initClient(): Promise<void>;
   destroy(): Promise<void>;
   saveState(): Record<string, any>;
   loadState(state: Record<string, any>): void;

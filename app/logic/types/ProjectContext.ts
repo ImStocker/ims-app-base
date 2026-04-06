@@ -21,10 +21,11 @@ export class ProjectContext implements IProjectContext {
     ProjectSubContext
   >();
   private readonly _initRoutines: (() => Promise<void>)[] = [];
-  private readonly _postInitRoutines: (() => Promise<void>)[] = [];
+  private readonly _clientInitRoutines: (() => Promise<void>)[] = [];
   private readonly _destroyRoutines: (() => Promise<void>)[] = [];
   private readonly _stateRoutines: StateRoutine[] = [];
   private _inited: boolean = false;
+  private _clientInited: boolean = false;
 
   constructor(
     private readonly _appManager: IAppManager,
@@ -64,7 +65,7 @@ export class ProjectContext implements IProjectContext {
       manager_id = subcontext_interface.constructor;
       subcontext = subcontext_interface;
     } else manager_id = subcontext_interface;
-    assert(subcontext, 'Manager is undefined');
+    assert(subcontext, 'Sub context is undefined');
     this._registeredSubContexts.set(
       manager_id,
       reactive(subcontext) as unknown as ProjectSubContext,
@@ -75,8 +76,8 @@ export class ProjectContext implements IProjectContext {
     this._initRoutines.push(init);
   }
 
-  addPostInitRoutine(init: () => Promise<void>) {
-    this._postInitRoutines.push(init);
+  addClientInitRoutine(init: () => Promise<void>) {
+    this._clientInitRoutines.push(init);
   }
 
   addDestroyRoutine(destroy: () => Promise<void>) {
@@ -97,6 +98,18 @@ export class ProjectContext implements IProjectContext {
     }
 
     this._inited = true;
+  }
+
+  async initClient() {
+    if (this._clientInited) {
+      return;
+    }
+
+    for (const init of this._clientInitRoutines) {
+      await init();
+    }
+
+    this._clientInited = true;
   }
 
   resetInit() {
