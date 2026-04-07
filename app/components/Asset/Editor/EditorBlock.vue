@@ -835,6 +835,7 @@ export default defineComponent({
   position: relative;
   align-items: center;
   break-inside: avoid;
+  gap: 5px;
 
   @include devices-mixins.device-type(mb) {
     display: grid;

@@ -1,38 +1,40 @@
 <template>
   <div class="FormDatePicker">
-    <DatePicker
-      :model-value="value"
-      :mode="mode"
-      :locale="datePickerLocale"
-      is24hr
-      @update:model-value="onInput"
-    >
-      <template #default="{ togglePopover }">
-        <div class="FormDatePicker-box" @click="open(togglePopover)">
-          <slot name="icon"></slot>
-          <input
-            v-model="rawValueStr"
-            class="FormDatePicker-input"
-            type="text"
-            :disabled="disabled"
-            @change="emitFromRawValueStr"
-          />
-          <button
-            v-if="value && nullable"
-            type="button"
-            class="FormDatePicker-clear"
-            tabindex="-1"
-            @click="clearValue"
-          >
-            <i class="ri-close-fill"></i>
-          </button>
-          <i
-            v-if="showCalendarIcon"
-            class="ri-calendar-2-fill FormDatePicker-input-i"
-          ></i>
-        </div>
-      </template>
-    </DatePicker>
+    <ClientOnly>
+      <DatePicker
+        :model-value="value"
+        :mode="mode"
+        :locale="datePickerLocale"
+        is24hr
+        @update:model-value="onInput"
+      >
+        <template #default="{ togglePopover }">
+          <div class="FormDatePicker-box" @click="open(togglePopover)">
+            <slot name="icon"></slot>
+            <input
+              v-model="rawValueStr"
+              class="FormDatePicker-input"
+              type="text"
+              :disabled="disabled"
+              @change="emitFromRawValueStr"
+            />
+            <button
+              v-if="value && nullable"
+              type="button"
+              class="FormDatePicker-clear"
+              tabindex="-1"
+              @click="clearValue"
+            >
+              <i class="ri-close-fill"></i>
+            </button>
+            <i
+              v-if="showCalendarIcon"
+              class="ri-calendar-2-fill FormDatePicker-input-i"
+            ></i>
+          </div>
+        </template>
+      </DatePicker>
+    </ClientOnly>
   </div>
 </template>
 
