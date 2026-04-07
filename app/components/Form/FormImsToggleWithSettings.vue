@@ -1,10 +1,10 @@
 <template>
   <div class="FormImsToggleWithSettings">
     <ims-toggle
-      :model-value="modelValue"
+      :model-value="modelValue === null ? undefined : modelValue"
       @update:model-value="ownModelValue = $event"
     ></ims-toggle>
-    <div v-if="projectRight.ownRights === null" class="use-buttons-options">
+    <div v-if="projectRight[option] === null" class="use-buttons-options">
       <button
         v-pro-function="projectRight.roleNum !== 0 ? 'roleSettings' : undefined"
         class="is-button"
@@ -19,7 +19,7 @@
       </button>
     </div>
     <div v-else class="use-buttons-options">
-      <button class="is-button" @click="deleteChange(projectRight.roleNum)">
+      <button class="is-button" @click="deleteChange">
         <i class="ri-close-fill"></i>
       </button>
     </div>
@@ -28,6 +28,8 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import ImsToggle from '#components/Common/ImsToggle.vue';
+import type { ProjectSubscriptionInspectResponseRoleDTO } from '#logic/types/SubscriptionInspect';
+import type { PropType } from 'vue';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
@@ -36,16 +38,24 @@ export default defineComponent({
     ImsToggle,
   },
   props: {
+    option: {
+      type: String,
+      required: true,
+    },
+    roleNum: {
+      type: Number,
+      required: true,
+    },
     modelValue: {
-      type: Boolean,
-      default: false,
+      type: [Boolean, null],
+      default: () => null,
     },
     projectRight: {
-      type: Object,
+      type: Object as PropType<ProjectSubscriptionInspectResponseRoleDTO>,
       required: true,
     },
   },
-  emits: ['update:model-value'],
+  emits: ['update:model-value', 'update:delete-change'],
   computed: {
     ownModelValue: {
       get() {
@@ -57,16 +67,8 @@ export default defineComponent({
     },
   },
   methods: {
-    deleteChange(role_num: number) {
-      /*const ind = this.changes.findIndex((ch) => ch.roleNum === role_num);
-      if (ind > -1) {
-        this.changes.splice(ind, 1);
-      } else {
-        this.changes.push({
-          roleNum: role_num,
-          rights: null,
-        });
-      }*/
+    deleteChange() {
+      this.$emit('update:delete-change');
     },
   },
 });
