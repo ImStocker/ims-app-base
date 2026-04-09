@@ -325,6 +325,7 @@ export default defineComponent({
       this.loading = false;
       this.initialLoad = false;
     },
+    revealCommentReply(reply_id: string) {},
     async sendMessage({ content }: { content: AssetPropValue }) {
       if (!this.currentAsset) {
         return;

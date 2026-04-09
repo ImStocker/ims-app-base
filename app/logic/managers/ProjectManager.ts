@@ -8,6 +8,7 @@ import type {
   ChangesStreamResponse,
   ApiResultListWithTotal,
   Member,
+  ApiRequestList,
 } from '../types/ProjectTypes';
 import CreatorAssetManager from './CreatorAssetManager';
 import Subscriber from '../types/Subscriber';
@@ -17,11 +18,19 @@ import { openBlobFile } from '../utils/dataUtils';
 import { Service, HttpMethods } from './ApiWorker';
 import ApiManager from './ApiManager';
 import type {
+  ProjectFullRole,
   ProjectRightsInspectResponseDTO,
   RoleAssetRightsChangeDTOOne,
   RoleWorkspaceRightsChangeDTOOne,
   RoleWorkspaceRightsGetDTO,
 } from '../types/RightsAndRoles';
+import type {
+  ProjectSubscriptionInspectResponseDTO,
+  RoleWorkspaceSubscriptionChangeDTOOne,
+  RoleAssetSubscriptionChangeDTOOne,
+  MemberAssetSubscriptionChangeDTOOne,
+  MemberWorkspaceSubscriptionChangeDTOOne,
+} from '#logic/types/SubscriptionInspect';
 import type { AssetPropValueAccount } from '../types/Props';
 
 export type IProjectInfo = ProjectInfoWithParams;
@@ -211,6 +220,54 @@ export default class ProjectManager extends AppSubManagerBase {
 
   async setAssetRoleRightsList(
     _changes: RoleAssetRightsChangeDTOOne[],
+  ): Promise<{ success: true }> {
+    return {
+      success: true,
+    };
+  }
+
+  async getRolesList(
+    _query: ApiRequestList<{}>,
+  ): Promise<ApiResultListWithTotal<ProjectFullRole>> {
+    return {
+      list: [],
+      total: 0,
+    };
+  }
+
+  async getInspectRights(
+    _asset_id?: string,
+    _workspace_id?: string,
+  ): Promise<ProjectSubscriptionInspectResponseDTO | undefined> {
+    return;
+  }
+
+  async setWorkspaceInspectRightsList(
+    _changes: RoleWorkspaceSubscriptionChangeDTOOne[],
+  ): Promise<{ success: true }> {
+    return {
+      success: true,
+    };
+  }
+
+  async setAssetInspectRightsList(
+    _changes: RoleAssetSubscriptionChangeDTOOne[],
+  ): Promise<{ success: true }> {
+    return {
+      success: true,
+    };
+  }
+
+  async changeMemberSubscriptionWorkspaces(
+    _changes: MemberWorkspaceSubscriptionChangeDTOOne[],
+  ): Promise<{ success: true }> {
+    return {
+      success: true,
+    };
+  }
+
+  async changeMemberSubscriptionAssets(
+    _changes: MemberAssetSubscriptionChangeDTOOne[],
   ): Promise<{ success: true }> {
     return {
       success: true,

@@ -446,6 +446,8 @@ export default defineComponent({
       this.saving = false;
     },
     async revealAssetBlock(blockId: string, anchor?: string): Promise<boolean> {
+      // Проверяю если комментарий, то передаю в AssetBlockEditorComment какое сообщение необходимо отобразить
+      // За поиск реплая отвечает ChatBlock
       const block_comp = this.getEditorBlockComponent(blockId);
       if (!block_comp) return false;
       return block_comp.revealBlock(anchor);

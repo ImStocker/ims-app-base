@@ -67,4 +67,5 @@ export type AssetCommentDTO = {
   blocks: CommentBlockDTO[];
   updatedAt: string;
   lastViewedAt: string;
+  hasMention: boolean;
 };
