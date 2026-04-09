@@ -60,8 +60,8 @@ import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import type { MenuListItem } from '../../logic/types/MenuList';
 import MenuButton from '../Common/MenuButton.vue';
 import MenuList from '../Common/MenuList.vue';
-import UserProfileIcon from '../UserProfileIcon.vue';
 import ProjectManager from '../../logic/managers/ProjectManager';
+import UserProfileIcon from '../Common/UserProfileIcon.vue';
 
 export default defineComponent({
   name: 'ProjectWatcherPropEditor',

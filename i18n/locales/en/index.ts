@@ -761,7 +761,10 @@ export default {
     editingMessage: 'Edit message',
     replyTo: 'Reply to',
     reply: 'Reply',
+    sendedMessage: 'Sended',
     editedMessage: 'Edited',
+    editedMessageShort: 'Edited',
+    reaction: 'Reaction',
   },
   importExport: {
     formats: {

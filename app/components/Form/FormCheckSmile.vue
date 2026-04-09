@@ -49,7 +49,7 @@ export default defineComponent({
       default: () => ({}),
     },
   },
-  emits: ['input', 'change-dropdown-state'],
+  emits: ['input', 'dropdown-state-change'],
   data() {
     return {
       dropdownShown: false,
@@ -57,7 +57,7 @@ export default defineComponent({
   },
   watch: {
     dropdownShown() {
-      this.$emit('change-dropdown-state', this.dropdownShown);
+      this.$emit('dropdown-state-change', this.dropdownShown);
     },
   },
   methods: {

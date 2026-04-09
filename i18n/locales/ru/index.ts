@@ -773,7 +773,10 @@ export default {
     editingMessage: 'Редактирование',
     replyTo: 'В ответ',
     reply: 'Ответить',
-    editedMessage: 'Ред.',
+    sendedMessage: 'Отправлено',
+    editedMessage: 'Изменено',
+    editedMessageShort: 'Ред.',
+    reaction: 'Реакция',
   },
   importExport: {
     formats: {

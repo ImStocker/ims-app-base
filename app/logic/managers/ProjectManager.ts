@@ -22,6 +22,7 @@ import type {
   RoleWorkspaceRightsChangeDTOOne,
   RoleWorkspaceRightsGetDTO,
 } from '../types/RightsAndRoles';
+import type { AssetPropValueAccount } from '../types/Props';
 
 export type IProjectInfo = ProjectInfoWithParams;
 
@@ -222,5 +223,9 @@ export default class ProjectManager extends AppSubManagerBase {
       return await res.json();
     }
     return [];
+  }
+
+  getCurrentAccountValueInProject(): AssetPropValueAccount | null {
+    return null;
   }
 }

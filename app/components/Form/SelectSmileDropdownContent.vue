@@ -8,7 +8,7 @@
           selectedLikesDict.hasOwnProperty(icon) && selectedLikesDict[icon],
       }"
       class="is-button SelectSmileDropdownContent-item"
-      @click="$emit('input', icon)"
+      @click="onClick(icon)"
     >
       {{ getLikeEmoji(icon) }}
     </button>
@@ -38,6 +38,21 @@ export default defineComponent({
     },
   },
   methods: {
+    dispatchMenuActionExecutedEvent() {
+      if (!this.$el) return;
+      const imcMenuActionExecuted = new CustomEvent(
+        'imc-menu-action-executed',
+        {
+          bubbles: true,
+          detail: { item: undefined },
+        },
+      );
+      this.$el.dispatchEvent(imcMenuActionExecuted);
+    },
+    onClick(icon: string) {
+      this.$emit('input', icon);
+      this.dispatchMenuActionExecutedEvent();
+    },
     getLikeEmoji,
   },
 });

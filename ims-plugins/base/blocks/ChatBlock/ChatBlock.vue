@@ -13,10 +13,12 @@
           <template v-else>
             <chat-block-message
               v-for="(message, idx) of unreadMessagesList"
-              :key="message.commentId"
+              :key="message.id"
               class="ChatBlock-chat-message"
               :message="message"
+              :all-messages="allMessages"
               :show-username="showUsername(idx, unreadMessagesList)"
+              :show-user-icon="showUserIcon(idx, unreadMessagesList)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
@@ -29,10 +31,12 @@
             </div>
             <chat-block-message
               v-for="(message, idx) of readMessagesList"
-              :key="message.commentId"
+              :key="message.id"
               class="ChatBlock-chat-message"
               :message="message"
+              :all-messages="allMessages"
               :show-username="showUsername(idx, readMessagesList)"
+              :show-user-icon="showUserIcon(idx, readMessagesList)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
@@ -76,7 +80,11 @@ import ProjectManager from '#logic/managers/ProjectManager';
 import { DISCUSSION_WORKSPACE_NAME } from '#logic/constants';
 import ChatBlockSend from './ChatBlockSend.vue';
 import { v4 as uuidv4 } from 'uuid';
-import { TargetMessageActionTypes, type TargetMessage } from './ChatBlockSend';
+import {
+  isMessageEmpty,
+  TargetMessageActionTypes,
+  type TargetMessage,
+} from './ChatBlock';
 import type { AssetPropValue } from '../../../../app/logic/types/Props';
 
 export default defineComponent({
@@ -110,6 +118,7 @@ export default defineComponent({
   emits: ['sendMessage', 'update:lastViewedAt'],
   data() {
     return {
+      allMessages: {} as { [key: string]: CommentReplyDTO },
       messages: [] as CommentReplyDTO[],
       unsentMessages: [] as CommentReplyDTO[],
       targetMessage: null as TargetMessage | null,
@@ -275,6 +284,11 @@ export default defineComponent({
       if (idx === list.length - 1) return true;
       return list[idx].user.AccountId !== list[idx + 1].user.AccountId;
     },
+    showUserIcon(idx: number, list: CommentReplyDTO[]) {
+      if (idx === list.length - 1) return true;
+      if (!list[idx - 1]) return true;
+      return list[idx].user.AccountId !== list[idx - 1].user.AccountId;
+    },
     async loadMessages() {
       this.loading = true;
       const loading_branch_id = this.chatCommentBranchId;
@@ -295,7 +309,7 @@ export default defineComponent({
               }
             });
             this.messages = [...messages];
-            // this.allMessages = словарь со всеми реплаями вида id: value и его нужно передавать в компонент message
+            this.allMessages = res.objects.replies;
           }
         } catch (err) {
           if (this.initialLoad) {
@@ -315,6 +329,8 @@ export default defineComponent({
       if (!this.currentAsset) {
         return;
       }
+      if (isMessageEmpty(content)) return;
+
       this.$emit('sendMessage');
       if (
         !this.targetMessage ||

@@ -4,7 +4,7 @@
       v-if="!smileIsBusy"
       :selected-likes-dict="selectedEmojis"
       @input="changeMyLike($event)"
-      @change-dropdown-state="$emit('change-dropdown-state', $event)"
+      @dropdown-state-change="$emit('dropdown-state-change', $event)"
     ></form-check-smile>
     <button v-else class="is-button loading"></button>
   </div>
@@ -24,7 +24,7 @@ export default defineComponent({
       default: () => ({}),
     },
   },
-  emits: ['like', 'change-dropdown-state'],
+  emits: ['like', 'dropdown-state-change'],
   data() {
     return {
       smileIsBusy: false,

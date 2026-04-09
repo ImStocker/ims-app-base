@@ -59,6 +59,7 @@ export default defineComponent({
       default: null,
     },
   },
+  emits: ['dropdown-state-change'],
   data() {
     return {
       dropdownShown: false,
@@ -82,8 +83,13 @@ export default defineComponent({
       return element.getBoundingClientRect();
     },
   },
+  watch: {
+    'contextMenu.shown'() {
+      this.$emit('dropdown-state-change', this.contextMenu.shown);
+    },
+  },
   methods: {
-    onContextMenu(event: PointerEvent) {
+    onContextMenu(event: PointerEvent | TouchEvent) {
       if (!this.contextMenuRect) return;
       if (
         this.ignoringCssSelector &&
@@ -101,8 +107,19 @@ export default defineComponent({
       }
       event.preventDefault();
 
-      this.contextMenu.x = event.clientX - this.contextMenuRect.left;
-      this.contextMenu.y = event.clientY - this.contextMenuRect.top;
+      let clientX;
+      let clientY;
+
+      if (event instanceof PointerEvent) {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      } else {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      }
+
+      this.contextMenu.x = clientX - this.contextMenuRect.left;
+      this.contextMenu.y = clientY - this.contextMenuRect.top;
       this.contextMenu.shown = true;
       event.stopPropagation();
     },

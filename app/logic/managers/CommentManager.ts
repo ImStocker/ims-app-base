@@ -96,12 +96,13 @@ export default class CommentManager extends AppSubManagerBase {
 
   async getComments(
     comment_id: string,
-    _params: GetCommentsParamsDTO,
+    params: GetCommentsParamsDTO,
   ): Promise<GetCommentsResultDTO> {
     return await this._apiManager.call<any>(
       Service.CREATORS,
       HttpMethods.GET,
       `assets/comment/${comment_id}/reply`,
+      params,
     );
   }
 }

@@ -57,13 +57,14 @@ import {
   type AssetPropType,
   type AssetPropValue,
   type AssetPropValueFile,
-  castAssetPropValueToString,
 } from '../../../../app/logic/types/Props';
 
-import { TargetMessageActionTypes, type TargetMessage } from './ChatBlockSend';
+import {
+  getTargetMessageContent,
+  TargetMessageActionTypes,
+  type TargetMessage,
+} from './ChatBlock';
 import ImcPresenter from '../../../../app/components/ImcText/ImcPresenter.vue';
-
-const TRUNCATE_TARGET_MESSAGE = 50;
 
 export default defineComponent({
   name: 'ChatBlockSend',
@@ -100,10 +101,7 @@ export default defineComponent({
       if (!this.targetMessage) {
         return null;
       }
-      const res = castAssetPropValueToString(
-        this.targetMessage.message.content[''],
-      );
-      return res.substring(0, TRUNCATE_TARGET_MESSAGE).replace(/\s+/g, ' ');
+      return getTargetMessageContent(this.targetMessage.message.content['']);
     },
   },
   watch: {
