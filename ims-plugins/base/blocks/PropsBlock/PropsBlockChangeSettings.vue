@@ -113,7 +113,12 @@
 </template>
 
 <script lang="ts">
-import { type PropType, defineComponent, defineAsyncComponent } from 'vue';
+import {
+  type PropType,
+  defineComponent,
+  defineAsyncComponent,
+  inject,
+} from 'vue';
 import {
   type AssetPropValue,
   castAssetPropValueToString,
@@ -134,8 +139,10 @@ import CaptionString from '#components/Common/CaptionString.vue';
 import StringPropEditor from '#components/Props/StringPropEditor.vue';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-import EditorSubContext from '#logic/managers/EditorManager';
 import RenamableText from '#components/Common/RenamableText.vue';
+import EditorSubContext from '#logic/project-sub-contexts/EditorSubContext';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
+import { assert } from '#logic/utils/typeUtils';
 
 export default defineComponent({
   name: 'AssetEditorPropsBlockChangeSettings',
@@ -179,6 +186,13 @@ export default defineComponent({
     'changeServiceName',
     'renameProp',
   ],
+  setup() {
+    const projectContext = inject(injectedProjectContext);
+    assert(projectContext, 'Project context not provided');
+    return {
+      projectContext,
+    };
+  },
   data() {
     return {};
   },
@@ -224,7 +238,7 @@ export default defineComponent({
     typeController(): FieldTypeController | null {
       if (!this.type) return null;
       return (
-        this.$getAppManager().get(EditorSubContext).getFieldTypesMap()[
+        this.projectContext.get(EditorSubContext).getFieldTypesMap()[
           this.type
         ] ?? null
       );

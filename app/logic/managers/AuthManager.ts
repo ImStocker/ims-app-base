@@ -17,6 +17,14 @@ export default class AuthManager extends AppSubManagerBase {
     return null;
   }
 
+  async getAvatar(_user_id: string, _size: number): Promise<string | null> {
+    return null;
+  }
+
+  getAvatarSync(_user_id: string, _size: number): string | null | undefined {
+    return null;
+  }
+
   getCurrentAccountValueInProject(projectContext: IProjectContext | null) {
     const user_info = this.getUserInfo();
     if (!user_info) return null;

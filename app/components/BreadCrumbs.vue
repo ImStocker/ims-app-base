@@ -68,13 +68,13 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
 import type { BreadCrumbsEntity } from '../logic/types/BreadCrumbs';
 import ProjectLink from './Common/ProjectLink.vue';
-import ProjectManager from '../logic/managers/ProjectManager';
 import CaptionString from './Common/CaptionString.vue';
 import UiManager from '../logic/managers/UiManager';
 import { RoutesWithLangParam } from '../logic/router/routes-helpers';
+import { injectedProjectContext } from '#logic/types/IProjectContext';
 
 export default defineComponent({
   name: 'BreadCrumbs',
@@ -87,6 +87,12 @@ export default defineComponent({
       type: Array as PropType<BreadCrumbsEntity[]>,
       default: null,
     },
+  },
+  setup() {
+    const projectContext = inject(injectedProjectContext, null);
+    return {
+      projectContext,
+    };
   },
   computed: {
     breadCrumbsComp(): BreadCrumbsEntity[] {
@@ -106,7 +112,7 @@ export default defineComponent({
       return this.$getAppManager().get(UiManager).getLanguage();
     },
     projectInfo() {
-      return this.projectContext.projectInfo;
+      return this.projectContext?.projectInfo ?? null;
     },
   },
 });

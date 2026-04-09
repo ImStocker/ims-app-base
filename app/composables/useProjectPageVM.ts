@@ -16,56 +16,59 @@ export async function useProjectPageVM<
   getParams: () => TParams,
   key?: string,
 ) {
+  const nuxtApp = useNuxtApp();
   const { isHydrating } = useNuxtApp();
   const projectContext = await useRouteProjectContextRequired();
-  const vm = ref<T>(new vmClass(projectContext, getParams()));
-  if (import.meta.server || isHydrating) {
-    let restoring = true;
-    const loaded = await useAsyncData(key ?? 'vmProjectPage', async () => {
-      restoring = false;
-      await unref(vm).load();
-      return unref(vm).toJSON();
-    });
-    const loadedError = unref(loaded.error);
-    if (loadedError) {
-      throw loadedError;
-    }
-    if (restoring) {
-      const data = unref(loaded.data);
-      if (data) {
-        unref(vm).loadJSON(data);
+  return nuxtApp.runWithContext(async () => {
+    const vm = ref<T>(new vmClass(projectContext, getParams()));
+    if (import.meta.server || isHydrating) {
+      let restoring = true;
+      const loaded = await useAsyncData(key ?? 'vmProjectPage', async () => {
+        restoring = false;
+        await unref(vm).load();
+        return unref(vm).toJSON();
+      });
+      const loadedError = unref(loaded.error);
+      if (loadedError) {
+        throw loadedError;
       }
+      if (restoring) {
+        const data = unref(loaded.data);
+        if (data) {
+          unref(vm).loadJSON(data);
+        }
+      }
+    } else {
+      await unref(vm).load();
     }
-  } else {
-    await unref(vm).load();
-  }
-  if (!import.meta.server) {
-    const $route = useRoute();
-    const route_key = JSON.stringify({
-      name: $route.name,
-      params: $route.params,
-    });
-    const unwatch_params = watch(
-      () => {
-        const $new_route = useRoute();
-        const new_key = JSON.stringify({
-          name: $new_route.name,
-          params: $new_route.params,
-        });
-        if (route_key === new_key) {
-          return getParams();
-        } else {
-          return null;
-        }
-      },
-      (new_params) => {
-        if (new_params) {
-          vm.value.setParams(new_params);
-        } else {
-          unwatch_params();
-        }
-      },
-    );
-  }
-  return vm;
+    if (!import.meta.server) {
+      const $route = useRoute();
+      const route_key = JSON.stringify({
+        name: $route.name,
+        params: $route.params,
+      });
+      const unwatch_params = watch(
+        () => {
+          const $new_route = useRoute();
+          const new_key = JSON.stringify({
+            name: $new_route.name,
+            params: $new_route.params,
+          });
+          if (route_key === new_key) {
+            return getParams();
+          } else {
+            return null;
+          }
+        },
+        (new_params) => {
+          if (new_params) {
+            vm.value.setParams(new_params);
+          } else {
+            unwatch_params();
+          }
+        },
+      );
+    }
+    return vm;
+  });
 }

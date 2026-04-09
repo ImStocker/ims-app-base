@@ -29,9 +29,12 @@ definePageMeta({
   middleware: [
     'check-asset-access',
     async (to) => {
+      const nuxtApp = useNuxtApp();
       const projectContext = await useRouteProjectContextRequired(to);
       const assetId = to.params.assetId.toString();
-      const projectMenu = useProjectMenu(projectContext);
+      const projectMenu = await nuxtApp.runWithContext(() =>
+        useProjectMenu(projectContext),
+      );
       await projectMenu.revealProjectAsset(assetId);
       return true;
     },

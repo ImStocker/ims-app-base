@@ -1,5 +1,5 @@
-import type { BaseAppConfiguration } from './app/logic/configurations/base-app-configuration';
-import type { IAppManager } from './app/logic/managers/IAppManager';
+import type { BaseAppConfiguration } from '#logic/configurations/base-app-configuration';
+import type { IAppManager } from '#logic/managers/IAppManager';
 import type {
   ComponentCustomOptions as _ComponentCustomOptions,
   ComponentCustomProperties as _ComponentCustomProperties,
