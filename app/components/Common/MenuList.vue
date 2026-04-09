@@ -46,7 +46,7 @@
             </div>
             <slot :name="'item-' + item.name + '-extra-content'"> </slot>
           </component>
-          <menu-button v-else :attach-position="attachPosition">
+          <menu-button v-else :attach-position="childrenAttachPosition">
             <template #button="{ toggle }">
               <button
                 class="is-button MenuList-item-inner"
@@ -114,6 +114,7 @@ import { RouterLink } from 'vue-router';
 import { getIconClass } from '../utils/ui';
 import MenuLoader from './MenuLoader.vue';
 import MenuLoadError from './MenuLoadError.vue';
+import UiManager, { ScreenSize } from '../../logic/managers/UiManager';
 
 export default defineComponent({
   name: 'MenuList',
@@ -132,6 +133,15 @@ export default defineComponent({
     },
   },
   computed: {
+    childrenAttachPosition() {
+      if (this.isMobile) return 'bottom';
+      return this.attachPosition;
+    },
+    isMobile() {
+      return this.$getAppManager()
+        .get(UiManager)
+        .isScreenSize(ScreenSize.NOT_PC);
+    },
     hasAnyIcons() {
       return this.menuList.some((item: MenuListItem) => {
         return (
