@@ -93,6 +93,7 @@ import {
   type TargetMessage,
 } from './ChatBlock';
 import type { AssetPropValue } from '../../../../app/logic/types/Props';
+import type { IProjectDatabaseCommentEventHandler } from '#logic/types/IProjectDatabase';
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import FeedLoader from '../../../../app/components/Common/FeedLoader.vue';
 
@@ -142,6 +143,7 @@ export default defineComponent({
       reloadMessagesTimeout: null as any,
       reloadMessagesRun: false,
       isMounted: false,
+      commentListener: null as IProjectDatabaseCommentEventHandler | null,
     };
   },
   computed: {
@@ -196,16 +198,19 @@ export default defineComponent({
   },
   watch: {
     async chatCommentBranchId() {
+      this.resetCommentListener(true);
       await this.reloadMessages('initial');
       await this.scrollToBottom();
     },
   },
   async mounted() {
     this.isMounted = true;
+    this.resetCommentListener(true);
     await this.reloadMessages('initial');
     await this.scrollToBottom();
   },
   unmounted() {
+    this.resetCommentListener(false);
     this.stopReloadMessages();
   },
   methods: {
@@ -218,6 +223,22 @@ export default defineComponent({
         }
       }
     },
+    resetCommentListener(init: boolean) {
+      if (this.commentListener) {
+        this.commentListener.cancel();
+        this.commentListener = null;
+      }
+      if (init) {
+        if (this.chatCommentBranchId) {
+          this.commentListener = this.$getAppManager()
+            .get(CreatorAssetManager)
+            .listenComment(this.chatCommentBranchId, (ev) => {
+              console.log('Chat event', ev);
+            });
+        }
+      }
+    },
+
     async loadMessages(mode: 'more' | 'initial' | 'load' = 'load') {
       this.isLoading = true;
       const loading_branch_id = this.chatCommentBranchId;

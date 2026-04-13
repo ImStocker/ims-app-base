@@ -107,10 +107,25 @@ export interface IProjectDatabaseWorkspace {
   getWorkspaceLocalPath(workspace_id: string): Promise<string | null>;
 }
 
+export type IProjectDatabaseCommentEventArgs = {
+  cId: string;
+  t: 'new' | 'change' | 'delete' | 'like';
+  rId: string;
+  instigator: number | null;
+};
+
+export type IProjectDatabaseCommentEventHandler = {
+  cancel: () => void;
+};
+
 export type IProjectDatabaseEventHandler = {
   cancel: () => void;
   isConnected: () => boolean;
   listenContent: (asset_ids: string[], workpace_ids: string[]) => void;
+  listenComment: (
+    comment_id: string,
+    callback: (ev: IProjectDatabaseCommentEventArgs) => void,
+  ) => IProjectDatabaseCommentEventHandler;
 };
 
 export interface IProjectDatabase
