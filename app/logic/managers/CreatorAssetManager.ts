@@ -75,6 +75,8 @@ import {
 } from '../types/PropsWhere';
 import type {
   IProjectDatabase,
+  IProjectDatabaseCommentEventArgs,
+  IProjectDatabaseCommentEventHandler,
   ProjectContentChangeEventArg,
 } from '../types/IProjectDatabase';
 import { Service, HttpMethods } from './ApiWorker';
@@ -839,6 +841,16 @@ export default class CreatorAssetManager extends AppSubManagerBase {
         workspaces.map((w) => w.id),
       );
     }
+  }
+
+  listenComment(
+    comment_id: string,
+    callback: (ev: IProjectDatabaseCommentEventArgs) => void,
+  ): IProjectDatabaseCommentEventHandler {
+    if (!this._externalContentListener) {
+      throw new Error('Events not listening');
+    }
+    return this._externalContentListener.listenComment(comment_id, callback);
   }
 
   async getAssetInstancesList(

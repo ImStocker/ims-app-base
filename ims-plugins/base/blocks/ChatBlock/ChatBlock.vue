@@ -86,6 +86,7 @@ import {
   type TargetMessage,
 } from './ChatBlock';
 import type { AssetPropValue } from '../../../../app/logic/types/Props';
+import type { IProjectDatabaseCommentEventHandler } from '#logic/types/IProjectDatabase';
 
 export default defineComponent({
   name: 'ChatBlock',
@@ -127,6 +128,7 @@ export default defineComponent({
       reloadMessagesTimeout: null as any,
       reloadMessagesRun: false,
       isMounted: false,
+      commentListener: null as IProjectDatabaseCommentEventHandler | null,
     };
   },
   computed: {
@@ -184,6 +186,7 @@ export default defineComponent({
       if (old_val) {
         this.initialLoad = true;
       }
+      this.resetCommentListener(true);
       await this.reloadMessages();
       await this.scrollToBottom();
     },
@@ -191,10 +194,12 @@ export default defineComponent({
   async mounted() {
     this.initialLoad = true;
     this.isMounted = true;
+    this.resetCommentListener(true);
     await this.reloadMessages();
     await this.scrollToBottom();
   },
   unmounted() {
+    this.resetCommentListener(false);
     this.stopReloadMessages();
   },
   methods: {
@@ -204,6 +209,21 @@ export default defineComponent({
         if (messagesField) {
           await this.$nextTick();
           messagesField.scrollTop = messagesField.scrollHeight;
+        }
+      }
+    },
+    resetCommentListener(init: boolean) {
+      if (this.commentListener) {
+        this.commentListener.cancel();
+        this.commentListener = null;
+      }
+      if (init) {
+        if (this.chatCommentBranchId) {
+          this.commentListener = this.$getAppManager()
+            .get(CreatorAssetManager)
+            .listenComment(this.chatCommentBranchId, (ev) => {
+              console.log('Chat event', ev);
+            });
         }
       }
     },

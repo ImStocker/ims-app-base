@@ -1,6 +1,8 @@
 import { debounceForThis } from '#components/utils/ComponentUtils';
 import type {
   IProjectDatabase,
+  IProjectDatabaseCommentEventArgs,
+  IProjectDatabaseCommentEventHandler,
   IProjectDatabaseEventHandler,
   ProjectContentChangeEventArg,
 } from '#logic/types/IProjectDatabase';
@@ -191,6 +193,16 @@ export class ProjectContentExternalListener {
       ...workspace_ids,
     ];
     this._requestListenContentDelayed();
+  }
+
+  listenComment(
+    comment_id: string,
+    callback: (ev: IProjectDatabaseCommentEventArgs) => void,
+  ): IProjectDatabaseCommentEventHandler {
+    if (!this._handler) {
+      throw new Error('Events not listening');
+    }
+    return this._handler.listenComment(comment_id, callback);
   }
 
   async expectMyEvents<T>(
