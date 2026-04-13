@@ -75,7 +75,7 @@ export default defineComponent({
       }
     },
     disabled() {
-      if (!this.disabled) {
+      if (!this.disabled && this.isIntersecting) {
         this.loadDelayed();
       }
     },

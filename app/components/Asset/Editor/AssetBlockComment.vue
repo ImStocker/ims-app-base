@@ -30,6 +30,7 @@
             <i class="ri-close-fill"></i>
           </button>
           <chat-block
+            ref="chat"
             v-model:last-viewed-at="lastViewedAt"
             class="AssetBlockComment-chat-block tiny-scrollbars"
             :resolved-block="resolvedBlock"
@@ -126,6 +127,11 @@ export default defineComponent({
     },
   },
   methods: {
+    revealCommentReply(reply_id: string) {
+      const chat = this.$refs['chat'];
+      if (!chat) return false;
+      (chat as InstanceType<typeof ChatBlock>).revealCommentReply(reply_id);
+    },
     openChat() {
       this.show_chat = true;
       this.$emit('open-comment', this.resolvedBlock.id);

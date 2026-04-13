@@ -30,6 +30,7 @@
         <div
           v-if="targetMessage"
           class="ChatBlockMessage-content-panel-targetMessage"
+          @click="$emit('target-message-click', targetMessage.id)"
         >
           <div class="ChatBlockMessage-content-panel-targetMessage-author">
             {{ targetMessage.user.Name }}
@@ -140,7 +141,7 @@ export default defineComponent({
       default: () => {},
     },
   },
-  emits: ['delete', 'edit', 'reply'],
+  emits: ['delete', 'edit', 'reply', 'target-message-click'],
   data() {
     return {
       isLikeDropdownActive: false,
@@ -467,6 +468,7 @@ export default defineComponent({
   padding: 5px;
   border-radius: 4px 8px 8px 4px;
   border-left: 4px solid var(--local-link-color);
+  cursor: pointer;
 
   .ChatBlockMessage-content-panel-targetMessage-author {
     color: var(--local-link-color);

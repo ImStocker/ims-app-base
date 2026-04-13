@@ -94,10 +94,13 @@ export default class CommentManager extends AppSubManagerBase {
     );
   }
 
-  async getComments(
+  async getCommentReplies(
     comment_id: string,
     params: GetCommentsParamsDTO,
   ): Promise<GetCommentsResultDTO> {
+    if (params.where) {
+      params.where = JSON.stringify(params.where) as any;
+    }
     return await this._apiManager.call<any>(
       Service.CREATORS,
       HttpMethods.GET,

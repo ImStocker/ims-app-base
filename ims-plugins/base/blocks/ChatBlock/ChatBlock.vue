@@ -5,14 +5,17 @@
   >
     <div class="ChatBlock-inner">
       <div ref="messagesField" class="ChatBlock-chat tiny-scrollbars">
-        <div class="ChatBlock-chat-messagesField">
-          <div
-            v-if="loading && initialLoad"
-            class="loaderSpinner PageLoaderSpinner"
-          />
+        <feed-loader
+          :load-more="() => loadMessages('more')"
+          :has-more="hasMore"
+          :disabled="true"
+          class="ChatBlock-chat-messagesField"
+        >
+          <div v-if="false" class="loaderSpinner PageLoaderSpinner" />
           <template v-else>
             <chat-block-message
               v-for="(message, idx) of unreadMessagesList"
+              :id="'reply-' + message.id"
               :key="message.id"
               class="ChatBlock-chat-message"
               :message="message"
@@ -22,6 +25,7 @@
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
+              @target-message-click="revealCommentReply($event)"
             />
             <div
               v-if="unreadMessagesList.length > 0"
@@ -31,6 +35,7 @@
             </div>
             <chat-block-message
               v-for="(message, idx) of readMessagesList"
+              :id="'reply-' + message.id"
               :key="message.id"
               class="ChatBlock-chat-message"
               :message="message"
@@ -40,9 +45,10 @@
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
+              @target-message-click="revealCommentReply($event)"
             />
           </template>
-        </div>
+        </feed-loader>
       </div>
       <Teleport
         v-if="!isGuest && isMounted"
@@ -69,6 +75,7 @@ import type {
   AssetCommentDTO,
   CommentBlockDTO,
   CommentReplyDTO,
+  GetCommentsParamsDTO,
 } from '#logic/types/CommentTypes';
 import AuthManager from '#logic/managers/AuthManager';
 import ChatBlockMessage from './ChatBlockMessage.vue';
@@ -86,12 +93,17 @@ import {
   type TargetMessage,
 } from './ChatBlock';
 import type { AssetPropValue } from '../../../../app/logic/types/Props';
+import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
+import FeedLoader from '../../../../app/components/Common/FeedLoader.vue';
+
+const MESSAGES_COUNT = 10;
 
 export default defineComponent({
   name: 'ChatBlock',
   components: {
     ChatBlockMessage,
     ChatBlockSend,
+    FeedLoader,
   },
   props: {
     assetBlockEditor: {
@@ -122,8 +134,11 @@ export default defineComponent({
       messages: [] as CommentReplyDTO[],
       unsentMessages: [] as CommentReplyDTO[],
       targetMessage: null as TargetMessage | null,
-      loading: false as boolean,
-      initialLoad: true,
+
+      loadError: null as string | null,
+      isLoading: false as boolean,
+      hasMore: false,
+
       reloadMessagesTimeout: null as any,
       reloadMessagesRun: false,
       isMounted: false,
@@ -180,18 +195,14 @@ export default defineComponent({
     },
   },
   watch: {
-    async chatCommentBranchId(new_val, old_val) {
-      if (old_val) {
-        this.initialLoad = true;
-      }
-      await this.reloadMessages();
+    async chatCommentBranchId() {
+      await this.reloadMessages('initial');
       await this.scrollToBottom();
     },
   },
   async mounted() {
-    this.initialLoad = true;
     this.isMounted = true;
-    await this.reloadMessages();
+    await this.reloadMessages('initial');
     await this.scrollToBottom();
   },
   unmounted() {
@@ -199,7 +210,7 @@ export default defineComponent({
   },
   methods: {
     async scrollToBottom() {
-      if (!this.loading) {
+      if (!this.isLoading) {
         const messagesField = this.$refs.messagesField as HTMLElement;
         if (messagesField) {
           await this.$nextTick();
@@ -207,13 +218,93 @@ export default defineComponent({
         }
       }
     },
-    async reloadMessages() {
+    async loadMessages(mode: 'more' | 'initial' | 'load' = 'load') {
+      this.isLoading = true;
+      const loading_branch_id = this.chatCommentBranchId;
+      if (loading_branch_id) {
+        this.$emit('update:lastViewedAt', new Date().toISOString());
+        try {
+          let params = {} as GetCommentsParamsDTO;
+          switch (mode) {
+            case 'initial': {
+              params = {
+                count: MESSAGES_COUNT,
+              };
+              break;
+            }
+            case 'load': {
+              params = {
+                count: this.messages.length,
+              };
+              break;
+            }
+            case 'more': {
+              params = {
+                count: MESSAGES_COUNT,
+                where: {
+                  dateTo: this.messages[this.messages.length - 1].createdAt,
+                },
+              };
+              break;
+            }
+          }
+          const messagesData = await this.$getAppManager()
+            .get(CommentManager)
+            .getCommentReplies(loading_branch_id, params);
+          if (loading_branch_id === this.chatCommentBranchId) {
+            const messages = [] as CommentReplyDTO[];
+            messagesData.ids.forEach((id: string) => {
+              const message_idx = this.messages.findIndex(
+                (message) => message.commentId === id,
+              );
+              if (message_idx === -1) {
+                messages.push({
+                  ...messagesData.objects.replies[id],
+                  sended: true,
+                });
+              }
+            });
+            if (mode === 'more') {
+              const scrollable_container = this.$refs[
+                'messagesField'
+              ] as HTMLElement;
+              if (!scrollable_container) return;
+              const old_scroll_height = scrollable_container.scrollHeight;
+              const old_scroll_top = scrollable_container.scrollTop;
+
+              this.messages = [...this.messages, ...messages];
+              this.allMessages = Object.assign(
+                this.allMessages,
+                messagesData.objects.replies,
+              );
+
+              await this.$nextTick();
+              const new_scroll_height = scrollable_container.scrollHeight;
+              const added_height = new_scroll_height - old_scroll_height;
+              scrollable_container.scrollTop = old_scroll_top + added_height;
+            } else {
+              this.messages = [...messages];
+              this.allMessages = messagesData.objects.replies;
+            }
+            this.hasMore = messagesData.more;
+          }
+        } catch (err) {
+          this.$getAppManager().get(UiManager).showError(err);
+        }
+      } else {
+        this.messages = [];
+      }
+      this.$emit('update:lastViewedAt', new Date().toISOString());
+      this.isLoading = false;
+    },
+
+    async reloadMessages(mode: 'more' | 'initial' | 'load' = 'load') {
       this.stopReloadMessages();
       this.reloadMessagesRun = true;
-      await this.loadMessages();
+      await this.loadMessages(mode);
       if (this.reloadMessagesRun) {
         this.reloadMessagesTimeout = setTimeout(
-          () => this.reloadMessages(),
+          () => this.reloadMessages('load'),
           2000,
         );
       }
@@ -289,43 +380,15 @@ export default defineComponent({
       if (!list[idx - 1]) return true;
       return list[idx].user.AccountId !== list[idx - 1].user.AccountId;
     },
-    async loadMessages() {
-      this.loading = true;
-      const loading_branch_id = this.chatCommentBranchId;
-      if (loading_branch_id) {
-        this.$emit('update:lastViewedAt', new Date().toISOString());
-        try {
-          const res = await this.$getAppManager()
-            .get(CommentManager)
-            .getComments(loading_branch_id, {});
-          if (loading_branch_id === this.chatCommentBranchId) {
-            const messages = [] as CommentReplyDTO[];
-            res.ids.forEach((id: string) => {
-              const message_idx = this.messages.findIndex(
-                (message) => message.commentId === id,
-              );
-              if (message_idx === -1) {
-                messages.push({ ...res.objects.replies[id], sended: true });
-              }
-            });
-            this.messages = [...messages];
-            this.allMessages = res.objects.replies;
-          }
-        } catch (err) {
-          if (this.initialLoad) {
-            this.$getAppManager().get(UiManager).showError(err);
-          } else {
-            console.error(err);
-          }
-        }
-      } else {
-        this.messages = [];
-      }
-      this.$emit('update:lastViewedAt', new Date().toISOString());
-      this.loading = false;
-      this.initialLoad = false;
+    revealCommentReply(reply_id: string) {
+      const reply_element = window.document.getElementById('reply-' + reply_id);
+      if (!reply_element) return;
+
+      scrollIntoViewIfNeeded(reply_element, {
+        behavior: 'smooth',
+        scrollMode: 'if-needed',
+      });
     },
-    revealCommentReply(reply_id: string) {},
     async sendMessage({ content }: { content: AssetPropValue }) {
       if (!this.currentAsset) {
         return;
@@ -506,6 +569,10 @@ export default defineComponent({
   display: flex;
   flex-direction: column-reverse;
   flex: 1;
+
+  :deep(.VisibilityTrigger) {
+    border: 1px solid red;
+  }
 }
 
 .ChatBlock-chat-messagesField-unread {

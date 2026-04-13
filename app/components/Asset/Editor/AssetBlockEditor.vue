@@ -62,6 +62,7 @@
             ></editor-block>
             <asset-block-comment
               v-if="showComments && !isDesktop"
+              :ref="(el) => setBlockCommentRef(item, index, el)"
               class="AssetBlockEditor-commentButton"
               :resolved-block="item"
               :asset-block-editor="assetBlockEditor"
@@ -130,6 +131,7 @@ import EditorManager from '../../../logic/managers/EditorManager';
 import AssetBlockHideButton from './AssetBlockHideButton.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import type EditorBlock from './EditorBlock.vue';
+import type ChatBlock from '../../../../ims-plugins/base/blocks/ChatBlock/ChatBlock.vue';
 
 export function getBlockIsHiddenPreferenceKey(
   projectId: string,
@@ -205,8 +207,15 @@ export default defineComponent({
           id: string;
         }
       >(),
+      commentRefs: new Map<
+        string,
+        {
+          component: InstanceType<typeof AssetBlockComment>;
+          id: string;
+        }
+      >(),
       renamingBlockId: null as string | null,
-      openedComment: null,
+      openedComment: null as null | string,
     };
   },
   computed: {
@@ -385,6 +394,27 @@ export default defineComponent({
         });
       }
     },
+    setBlockCommentRef(
+      resolved_block: ResolvedAssetBlock,
+      index: number,
+      el: InstanceType<typeof AssetBlockComment>,
+    ) {
+      if (!el) this.commentRefs.delete(resolved_block.id + '|' + index);
+      else {
+        this.commentRefs.set(resolved_block.id + '|' + index, {
+          component: el,
+          id: resolved_block.id,
+        });
+      }
+    },
+    getBlockCommentComponent(
+      block_id: string,
+    ): InstanceType<typeof AssetBlockComment> | null {
+      for (const [_key, comp_ent] of this.commentRefs) {
+        if (block_id === comp_ent.id) return comp_ent.component;
+      }
+      return null;
+    },
     createTitle(block_id: string) {
       this.renamingBlockId = block_id;
     },
@@ -448,9 +478,34 @@ export default defineComponent({
     async revealAssetBlock(blockId: string, anchor?: string): Promise<boolean> {
       // Проверяю если комментарий, то передаю в AssetBlockEditorComment какое сообщение необходимо отобразить
       // За поиск реплая отвечает ChatBlock
+      let has_comment = false;
+      if (anchor && anchor.startsWith('comment-')) {
+        has_comment = true;
+      }
       const block_comp = this.getEditorBlockComponent(blockId);
       if (!block_comp) return false;
-      return block_comp.revealBlock(anchor);
+      const block_reveal_res = await block_comp.revealBlock(
+        has_comment ? undefined : anchor,
+      );
+      if (!block_reveal_res) return false;
+      if (has_comment) {
+        const [comment, content] = anchor!.split('~');
+        const comment_id = comment.substring('comment-'.length);
+        this.openedComment = blockId;
+        await this.$nextTick();
+
+        let reply_id;
+        if (content && content.startsWith('reply-')) {
+          reply_id = content.substring('reply-'.length);
+        }
+        if (reply_id) {
+          const comment_block = this.getBlockCommentComponent(blockId);
+          if (comment_block) {
+            comment_block.revealCommentReply(reply_id);
+          }
+        }
+      }
+      return block_reveal_res;
     },
   },
 });

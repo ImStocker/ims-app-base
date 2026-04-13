@@ -57,7 +57,7 @@ export type GetCommentsResultDTO = {
 };
 
 export type GetCommentsParamsDTO = {
-  offset?: number;
+  where?: { query?: string; dateFrom?: string; dateTo?: string };
   count?: number;
 };
 
