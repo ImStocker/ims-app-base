@@ -8,6 +8,7 @@ import type {
   GetCommentsParamsDTO,
   GetCommentsResultDTO,
   SetLikeDTO,
+  CommentReplyCreateDTO,
 } from '../types/CommentTypes';
 import CreatorAssetManager from './CreatorAssetManager';
 import { Service, HttpMethods } from './ApiWorker';
@@ -44,7 +45,7 @@ export default class CommentManager extends AppSubManagerBase {
 
   async addAnswer(
     comment_id: string,
-    params: CommentCreateDTO,
+    params: CommentReplyCreateDTO,
   ): Promise<CommentReplyDTO> {
     return await this._apiManager.call<any>(
       Service.CREATORS,
@@ -106,6 +107,16 @@ export default class CommentManager extends AppSubManagerBase {
       HttpMethods.GET,
       `assets/comment/${comment_id}/reply`,
       params,
+    );
+  }
+  async getCommentReply(
+    comment_id: string,
+    reply_id: string,
+  ): Promise<CommentReplyDTO> {
+    return await this._apiManager.call<any>(
+      Service.CREATORS,
+      HttpMethods.GET,
+      `assets/comment/${comment_id}/reply/${reply_id}`,
     );
   }
 }

@@ -18,8 +18,13 @@ export type CommentReplyChangeDTO = {
 export type CommentCreateDTO = {
   assetId: string;
   content: AssetProps;
-  answerToReplyId?: string;
   blocks: CommentBlockDTO[];
+};
+
+export type CommentReplyCreateDTO = {
+  assetId: string;
+  content: AssetProps;
+  answerToReplyId?: string;
 };
 
 export type CommentCreateResponseDTO = {
