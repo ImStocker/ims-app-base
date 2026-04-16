@@ -62,7 +62,7 @@
           class="ChatBlockMessage-content-panel-likes"
           :likes="message.likes"
           :is-author="isAuthor"
-          :readonly="readonly"
+          :can-comment="canComment"
           @like="changeLike($event)"
         ></chat-block-likes>
         <div class="ChatBlockMessage-content-panel-meta">
@@ -165,7 +165,7 @@ export default defineComponent({
       type: Object as PropType<Map<string, FailedMessageData>>,
       default: null,
     },
-    readonly: {
+    canComment: {
       type: Boolean,
       default: false,
     },
@@ -198,7 +198,7 @@ export default defineComponent({
   },
   computed: {
     allowedActions() {
-      return !this.readonly && !this.sendingError && this.message.sended;
+      return this.canComment && !this.sendingError && this.message.sended;
     },
     messageStyle() {
       if (this.touchContext && this.touchContext.swipeOffset) {
@@ -289,7 +289,7 @@ export default defineComponent({
       );
     },
     menuList() {
-      if (this.readonly) return [];
+      if (!this.canComment) return [];
       if (this.sendingError) {
         return [
           {
@@ -372,11 +372,11 @@ export default defineComponent({
       }
     },
     onDblClick() {
-      if (this.readonly) return;
+      if (!this.canComment) return;
       this.$emit('reply', this.message.id);
     },
     onTouchStart(e: TouchEvent) {
-      if (this.readonly) return;
+      if (!this.canComment) return;
       const touch = e.touches[0];
 
       this.touchContext = {

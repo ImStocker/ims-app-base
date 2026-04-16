@@ -7,7 +7,7 @@
         'my-like': emojiSelectedByCurrentUser(emoji),
       }"
       class="is-button ChatBlockLikes-like"
-      :disabled="readonly"
+      :disabled="!canComment"
       @click="changeMyLike(emoji)"
     >
       <div class="ChatBlockLikes-like-content">
@@ -39,7 +39,7 @@ export default defineComponent({
       type: Object as PropType<CommentLike[]>,
       required: true,
     },
-    readonly: {
+    canComment: {
       type: Boolean,
       default: false,
     },
@@ -60,11 +60,13 @@ export default defineComponent({
     },
     emojiSelectedByCurrentUser(emoji: string) {
       return this.likes.find(
-        (l) => l.user.AccountId === this.userInfo?.id && l.emoji === emoji,
+        (l) =>
+          l.user.AccountId === this.userInfo?.id?.toString() &&
+          l.emoji === emoji,
       );
     },
     async changeMyLike(emoji: string) {
-      if (this.readonly) return;
+      if (!this.canComment) return;
       this.$emit('like', emoji);
     },
   },

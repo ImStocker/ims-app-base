@@ -23,7 +23,7 @@
               :show-username="showUsername(idx, unreadMessagesList)"
               :show-user-icon="showUserIcon(idx, unreadMessagesList)"
               :failed-messages="failedMessagesMap"
-              :readonly="readonly"
+              :can-comment="canComment"
               @resend="resendMessage($event)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
@@ -48,7 +48,7 @@
               :show-username="showUsername(idx, readMessagesList)"
               :show-user-icon="showUserIcon(idx, readMessagesList)"
               :failed-messages="failedMessagesMap"
-              :readonly="readonly"
+              :can-comment="canComment"
               @resend="resendMessage($event)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
@@ -67,7 +67,7 @@
       >
         <slot name="additionalLeftButtons"></slot>
         <chat-block-send
-          v-if="!readonly"
+          v-if="canComment"
           v-model:target-message="targetMessage"
           @send="commitMessage($event)"
         ></chat-block-send>
@@ -107,6 +107,7 @@ import type { AssetPropValue } from '../../../../app/logic/types/Props';
 import type { IProjectDatabaseCommentEventHandler } from '#logic/types/IProjectDatabase';
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import FeedLoader from '../../../../app/components/Common/FeedLoader.vue';
+import { AssetRights } from '#logic/types/Rights';
 
 const MESSAGES_COUNT = 100;
 
@@ -121,10 +122,6 @@ export default defineComponent({
     assetBlockEditor: {
       type: Object as PropType<AssetBlockEditorVM>,
       required: true,
-    },
-    readonly: {
-      type: Boolean,
-      default: false,
     },
     resolvedBlock: {
       type: Object as PropType<ResolvedAssetBlock>,
@@ -161,6 +158,12 @@ export default defineComponent({
     };
   },
   computed: {
+    canComment() {
+      return (
+        this.assetBlockEditor.assetFull &&
+        this.assetBlockEditor.assetFull.rights >= AssetRights.COMMENT
+      );
+    },
     messagesList() {
       return [...this.unsentMessages, ...this.messages];
     },
@@ -805,7 +808,7 @@ export default defineComponent({
 
 .ChatBlock.state-has-messages {
   .ChatBlock-chat-messagesField {
-    padding-bottom: 15px;
+    padding-bottom: 30px;
   }
 }
 
