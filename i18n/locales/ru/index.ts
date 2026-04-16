@@ -941,6 +941,9 @@ export default {
     notifications: 'Оповещения',
     changes: 'Изменения',
     comments: 'Комментарии',
+    notificationsInheritedParent:
+      'Уведомления унаследованы от родительской папки',
+    notificationsDefault: 'Уведомления по умолчанию',
   },
   errorPage: {
     goBack: 'Вернуться',

@@ -13,8 +13,8 @@
         disabled
         :title="
           projectRight.type === 'workspace'
-            ? $t('setUpAccessDialog.rightsInheritedParent')
-            : $t('setUpAccessDialog.rightsDefault')
+            ? $t('setUpNotificationDialog.notificationsInheritedParent')
+            : $t('setUpNotificationDialog.notificationsDefault')
         "
       >
         <i class="ri-node-tree"></i>
