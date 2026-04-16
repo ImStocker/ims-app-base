@@ -53,6 +53,7 @@ import {
   type TreePresenterItem,
 } from '../../components/Common/TreePresenter/TreePresenter';
 import type { ProjectTreeItemPayload } from '../../components/Asset/ProjectTree/ProjectTreePresenterBaseVM';
+import SetUpNotificationsDialog from '#components/Asset/Rights/SetUpNotificationsDialog.vue';
 
 export class GameDesignMenuVM extends ProjectTreePresenterVM {
   private _searchValue: AssetPropValueSelection | null = null;
@@ -380,6 +381,23 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
             workspaceId: workspace.id,
           }),
         icon: 'ri-lock-fill',
+      });
+    }
+    const is_guest = !this.appManager
+      .get(ProjectManager)
+      .getUserRoleInProject();
+    if (
+      workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
+      !is_guest &&
+      !is_desktop
+    ) {
+      workspaceActions.push({
+        title: this.appManager.$t('gddPage.setUpNotifications'),
+        action: () =>
+          this.appManager.get(DialogManager).show(SetUpNotificationsDialog, {
+            workspaceId: workspace.id,
+          }),
+        icon: 'ri-notification-fill',
       });
     }
 

@@ -6,7 +6,9 @@
     ></ims-toggle>
     <div v-if="projectRight[option] === null" class="use-buttons-options">
       <button
-        v-pro-function="projectRight.roleNum !== 0 ? 'roleSettings' : undefined"
+        v-pro-function="
+          projectRight?.roleNum !== 0 ? 'roleSettings' : undefined
+        "
         class="is-button"
         disabled
         :title="
@@ -28,8 +30,6 @@
 
 <script type="text/ecmascript-6" lang="ts">
 import ImsToggle from '#components/Common/ImsToggle.vue';
-import type { ProjectSubscriptionInspectResponseRoleDTO } from '#logic/types/SubscriptionInspect';
-import type { PropType } from 'vue';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
@@ -51,7 +51,7 @@ export default defineComponent({
       default: () => null,
     },
     projectRight: {
-      type: Object as PropType<ProjectSubscriptionInspectResponseRoleDTO>,
+      type: Object,
       required: true,
     },
   },
