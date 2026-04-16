@@ -383,7 +383,14 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         icon: 'ri-lock-fill',
       });
     }
-    if (workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_READ && !is_desktop) {
+    const is_guest = !this.appManager
+      .get(ProjectManager)
+      .getUserRoleInProject();
+    if (
+      workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
+      !is_guest &&
+      !is_desktop
+    ) {
       workspaceActions.push({
         title: this.appManager.$t('gddPage.setUpNotifications'),
         action: () =>
