@@ -26,7 +26,7 @@
               v-if="myRights && currentUserRole"
               :role-num="currentUserRole.num"
               :option="'subscribedChange'"
-              :project-right="getRightsByRole(currentUserRole.num)"
+              :project-right="rightsByUser"
               :model-value="myRights.subscribedChange"
               @update:model-value="addUserChange('subscribedChange', $event)"
               @update:delete-change="deleteUserChange('subscribedChange')"
@@ -40,7 +40,7 @@
               v-if="myRights && currentUserRole"
               :role-num="currentUserRole.num"
               :option="'subscribedComment'"
-              :project-right="getRightsByRole(currentUserRole.num)"
+              :project-right="rightsByUser"
               :model-value="myRights.subscribedComment"
               @update:model-value="addUserChange('subscribedComment', $event)"
               @update:delete-change="deleteUserChange('subscribedComment')"
@@ -223,8 +223,8 @@ export default defineComponent({
     myRights() {
       const user = this.userInfo;
       if (!user) return;
-      const own_rights = this.roleChanges.find(
-        (change) => change.roleNum === user.id,
+      const own_rights = this.userChanges.find(
+        (change) => change.userId === user.id,
       );
       if (own_rights) {
         return {
@@ -248,16 +248,45 @@ export default defineComponent({
             };
       }
     },
+    rightsByUser() {
+      const user_id = this.userInfo?.id ?? null;
+      const own_rights = this.userChanges.find(
+        (change) => change.userId === user_id,
+      );
+      if (own_rights) {
+        return {
+          userId: user_id,
+          subscribedChange: own_rights.subscribedChange ?? null,
+          subscribedComment: own_rights.subscribedComment ?? null,
+          type: ProjectSubscriptionInspectResponseRightType.OWN,
+        };
+      } else {
+        const initial_rights = this.initialRights?.byUser.find(
+          (item) => item.userId === user_id,
+        );
+
+        return initial_rights
+          ? initial_rights
+          : {
+              roleNum: user_id,
+              subscribedChange: null,
+              subscribedComment: null,
+              type: ProjectSubscriptionInspectResponseRightType.OWN,
+            };
+      }
+    },
   },
   async mounted() {
     this.isLoading = true;
     this.$emit('dialog-parameters', {
       forbidClose: true,
     });
-    const roles = await this.$getAppManager()
-      .get(ProjectManager)
-      .getRolesList({});
-    this.allRoles = roles.list;
+    if (this.$getAppManager().get(ProjectManager).isAdmin()) {
+      const roles = await this.$getAppManager()
+        .get(ProjectManager)
+        .getRolesList({});
+      this.allRoles = roles.list.filter((role) => role.num);
+    }
     this.initialRights = await this.$getAppManager()
       .get(ProjectManager)
       .getInspectRights(
@@ -392,57 +421,65 @@ export default defineComponent({
       try {
         if (this.dialog.state.workspaceId) {
           const workspace_id = this.dialog.state.workspaceId;
-          await this.$getAppManager()
-            .get(ProjectManager)
-            .setWorkspaceInspectRightsList(
-              this.roleChanges.map((rs) => {
-                return {
-                  workspaceId: workspace_id,
-                  roleNum: rs.roleNum,
-                  subscribedChange: rs.subscribedChange,
-                  subscribedComment: rs.subscribedComment,
-                };
-              }),
-            );
-          await this.$getAppManager()
-            .get(ProjectManager)
-            .changeMemberSubscriptionWorkspaces(
-              this.userChanges.map((change) => {
-                return {
-                  workspaceId: workspace_id,
-                  userId: change.userId,
-                  subscribedChange: change.subscribedChange,
-                  subscribedComment: change.subscribedComment,
-                };
-              }),
-            );
+          if (this.roleChanges.length > 0) {
+            await this.$getAppManager()
+              .get(ProjectManager)
+              .setWorkspaceInspectRightsList(
+                this.roleChanges.map((rs) => {
+                  return {
+                    workspaceId: workspace_id,
+                    roleNum: rs.roleNum,
+                    subscribedChange: rs.subscribedChange,
+                    subscribedComment: rs.subscribedComment,
+                  };
+                }),
+              );
+          }
+          if (this.userChanges.length > 0) {
+            await this.$getAppManager()
+              .get(ProjectManager)
+              .changeMemberSubscriptionWorkspaces(
+                this.userChanges.map((change) => {
+                  return {
+                    workspaceId: workspace_id,
+                    userId: change.userId,
+                    subscribedChange: change.subscribedChange,
+                    subscribedComment: change.subscribedComment,
+                  };
+                }),
+              );
+          }
         }
         if (this.dialog.state.assetId) {
           const asset_id = this.dialog.state.assetId;
-          await this.$getAppManager()
-            .get(ProjectManager)
-            .setAssetInspectRightsList(
-              this.roleChanges.map((rs) => {
-                return {
-                  assetId: asset_id,
-                  roleNum: rs.roleNum,
-                  subscribedChange: rs.subscribedChange,
-                  subscribedComment: rs.subscribedComment,
-                };
-              }),
-            );
-          await this.$getAppManager()
-            .get(ProjectManager)
-            .changeMemberSubscriptionAssets(
-              this.userChanges.map((change) => {
-                return {
-                  assetId: asset_id,
-                  userId: change.userId,
-                  subscribedChange: change.subscribedChange,
-                  subscribedComment: change.subscribedComment,
-                };
-              }),
-            );
+          if (this.roleChanges.length > 0) {
+            await this.$getAppManager()
+              .get(ProjectManager)
+              .setAssetInspectRightsList(
+                this.roleChanges.map((rs) => {
+                  return {
+                    assetId: asset_id,
+                    roleNum: rs.roleNum,
+                    subscribedChange: rs.subscribedChange,
+                    subscribedComment: rs.subscribedComment,
+                  };
+                }),
+              );
+          }
+          if (this.userChanges.length > 0) {
+            await this.$getAppManager()
+              .get(ProjectManager)
+              .changeMemberSubscriptionAssets(
+                this.userChanges.map((change) => {
+                  return {
+                    assetId: asset_id,
+                    userId: change.userId,
+                    subscribedChange: change.subscribedChange,
+                    subscribedComment: change.subscribedComment,
+                  };
+                }),
+              );
+          }
         }
         this.dialog.close();
         this.$getAppManager()
