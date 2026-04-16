@@ -26,6 +26,7 @@
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
+              @view-ready="onMessageViewReady()"
             />
             <div
               v-if="unreadMessagesList.length > 0"
@@ -46,6 +47,7 @@
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
+              @view-ready="onMessageViewReady()"
             />
           </template>
         </feed-loader>
@@ -142,6 +144,8 @@ export default defineComponent({
       hasMoreNewer: false,
       expectMessageEvent: false,
 
+      messageViewReady: false,
+
       isMounted: false,
       commentListener: null as IProjectDatabaseCommentEventHandler | null,
     };
@@ -209,10 +213,17 @@ export default defineComponent({
     this.resetCommentListener(false);
   },
   methods: {
+    async onMessageViewReady() {
+      if (!this.messageViewReady) {
+        this.messageViewReady = true;
+        await this.scrollToBottom();
+      }
+    },
     async scrollToBottom() {
       const container = this.$refs['messagesField'] as HTMLElement | undefined;
       if (!container) return;
       await this.$nextTick();
+
       container.scrollTop = container.scrollHeight;
     },
     async init() {
@@ -422,7 +433,7 @@ export default defineComponent({
       const loading_branch_id = this.chatCommentBranchId;
       if (loading_branch_id) {
         this.$emit('update:lastViewedAt', new Date().toISOString());
-        this.$getAppManager()
+        await this.$getAppManager()
           .get(UiManager)
           .doTask(async () => {
             const messages_data = await this.$getAppManager()
@@ -455,6 +466,7 @@ export default defineComponent({
       } else {
         this.messages = [];
       }
+
       this.$emit('update:lastViewedAt', new Date().toISOString());
       this.isLoading = false;
     },

@@ -6,7 +6,11 @@
       :click-to-open="clickToOpen"
       :project-info="projectInfo"
     >
-      <div class="ImcPresenter-content" v-html="displayingHtml"></div>
+      <div
+        class="ImcPresenter-content"
+        @vue:mounted="contentMounted"
+        v-html="displayingHtml"
+      ></div>
     </imc-text-augmentation>
     <template v-else> &nbsp; </template>
   </div>
@@ -72,8 +76,10 @@ export default defineComponent({
       });
     },
   },
-  mounted() {
-    this.$emit('view-ready');
+  methods: {
+    contentMounted() {
+      this.$emit('view-ready');
+    },
   },
 });
 </script>
