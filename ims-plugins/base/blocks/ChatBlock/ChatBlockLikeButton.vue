@@ -1,40 +1,26 @@
 <template>
-  <div class="ChatBlockLikeButton use-buttons-rounded">
-    <form-check-smile
-      v-if="!smileIsBusy"
-      :selected-likes-dict="selectedEmojis"
-      @input="changeMyLike($event)"
-      @dropdown-state-change="$emit('dropdown-state-change', $event)"
-    ></form-check-smile>
-    <button v-else class="is-button loading"></button>
-  </div>
+  <form-select-emoji
+    :selected-emojis="selectedEmojis"
+    @dropdown-state-change="$emit('dropdown-state-change', $event)"
+    @select="$emit('like', $event)"
+  ></form-select-emoji>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
-import FormCheckSmile from '../../../../app/components/Form/FormCheckSmile.vue';
+import { defineComponent } from 'vue';
+import FormSelectEmoji from '../../../../app/components/Form/FormSelectEmoji.vue';
 
 export default defineComponent({
   name: 'ChatBlockLikeButton',
   components: {
-    FormCheckSmile,
+    FormSelectEmoji,
   },
   props: {
     selectedEmojis: {
-      type: Object as PropType<{ [like: string]: boolean }>,
-      default: () => ({}),
+      type: Set,
+      default: null,
     },
   },
   emits: ['like', 'dropdown-state-change'],
-  data() {
-    return {
-      smileIsBusy: false,
-    };
-  },
-  methods: {
-    changeMyLike(emoji: string) {
-      this.$emit('like', emoji);
-    },
-  },
 });
 </script>
 <style lang="scss" scoped>

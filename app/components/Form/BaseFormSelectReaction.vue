@@ -1,7 +1,8 @@
 <template>
   <menu-button
+    v-if="!loading"
     v-model:shown="dropdownShown"
-    class="FormCheckSmile use-buttons-icon-rounded"
+    class="BaseFromSelectReaction use-buttons-icon-rounded"
   >
     <template #button="{ show }">
       <div
@@ -11,45 +12,41 @@
           [`type-${value.toLowerCase()}`]: true,
         }"
       >
-        {{ getLikeEmoji(value) }}
+        {{ getReactionView ? getReactionView(value) : value }}
       </div>
       <button v-else class="is-button" @click="show()">
         <i class="ri-user-smile-line"></i>
       </button>
     </template>
-    <select-smile-dropdown-content
-      :value="value"
-      :selected-likes-dict="selectedLikesDict"
-      @input="onSelected($event)"
-    ></select-smile-dropdown-content>
+    <slot></slot>
   </menu-button>
+  <button v-else class="is-button loading"></button>
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
 import { getLikeEmoji } from '#logic/constants';
-import type { PropType } from 'vue';
-import { defineComponent } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import MenuButton from '../Common/MenuButton.vue';
-import SelectSmileDropdownContent from './SelectSmileDropdownContent.vue';
 
 export default defineComponent({
-  name: 'FormCheckSmile',
+  name: 'BaseFromSelectReaction',
   components: {
     MenuButton,
-    SelectSmileDropdownContent,
   },
   props: {
     value: { type: String, default: undefined },
-    keyProp: { type: String, default: 'value' },
-    titleProp: { type: String, default: 'title' },
     clearable: { type: Boolean, default: true },
     disabled: { type: Boolean, default: false },
-    selectedLikesDict: {
-      type: Object as PropType<{ [like: string]: boolean }>,
-      default: () => ({}),
+    loading: {
+      type: Boolean,
+      default: false,
+    },
+    getReactionView: {
+      type: Function as PropType<(item) => string | undefined>,
+      default: null,
     },
   },
-  emits: ['input', 'dropdown-state-change'],
+  emits: ['dropdown-state-change', 'select'],
   data() {
     return {
       dropdownShown: false,
@@ -61,13 +58,15 @@ export default defineComponent({
     },
   },
   methods: {
-    onSelected(item: string) {
-      this.$emit('input', item);
-      this.dropdownShown = false;
-    },
     getLikeEmoji,
   },
 });
 </script>
 
-<style lang="scss" rel="stylesheet/scss" scoped></style>
+<style lang="scss" rel="stylesheet/scss" scoped>
+.is-button.loading {
+  font-size: 10px;
+  width: 27px;
+  height: 27px;
+}
+</style>

@@ -72,6 +72,7 @@
         <chat-block-like-button
           class="ChatBlockMessage-content-panel-like"
           :class="{ active: isLikeDropdownActive }"
+          :selected-emojis="selectedEmojisByUser"
           @dropdown-state-change="isLikeDropdownActive = $event"
           @like="changeLike($event)"
         ></chat-block-like-button>
@@ -82,9 +83,10 @@
           <i class="ri-reply-fill"></i>
         </div>
         <template #item-reactions>
-          <select-smile-dropdown-content
-            @input="onSmileDropdownInput"
-          ></select-smile-dropdown-content>
+          <select-emoji-dropdown-content
+            :selected-emojis="selectedEmojisByUser"
+            @select="onSmileDropdownInput"
+          ></select-emoji-dropdown-content>
         </template>
       </context-menu-zone>
     </div>
@@ -106,8 +108,8 @@ import { getTargetMessageContent } from './ChatBlock';
 import UserProfileIcon from '../../../../app/components/Common/UserProfileIcon.vue';
 import type { MenuListItem } from '../../../../app/logic/types/MenuList';
 import ProjectManager from '../../../../app/logic/managers/ProjectManager';
-import SelectSmileDropdownContent from '../../../../app/components/Form/SelectSmileDropdownContent.vue';
 import dayjs from 'dayjs';
+import SelectEmojiDropdownContent from '../../../../app/components/Form/SelectEmojiDropdownContent.vue';
 
 const SWIPE_THRESHOLD = 25; // px for «reply» activation
 const SWIPE_MAX_OFFSET = 55; // px for swipe limitation
@@ -124,7 +126,7 @@ export default defineComponent({
     ContextMenuZone,
     ChatBlockLikeButton,
     UserProfileIcon,
-    SelectSmileDropdownContent,
+    SelectEmojiDropdownContent,
   },
   props: {
     message: {
@@ -144,7 +146,14 @@ export default defineComponent({
       default: () => {},
     },
   },
-  emits: ['delete', 'edit', 'reply', 'target-message-click', 'view-ready'],
+  emits: [
+    'delete',
+    'edit',
+    'reply',
+    'target-message-click',
+    'view-ready',
+    'like',
+  ],
   data() {
     return {
       messageViewReady: false,
@@ -196,6 +205,13 @@ export default defineComponent({
     isAdmin() {
       return this.$getAppManager().get(ProjectManager).isAdmin();
     },
+    selectedEmojisByUser() {
+      return new Set(
+        this.likes
+          .filter((item) => item.user.AccountId === (this.userInfo?.id as any))
+          .map((item) => item.emoji),
+      );
+    },
     messageDate() {
       const created_at_date = new Date(this.message.createdAt);
 
@@ -234,6 +250,9 @@ export default defineComponent({
       } else {
         return this.messageViewReady;
       }
+    },
+    likesFromUser() {
+      return this.likes.filter((l) => l.user.AccountId === this.userInfo?.id);
     },
     menuList() {
       return [
@@ -380,30 +399,14 @@ export default defineComponent({
       }
     },
     async changeLike(emoji: string) {
-      const like_is_set_ind = this.likes.findIndex((l) => l.emoji === emoji);
-      await this.setLike(like_is_set_ind > -1 ? '' : emoji);
-      if (like_is_set_ind > -1) {
-        this.likes.splice(like_is_set_ind, 1);
-      } else if (this.userInfo) {
-        this.likes.push({
-          user: {
-            AccountId: this.userInfo.id.toString(),
-            Name: this.userInfo.name,
-          },
-          emoji,
-        });
+      const existing_user_like_idx = this.likesFromUser.findIndex(
+        (l) => l.emoji === emoji,
+      );
+      if (existing_user_like_idx >= 0) {
+        this.$emit('like', null);
+      } else {
+        this.$emit('like', emoji);
       }
-    },
-    async setLike(emoji: string) {
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          await this.$getAppManager()
-            .get(CommentManager)
-            .setLike(this.message.commentId, this.message.id, {
-              like: emoji,
-            });
-        });
     },
     formatDateTime,
   },
