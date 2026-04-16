@@ -85,7 +85,7 @@
         <template #item-reactions>
           <select-emoji-dropdown-content
             :selected-emojis="selectedEmojisByUser"
-            @select="onSmileDropdownInput"
+            @select="changeLike($event)"
           ></select-emoji-dropdown-content>
         </template>
       </context-menu-zone>
@@ -103,7 +103,6 @@ import UiManager from '#logic/managers/UiManager';
 import ChatBlockLikes from './ChatBlockLikes.vue';
 import ContextMenuZone from '../../../../app/components/Common/ContextMenuZone.vue';
 import ChatBlockLikeButton from './ChatBlockLikeButton.vue';
-import CommentManager from '../../../../app/logic/managers/CommentManager';
 import { getTargetMessageContent } from './ChatBlock';
 import UserProfileIcon from '../../../../app/components/Common/UserProfileIcon.vue';
 import type { MenuListItem } from '../../../../app/logic/types/MenuList';
@@ -252,7 +251,10 @@ export default defineComponent({
       }
     },
     likesFromUser() {
-      return this.likes.filter((l) => l.user.AccountId === this.userInfo?.id);
+      //TODO: fix client-server type contracts
+      return this.likes.filter(
+        (l) => l.user.AccountId === (this.userInfo?.id as any),
+      );
     },
     menuList() {
       return [
@@ -317,9 +319,6 @@ export default defineComponent({
   },
   mounted() {},
   methods: {
-    onSmileDropdownInput(emoji: string) {
-      this.changeLike(emoji);
-    },
     onContextMenuStateChange(state: boolean) {
       if (state) {
         if (this.touchContext) this.touchContext.moveBlocked = true;
@@ -368,7 +367,7 @@ export default defineComponent({
         const timeSinceLastTap = endTime - (this.touchContext.lastTapTime ?? 0);
 
         if (timeSinceLastTap < DOUBLE_TAP_DELAY) {
-          this.setLike('heart');
+          this.changeLike('❤️');
           this.touchContext.lastTapTime = 0;
         } else {
           this.touchContext.lastTapTime = endTime;
