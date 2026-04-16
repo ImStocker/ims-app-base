@@ -930,6 +930,9 @@ export default {
     notifications: 'Notifications',
     changes: 'Changes',
     comments: 'Comments',
+    notificationsInheritedParent:
+      'Notifications are inherited from parent folder',
+    notificationsDefault: 'Default notifications',
   },
   errorPage: {
     goBack: 'Go back home',

@@ -383,12 +383,12 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         icon: 'ri-lock-fill',
       });
     }
-    const is_guest = !this.appManager
+    const is_member = this.appManager
       .get(ProjectManager)
       .getUserRoleInProject();
     if (
       workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
-      !is_guest &&
+      is_member &&
       !is_desktop
     ) {
       workspaceActions.push({

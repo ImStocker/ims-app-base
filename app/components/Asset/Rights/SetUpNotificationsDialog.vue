@@ -234,18 +234,34 @@ export default defineComponent({
           type: ProjectSubscriptionInspectResponseRightType.OWN,
         };
       } else {
-        const initial_rights = this.initialRights?.byUser.find(
+        const initial_rights_by_user = this.initialRights?.byUser.find(
           (item) => item.userId === user.id,
         );
-
-        return initial_rights
-          ? initial_rights
-          : {
+        if (initial_rights_by_user) {
+          return initial_rights_by_user;
+        } else {
+          const user_role = this.$getAppManager()
+            .get(ProjectManager)
+            .getUserRoleInProject();
+          const initial_rights_by_role = this.initialRights?.byRole.find(
+            (item) => item.roleNum === user_role?.num,
+          );
+          if (initial_rights_by_role) {
+            return {
               userId: user.id,
-              subscribedChange: null,
-              subscribedComment: null,
-              type: ProjectSubscriptionInspectResponseRightType.OWN,
+              subscribedChange: initial_rights_by_role.subscribedChange,
+              subscribedComment: initial_rights_by_role.subscribedComment,
+              type: initial_rights_by_role.type,
             };
+          }
+        }
+
+        return {
+          userId: user.id,
+          subscribedChange: null,
+          subscribedComment: null,
+          type: ProjectSubscriptionInspectResponseRightType.WORKSPACE,
+        };
       }
     },
     rightsByUser() {
@@ -271,7 +287,7 @@ export default defineComponent({
               roleNum: user_id,
               subscribedChange: null,
               subscribedComment: null,
-              type: ProjectSubscriptionInspectResponseRightType.OWN,
+              type: ProjectSubscriptionInspectResponseRightType.WORKSPACE,
             };
       }
     },
@@ -318,7 +334,7 @@ export default defineComponent({
               roleNum: role_num,
               subscribedChange: null,
               subscribedComment: null,
-              type: ProjectSubscriptionInspectResponseRightType.OWN,
+              type: ProjectSubscriptionInspectResponseRightType.WORKSPACE,
             };
       }
     },
@@ -358,20 +374,16 @@ export default defineComponent({
       const ind = this.roleChanges.findIndex((ch) => ch.roleNum === role_num);
       if (ind > -1) {
         this.roleChanges[ind][change_type] = null;
-        if (
-          this.roleChanges[ind].subscribedChange === null &&
-          this.roleChanges[ind].subscribedComment === null
-        ) {
-          this.roleChanges.splice(ind, 1);
-        }
       } else {
         const initial_rights = this.initialRights?.byRole.find(
           (item) => item.roleNum === role_num,
         );
-        this.roleChanges.push({
-          roleNum: role_num,
-          ...(initial_rights ? initial_rights : {}),
-        });
+        if (initial_rights) {
+          this.roleChanges.push({
+            ...initial_rights,
+            [change_type]: null,
+          });
+        }
       }
     },
     addUserChange(
@@ -400,20 +412,16 @@ export default defineComponent({
       const ind = this.userChanges.findIndex((ch) => ch.userId === user.id);
       if (ind > -1) {
         this.userChanges[ind][change_type] = null;
-        if (
-          this.userChanges[ind].subscribedChange === null &&
-          this.userChanges[ind].subscribedComment === null
-        ) {
-          this.userChanges.splice(ind, 1);
-        }
       } else {
         const initial_rights = this.initialRights?.byUser.find(
           (item) => item.userId === user.id,
         );
-        this.userChanges.push({
-          userId: user.id,
-          ...(initial_rights ? initial_rights : {}),
-        });
+        if (initial_rights) {
+          this.userChanges.push({
+            ...initial_rights,
+            [change_type]: null,
+          });
+        }
       }
     },
     async save() {
