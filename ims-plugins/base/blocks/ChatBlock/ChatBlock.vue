@@ -22,6 +22,9 @@
               :all-messages="allMessages"
               :show-username="showUsername(idx, unreadMessagesList)"
               :show-user-icon="showUserIcon(idx, unreadMessagesList)"
+              :failed-messages="failedMessagesMap"
+              :readonly="readonly"
+              @resend="resendMessage($event)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @like="likeMessage(message.id, $event)"
@@ -44,6 +47,9 @@
               :all-messages="allMessages"
               :show-username="showUsername(idx, readMessagesList)"
               :show-user-icon="showUserIcon(idx, readMessagesList)"
+              :failed-messages="failedMessagesMap"
+              :readonly="readonly"
+              @resend="resendMessage($event)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
               @like="likeMessage(message.id, $event)"
@@ -63,7 +69,7 @@
         <chat-block-send
           v-if="!readonly"
           v-model:target-message="targetMessage"
-          @send="sendMessage($event)"
+          @send="commitMessage($event)"
         ></chat-block-send>
       </Teleport>
     </div>
@@ -94,6 +100,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   isMessageEmpty,
   TargetMessageActionTypes,
+  type FailedMessageData,
   type TargetMessage,
 } from './ChatBlock';
 import type { AssetPropValue } from '../../../../app/logic/types/Props';
@@ -138,6 +145,7 @@ export default defineComponent({
       allMessages: {} as { [key: string]: CommentReplyDTO },
       messages: [] as CommentReplyDTO[],
       unsentMessages: [] as CommentReplyDTO[],
+      failedMessagesMap: new Map() as Map<string, FailedMessageData>,
       targetMessage: null as TargetMessage | null,
 
       loadError: null as string | null,
@@ -298,7 +306,6 @@ export default defineComponent({
                   break;
                 }
               }
-              console.log(ev);
             });
         }
       }
@@ -511,21 +518,27 @@ export default defineComponent({
             });
         });
 
-      // if (like_is_set_ind > -1) {
-      //   this.likes.splice(like_is_set_ind, 1);
-      // } else if (this.userInfo) {
-      //   this.likes.push({
-      //     user: {
-      //       AccountId: this.userInfo.id.toString(),
-      //       Name: this.userInfo.name,
-      //     },
-      //     emoji,
-      //   });
-      // }
-
       setTimeout(() => {
         this.expectMessageEvent = false;
       }, 0);
+    },
+    async resendMessage(message_id: string) {
+      const failed_message = this.failedMessagesMap.get(message_id);
+      if (!failed_message) return;
+      const new_message_idx = this.unsentMessages.findIndex(
+        (m) => m.id === message_id,
+      );
+      if (new_message_idx >= 0) {
+        this.unsentMessages.splice(new_message_idx, 1);
+        await this.createMessage(
+          failed_message.content,
+          failed_message.answerToId,
+        );
+      } else {
+        // edit
+        this.failedMessagesMap.delete(message_id);
+        await this.editMessage(failed_message.content, message_id);
+      }
     },
     async deleteMessage(message: { commentId: string; replyId: string }) {
       const answer = await this.$getAppManager()
@@ -580,8 +593,15 @@ export default defineComponent({
       if (!list[idx - 1]) return true;
       return list[idx].user.AccountId !== list[idx - 1].user.AccountId;
     },
-    revealCommentReply(reply_id: string) {
-      const reply_element = window.document.getElementById('reply-' + reply_id);
+    async revealCommentReply(reply_id: string) {
+      let reply_element = window.document.getElementById('reply-' + reply_id);
+      if (!reply_element) {
+        while (this.hasMoreOlder && !reply_element) {
+          await this.loadOlderMessages();
+          await this.$nextTick();
+          reply_element = window.document.getElementById('reply-' + reply_id);
+        }
+      }
       if (!reply_element) return;
 
       scrollIntoViewIfNeeded(reply_element, {
@@ -589,52 +609,63 @@ export default defineComponent({
         scrollMode: 'if-needed',
       });
     },
-    async sendMessage({ content }: { content: AssetPropValue }) {
+    async commitMessage({ content }: { content: AssetPropValue }) {
       if (!this.currentAsset) {
         return;
       }
       if (isMessageEmpty(content)) return;
 
       this.$emit('sendMessage');
+      const target_message_id = this.targetMessage?.message.id;
+
       if (
         !this.targetMessage ||
         this.targetMessage.actionType !== TargetMessageActionTypes.EDIT
       ) {
-        await this.createMessage(content, this.targetMessage?.message.id);
+        this.targetMessage = null;
+        await this.createMessage(content, target_message_id);
       } else {
-        await this.editMessage(content);
+        this.targetMessage = null;
+        await this.editMessage(content, target_message_id);
       }
-      this.targetMessage = null;
     },
-    async editMessage(content: AssetPropValue) {
+    async editMessage(content: AssetPropValue, targetMessageId?: string) {
       this.expectMessageEvent = true;
       const comment_content_to_db: any =
         typeof content === 'object' ? { ...content } : content;
       const editing_message_index = this.messages.findIndex(
-        (el) => el.id === this.targetMessage?.message.id,
+        (el) => el.id === targetMessageId,
       );
 
-      if (editing_message_index === -1) return;
+      if (editing_message_index < 0) return;
 
       this.messages[editing_message_index].content = {
         '': comment_content_to_db,
       };
       this.messages[editing_message_index].sended = false;
 
-      const res = await this.$getAppManager()
-        .get(CommentManager)
-        .changeReply(
-          this.chatCommentBranch?.id ?? '',
-          this.messages[editing_message_index].id,
-          {
-            content: { '': comment_content_to_db },
-          },
-        );
-      if (res) {
-        this.messages[editing_message_index] = {
-          ...res,
-          sended: true,
-        };
+      try {
+        const res = await this.$getAppManager()
+          .get(CommentManager)
+          .changeReply(
+            this.chatCommentBranch?.id ?? '',
+            this.messages[editing_message_index].id,
+            {
+              content: { '': comment_content_to_db },
+            },
+          );
+        if (res) {
+          this.messages[editing_message_index] = {
+            ...res,
+            sended: true,
+          };
+        }
+      } catch (err: any) {
+        await this.scrollToBottom();
+        this.failedMessagesMap.set(this.messages[editing_message_index].id, {
+          error: err.toString(),
+          content,
+        });
       }
       setTimeout(() => {
         this.expectMessageEvent = false;
@@ -649,72 +680,87 @@ export default defineComponent({
 
       const comment_content_to_db: any =
         typeof content === 'object' ? { ...content } : content;
+      const new_message_id = 'temp-' + uuidv4();
+      const new_message: CommentReplyDTO = {
+        id: new_message_id,
+        commentId: this.chatCommentBranch?.id ?? '',
+        answerToId: answerToId ?? '',
+        user: {
+          AccountId: this.userInfo ? this.userInfo.id.toString() : '0',
+          Name: this.userInfo ? this.userInfo.name : '',
+        },
+        content: { '': content },
+        createdAt: new Date().toString(),
+        updatedAt: new Date().toString(),
+        sended: false,
+        likes: [],
+      };
 
       if (this.chatCommentBranch && this.messages.length) {
-        const new_message_id = 'temp-' + uuidv4();
-        const new_message: CommentReplyDTO = {
-          id: new_message_id,
-          commentId: this.chatCommentBranch?.id ?? '',
-          answerToId: answerToId ?? '',
-          user: {
-            AccountId: this.userInfo ? this.userInfo.id.toString() : '0',
-            Name: this.userInfo ? this.userInfo.name : '',
-          },
-          content: { '': content },
-          createdAt: new Date().toString(),
-          updatedAt: new Date().toString(),
-          sended: false,
-          likes: [],
-        };
         this.unsentMessages.unshift(new_message);
         await this.scrollToBottom();
 
         this.$emit('update:lastViewedAt', new Date().toISOString());
 
-        const res = await this.$getAppManager()
-          .get(CommentManager)
-          .addAnswer(this.chatCommentBranch.id, {
-            assetId: this.currentAsset.id,
-            answerToReplyId: answerToId,
-            content: { '': comment_content_to_db },
-          });
-        this.$emit('update:lastViewedAt', new Date().toISOString());
-        if (res) {
-          const newMessageIndex = this.unsentMessages.findIndex(
-            (message: CommentReplyDTO) => message.id === new_message_id,
-          );
-          if (newMessageIndex !== -1) {
-            this.unsentMessages[newMessageIndex] = {
-              ...res,
-              sended: true,
-            };
-            const msg_index = this.messages.findIndex(
-              (message: CommentReplyDTO) =>
-                message.id === this.unsentMessages[newMessageIndex].id,
+        try {
+          const res = await this.$getAppManager()
+            .get(CommentManager)
+            .addAnswer(this.chatCommentBranch.id, {
+              assetId: this.currentAsset.id,
+              answerToReplyId: answerToId,
+              content: { '': comment_content_to_db },
+            });
+          this.$emit('update:lastViewedAt', new Date().toISOString());
+          if (res) {
+            const newMessageIndex = this.unsentMessages.findIndex(
+              (message: CommentReplyDTO) => message.id === new_message_id,
             );
-            if (msg_index === -1) {
-              this.messages.unshift(this.unsentMessages[newMessageIndex]);
-            }
-            this.unsentMessages.splice(newMessageIndex, 1);
+            if (newMessageIndex > -1) {
+              this.unsentMessages[newMessageIndex] = {
+                ...res,
+                sended: true,
+              };
+              const msg_index = this.messages.findIndex(
+                (message: CommentReplyDTO) =>
+                  message.id === this.unsentMessages[newMessageIndex].id,
+              );
+              if (msg_index === -1) {
+                this.messages.unshift(this.unsentMessages[newMessageIndex]);
+              }
+              this.unsentMessages.splice(newMessageIndex, 1);
 
-            this.allMessages[res.id] = res;
+              this.allMessages[res.id] = res;
+            }
           }
+        } catch (err: any) {
+          this.failedMessagesMap.set(new_message_id, {
+            error: err.toString(),
+            content,
+            answerToId,
+          });
         }
       } else {
-        const res = await this.$getAppManager()
-          .get(CommentManager)
-          .createComment({
-            assetId: this.currentAsset.id,
-            content: { '': comment_content_to_db },
-            blocks: [
-              {
-                id: this.resolvedBlock.id,
-                anchor: { chat: true },
-              },
-            ],
+        try {
+          await this.$getAppManager()
+            .get(CommentManager)
+            .createComment({
+              assetId: this.currentAsset.id,
+              content: { '': comment_content_to_db },
+              blocks: [
+                {
+                  id: this.resolvedBlock.id,
+                  anchor: { chat: true },
+                },
+              ],
+            });
+        } catch (err: any) {
+          this.unsentMessages.unshift(new_message);
+          await this.scrollToBottom();
+          this.failedMessagesMap.set(new_message_id, {
+            error: err.toString(),
+            content,
+            answerToId,
           });
-        if (res) {
-          // await this.reloadMessages();
         }
       }
       setTimeout(() => {

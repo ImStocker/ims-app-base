@@ -755,6 +755,8 @@ export default {
     },
   },
   discussions: {
+    resend: 'Resend',
+    deletedMessage: 'Deleted message',
     placeholder: 'Write a message...',
     delete: 'Delete message',
     deleteMessageConfirm: 'Are you sure you want to delete message?',

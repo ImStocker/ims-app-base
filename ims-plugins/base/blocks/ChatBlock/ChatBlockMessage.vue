@@ -21,27 +21,37 @@
         ref="contextZone"
         class="ChatBlockMessage-content-panel"
         :menu-list="menuList"
-        @dblclick="$emit('reply', message.id)"
+        @dblclick="onDblClick"
         @touchstart="onTouchStart"
         @touchmove.passive="onTouchMove"
         @touchend="onTouchEnd"
         @dropdown-state-change="onContextMenuStateChange($event)"
       >
-        <div
-          v-if="targetMessage"
-          class="ChatBlockMessage-content-panel-targetMessage"
-          @click="$emit('target-message-click', targetMessage.id)"
-        >
-          <div class="ChatBlockMessage-content-panel-targetMessage-author">
-            {{ targetMessage.user.Name }}
-          </div>
-          <imc-presenter
-            class="ChatBlockMessage-content-panel-targetMessage-content"
-            :value="targetMessageContent"
-            @view-ready="targetMessageViewReady = true"
+        <template v-if="message.answerToId">
+          <div
+            v-if="targetMessage"
+            class="ChatBlockMessage-content-panel-targetMessage"
+            @click="$emit('target-message-click', targetMessage.id)"
           >
-          </imc-presenter>
-        </div>
+            <div class="ChatBlockMessage-content-panel-targetMessage-author">
+              {{ targetMessage.user.Name }}
+            </div>
+            <imc-presenter
+              class="ChatBlockMessage-content-panel-targetMessage-content"
+              :value="targetMessageContent"
+              @view-ready="targetMessageViewReady = true"
+            >
+            </imc-presenter>
+          </div>
+          <div
+            v-else
+            class="ChatBlockMessage-content-panel-targetMessage deleted"
+          >
+            <div class="ChatBlockMessage-content-panel-targetMessage-content">
+              {{ $t('discussions.deletedMessage') }}
+            </div>
+          </div>
+        </template>
         <imc-presenter
           class="ChatBlockMessage-content-panel-text"
           :value="message.content['']"
@@ -52,6 +62,7 @@
           class="ChatBlockMessage-content-panel-likes"
           :likes="message.likes"
           :is-author="isAuthor"
+          :readonly="readonly"
           @like="changeLike($event)"
         ></chat-block-likes>
         <div class="ChatBlockMessage-content-panel-meta">
@@ -65,11 +76,17 @@
             v-if="isAuthor"
             class="ChatBlockMessage-content-panel-meta-status"
           >
-            <i v-if="!message.sended" class="ri-copper-coin-fill" />
+            <i
+              v-if="sendingError"
+              class="ri-error-warning-fill error"
+              :title="sendingError.error"
+            ></i>
+            <i v-else-if="!message.sended" class="ri-copper-coin-fill" />
             <i v-else class="ri-check-fill" />
           </div>
         </div>
         <chat-block-like-button
+          v-if="allowedActions"
           class="ChatBlockMessage-content-panel-like"
           :class="{ active: isLikeDropdownActive }"
           :selected-emojis="selectedEmojisByUser"
@@ -103,7 +120,7 @@ import UiManager from '#logic/managers/UiManager';
 import ChatBlockLikes from './ChatBlockLikes.vue';
 import ContextMenuZone from '../../../../app/components/Common/ContextMenuZone.vue';
 import ChatBlockLikeButton from './ChatBlockLikeButton.vue';
-import { getTargetMessageContent } from './ChatBlock';
+import { getTargetMessageContent, type FailedMessageData } from './ChatBlock';
 import UserProfileIcon from '../../../../app/components/Common/UserProfileIcon.vue';
 import type { MenuListItem } from '../../../../app/logic/types/MenuList';
 import ProjectManager from '../../../../app/logic/managers/ProjectManager';
@@ -144,6 +161,14 @@ export default defineComponent({
       type: Object as PropType<{ [key: string]: CommentReplyDTO } | undefined>,
       default: () => {},
     },
+    failedMessages: {
+      type: Object as PropType<Map<string, FailedMessageData>>,
+      default: null,
+    },
+    readonly: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: [
     'delete',
@@ -152,6 +177,7 @@ export default defineComponent({
     'target-message-click',
     'view-ready',
     'like',
+    'resend',
   ],
   data() {
     return {
@@ -171,6 +197,9 @@ export default defineComponent({
     };
   },
   computed: {
+    allowedActions() {
+      return !this.readonly && !this.sendingError && this.message.sended;
+    },
     messageStyle() {
       if (this.touchContext && this.touchContext.swipeOffset) {
         return {
@@ -211,6 +240,9 @@ export default defineComponent({
           .map((item) => item.emoji),
       );
     },
+    sendingError() {
+      return this.failedMessages?.get(this.message.id);
+    },
     messageDate() {
       const created_at_date = new Date(this.message.createdAt);
 
@@ -229,7 +261,7 @@ export default defineComponent({
 
       let full_date_info = `${this.$t('discussions.sendedMessage')}: ${created_at_full}`;
       let short_date_info = is_today
-        ? dayjs(created_at_date).format('HH:MM')
+        ? dayjs(created_at_date).format('HH:mm')
         : created_at_full;
 
       if (this.message.createdAt != this.message.updatedAt) {
@@ -257,6 +289,19 @@ export default defineComponent({
       );
     },
     menuList() {
+      if (this.readonly) return [];
+      if (this.sendingError) {
+        return [
+          {
+            title: this.$t('discussions.resend'),
+            icon: 'ri-reply-line',
+            action: () => {
+              this.$emit('resend', this.message.id);
+            },
+          },
+        ];
+      }
+      if (!this.message.sended) return [];
       return [
         {
           title: this.$t('discussions.reaction'),
@@ -326,7 +371,12 @@ export default defineComponent({
         if (this.touchContext) this.touchContext.moveBlocked = false;
       }
     },
+    onDblClick() {
+      if (this.readonly) return;
+      this.$emit('reply', this.message.id);
+    },
     onTouchStart(e: TouchEvent) {
+      if (this.readonly) return;
       const touch = e.touches[0];
 
       this.touchContext = {
@@ -367,7 +417,7 @@ export default defineComponent({
         const timeSinceLastTap = endTime - (this.touchContext.lastTapTime ?? 0);
 
         if (timeSinceLastTap < DOUBLE_TAP_DELAY) {
-          this.changeLike('❤️');
+          this.changeLike('❤');
           this.touchContext.lastTapTime = 0;
         } else {
           this.touchContext.lastTapTime = endTime;
@@ -491,6 +541,10 @@ export default defineComponent({
   border-left: 4px solid var(--local-link-color);
   cursor: pointer;
 
+  &.deleted {
+    font-style: italic;
+  }
+
   .ChatBlockMessage-content-panel-targetMessage-author {
     color: var(--local-link-color);
     font-weight: bold;
@@ -512,6 +566,11 @@ export default defineComponent({
   min-width: 30px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.ChatBlockMessage-content-panel-meta-status {
+  .error {
+    color: var(--color-danger);
+  }
 }
 
 .ChatBlockMessage-content-panel-likes {

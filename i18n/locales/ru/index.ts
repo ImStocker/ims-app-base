@@ -767,6 +767,8 @@ export default {
     },
   },
   discussions: {
+    resend: 'Отправить повторно',
+    deletedMessage: 'Сообщение удалено',
     placeholder: 'Написать сообщение...',
     delete: 'Удалить сообщение',
     deleteMessageConfirm: 'Вы уверены, что хотите удалить сообщение?',

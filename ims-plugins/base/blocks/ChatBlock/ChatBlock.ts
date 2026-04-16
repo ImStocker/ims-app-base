@@ -26,3 +26,9 @@ export function isMessageEmpty(message: AssetPropValue) {
     ? !Object.keys(message as any).length
     : !message;
 }
+
+export type FailedMessageData = {
+  content: AssetPropValue;
+  error: string;
+  answerToId?: string;
+};
