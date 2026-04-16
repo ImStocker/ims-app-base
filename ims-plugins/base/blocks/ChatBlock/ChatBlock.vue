@@ -6,9 +6,9 @@
     <div class="ChatBlock-inner">
       <div ref="messagesField" class="ChatBlock-chat tiny-scrollbars">
         <feed-loader
-          :load-more="() => loadMessages('more')"
-          :has-more="hasMore"
-          :disabled="true"
+          :load-more="async () => await loadOlderMessages()"
+          :has-more="hasMoreOlder"
+          :disabled="isLoading"
           class="ChatBlock-chat-messagesField"
         >
           <div v-if="false" class="loaderSpinner PageLoaderSpinner" />
@@ -26,6 +26,7 @@
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
+              @view-ready="onMessageViewReady()"
             />
             <div
               v-if="unreadMessagesList.length > 0"
@@ -46,6 +47,7 @@
               @edit="startMessageEditing($event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
+              @view-ready="onMessageViewReady()"
             />
           </template>
         </feed-loader>
@@ -97,7 +99,7 @@ import type { IProjectDatabaseCommentEventHandler } from '#logic/types/IProjectD
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import FeedLoader from '../../../../app/components/Common/FeedLoader.vue';
 
-const MESSAGES_COUNT = 10;
+const MESSAGES_COUNT = 100;
 
 export default defineComponent({
   name: 'ChatBlock',
@@ -138,10 +140,12 @@ export default defineComponent({
 
       loadError: null as string | null,
       isLoading: false as boolean,
-      hasMore: false,
+      hasMoreOlder: false,
+      hasMoreNewer: false,
+      expectMessageEvent: false,
 
-      reloadMessagesTimeout: null as any,
-      reloadMessagesRun: false,
+      messageViewReady: false,
+
       isMounted: false,
       commentListener: null as IProjectDatabaseCommentEventHandler | null,
     };
@@ -198,30 +202,33 @@ export default defineComponent({
   },
   watch: {
     async chatCommentBranchId() {
-      this.resetCommentListener(true);
-      await this.reloadMessages('initial');
-      await this.scrollToBottom();
+      await this.init();
     },
   },
   async mounted() {
     this.isMounted = true;
-    this.resetCommentListener(true);
-    await this.reloadMessages('initial');
-    await this.scrollToBottom();
+    await this.init();
   },
   unmounted() {
     this.resetCommentListener(false);
-    this.stopReloadMessages();
   },
   methods: {
-    async scrollToBottom() {
-      if (!this.isLoading) {
-        const messagesField = this.$refs.messagesField as HTMLElement;
-        if (messagesField) {
-          await this.$nextTick();
-          messagesField.scrollTop = messagesField.scrollHeight;
-        }
+    async onMessageViewReady() {
+      if (!this.messageViewReady) {
+        this.messageViewReady = true;
+        await this.scrollToBottom();
       }
+    },
+    async scrollToBottom() {
+      const container = this.$refs['messagesField'] as HTMLElement | undefined;
+      if (!container) return;
+      await this.$nextTick();
+
+      container.scrollTop = container.scrollHeight;
+    },
+    async init() {
+      this.resetCommentListener(true);
+      await this.loadInitialMessages();
     },
     resetCommentListener(init: boolean) {
       if (this.commentListener) {
@@ -232,103 +239,236 @@ export default defineComponent({
         if (this.chatCommentBranchId) {
           this.commentListener = this.$getAppManager()
             .get(CreatorAssetManager)
-            .listenComment(this.chatCommentBranchId, (ev) => {
-              console.log('Chat event', ev);
+            .listenComment(this.chatCommentBranchId, async (ev) => {
+              const loading_branch_id = this.chatCommentBranchId;
+              if (!loading_branch_id) return;
+              switch (ev.t) {
+                case 'new': {
+                  if (!this.expectMessageEvent) {
+                    this.loadNewMessages();
+                  }
+                  break;
+                }
+                case 'delete': {
+                  if (!this.expectMessageEvent) {
+                    const deleted_message_index = this.messages.findIndex(
+                      (msg: CommentReplyDTO) => msg.id === ev.rId,
+                    );
+                    if (deleted_message_index >= 0) {
+                      this.messages.splice(deleted_message_index, 1);
+                    }
+                    delete this.allMessages[ev.rId];
+                  }
+                  break;
+                }
+                case 'change': {
+                  if (!this.expectMessageEvent) {
+                    const message_data = await this.$getAppManager()
+                      .get(CommentManager)
+                      .getCommentReply(ev.cId, ev.rId);
+                    const message_index = this.messages.findIndex(
+                      (m) =>
+                        m.id === message_data.id &&
+                        m.commentId === message_data.commentId,
+                    );
+                    if (message_index >= 0) {
+                      message_data.sended = true;
+                      this.messages[message_index] = message_data;
+                      this.allMessages[message_data.id] = message_data;
+                    }
+                  }
+                  break;
+                }
+                case 'like': {
+                  if (!this.expectMessageEvent) {
+                    const message_data = await this.$getAppManager()
+                      .get(CommentManager)
+                      .getCommentReply(ev.cId, ev.rId);
+                    const message_index = this.messages.findIndex(
+                      (m) =>
+                        m.id === message_data.id &&
+                        m.commentId === message_data.commentId,
+                    );
+                    if (message_index >= 0) {
+                      this.messages[message_index].likes = message_data.likes;
+                    }
+                  }
+                  break;
+                }
+              }
+              console.log(ev);
             });
         }
       }
     },
+    async withScrollRestoration(
+      cb: () => void,
+      direction: 'top' | 'bottom' = 'bottom',
+    ) {
+      const scrollable_container = this.$refs['messagesField'] as
+        | HTMLElement
+        | undefined;
+      if (!scrollable_container) return;
+      const before_scroll_height = scrollable_container.scrollHeight;
+      const before_scroll_top = scrollable_container.scrollTop;
 
-    async loadMessages(mode: 'more' | 'initial' | 'load' = 'load') {
+      const is_max_scroll =
+        scrollable_container.scrollHeight -
+          (scrollable_container.scrollTop +
+            scrollable_container.clientHeight) <=
+        5;
+
+      cb();
+      await this.$nextTick();
+
+      if (is_max_scroll) {
+        scrollable_container.scrollTop = scrollable_container.scrollHeight;
+      } else {
+        if (direction === 'bottom') return;
+        const after_scroll_height = scrollable_container.scrollHeight;
+        const added_height = after_scroll_height - before_scroll_height;
+        scrollable_container.scrollTop = before_scroll_top + added_height;
+      }
+    },
+    async loadOlderMessages() {
       this.isLoading = true;
       const loading_branch_id = this.chatCommentBranchId;
-      if (loading_branch_id) {
-        this.$emit('update:lastViewedAt', new Date().toISOString());
-        try {
-          let params = {} as GetCommentsParamsDTO;
-          switch (mode) {
-            case 'initial': {
-              params = {
-                count: MESSAGES_COUNT,
-              };
-              break;
-            }
-            case 'load': {
-              params = {
-                count: this.messages.length,
-              };
-              break;
-            }
-            case 'more': {
-              params = {
-                count: MESSAGES_COUNT,
-                where: {
-                  dateTo: this.messages[this.messages.length - 1].createdAt,
-                },
-              };
-              break;
-            }
-          }
-          const messagesData = await this.$getAppManager()
+      if (!loading_branch_id) return;
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          const messages_data = await this.$getAppManager()
             .get(CommentManager)
-            .getCommentReplies(loading_branch_id, params);
+            .getCommentReplies(loading_branch_id, {
+              count: MESSAGES_COUNT,
+              where: {
+                dateTo: this.messages[this.messages.length - 1].createdAt,
+              },
+            });
           if (loading_branch_id === this.chatCommentBranchId) {
-            const messages = [] as CommentReplyDTO[];
-            messagesData.ids.forEach((id: string) => {
+            const messages: CommentReplyDTO[] = [];
+            messages_data.ids.forEach((id: string) => {
               const message_idx = this.messages.findIndex(
                 (message) => message.commentId === id,
               );
               if (message_idx === -1) {
                 messages.push({
-                  ...messagesData.objects.replies[id],
+                  ...messages_data.objects.replies[id],
                   sended: true,
                 });
               }
             });
-            if (mode === 'more') {
-              const scrollable_container = this.$refs[
-                'messagesField'
-              ] as HTMLElement;
-              if (!scrollable_container) return;
-              const old_scroll_height = scrollable_container.scrollHeight;
-              const old_scroll_top = scrollable_container.scrollTop;
 
+            await this.withScrollRestoration(() => {
               this.messages = [...this.messages, ...messages];
+            }, 'top');
+
+            this.allMessages = Object.assign(
+              this.allMessages,
+              messages_data.objects.replies,
+            );
+            this.hasMoreOlder = messages_data.more;
+          }
+        });
+      this.isLoading = false;
+    },
+    async loadNewMessages() {
+      this.isLoading = true;
+      const loading_branch_id = this.chatCommentBranchId;
+      if (!loading_branch_id) return;
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          this.hasMoreNewer = true;
+          const messages: CommentReplyDTO[] = [];
+          while (this.hasMoreNewer) {
+            let params: GetCommentsParamsDTO = {
+              count: MESSAGES_COUNT,
+            };
+            if (this.messages[0]) {
+              params = {
+                ...params,
+                where: {
+                  dateFrom: new Date(
+                    +new Date(this.messages[0].createdAt) + 1,
+                  ).toISOString(),
+                  dateTo: messages.length
+                    ? messages[messages.length - 1].createdAt
+                    : undefined,
+                },
+              };
+            }
+
+            const messages_data = await this.$getAppManager()
+              .get(CommentManager)
+              .getCommentReplies(loading_branch_id, params);
+            if (loading_branch_id === this.chatCommentBranchId) {
+              messages_data.ids.forEach((id: string) => {
+                const message_idx = this.messages.findIndex(
+                  (message) => message.commentId === id,
+                );
+                if (message_idx === -1) {
+                  messages.push({
+                    ...messages_data.objects.replies[id],
+                    sended: true,
+                  });
+                }
+              });
+
               this.allMessages = Object.assign(
                 this.allMessages,
-                messagesData.objects.replies,
+                messages_data.objects.replies,
               );
-
-              await this.$nextTick();
-              const new_scroll_height = scrollable_container.scrollHeight;
-              const added_height = new_scroll_height - old_scroll_height;
-              scrollable_container.scrollTop = old_scroll_top + added_height;
-            } else {
-              this.messages = [...messages];
-              this.allMessages = messagesData.objects.replies;
+              this.hasMoreNewer = messages_data.more;
             }
-            this.hasMore = messagesData.more;
           }
-        } catch (err) {
-          this.$getAppManager().get(UiManager).showError(err);
-        }
+          await this.withScrollRestoration(() => {
+            this.messages = [...messages, ...this.messages];
+          }, 'bottom');
+        });
+      this.isLoading = false;
+    },
+    async loadInitialMessages() {
+      this.isLoading = true;
+      const loading_branch_id = this.chatCommentBranchId;
+      if (loading_branch_id) {
+        this.$emit('update:lastViewedAt', new Date().toISOString());
+        await this.$getAppManager()
+          .get(UiManager)
+          .doTask(async () => {
+            const messages_data = await this.$getAppManager()
+              .get(CommentManager)
+              .getCommentReplies(loading_branch_id, {
+                count: MESSAGES_COUNT,
+              });
+            if (loading_branch_id === this.chatCommentBranchId) {
+              const messages = [] as CommentReplyDTO[];
+              messages_data.ids.forEach((id: string) => {
+                const message_idx = this.messages.findIndex(
+                  (message) => message.commentId === id,
+                );
+                if (message_idx === -1) {
+                  messages.push({
+                    ...messages_data.objects.replies[id],
+                    sended: true,
+                  });
+                }
+              });
+
+              await this.withScrollRestoration(() => {
+                this.messages = messages;
+              }, 'bottom');
+
+              this.allMessages = messages_data.objects.replies;
+              this.hasMoreOlder = messages_data.more;
+            }
+          });
       } else {
         this.messages = [];
       }
+
       this.$emit('update:lastViewedAt', new Date().toISOString());
       this.isLoading = false;
-    },
-
-    async reloadMessages(mode: 'more' | 'initial' | 'load' = 'load') {
-      this.stopReloadMessages();
-      this.reloadMessagesRun = true;
-      await this.loadMessages(mode);
-      if (this.reloadMessagesRun) {
-        this.reloadMessagesTimeout = setTimeout(
-          () => this.reloadMessages('load'),
-          2000,
-        );
-      }
     },
 
     async startMessageEditing(message_id: string) {
@@ -363,6 +503,7 @@ export default defineComponent({
           danger: true,
         });
       if (answer) {
+        this.expectMessageEvent = true;
         await this.$getAppManager()
           .get(UiManager)
           .doTask(async () => {
@@ -389,6 +530,10 @@ export default defineComponent({
               .get(CommentManager)
               .deleteReply(message.commentId, message.replyId);
             this.messages.splice(deleted_message_index, 1);
+
+            setTimeout(() => {
+              this.expectMessageEvent = false;
+            }, 0);
           });
       }
     },
@@ -428,6 +573,7 @@ export default defineComponent({
       this.targetMessage = null;
     },
     async editMessage(content: AssetPropValue) {
+      this.expectMessageEvent = true;
       const comment_content_to_db: any =
         typeof content === 'object' ? { ...content } : content;
       const editing_message_index = this.messages.findIndex(
@@ -456,11 +602,16 @@ export default defineComponent({
           sended: true,
         };
       }
+      setTimeout(() => {
+        this.expectMessageEvent = false;
+      }, 0);
     },
     async createMessage(content: AssetPropValue, answerToId?: string) {
       if (!this.currentAsset) {
         return;
       }
+
+      this.expectMessageEvent = true;
 
       const comment_content_to_db: any =
         typeof content === 'object' ? { ...content } : content;
@@ -482,20 +633,16 @@ export default defineComponent({
           likes: [],
         };
         this.unsentMessages.unshift(new_message);
-        this.$emit('update:lastViewedAt', new Date().toISOString());
         await this.scrollToBottom();
+
+        this.$emit('update:lastViewedAt', new Date().toISOString());
+
         const res = await this.$getAppManager()
           .get(CommentManager)
           .addAnswer(this.chatCommentBranch.id, {
             assetId: this.currentAsset.id,
             answerToReplyId: answerToId,
             content: { '': comment_content_to_db },
-            blocks: [
-              {
-                id: this.resolvedBlock.id,
-                anchor: { chat: true },
-              },
-            ],
           });
         this.$emit('update:lastViewedAt', new Date().toISOString());
         if (res) {
@@ -515,6 +662,8 @@ export default defineComponent({
               this.messages.unshift(this.unsentMessages[newMessageIndex]);
             }
             this.unsentMessages.splice(newMessageIndex, 1);
+
+            this.allMessages[res.id] = res;
           }
         }
       } else {
@@ -531,17 +680,12 @@ export default defineComponent({
             ],
           });
         if (res) {
-          this.stopReloadMessages();
-          await this.reloadMessages();
+          // await this.reloadMessages();
         }
       }
-    },
-    stopReloadMessages() {
-      this.reloadMessagesRun = false;
-      if (this.reloadMessagesTimeout) {
-        clearTimeout(this.reloadMessagesTimeout);
-        this.reloadMessagesTimeout = null;
-      }
+      setTimeout(() => {
+        this.expectMessageEvent = false;
+      }, 0);
     },
   },
 });
@@ -590,10 +734,6 @@ export default defineComponent({
   display: flex;
   flex-direction: column-reverse;
   flex: 1;
-
-  :deep(.VisibilityTrigger) {
-    border: 1px solid red;
-  }
 }
 
 .ChatBlock-chat-messagesField-unread {

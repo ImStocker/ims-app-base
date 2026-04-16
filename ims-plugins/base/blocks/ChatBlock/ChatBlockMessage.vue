@@ -38,6 +38,7 @@
           <imc-presenter
             class="ChatBlockMessage-content-panel-targetMessage-content"
             :value="targetMessageContent"
+            @view-ready="targetMessageViewReady = true"
           >
           </imc-presenter>
         </div>
@@ -45,6 +46,7 @@
           class="ChatBlockMessage-content-panel-text"
           :value="message.content['']"
           :content-id="'chat-' + message.id"
+          @view-ready="messageViewReady = true"
         />
         <chat-block-likes
           class="ChatBlockMessage-content-panel-likes"
@@ -105,6 +107,7 @@ import UserProfileIcon from '../../../../app/components/Common/UserProfileIcon.v
 import type { MenuListItem } from '../../../../app/logic/types/MenuList';
 import ProjectManager from '../../../../app/logic/managers/ProjectManager';
 import SelectSmileDropdownContent from '../../../../app/components/Form/SelectSmileDropdownContent.vue';
+import dayjs from 'dayjs';
 
 const SWIPE_THRESHOLD = 25; // px for «reply» activation
 const SWIPE_MAX_OFFSET = 55; // px for swipe limitation
@@ -141,9 +144,11 @@ export default defineComponent({
       default: () => {},
     },
   },
-  emits: ['delete', 'edit', 'reply', 'target-message-click'],
+  emits: ['delete', 'edit', 'reply', 'target-message-click', 'view-ready'],
   data() {
     return {
+      messageViewReady: false,
+      targetMessageViewReady: false,
       isLikeDropdownActive: false,
       isContextMenuActive: false,
       touchContext: null as {
@@ -209,7 +214,7 @@ export default defineComponent({
 
       let full_date_info = `${this.$t('discussions.sendedMessage')}: ${created_at_full}`;
       let short_date_info = is_today
-        ? `${created_at_date.getHours()}:${created_at_date.getMinutes()}`
+        ? dayjs(created_at_date).format('HH:MM')
         : created_at_full;
 
       if (this.message.createdAt != this.message.updatedAt) {
@@ -222,6 +227,13 @@ export default defineComponent({
         fullInfo: full_date_info,
         shortInfo: short_date_info,
       };
+    },
+    isMessageViewReady() {
+      if (this.targetMessage) {
+        return this.messageViewReady && this.targetMessageViewReady;
+      } else {
+        return this.messageViewReady;
+      }
     },
     menuList() {
       return [
@@ -275,6 +287,13 @@ export default defineComponent({
     },
     likes() {
       return this.message.likes;
+    },
+  },
+  watch: {
+    isMessageViewReady() {
+      if (this.isMessageViewReady) {
+        this.$emit('view-ready');
+      }
     },
   },
   mounted() {},
