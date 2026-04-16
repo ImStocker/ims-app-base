@@ -24,6 +24,7 @@
               :show-user-icon="showUserIcon(idx, unreadMessagesList)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
+              @like="likeMessage(message.id, $event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
               @view-ready="onMessageViewReady()"
@@ -45,6 +46,7 @@
               :show-user-icon="showUserIcon(idx, readMessagesList)"
               @delete="deleteMessage($event)"
               @edit="startMessageEditing($event)"
+              @like="likeMessage(message.id, $event)"
               @reply="replyMessage($event)"
               @target-message-click="revealCommentReply($event)"
               @view-ready="onMessageViewReady()"
@@ -492,6 +494,38 @@ export default defineComponent({
         message: editing_message,
         actionType: TargetMessageActionTypes.REPLY,
       };
+    },
+    async likeMessage(message_id: string, emoji: string | null) {
+      this.expectMessageEvent = false;
+
+      const editing_message = this.messages.find((el) => el.id === message_id);
+      if (!editing_message) return;
+
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          await this.$getAppManager()
+            .get(CommentManager)
+            .setLike(editing_message.commentId, editing_message.id, {
+              like: emoji,
+            });
+        });
+
+      // if (like_is_set_ind > -1) {
+      //   this.likes.splice(like_is_set_ind, 1);
+      // } else if (this.userInfo) {
+      //   this.likes.push({
+      //     user: {
+      //       AccountId: this.userInfo.id.toString(),
+      //       Name: this.userInfo.name,
+      //     },
+      //     emoji,
+      //   });
+      // }
+
+      setTimeout(() => {
+        this.expectMessageEvent = false;
+      }, 0);
     },
     async deleteMessage(message: { commentId: string; replyId: string }) {
       const answer = await this.$getAppManager()

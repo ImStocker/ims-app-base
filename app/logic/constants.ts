@@ -124,7 +124,27 @@ export const ASSET_SELECTION_LEVEL: AssetForSelection = {
 
 export const TASK_COLUMNS_ID = '00000000-0000-0000-0000-000000000038';
 
-export const likeIcons = [
+export const reactionEmojis = [
+  '👍',
+  '😀',
+  '🔥',
+  '⚡',
+  '😊',
+  '😍',
+  '❤',
+  '🤣',
+  '🎉',
+  '🎈',
+  '👀',
+  '😎',
+  '😉',
+  '💩',
+  '👎',
+  '😬',
+  '😡',
+];
+
+export const smileNames = [
   'good',
   'wow',
   'fire',

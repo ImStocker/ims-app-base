@@ -1,25 +1,25 @@
 <template>
   <div class="ChatBlockLikes use-buttons-rounded">
     <button
-      v-for="like of likes"
-      :key="like.emoji"
+      v-for="emoji of messageLikes"
+      :key="emoji"
       :class="{
-        'my-like': emojiSelectedByCurrentUser(like.emoji),
+        'my-like': emojiSelectedByCurrentUser(emoji),
       }"
       class="is-button ChatBlockLikes-like"
-      @click="changeMyLike(like.emoji)"
+      @click="changeMyLike(emoji)"
     >
       <div class="ChatBlockLikes-like-content">
         <div
           class="ChatBlockLikes-like-content-emoji"
           :class="{
-            [`type-${like.emoji.toLowerCase()}`]: true,
+            [`type-${emoji.toLowerCase()}`]: true,
           }"
         >
-          {{ getLikeEmoji(like.emoji) }}
+          {{ emoji }}
         </div>
         <div class="ChatBlockLikes-like-content-counter">
-          {{ getLikeCount(like.emoji) }}
+          {{ getLikeCount(emoji) }}
         </div>
       </div>
     </button>
@@ -43,6 +43,9 @@ export default defineComponent({
   computed: {
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
+    },
+    messageLikes() {
+      return new Set(this.likes.map((el) => el.emoji));
     },
   },
   methods: {
