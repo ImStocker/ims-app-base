@@ -155,6 +155,7 @@ export default defineComponent({
 
       isMounted: false,
       commentListener: null as IProjectDatabaseCommentEventHandler | null,
+      commentRefreshTimer: null as NodeJS.Timeout | null,
     };
   },
   computed: {
@@ -248,68 +249,78 @@ export default defineComponent({
         this.commentListener.cancel();
         this.commentListener = null;
       }
+      if (this.commentRefreshTimer) {
+        clearInterval(this.commentRefreshTimer);
+        this.commentRefreshTimer = null;
+      }
       if (init) {
         if (this.chatCommentBranchId) {
-          this.commentListener = this.$getAppManager()
-            .get(CreatorAssetManager)
-            .listenComment(this.chatCommentBranchId, async (ev) => {
-              const loading_branch_id = this.chatCommentBranchId;
-              if (!loading_branch_id) return;
-              switch (ev.t) {
-                case 'new': {
-                  if (!this.expectMessageEvent) {
-                    this.loadNewMessages();
-                  }
-                  break;
-                }
-                case 'delete': {
-                  if (!this.expectMessageEvent) {
-                    const deleted_message_index = this.messages.findIndex(
-                      (msg: CommentReplyDTO) => msg.id === ev.rId,
-                    );
-                    if (deleted_message_index >= 0) {
-                      this.messages.splice(deleted_message_index, 1);
+          if (this.isGuest) {
+            this.commentRefreshTimer = setInterval(() => {
+              this.loadNewMessages();
+            }, 10 * 1000);
+          } else {
+            this.commentListener = this.$getAppManager()
+              .get(CreatorAssetManager)
+              .listenComment(this.chatCommentBranchId, async (ev) => {
+                const loading_branch_id = this.chatCommentBranchId;
+                if (!loading_branch_id) return;
+                switch (ev.t) {
+                  case 'new': {
+                    if (!this.expectMessageEvent) {
+                      this.loadNewMessages();
                     }
-                    delete this.allMessages[ev.rId];
+                    break;
                   }
-                  break;
-                }
-                case 'change': {
-                  if (!this.expectMessageEvent) {
-                    const message_data = await this.$getAppManager()
-                      .get(CommentManager)
-                      .getCommentReply(ev.cId, ev.rId);
-                    const message_index = this.messages.findIndex(
-                      (m) =>
-                        m.id === message_data.id &&
-                        m.commentId === message_data.commentId,
-                    );
-                    if (message_index >= 0) {
-                      message_data.sended = true;
-                      this.messages[message_index] = message_data;
-                      this.allMessages[message_data.id] = message_data;
+                  case 'delete': {
+                    if (!this.expectMessageEvent) {
+                      const deleted_message_index = this.messages.findIndex(
+                        (msg: CommentReplyDTO) => msg.id === ev.rId,
+                      );
+                      if (deleted_message_index >= 0) {
+                        this.messages.splice(deleted_message_index, 1);
+                      }
+                      delete this.allMessages[ev.rId];
                     }
+                    break;
                   }
-                  break;
-                }
-                case 'like': {
-                  if (!this.expectMessageEvent) {
-                    const message_data = await this.$getAppManager()
-                      .get(CommentManager)
-                      .getCommentReply(ev.cId, ev.rId);
-                    const message_index = this.messages.findIndex(
-                      (m) =>
-                        m.id === message_data.id &&
-                        m.commentId === message_data.commentId,
-                    );
-                    if (message_index >= 0) {
-                      this.messages[message_index].likes = message_data.likes;
+                  case 'change': {
+                    if (!this.expectMessageEvent) {
+                      const message_data = await this.$getAppManager()
+                        .get(CommentManager)
+                        .getCommentReply(ev.cId, ev.rId);
+                      const message_index = this.messages.findIndex(
+                        (m) =>
+                          m.id === message_data.id &&
+                          m.commentId === message_data.commentId,
+                      );
+                      if (message_index >= 0) {
+                        message_data.sended = true;
+                        this.messages[message_index] = message_data;
+                        this.allMessages[message_data.id] = message_data;
+                      }
                     }
+                    break;
                   }
-                  break;
+                  case 'like': {
+                    if (!this.expectMessageEvent) {
+                      const message_data = await this.$getAppManager()
+                        .get(CommentManager)
+                        .getCommentReply(ev.cId, ev.rId);
+                      const message_index = this.messages.findIndex(
+                        (m) =>
+                          m.id === message_data.id &&
+                          m.commentId === message_data.commentId,
+                      );
+                      if (message_index >= 0) {
+                        this.messages[message_index].likes = message_data.likes;
+                      }
+                    }
+                    break;
+                  }
                 }
-              }
-            });
+              });
+          }
         }
       }
     },
