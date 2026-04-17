@@ -1,4 +1,4 @@
-import { isUUID } from 'validator';
+import isUUID from 'validator/es/lib/isUUID';
 import {
   AssetPropWhereOpKind,
   type AssetPropWhere,
