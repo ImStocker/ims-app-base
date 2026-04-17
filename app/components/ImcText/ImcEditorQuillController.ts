@@ -261,6 +261,30 @@ export class ImcEditorQuillController {
     }
 
     gather.push(async () => {
+      const gdd_workspace = this.component
+        .$getAppManager()
+        .get(ProjectManager)
+        .getWorkspaceIdByName('gdd');
+      const discussions_workspace = this.component
+        .$getAppManager()
+        .get(ProjectManager)
+        .getWorkspaceIdByName('discussions');
+      const tasks_workspace = this.component
+        .$getAppManager()
+        .get(ProjectManager)
+        .getWorkspaceIdByName('tasks');
+      const workspaceids: string[] = [];
+      if (gdd_workspace) {
+        workspaceids.push(gdd_workspace);
+      }
+      if (query) {
+        if (discussions_workspace) {
+          workspaceids.push(discussions_workspace);
+        }
+        if (tasks_workspace) {
+          workspaceids.push(tasks_workspace);
+        }
+      }
       const assets = await this.component
         .$getAppManager()
         .get(CreatorAssetManager)
@@ -271,20 +295,7 @@ export class ImcEditorQuillController {
               op: AssetPropWhereOpKind.EQUAL,
               v: null,
             },
-            workspaceids: [
-              this.component
-                .$getAppManager()
-                .get(ProjectManager)
-                .getWorkspaceIdByName('gdd'),
-              this.component
-                .$getAppManager()
-                .get(ProjectManager)
-                .getWorkspaceIdByName('discussions'),
-              this.component
-                .$getAppManager()
-                .get(ProjectManager)
-                .getWorkspaceIdByName('tasks'),
-            ],
+            workspaceids,
           },
           count: take_count + 1,
         });
