@@ -226,6 +226,14 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
           }),
         icon: 'ri-lock-fill',
       });
+      assetActions.push({
+        title: this.appManager.$t('gddPage.setUpNotifications'),
+        action: () =>
+          this.appManager.get(DialogManager).show(SetUpNotificationsDialog, {
+            assetId: asset.id,
+          }),
+        icon: 'ri-notification-fill',
+      });
     }
     const asset_is_discussion =
       asset.typeIds && asset.typeIds.includes(DISCUSSION_ASSET_ID);

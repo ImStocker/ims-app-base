@@ -104,7 +104,6 @@ export default defineComponent({
             }
           : null,
         this.isAdmin &&
-          !this.isDiscussion &&
           !this.isArticle &&
           !this.isGuest &&
           !this.isSystemAsset &&
@@ -115,8 +114,8 @@ export default defineComponent({
               action: this.openSetUpAccessDialog,
             }
           : null,
-        !this.isDiscussion &&
-          !this.isArticle &&
+
+        !this.isArticle &&
           !this.isGuest &&
           !this.isSystemAsset &&
           !this.isDesktop
