@@ -38,11 +38,22 @@ export type TokenRefreshSavedData = {
   refreshToken: string | undefined;
 };
 
+export type LicenseInfo = {
+  id: number;
+  isTrial: boolean;
+  options: {
+    [key: string]: any;
+  };
+  productName: string;
+  start: Date;
+  till: Date | null;
+};
+
 export type AuthTokenInfo = BaseTokenInfo & {
   id: number;
   email: string;
   language: string;
-  licenses: string[];
+  licenses: LicenseInfo[];
   name: string;
 };
 
