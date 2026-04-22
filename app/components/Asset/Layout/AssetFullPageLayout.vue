@@ -4,7 +4,13 @@
     class="without-border AssetFullPageLayout"
   >
     <template #header>
-      <asset-page-header ref="header" :vm="vm"></asset-page-header>
+      <div class="AssetFullPageLayout-header">
+        <asset-system-panel
+          v-if="isSystemAsset"
+          :current-asset-full="currentAssetFull!"
+        ></asset-system-panel>
+        <asset-page-header ref="header" :vm="vm"></asset-page-header>
+      </div>
     </template>
     <div class="AssetFullPageLayout-active-element tiny-scrollbars">
       <asset-full-editor
@@ -26,6 +32,8 @@ import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AssetFullEditor from '../Editor/AssetFullEditor.vue';
 import AssetPageHeader from '../Editor/AssetPageHeader.vue';
 import type { BreadCrumbsEntity } from '../../../logic/types/BreadCrumbs';
+import ProjectManager from '../../../logic/managers/ProjectManager';
+import AssetSystemPanel from '../AssetSystemPanel.vue';
 
 export default defineComponent({
   name: 'AssetFullPageLayout',
@@ -33,6 +41,7 @@ export default defineComponent({
     FullyFilledPage,
     AssetFullEditor,
     AssetPageHeader,
+    AssetSystemPanel,
   },
   props: {
     vm: {
@@ -45,6 +54,19 @@ export default defineComponent({
     },
   },
   emits: ['delete'],
+  computed: {
+    isSystemAsset() {
+      return this.currentAssetFull
+        ? this.currentAssetFull.projectId !== this.projectInfo?.id
+        : false;
+    },
+    currentAssetFull() {
+      return this.vm.assetFullEditorVM.getOpenedAssetFull();
+    },
+    projectInfo() {
+      return this.$getAppManager().get(ProjectManager).getProjectInfo();
+    },
+  },
   methods: {
     async requestToolbarTarget(): Promise<HTMLElement | null> {
       const header = this.$refs['header'] as InstanceType<
@@ -70,5 +92,11 @@ export default defineComponent({
 }
 .AssetsPageContent-active-element-editor {
   height: 100%;
+}
+.AssetFullPageLayout-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 </style>

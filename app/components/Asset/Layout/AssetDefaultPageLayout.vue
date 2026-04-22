@@ -1,21 +1,11 @@
 <template>
   <centered-page class="AssetsPageContent" :bread-crumbs="breadCrumbs">
     <template #header>
-      <div class="AssetsPageContent-SystemPanel">
-        <div
+      <div class="AssetsPageContent-header">
+        <asset-system-panel
           v-if="isSystemAsset"
-          class="AssetsPageContent-SystemPanel-TopPanel"
-        >
-          {{ $t('baseObjects.baseObject') }}
-          <button
-            class="is-button accent"
-            :class="{ loading: baseCreating }"
-            :disabled="baseCreating"
-            @click="createUserAsset()"
-          >
-            {{ $t('baseObjects.clickToEdit') }}
-          </button>
-        </div>
+          :current-asset-full="currentAssetFull!"
+        ></asset-system-panel>
         <asset-page-header ref="header" :vm="vm"></asset-page-header>
       </div>
     </template>
@@ -73,21 +63,17 @@ import {
   getScrollEdgeState,
   getScrollParentNode,
 } from '../../utils/DomElementUtils';
-import {
-  getCurrentUrl,
-  openProjectLink,
-} from '../../../logic/router/routes-helpers';
+import { getCurrentUrl } from '../../../logic/router/routes-helpers';
 import { DISCUSSION_ASSET_ID } from '../../../logic/constants';
 import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AssetPageHeader from '../Editor/AssetPageHeader.vue';
-import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
-import UiManager from '../../../logic/managers/UiManager';
 import type { BlockContentItem } from '../../../logic/types/BlockTypeDefinition';
 import AssetPageContentsTable from '../Editor/AssetPageContentsTable.vue';
 import EditorManager, {
   type EditorContextForAssetRequested,
 } from '../../../logic/managers/EditorManager';
 import { makeAnchorTagId } from '../../../logic/utils/assets';
+import AssetSystemPanel from '../AssetSystemPanel.vue';
 
 export default defineComponent({
   name: 'AssetsPageContent',
@@ -97,6 +83,7 @@ export default defineComponent({
     CenteredPage,
     AssetPageHeader,
     AssetPageContentsTable,
+    AssetSystemPanel,
   },
   props: {
     vm: {
@@ -207,69 +194,6 @@ export default defineComponent({
               .requestEditorContextForAsset(this.currentAssetFull.id)
           : null;
       }
-    },
-    async createUserAsset() {
-      if (this.baseCreating) {
-        return;
-      }
-      const base_asset = this.currentAssetFull;
-      if (!base_asset) {
-        return;
-      }
-
-      this.baseCreating = true;
-      await this.$getAppManager()
-        .get(UiManager)
-        .doTask(async () => {
-          let target_workspace_id: string | null = null;
-          const base_workspace = base_asset.workspaceId
-            ? ((
-                await this.$getAppManager()
-                  .get(CreatorAssetManager)
-                  .getWorkspacesList({
-                    where: {
-                      ids: [base_asset.workspaceId],
-                      isSystem: true,
-                    },
-                  })
-              ).list[0] ?? null)
-            : null;
-
-          if (base_workspace && base_workspace.name) {
-            target_workspace_id = this.$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName(base_workspace.name);
-          }
-
-          if (!target_workspace_id) {
-            target_workspace_id = this.$getAppManager()
-              .get(ProjectManager)
-              .getWorkspaceIdByName('settings');
-          }
-
-          const result = await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .createAsset({
-              id: base_asset.id,
-              set: {
-                title: base_asset.ownTitle ?? undefined,
-                parentIds: base_asset.parentIds,
-                name: base_asset.name ?? undefined,
-                icon: base_asset.ownIcon ?? undefined,
-                workspaceId: target_workspace_id,
-                isAbstract: base_asset.isAbstract,
-              },
-            });
-          if (this.projectInfo) {
-            await openProjectLink(this.$getAppManager(), this.projectInfo, {
-              name: 'project-asset-by-id',
-              params: {
-                assetId: result.ids[0],
-              },
-            });
-          }
-        });
-      this.baseCreating = false;
     },
     handleScroll() {
       if (
@@ -427,10 +351,13 @@ export default defineComponent({
   position: fixed;
   width: 200px;
 }
-.AssetsPageContent-SystemPanel {
+.AssetsPageContent-header {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.AssetsPageContent-SystemPanel-TopPanel {
+.AssetsPageContent-systemPanel {
   border: 1px solid var(--color-accent);
   border-radius: 4px;
   padding: 20px;
