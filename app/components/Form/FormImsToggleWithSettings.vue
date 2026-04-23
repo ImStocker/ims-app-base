@@ -20,7 +20,7 @@
         <i class="ri-node-tree"></i>
       </button>
     </div>
-    <div v-else class="use-buttons-options">
+    <div v-else-if="projectRight.type === 'own'" class="use-buttons-options">
       <button class="is-button" @click="deleteChange">
         <i class="ri-close-fill"></i>
       </button>
