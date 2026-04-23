@@ -200,6 +200,7 @@ export default defineComponent({
   padding: var(--ChatBlockSend-padding);
 
   .ChatBlockSend-sendForm-input {
+    font-size: 16px;
     width: 100%;
     margin: auto 5px;
 

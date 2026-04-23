@@ -13,7 +13,11 @@ import { convertTranslatedTitle } from '../../logic/utils/assets';
 import DialogManager from '../../logic/managers/DialogManager';
 import PromptDialog from '../Common/PromptDialog.vue';
 import UiManager from '../../logic/managers/UiManager';
-import { MIN_ASSET_RIGHTS_TO_HISTORY } from '../../logic/types/Rights';
+import {
+  MIN_ASSET_RIGHTS_TO_CHANGE,
+  MIN_ASSET_RIGHTS_TO_DELETE,
+  MIN_ASSET_RIGHTS_TO_HISTORY,
+} from '../../logic/types/Rights';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import {
   getProjectLinkHref,
@@ -59,6 +63,9 @@ export default defineComponent({
         ? this.currentAssetFull.projectId !== this.projectInfo?.id
         : false;
     },
+    currentAssetFullRights() {
+      return this.currentAssetFull?.rights ?? 0;
+    },
     projectInfo() {
       return this.$getAppManager().get(ProjectManager).getProjectInfo();
     },
@@ -86,7 +93,9 @@ export default defineComponent({
         );
       }
       list.push(
-        !this.isArticle && !this.isGuest && !this.isSystemAsset
+        !this.isArticle &&
+          this.currentAssetFullRights >= MIN_ASSET_RIGHTS_TO_CHANGE &&
+          !this.isSystemAsset
           ? {
               title: this.$t('common.dialogs.rename'),
               icon: 'edit',
@@ -191,7 +200,9 @@ export default defineComponent({
               ],
             }
           : null,
-        this.currentSingleAsset && !this.isGuest && !this.isSystemAsset
+        this.currentSingleAsset &&
+          this.currentAssetFullRights >= MIN_ASSET_RIGHTS_TO_DELETE &&
+          !this.isSystemAsset
           ? {
               title: this.$t('gddPage.delete'),
               action: () => this.$emit('delete', this.currentSingleAsset),

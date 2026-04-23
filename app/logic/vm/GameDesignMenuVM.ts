@@ -226,6 +226,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
           }),
         icon: 'ri-lock-fill',
       });
+    }
+    if (!is_desktop) {
       assetActions.push({
         title: this.appManager.$t('gddPage.setUpNotifications'),
         action: () =>
