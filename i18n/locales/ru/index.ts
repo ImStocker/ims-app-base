@@ -187,6 +187,11 @@ export default {
       guide: 'Справка',
       blog: 'Блог',
     },
+    theme: {
+      title: 'Theme',
+      light: 'Светлая',
+      dark: 'Тёмная',
+    },
     tasks: {
       filters: 'Фильтры',
       tasks: 'Задачи',

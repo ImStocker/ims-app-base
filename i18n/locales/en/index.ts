@@ -178,6 +178,11 @@ export default {
       guide: 'Guide',
       blog: 'Blog',
     },
+    theme: {
+      title: 'Theme',
+      light: 'Light',
+      dark: 'Dark',
+    },
     tasks: {
       filters: 'Filters',
       tasks: 'Tasks',
