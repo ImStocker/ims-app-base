@@ -162,6 +162,8 @@ export default {
     },
     var: {
       manageVariables: 'Manage variables',
+      currentScript: 'Current script',
+      baseScript: 'Base script',
       editVariable: 'Edit variable',
       duplicateVariable: 'Duplicate variable',
       deleteVariable: 'Delete variable',
