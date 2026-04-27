@@ -121,6 +121,7 @@ export default {
       },
     },
     speech: {
+      restoreValues: 'Restore default values',
       add: 'Add',
       addOption: 'Add option',
       character: 'Character',

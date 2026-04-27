@@ -188,7 +188,7 @@ export default {
       blog: 'Блог',
     },
     theme: {
-      title: 'Theme',
+      title: 'Тема',
       light: 'Светлая',
       dark: 'Тёмная',
     },
