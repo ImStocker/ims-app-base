@@ -13,4 +13,5 @@ export type LicenseFeatures = {
   communityShortLink: boolean;
   communityShortLinkHub: boolean;
   changeHistoryDays: number | null;
+  desktopSync?: true;
 };
