@@ -178,6 +178,7 @@ export default {
       variables: 'Переменные',
       description: 'Описание',
       enterName: 'Введите название',
+      enterServiceName: 'Введите служебное имя',
       enterType: 'Выберите тип',
       enterDescription: 'Введите описание',
       types: {

@@ -179,6 +179,7 @@ export default {
       variables: 'Variables',
       description: 'Description',
       enterName: 'Enter name',
+      enterServiceName: 'Enter service name',
       enterType: 'Choose type',
       enterDescription: 'Enter description',
       types: {
