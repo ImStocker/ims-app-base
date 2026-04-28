@@ -157,6 +157,7 @@ export default {
       addOutputParameter: 'Добавить выходной параметр',
       parameterAlreadyExists: 'Параметр уже существует',
       deleteParameter: 'Удалить параметр',
+      deleteParameterConfirm: 'Вы уверены, что хотите удалить параметр?',
       changeParameter: 'Изменить параметр',
       duplicateParameter: 'Дублировать параметр',
     },

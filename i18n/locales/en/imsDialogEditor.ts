@@ -158,7 +158,8 @@ export default {
       addOutputParameter: 'Add output parameter',
       parameterAlreadyExists: 'Parameter already exists',
       deleteParameter: 'Delete parameter',
-      changeParameter: 'Change paramter',
+      deleteParameterConfirm: 'Are you sure want to delete parameter?',
+      changeParameter: 'Change parameter',
       duplicateParameter: 'Duplicate parameter',
     },
     var: {
