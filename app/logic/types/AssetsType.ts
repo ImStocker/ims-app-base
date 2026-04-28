@@ -97,7 +97,6 @@ export type AssetShort = {
   creatorUserId: string | null;
   unread?: number;
   hasImage: boolean;
-  localName?: string;
 };
 
 export type AssetPreviewInfo = AssetCompletionMeta & {

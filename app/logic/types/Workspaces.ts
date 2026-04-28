@@ -47,7 +47,6 @@ export type Workspace = {
   index: number | null;
   props: AssetProps;
   unread?: number;
-  localName?: string;
 };
 
 export type WorkspaceMoveParams = {

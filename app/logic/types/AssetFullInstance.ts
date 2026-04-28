@@ -167,7 +167,6 @@ export class AssetFullInstance implements AssetFull {
   lastViewedAt!: string | null;
   unread!: number;
   hasImage!: boolean;
-  localName?: string;
 
   private _activated = false;
   private _resolvedBlocksComp = this._calcResolvedBlocks();
@@ -239,7 +238,6 @@ export class AssetFullInstance implements AssetFull {
     this.comments = asset.comments;
     this.lastViewedAt = asset.lastViewedAt ?? null;
     this.unread = asset.unread ?? 0;
-    this.localName = asset.localName;
     if (this.activated) {
       this._resolvedBlocksComp = this._calcResolvedBlocks();
     }
@@ -393,7 +391,6 @@ export class AssetFullInstance implements AssetFull {
       creatorUserId: this.creatorUserId,
       projectId: this.projectId,
       hasImage: this.hasImage,
-      localName: this.localName,
     };
   }
 
@@ -458,7 +455,6 @@ export class AssetFullInstance implements AssetFull {
       lastViewedAt: this.lastViewedAt,
       unread: this.unread,
       hasImage: this.hasImage,
-      localName: this.localName,
     };
   }
 
