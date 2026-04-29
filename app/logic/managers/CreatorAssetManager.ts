@@ -1807,7 +1807,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getWorkspaceLocalPath(workspace_id: string): Promise<string | null> {
     assert(this._projectDatabase, 'Not inited');
-    return await this._projectDatabase.getWorkspaceLocalPath(workspace_id);
+    return await this._projectDatabase.getWorkspaceLocalPathFolder(workspace_id);
   }
 
   saveState(): Record<string, any> {
