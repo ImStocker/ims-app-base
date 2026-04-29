@@ -41,6 +41,10 @@ export default defineComponent({
       type: String as PropType<string | null>,
       default: null,
     },
+    baseFieldsOnly: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:model-value'],
   computed: {
@@ -64,6 +68,7 @@ export default defineComponent({
             .show(EditFormatFieldsDialog, {
               assetId: this.assetId,
               fields: this.ownModelValue,
+              baseFieldsOnly: this.baseFieldsOnly,
             });
           if (!res) return;
           this.ownModelValue = res.fields;

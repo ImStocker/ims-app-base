@@ -137,6 +137,7 @@ type ExportFormatFieldWithSelected = {
 type DialogProps = {
   assetId: string | null;
   fields: ExportFormatField[];
+  baseFieldsOnly?: boolean;
 };
 
 type DialogResult = {
@@ -251,6 +252,10 @@ export default defineComponent({
             continue;
           }
           this.fields.push(base_field);
+        }
+
+        if (this.dialog.state.baseFieldsOnly) {
+          return;
         }
 
         for (const block of this.asset.blocks) {

@@ -172,7 +172,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       .get(UiPreferenceManager)
       .getPreference<boolean>(
         'LocalFsSyncManager-autoSync-' + (this._currentProjectId ?? '0'),
-        false,
+        true,
       );
   }
 
@@ -525,6 +525,11 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       .get(ProjectManager)
       .getWorkspaceIdByName('gdd');
 
+    // added for correct export when format asset type filter is empty
+    if (segment.info.assetSelection?.Where?.typeids === null) {
+      delete segment.info.assetSelection?.Where?.typeids;
+    }
+
     const asset_condition: AssetPropWhere = {
       ...(segment.info.assetSelection?.Where ?? {}),
       _syncSegment: {
@@ -627,7 +632,8 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
             });
           chunk.assetUpdatedIds = asset_ids.list.map((a) => a.id as string);
           asset_proccessed += asset_ids.list.length;
-          asset_has_more = asset_proccessed < asset_ids.total;
+          asset_has_more =
+            asset_proccessed < asset_ids.total && asset_ids.list.length > 0;
         }
         if (segment.needWorkspaces()) {
           const workspaces = await this.appManager

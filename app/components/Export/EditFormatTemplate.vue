@@ -87,6 +87,7 @@ export default defineComponent({
               editor: EditFormatFields,
               editorProps: {
                 assetId: this.assetId,
+                baseFieldsOnly: this.assetId === null,
               },
               prop: 'formatFields',
             }

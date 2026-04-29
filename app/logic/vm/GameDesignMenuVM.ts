@@ -29,7 +29,7 @@ import {
   MIN_WORKSPACE_RIGHTS_TO_READ,
   MIN_WORKSPACE_RIGHTS_TO_RENAME,
 } from '../types/Rights';
-import type { ExtendedMenuListItem } from '../types/MenuList';
+import type { ExtendedMenuListItem, MenuListItem } from '../types/MenuList';
 import SetUpAccessDialog from '../../components/Asset/Rights/SetUpAccessDialog.vue';
 import AssetLinksDialog from '../../components/Asset/AssetLinksDialog.vue';
 import AssetSettingsDialog from '../../components/Asset/AssetSettingsDialog.vue';
@@ -316,7 +316,22 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
                 .get(ProjectContentManager)
                 .exportAssetWithCustomFormat(asset),
           },
-        ],
+          ...(is_desktop
+            ? [
+                {
+                  type: 'separator',
+                },
+                {
+                  title: this.appManager.$t('autoExport.setupAutoExport'),
+                  action: () => {
+                    openProjectLink(this.appManager, this.getProjectInfo(), {
+                      name: 'project-autoexport',
+                    });
+                  },
+                },
+              ]
+            : []),
+        ].filter((x) => x) as MenuListItem[],
       });
     }
     if (this.appManager.get(CreatorAssetManager).canDeleteAsset(asset)) {
@@ -557,7 +572,22 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
                 },
               ]
             : []),
-        ],
+          ...(is_desktop
+            ? [
+                {
+                  type: 'separator',
+                },
+                {
+                  title: this.appManager.$t('autoExport.setupAutoExport'),
+                  action: () => {
+                    openProjectLink(this.appManager, this.getProjectInfo(), {
+                      name: 'project-autoexport',
+                    });
+                  },
+                },
+              ]
+            : []),
+        ].filter((x) => x) as MenuListItem[],
       });
     }
     if (

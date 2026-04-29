@@ -947,17 +947,27 @@ export default {
     list: 'List',
     calendar: 'Calendar',
   },
+  autoExport: {
+    autoExportPageHeader: 'Export to a local project',
+    autoExportPageInfo:
+      'Here you can setup auto export of game parameters between IMS Creators and your local project files. Create an export configuration, then click «Export» and select a folder on your computer to save the data to.',
+    addConfiguration: 'Add configuration',
+    exportButton: 'Export',
+    exportAutomatically: 'Export automatically',
+    copyAsArchive: 'Copy as archive',
+    setupAutoExport: 'Setup auto export',
+  },
   fsSync: {
     syncPageHeader: 'Local project files sync',
     syncPageInfo:
-      'Here you can setup synchoronization of game parameters between IMS Creators and your local project files. Create an export configuration, then click "Synchronize" and select a folder on your computer to save the data to.',
+      'To synchronize, download our IMS Desktop application and open the current project as a cloud one.',
     synchronization: 'Sync',
     syncButton: 'Sync',
     syncFullButton: 'Full sync',
     downloadArchive: 'Download archive',
     downloadArchivePrepare: 'Archive is preparing',
     downloadFilePrepare: 'File is preparing',
-    autoSync: 'Synchonize automatically',
+    autoSync: 'Synchronize automatically',
     browserNotSupported:
       'Your browser do not support Local File System synchronization',
     targetFolderNotEmpty: 'Target folder is not empty',
@@ -969,7 +979,7 @@ export default {
     syncComplete: 'Synchronization is complete',
     cannotReinitialzeOldSegmentsMissed:
       'Old exported content used missed controllers. Cannot reinitialize target folder',
-    addConfiguration: 'Add configuration',
+
     openSyncPage: 'Open sync page',
     configuration: {
       saveResultAs: 'Save result as',
