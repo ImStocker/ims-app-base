@@ -41,7 +41,7 @@ export type AssetPropValueFile = {
 };
 
 export type AssetPropValueBlob = {
-  Blob: string;
+  Blob: any;
   Type: string;
   Key?: string;
 };

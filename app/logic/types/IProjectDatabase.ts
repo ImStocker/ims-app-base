@@ -104,7 +104,7 @@ export interface IProjectDatabaseWorkspace {
   ): Promise<Workspace>;
   workspacesDelete(workspace_id: string): Promise<void>;
   workspacesMove(params: WorkspaceMoveParams): Promise<WorkspaceMoveResult>;
-  getWorkspaceLocalPath(workspace_id: string): Promise<string | null>;
+  getWorkspaceLocalPathFolder(workspace_id: string): Promise<string | null>;
 }
 
 export type IProjectDatabaseCommentEventArgs = {
