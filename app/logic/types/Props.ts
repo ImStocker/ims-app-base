@@ -1109,7 +1109,9 @@ export function convertAssetPropsToPlainObject<T extends AssetPropsPlainObject>(
     if (is_digit) digits.add(parseInt(parts[0]));
     else any_not_digit = true;
 
-    if (parts.length === 1) {
+    if (key[0] === '~') {
+      res[key] = val;
+    } else if (parts.length === 1) {
       res[parts[0]] = val;
     } else {
       if (nested.hasOwnProperty(parts[0])) {
@@ -1130,11 +1132,22 @@ export function convertAssetPropsToPlainObject<T extends AssetPropsPlainObject>(
   if (props_entries.length > 0 && digits.size > 0 && !any_not_digit) {
     const digits_arr = [...digits];
     digits_arr.sort((a, b) => a - b);
-    const arr: string[] = [];
-    for (const d of digits_arr) {
-      arr.push(res[d]);
+    // Check indices are in subsequence
+    let digits_subsequence = 0;
+    while (
+      digits_subsequence < digits_arr.length &&
+      digits_arr[digits_subsequence] === digits_subsequence
+    ) {
+      digits_subsequence++;
     }
-    res = arr;
+
+    if (digits_subsequence === digits_arr.length) {
+      const arr: string[] = [];
+      for (const d of digits_arr) {
+        arr.push(res[d]);
+      }
+      res = arr;
+    }
   }
   return res;
 }
