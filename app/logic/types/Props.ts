@@ -1191,14 +1191,25 @@ export function assignPlainValueToAssetProps(
     } else {
       const type = getAssetPropType(value as any);
       if (type === undefined) {
+        const digit_keys: number[] = [];
+        let digit_all_keys = true;
         for (const [key, val] of Object.entries(
           value as Record<string, AssetPropValue>,
         )) {
+          if (/^\d+$/.test(key)) {
+            digit_keys.push(parseInt(key));
+          } else {
+            digit_all_keys = false;
+          }
           assignPlainValueToAssetProps(
             target,
             val as AssetPropsPlainObject,
             (prefix ? prefix + '\\' : '') + key,
           );
+        }
+        if (digit_all_keys && digit_keys.length > 0) {
+          digit_keys.sort((a, b) => a - b);
+          target[prefix] = digit_keys;
         }
       } else {
         target[prefix] = value as AssetPropValue;
