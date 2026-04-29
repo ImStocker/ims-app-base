@@ -40,6 +40,11 @@ export type AssetPropValueFile = {
   Store: string;
 };
 
+export type AssetMention = {
+  accountId: string;
+  id: string;
+  name: string;
+};
 export type AssetPropValueBlob = {
   Blob: any;
   Type: string;
@@ -282,6 +287,7 @@ export function* walkAssetPropValueTextOps(
   insertProp?: { value: AssetPropValue };
   insertTask?: { value: AssetPropValueAsset };
   insertFile?: { value: AssetPropValueFile };
+  insertMention?: AssetMention;
   attributeAsset?: { value: AssetPropValueAsset };
 }> {
   if (!(ops as unknown)) return;
@@ -305,6 +311,13 @@ export function* walkAssetPropValueTextOps(
         op.insert.file.value !== undefined &&
         (op.insert.file.value as AssetPropValueFile).FileId
           ? op.insert.file
+          : undefined,
+      insertMention:
+        op.insert &&
+        op.insert.mention &&
+        op.insert.mention.id !== undefined &&
+        op.insert.mention.accountId !== undefined
+          ? op.insert.mention
           : undefined,
       attributeAsset:
         op.attributes &&
