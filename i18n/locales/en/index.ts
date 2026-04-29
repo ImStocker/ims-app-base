@@ -1,6 +1,7 @@
 export default {
   localeName: 'en',
   common: {
+    goHome: 'Go Home',
     welcome: 'Welcome to Creators, {user}',
     contextMenu: {
       openPageInNewTab: 'Open page in new tab',

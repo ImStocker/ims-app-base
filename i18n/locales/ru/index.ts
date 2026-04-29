@@ -1,6 +1,7 @@
 export default {
   localeName: 'ru',
   common: {
+    goHome: 'На Главную',
     welcome: 'Добро пожаловать в Creators, {user}',
     contextMenu: {
       openPageInNewTab: 'Открыть страницу в новой вкладке',
