@@ -240,10 +240,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
     if (!this._currentProject) return false;
 
-    const rootDirHandle = await getDirHandle(
-      this._currentProject.id,
-      'syncDir',
-    );
+    const rootDirHandle = await this.getDirHandle('syncDir');
     if (!rootDirHandle) {
       return false;
     }
@@ -255,7 +252,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
     try {
       this.syncStatus.isAuto = true;
-      const syncTarget = new FsSyncTarget(rootDirHandle);
+      const syncTarget = this.createFsSyncTarget(rootDirHandle);
       const context = await this._makeSyncContext(this._currentProject);
       const res = await this._syncImpl(context, syncTarget, false);
       if (res === false) {
@@ -295,29 +292,57 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     return new SyncContext(project.id, segments);
   }
 
+  async requestDirHandle(): Promise<any | null> {
+    try {
+      const rootDirHandle = await window.showDirectoryPicker({
+        mode: 'readwrite',
+      });
+      if (!rootDirHandle) {
+        return null;
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return null;
+      }
+      throw err;
+    }
+    return;
+  }
+
+  async saveDirHandle(key: string, rootDirHandle: any): Promise<void> {
+    if (!this._currentProject) {
+      throw new Error('No project selected');
+    }
+    await saveDirHandle(this._currentProject.id, key, rootDirHandle);
+  }
+
+  async getDirHandle(key: string) {
+    if (!this._currentProject) {
+      throw new Error('No project selected');
+    }
+    return await getDirHandle(this._currentProject.id, key);
+  }
+  createFsSyncTarget(rootDirHandle: any): ISyncTarget {
+    return new FsSyncTarget(rootDirHandle);
+  }
+
   public async sync(full = false, progress?: (p: number) => void) {
     if (!window.showDirectoryPicker) {
       throw new Error(this.appManager.$t('sync.fsSync.browserNotSupported'));
     }
-    let rootDirHandle: FileSystemDirectoryHandle;
+    debugger;
 
-    try {
-      rootDirHandle = await window.showDirectoryPicker({
-        mode: 'readwrite',
-      });
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        return false;
-      }
-      throw err;
+    const rootDirHandle = await this.requestDirHandle();
+    if (!rootDirHandle) {
+      return false;
     }
     if (!this._currentProject) {
       throw new Error('No project selected');
     }
 
-    await saveDirHandle(this._currentProject.id, 'syncDir', rootDirHandle);
+    await this.saveDirHandle('syncDir', rootDirHandle);
 
-    const syncTarget = new FsSyncTarget(rootDirHandle);
+    const syncTarget = this.createFsSyncTarget(rootDirHandle);
     const context = await this._makeSyncContext(this._currentProject);
     return await this._syncImpl(context, syncTarget, full, progress);
   }
