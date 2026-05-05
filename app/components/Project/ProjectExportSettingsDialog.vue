@@ -6,7 +6,7 @@
       </div>
       <div class="ProjectExportSettingsDialog-content">
         <FormCheckBox
-          v-for="item in Object.keys(exportSettingsPreference)"
+          v-for="item in ['save_structure']"
           :key="item"
           :value="isSelected(item as any)"
           @input="selectSetting(item as any)"
