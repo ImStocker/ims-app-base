@@ -15,13 +15,15 @@ function formatAssetFull(asset: AssetFullInstanceR) {
   delete asset_info.deletedAt;
   delete asset_info.rights;
   delete asset_info.comments;
-  const block_with_names = asset_info.blocks.filter((block) => block.name);
+  const block_with_names = asset_info.blocks.filter(
+    (block) => block.name && !block.name.startsWith('__'),
+  );
   asset_info.values = {};
   for (const block of block_with_names) {
-    const values_block_props = { ...block.props };
+    const values_block_props = { ...block.computed };
     const block_props_keys = Object.keys(values_block_props);
     for (const block_props_key of block_props_keys) {
-      if (/^(__).+/.test(block_props_key)) {
+      if (/^(__|~).+/.test(block_props_key)) {
         delete values_block_props[block_props_key];
       }
     }

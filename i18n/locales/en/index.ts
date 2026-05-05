@@ -963,7 +963,7 @@ export default {
   fsSync: {
     syncPageHeader: 'Local project files sync',
     syncPageInfo:
-      'To synchronize, download our IMS Desktop application and open the current project as a cloud one.',
+      'To automatically sync your project files with your game, download our IMS Desktop app and open your current project as a cloud project.',
     synchronization: 'Sync',
     syncButton: 'Sync',
     syncFullButton: 'Full sync',
