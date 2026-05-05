@@ -40,6 +40,11 @@ export type AssetPropValueFile = {
   Store: string;
 };
 
+export type AssetMention = {
+  accountId: string;
+  id: string;
+  name: string;
+};
 export type AssetPropValueBlob = {
   Blob: any;
   Type: string;
@@ -282,6 +287,7 @@ export function* walkAssetPropValueTextOps(
   insertProp?: { value: AssetPropValue };
   insertTask?: { value: AssetPropValueAsset };
   insertFile?: { value: AssetPropValueFile };
+  insertMention?: AssetMention;
   attributeAsset?: { value: AssetPropValueAsset };
 }> {
   if (!(ops as unknown)) return;
@@ -305,6 +311,13 @@ export function* walkAssetPropValueTextOps(
         op.insert.file.value !== undefined &&
         (op.insert.file.value as AssetPropValueFile).FileId
           ? op.insert.file
+          : undefined,
+      insertMention:
+        op.insert &&
+        op.insert.mention &&
+        op.insert.mention.id !== undefined &&
+        op.insert.mention.accountId !== undefined
+          ? op.insert.mention
           : undefined,
       attributeAsset:
         op.attributes &&
@@ -1109,7 +1122,9 @@ export function convertAssetPropsToPlainObject<T extends AssetPropsPlainObject>(
     if (is_digit) digits.add(parseInt(parts[0]));
     else any_not_digit = true;
 
-    if (parts.length === 1) {
+    if (key[0] === '~') {
+      res[key] = val;
+    } else if (parts.length === 1) {
       res[parts[0]] = val;
     } else {
       if (nested.hasOwnProperty(parts[0])) {
@@ -1130,11 +1145,22 @@ export function convertAssetPropsToPlainObject<T extends AssetPropsPlainObject>(
   if (props_entries.length > 0 && digits.size > 0 && !any_not_digit) {
     const digits_arr = [...digits];
     digits_arr.sort((a, b) => a - b);
-    const arr: string[] = [];
-    for (const d of digits_arr) {
-      arr.push(res[d]);
+    // Check indices are in subsequence
+    let digits_subsequence = 0;
+    while (
+      digits_subsequence < digits_arr.length &&
+      digits_arr[digits_subsequence] === digits_subsequence
+    ) {
+      digits_subsequence++;
     }
-    res = arr;
+
+    if (digits_subsequence === digits_arr.length) {
+      const arr: string[] = [];
+      for (const d of digits_arr) {
+        arr.push(res[d]);
+      }
+      res = arr;
+    }
   }
   return res;
 }
@@ -1178,14 +1204,25 @@ export function assignPlainValueToAssetProps(
     } else {
       const type = getAssetPropType(value as any);
       if (type === undefined) {
+        const digit_keys: number[] = [];
+        let digit_all_keys = true;
         for (const [key, val] of Object.entries(
           value as Record<string, AssetPropValue>,
         )) {
+          if (/^\d+$/.test(key)) {
+            digit_keys.push(parseInt(key));
+          } else {
+            digit_all_keys = false;
+          }
           assignPlainValueToAssetProps(
             target,
             val as AssetPropsPlainObject,
             (prefix ? prefix + '\\' : '') + key,
           );
+        }
+        if (digit_all_keys && digit_keys.length > 0) {
+          digit_keys.sort((a, b) => a - b);
+          target[prefix] = digit_keys;
         }
       } else {
         target[prefix] = value as AssetPropValue;

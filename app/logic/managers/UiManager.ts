@@ -586,7 +586,7 @@ export default class UiManager extends AppSubManagerBase {
   }
 
   async reloadPage() {
-    window.location.assign(window.location.href);
+    window.location.reload();
   }
 
   async showUpgradeDialog(_feature?: string): Promise<boolean> {

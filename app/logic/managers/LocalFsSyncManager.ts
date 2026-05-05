@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import JSZip from 'jszip/dist/jszip.min.js';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
 import type { ISyncTarget } from '../local-fs-sync/ISyncTarget';
 import type { SyncChunk } from '../local-fs-sync/SyncChunk';

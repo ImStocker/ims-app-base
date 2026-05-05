@@ -105,13 +105,13 @@ type AssetHasChildrenRecord = {
 
 export default class CreatorAssetManager extends AppSubManagerBase {
   private readonly _apiManager: ApiManager;
-  private _shortAssetsCache: EntityCache<AssetShort> | undefined;
+  protected _shortAssetsCache: EntityCache<AssetShort> | undefined;
   private _previewAssetsCache: EntityCache<AssetPreviewInfo> | undefined;
   private _hasChildrenAssetsCache:
     | EntityCache<AssetHasChildrenRecord>
     | undefined;
-  private _fullAssetsCache: EntityCache<AssetFullInstanceR> | undefined;
-  private _workspacesCache: EntityCache<Workspace> | undefined;
+  protected _fullAssetsCache: EntityCache<AssetFullInstanceR> | undefined;
+  protected _workspacesCache: EntityCache<Workspace> | undefined;
   protected _projectDatabase: IProjectDatabase | undefined;
   private _watchExternalEvents: boolean = false;
   private _externalContentListener: ProjectContentExternalListener | null =
@@ -1807,7 +1807,9 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
   async getWorkspaceLocalPath(workspace_id: string): Promise<string | null> {
     assert(this._projectDatabase, 'Not inited');
-    return await this._projectDatabase.getWorkspaceLocalPathFolder(workspace_id);
+    return await this._projectDatabase.getWorkspaceLocalPathFolder(
+      workspace_id,
+    );
   }
 
   saveState(): Record<string, any> {

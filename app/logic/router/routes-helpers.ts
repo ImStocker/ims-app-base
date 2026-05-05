@@ -259,7 +259,11 @@ export function getProjectLinkHref(
   if (typeof link === 'string') return link;
   const path = $router.resolve(link).href;
   if (!full) return path;
-  return currentUrl.origin + path;
+  let base = currentUrl.origin;
+  if (path[0] === '#') {
+    base += currentUrl.pathname; // Hash mode is using
+  }
+  return base + path;
 }
 
 export function sanitizeProjectUrl(
@@ -368,7 +372,11 @@ export function getServiceLinkHref(
   if (typeof link === 'string') return link;
   const path = $router.resolve(link).href;
   if (!full) return path;
-  return currentUrl.origin + path;
+  let base = currentUrl.origin;
+  if (path[0] === '#') {
+    base += currentUrl.pathname; // Hash mode is using
+  }
+  return base + path;
 }
 
 export async function openServiceLink(
