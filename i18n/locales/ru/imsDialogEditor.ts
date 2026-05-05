@@ -120,6 +120,7 @@ export default {
     },
     speech: {
       restoreValues: 'Вернуть значения по умолчанию',
+      restoreValue: 'Вернуть значение по умолчанию',
       add: 'Добавить',
       addOption: 'Добавить опцию',
       character: 'Персонаж',
