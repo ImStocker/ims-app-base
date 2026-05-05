@@ -1,5 +1,5 @@
 <template>
-  <div v-if="projectInfo" class="BreadCrumbs">
+  <div class="BreadCrumbs">
     <ul class="BreadCrumbs-list">
       <li
         v-for="(link, idx) in breadCrumbsComp"
@@ -8,7 +8,9 @@
       >
         <project-link
           v-if="
-            (link.type === undefined && !link.href) || link.type === 'project'
+            ((link.type === undefined && !link.href) ||
+              link.type === 'project') &&
+            projectInfo
           "
           class="BreadCrumbs-item-link"
           :title="$tTitle"
