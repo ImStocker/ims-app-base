@@ -223,11 +223,11 @@ export type ExportProjectDTOWhere = {
 
 export type ExportProjectParams = {
   save_structure?: boolean;
-  use_names?: boolean;
+  name_mode?: 'id' | 'title' | 'name';
 };
 
-export const DEFAULT_PROJECT_EXPORT_SETTINGS = {
-  use_names: true,
+export const DEFAULT_PROJECT_EXPORT_SETTINGS: ExportProjectParams = {
+  name_mode: 'title',
   save_structure: true,
 };
 

@@ -145,7 +145,7 @@ export default class ProjectManager extends AppSubManagerBase {
         HttpMethods.GET,
         `project/export/asset/${asset.id}`,
         {
-          use_names: params?.use_names,
+          name_mode: params?.name_mode,
         },
       );
     const file_title = `${asset.name ? asset.name : asset.title}.ima.json`;
