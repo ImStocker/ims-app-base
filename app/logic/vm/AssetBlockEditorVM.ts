@@ -700,8 +700,13 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       .checkHasChildrenViaCache(assetId);
   }
 
-  copyEditingBlock() {
-    const editing = this.editingBlock;
+  copyBlock(block_id?: string) {
+    let editing: ResolvedAssetBlock | null;
+    if (block_id) {
+      editing = this.getResolvedBlockById(block_id);
+    } else {
+      editing = this.editingBlock;
+    }
     if (!editing) return;
     const props = mergeInheritedProps(editing.inherited ?? {}, editing.props);
     this.copiedBlock = {
@@ -722,7 +727,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
   }
 
-  copyEditingBlockAsBlockMirror() {
+  copyBlockAsBlockMirror() {
     const editing = this.editingBlock;
     if (!editing) return;
     const editing_asset = this.assetFull;
@@ -752,13 +757,18 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       this.appManager.get(UiManager).showError('Window is undefined');
     }
   }
-  pasteBlock() {
+  pasteBlock(block_id?: string) {
     const copied = JSON.parse(
       window?.localStorage.getItem('AssetEditorToolbar-copied') ?? '',
     );
     if (!copied) return;
     const blocks = this.resolveBlocks();
-    const editing = this.editingBlock;
+    let editing: ResolvedAssetBlock | null;
+    if (block_id) {
+      editing = this.getResolvedBlockById(block_id);
+    } else {
+      editing = this.editingBlock;
+    }
     let index1: number;
     let index2: number | null = null;
     if (editing) {
@@ -808,7 +818,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         disabled: !this.editingBlock,
         icon: 'ri-file-copy-fill',
         action: () => {
-          this.copyEditingBlock();
+          this.copyBlock();
         },
       },
       {
@@ -828,7 +838,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         tooltip: this.appManager.$t(
           'assetEditor.toolbarCopyBlockAsBlockMirrorHint',
         ),
-        action: () => this.copyEditingBlockAsBlockMirror(),
+        action: () => this.copyBlockAsBlockMirror(),
         disabled: !this.editingBlock,
       },
     ];

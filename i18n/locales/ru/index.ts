@@ -497,6 +497,7 @@ export default {
     valueTableColumnOrderRight: 'Вправо',
     toolbarCopyBlock: 'Копировать блок',
     toolbarPasteBlock: 'Вставить блок',
+    pasteBlockAfter: 'Вставить после',
     toolbarSaveChanges: 'Сохранить изменения',
     toolbarSaving: 'Сохранение...',
     toolbarCopyBlockDone: 'Блок скопирован',
