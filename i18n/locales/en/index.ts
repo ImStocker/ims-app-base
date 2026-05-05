@@ -958,6 +958,7 @@ export default {
     exportAutomatically: 'Export automatically',
     copyAsArchive: 'Copy as archive',
     setupAutoExport: 'Setup auto export',
+    selectFolder: 'Select the folder to export',
   },
   fsSync: {
     syncPageHeader: 'Local project files sync',

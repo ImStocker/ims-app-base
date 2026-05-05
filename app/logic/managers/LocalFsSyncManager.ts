@@ -96,6 +96,10 @@ export type SegmentEntity = {
   controller: () => Promise<SyncExportSegmentCtr<SyncExportSegment>>;
 };
 
+export const ROOT_DIR_NAME = 'syncDir';
+
+const AUTOEXPORT_DEBOUNCE_DURATION = 1000;
+
 export default class LocalFsSyncManager extends AppSubManagerBase {
   private _syncWorkerId = Math.round(Math.random() * 10000000).toString();
   private _primarySyncWorkerId: string | null = null;
@@ -103,6 +107,10 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
   private _autoSyncRequested: boolean = false;
   private _userCodeExecutorManager: UserCodeExecuteManager | null = null;
   private _segmentEntities: SegmentEntity[] = [];
+
+  private _syncDebounceTimer: NodeJS.Timeout | null = null;
+  private _pendingAssetIds = new Set<string>();
+  private _pendingWorkspaceIds = new Set<string>();
 
   public syncStatus: SyncStatus = {
     isSyncing: false,
@@ -135,12 +143,116 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     return new Map(this._segmentEntities.map((s) => [s.name, s]));
   }
 
+  private _getSegmentAssetCondition(
+    segment: SyncExportSegment,
+  ): AssetPropWhere {
+    const gdd_workspace_id = this.appManager
+      .get(ProjectManager)
+      .getWorkspaceIdByName('gdd');
+
+    return {
+      ...(segment.info.assetSelection?.Where ?? {}),
+      _syncSegment: {
+        op: AssetPropWhereOpKind.AND,
+        v: [
+          {
+            ...segment.getAdditionalAssetFilter(),
+            issystem: false,
+            workspaceids: gdd_workspace_id ?? [],
+          },
+        ],
+      },
+    };
+  }
+
+  private _getSegmentWorkspaceCondition(segment: SyncExportSegment) {
+    const gdd_workspace_id = this.appManager
+      .get(ProjectManager)
+      .getWorkspaceIdByName('gdd');
+    const asset_condition = this._getSegmentAssetCondition(segment);
+    return {
+      insideId: gdd_workspace_id ?? null,
+      hasAssets: asset_condition,
+    };
+  }
+
+  private async _areIdsExporting(
+    a_ids: string[],
+    w_ids: string[],
+  ): Promise<boolean> {
+    if (!this._currentProject) return false;
+
+    const context = await this._makeSyncContext(this._currentProject);
+    for (const segment of context.segments) {
+      const asset_condition: AssetPropWhere = {
+        ...this._getSegmentAssetCondition(segment),
+        _idFilter: {
+          op: AssetPropWhereOpKind.AND,
+          v: [
+            {
+              id: a_ids,
+            },
+          ],
+        },
+      };
+      const asset_ids = await this.appManager
+        .get(CreatorAssetManager)
+        .getAssetsView({
+          select: ['id'],
+          where: asset_condition,
+          count: 1,
+        });
+      if (asset_ids.list?.length) return true;
+
+      const workspace_condition: WorkspaceQueryDTOWhere = {
+        ...this._getSegmentWorkspaceCondition(segment),
+        ids: w_ids,
+      };
+      const workspaces = await this.appManager
+        .get(CreatorAssetManager)
+        .getWorkspacesList({
+          where: workspace_condition,
+          count: 1,
+        });
+      if (workspaces.list.length) return true;
+    }
+
+    return false;
+  }
+
   public initClient() {
     this.appManager
       .get(CreatorAssetManager)
-      .projectContentEvents.subscribe(() => {
-        this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
-        this.autosync();
+      .projectContentEvents.subscribe((changes) => {
+        const aDel = changes.aDelIds ?? [];
+        const aUps = changes.aUpsIds ?? [];
+        const wDel = changes.wDelIds ?? [];
+        const wTch = changes.wTchIds ?? [];
+        const wUps = changes.wUpsIds ?? [];
+        for (const id of [...aDel, ...aUps]) {
+          this._pendingAssetIds.add(id);
+        }
+        for (const id of [...wDel, ...wTch, ...wUps]) {
+          this._pendingWorkspaceIds.add(id);
+        }
+
+        if (this._syncDebounceTimer !== null) {
+          clearTimeout(this._syncDebounceTimer);
+        }
+
+        this._syncDebounceTimer = setTimeout(async () => {
+          const need_sync = await this._areIdsExporting(
+            Array.from(this._pendingAssetIds),
+            Array.from(this._pendingWorkspaceIds),
+          );
+          if (need_sync) {
+            this.autosync();
+            this._primarySyncWorkerId = this._syncWorkerId; // Поменять, когда будет синхронизация по сокетам
+          }
+          this._pendingAssetIds.clear();
+          this._pendingWorkspaceIds.clear();
+          this._syncDebounceTimer = null;
+        }, AUTOEXPORT_DEBOUNCE_DURATION);
       });
     const bc = new BroadcastChannel(BC_NAME);
     bc.onmessage = (ev) => {
@@ -163,7 +275,13 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
     const role = this.appManager.get(ProjectManager).getUserRoleInProject();
     if (this._currentProject && role) {
-      this.autosync(); // No await
+      if (this._syncDebounceTimer !== null) {
+        clearTimeout(this._syncDebounceTimer);
+      }
+
+      this._syncDebounceTimer = setTimeout(async () => {
+        this.autosync();
+      }, AUTOEXPORT_DEBOUNCE_DURATION);
     }
   }
 
@@ -240,7 +358,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
 
     if (!this._currentProject) return false;
 
-    const rootDirHandle = await this.getDirHandle('syncDir');
+    const rootDirHandle = await this.getDirHandle(ROOT_DIR_NAME);
     if (!rootDirHandle) {
       return false;
     }
@@ -316,7 +434,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     await saveDirHandle(this._currentProject.id, key, rootDirHandle);
   }
 
-  async getDirHandle(key: string) {
+  async getDirHandle(key: string): Promise<any> {
     if (!this._currentProject) {
       throw new Error('No project selected');
     }
@@ -330,7 +448,6 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
     if (!window.showDirectoryPicker) {
       throw new Error(this.appManager.$t('sync.fsSync.browserNotSupported'));
     }
-    debugger;
 
     const rootDirHandle = await this.requestDirHandle();
     if (!rootDirHandle) {
@@ -340,7 +457,7 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       throw new Error('No project selected');
     }
 
-    await this.saveDirHandle('syncDir', rootDirHandle);
+    await this.saveDirHandle(ROOT_DIR_NAME, rootDirHandle);
 
     const syncTarget = this.createFsSyncTarget(rootDirHandle);
     const context = await this._makeSyncContext(this._currentProject);
@@ -546,87 +663,70 @@ export default class LocalFsSyncManager extends AppSubManagerBase {
       return false;
     }
 
-    const gdd_workspace_id = this.appManager
-      .get(ProjectManager)
-      .getWorkspaceIdByName('gdd');
-
     // added for correct export when format asset type filter is empty
     if (segment.info.assetSelection?.Where?.typeids === null) {
       delete segment.info.assetSelection?.Where?.typeids;
     }
 
-    const asset_condition: AssetPropWhere = {
-      ...(segment.info.assetSelection?.Where ?? {}),
-      _syncSegment: {
-        op: AssetPropWhereOpKind.AND,
-        v: [
-          {
-            ...segment.getAdditionalAssetFilter(),
-            issystem: false,
-            workspaceids: gdd_workspace_id ?? [],
-          },
-        ],
-      },
-    };
+    const asset_condition: AssetPropWhere =
+      this._getSegmentAssetCondition(segment);
 
-    const workspace_condition: WorkspaceQueryDTOWhere = {
-      insideId: gdd_workspace_id ?? null,
-      hasAssets: asset_condition,
-    };
+    const workspace_condition: WorkspaceQueryDTOWhere =
+      this._getSegmentWorkspaceCondition(segment);
 
-    let has_any_changes = false;
-    if (sync_at) {
-      let has_more = segment.needAssets() || segment.needWorkspaces();
-      let last_asset_id = null as string | null;
-      let last_workspace_id = null as string | null;
-      let last_time = sync_at;
-      while (has_more) {
-        const changes = await this.appManager
-          .get(ProjectManager)
-          .getChangesStream({
-            dateFrom: last_time,
-            lastAssetId: last_asset_id ?? undefined,
-            lastWorkspaceId: last_workspace_id ?? undefined,
-            count: SYNC_CHUNK_SIZE,
-            whereAssets: asset_condition,
-            whereWorkspaces: workspace_condition,
-          });
-        has_more = !!changes.last && changes.more;
-        if (changes.last) {
-          last_time = changes.last.date;
-          last_asset_id = changes.last.assetId;
-          last_workspace_id = changes.last.workspaceId;
-        }
-        const chunk: SyncChunk = {
-          assetDeletedIds: changes.assetDeletedIds,
-          assetUpdatedIds: changes.assetUpdatedIds,
-          workspaceDeletedIds: changes.workspaceDeletedIds,
-          workspaceUpdatedIds: changes.workspaceUpdatedIds,
-        };
-        if (context.projectId !== this._currentProjectId) {
-          return false;
-        }
+    const has_any_changes = true;
+    // if (sync_at) {
+    //   let has_more = segment.needAssets() || segment.needWorkspaces();
+    //   let last_asset_id = null as string | null;
+    //   let last_workspace_id = null as string | null;
+    //   let last_time = sync_at;
+    //   while (has_more) {
+    //     const changes = await this.appManager
+    //       .get(ProjectManager)
+    //       .getChangesStream({
+    //         dateFrom: last_time,
+    //         lastAssetId: last_asset_id ?? undefined,
+    //         lastWorkspaceId: last_workspace_id ?? undefined,
+    //         count: SYNC_CHUNK_SIZE,
+    //         whereAssets: asset_condition,
+    //         whereWorkspaces: workspace_condition,
+    //       });
+    //     has_more = !!changes.last && changes.more;
+    //     if (changes.last) {
+    //       last_time = changes.last.date;
+    //       last_asset_id = changes.last.assetId;
+    //       last_workspace_id = changes.last.workspaceId;
+    //     }
+    //     const chunk: SyncChunk = {
+    //       assetDeletedIds: changes.assetDeletedIds,
+    //       assetUpdatedIds: changes.assetUpdatedIds,
+    //       workspaceDeletedIds: changes.workspaceDeletedIds,
+    //       workspaceUpdatedIds: changes.workspaceUpdatedIds,
+    //     };
+    //     if (context.projectId !== this._currentProjectId) {
+    //       return false;
+    //     }
 
-        if (
-          !chunk.assetDeletedIds.length &&
-          !chunk.assetUpdatedIds.length &&
-          !chunk.workspaceDeletedIds.length &&
-          !chunk.workspaceUpdatedIds.length
-        ) {
-          break;
-        }
+    //     if (
+    //       !chunk.assetDeletedIds.length &&
+    //       !chunk.assetUpdatedIds.length &&
+    //       !chunk.workspaceDeletedIds.length &&
+    //       !chunk.workspaceUpdatedIds.length
+    //     ) {
+    //       break;
+    //     }
 
-        if (force_full) {
-          has_any_changes = true;
-          has_more = false;
-        } else {
-          if (!syncTarget) {
-            syncTarget = await segment.init(context, rootSyncTarget);
-          }
-          await segment.sync(context, syncTarget, chunk);
-        }
-      }
-    }
+    //     if (force_full) {
+    //       has_any_changes = true;
+    //       has_more = false;
+    //     } else {
+    //       if (!syncTarget) {
+    //         syncTarget = await segment.init(context, rootSyncTarget);
+    //       }
+    //       await segment.sync(context, syncTarget, chunk);
+    //     }
+    //   }
+    // }
 
     if (!sync_at || (force_full && has_any_changes)) {
       if (sync_at) {
