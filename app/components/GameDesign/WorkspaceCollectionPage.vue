@@ -290,8 +290,8 @@ export default defineComponent({
 <style lang="scss" scoped>
 @use '$style/asset-icons';
 .WorkspaceCollectionPage {
-  --local-bg-color: var(--panel-bg-color);
-  background-color: var(--panel-bg-color);
+  --local-bg-color: var(--editor-bg-color);
+  background-color: var(--local-bg-color);
 }
 .WorkspaceCollectionPage-common {
   width: 100%;
