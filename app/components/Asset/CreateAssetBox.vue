@@ -113,27 +113,33 @@ export default defineComponent({
       return this.$getAppManager().get(ProjectManager).getProjectInfo();
     },
     defaultOptions(): (AssetForSelection & { tooltip: string })[] {
-      return [
+      const default_options: AssetForSelection[] = [
         {
           id: TEXT_ELEMENT_ID,
           title: '[[t:TextElement]]',
           name: null,
           icon: 'file-fill',
         },
-        this.$appConfiguration.isDesktop ? ASSET_SELECTION_MARKDOWN : null,
-        ASSET_SELECTION_GAME_OBJECT,
-        ASSET_SELECTION_GAME_MECHANICS,
-        ASSET_SELECTION_DIAGRAM,
-        ASSET_SELECTION_SCRIPT,
-        ASSET_SELECTION_LEVEL,
-      ]
-        .filter((x) => x)
-        .map((x) => {
-          return {
-            ...x,
-            tooltip: this.$t('asset.createTooltips.' + x.id),
-          };
-        });
+      ];
+      if (this.$appConfiguration.isDesktop) {
+        default_options.push(ASSET_SELECTION_MARKDOWN);
+      }
+      default_options.push(
+        ...[
+          ASSET_SELECTION_GAME_OBJECT,
+          ASSET_SELECTION_GAME_MECHANICS,
+          ASSET_SELECTION_DIAGRAM,
+          ASSET_SELECTION_SCRIPT,
+          ASSET_SELECTION_LEVEL,
+        ],
+      );
+
+      return default_options.map((x) => {
+        return {
+          ...x,
+          tooltip: this.$t('asset.createTooltips.' + x.id),
+        };
+      });
     },
     defaultOptionsInOther() {
       return [

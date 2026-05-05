@@ -487,6 +487,7 @@ export default {
     valueTableColumnOrderRight: 'Right',
     toolbarCopyBlock: 'Copy block',
     toolbarPasteBlock: 'Paste block',
+    pasteBlockAfter: 'Paste after',
     toolbarSaveChanges: 'Save changes',
     toolbarSaving: 'Saving...',
     toolbarCopyBlockDone: 'Block copied',

@@ -1,14 +1,14 @@
 import { FieldTypeController } from '../FieldTypeController';
 import EnumRadioPropEditor from '../../../components/Props/EnumRadioPropEditor.vue';
-import CaptionPropPresenter from '../../../components/Props/CaptionPropPresenter.vue';
 import { ASSET_VALUE_ENUM } from '../../constants';
 import { AssetPropType } from '../Props';
+import EnumPropPresenter from '#components/Props/EnumPropPresenter.vue';
 
 export class EnumRadioFieldController extends FieldTypeController {
   name = 'enumRadio';
   title = '[[t:EnumRadio]]';
   editor = async () => EnumRadioPropEditor;
-  presenter = async () => CaptionPropPresenter;
+  presenter = async () => EnumPropPresenter;
   override parameters = [
     {
       name: 'type',

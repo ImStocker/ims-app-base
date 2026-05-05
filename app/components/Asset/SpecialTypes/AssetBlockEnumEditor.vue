@@ -9,7 +9,7 @@
   </is-panel>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import EnumEditor from './EnumEditor.vue';
