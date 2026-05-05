@@ -286,7 +286,7 @@ export function sanitizeProjectUrl(
         true,
       ) + '/';
     const u = new URL(project_url + url.substring(project_protocol.length));
-    const simplified = u.protocol + '//' + u.host + u.pathname;
+    const simplified = u.protocol + '//' + u.host + u.pathname + u.hash;
     if (simplified.startsWith(project_url)) return simplified;
   }
 
