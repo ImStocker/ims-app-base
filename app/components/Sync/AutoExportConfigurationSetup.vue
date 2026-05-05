@@ -11,6 +11,7 @@
         v-else
         class="AutoExportConfigurationSetup-rootDir"
         :class="{ warning: !exportRootDir }"
+        disabled
         @click="changeRootDir"
       >
         <i
@@ -181,6 +182,7 @@ export default defineComponent({
             message: this.$t('fsSync.synchronization'),
           },
         );
+      await this.loadRootDir();
       this.syncButtonLoading = false;
     },
     async downloadArchive() {
