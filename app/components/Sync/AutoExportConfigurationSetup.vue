@@ -6,8 +6,23 @@
     }"
   >
     <div class="AutoExportConfigurationSetup-controls">
+      <div v-if="exportDirLoading" class="loaderSpinner"></div>
       <button
-        class="is-button"
+        v-else
+        class="AutoExportConfigurationSetup-rootDir"
+        :class="{ warning: !exportRootDir }"
+        disabled
+        @click="changeRootDir"
+      >
+        <i
+          class="ri-folder-open-fill AutoExportConfigurationSetup-rootDir-icon"
+        ></i>
+        <span class="AutoExportConfigurationSetup-rootDir-caption">
+          {{ exportRootDir ? exportRootDir : $t('autoExport.selectFolder') }}
+        </span>
+      </button>
+      <button
+        class="is-button AutoExportConfigurationSetup-addButton"
         :class="{
           accent: configurations.length === 0,
         }"
@@ -69,7 +84,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import EditConfigurationDialog from './EditConfigurationDialog.vue';
-import LocalFsSyncManager from '../../logic/managers/LocalFsSyncManager';
+import LocalFsSyncManager, {
+  ROOT_DIR_NAME,
+} from '../../logic/managers/LocalFsSyncManager';
 import ExportFormatManager from '../../logic/managers/ExportFormatManager';
 import UiManager, { ToastTypes } from '../../logic/managers/UiManager';
 import { openBlobFile } from '../../logic/utils/dataUtils';
@@ -86,6 +103,8 @@ export default defineComponent({
   data() {
     return {
       syncButtonLoading: false,
+      exportRootDir: null as null | string,
+      exportDirLoading: false,
     };
   },
   computed: {
@@ -109,7 +128,30 @@ export default defineComponent({
       return this.$getAppManager().get(ExportFormatManager).getExportFormats();
     },
   },
+  async mounted() {
+    await this.loadRootDir();
+  },
   methods: {
+    async loadRootDir() {
+      this.exportDirLoading = true;
+      this.exportRootDir = await this.$getAppManager()
+        .get(LocalFsSyncManager)
+        .getDirHandle(ROOT_DIR_NAME);
+      this.exportDirLoading = false;
+    },
+    async changeRootDir() {
+      const rootDirHandle = await this.$getAppManager()
+        .get(LocalFsSyncManager)
+        .requestDirHandle();
+      if (!rootDirHandle) {
+        return false;
+      }
+
+      await this.$getAppManager()
+        .get(LocalFsSyncManager)
+        .saveDirHandle(ROOT_DIR_NAME, rootDirHandle);
+      this.exportRootDir = rootDirHandle;
+    },
     getConfigurationFormat(formatId: string) {
       return this.formats.find((el) => el.id === formatId);
     },
@@ -140,6 +182,7 @@ export default defineComponent({
             message: this.$t('fsSync.synchronization'),
           },
         );
+      await this.loadRootDir();
       this.syncButtonLoading = false;
     },
     async downloadArchive() {
@@ -257,8 +300,22 @@ export default defineComponent({
 
 <style lang="scss" rel="stylesheet/scss" scoped>
 .AutoExportConfigurationSetup-controls {
-  text-align: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   margin-bottom: 20px;
+}
+.AutoExportConfigurationSetup-rootDir {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--local-sub-text-color);
+  font-size: 12px;
+  display: flex;
+  gap: 5px;
+  &.warning {
+    color: var(--color-warning);
+  }
 }
 .AutoExportConfigurationSetup.state-empty {
   .AutoExportConfigurationSetup-controls {

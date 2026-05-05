@@ -971,6 +971,7 @@ export default {
     exportAutomatically: 'Экспортировать автоматически',
     copyAsArchive: 'Скопировать в виде архива',
     setupAutoExport: 'Настроить автоэкспорт',
+    selectFolder: 'Выберите папку для экспорта, нажав на «Экспорт»',
   },
   fsSync: {
     syncPageHeader: 'Синхронизация с локальным проектом',

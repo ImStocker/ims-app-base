@@ -60,7 +60,7 @@ export class SyncContext {
     const data_parsed = JSON.parse(data_str);
     this.rootIndex = data_parsed;
     assert(this.rootIndex);
-    if (!this.rootIndex.imsProjectId) {
+    if (this.rootIndex.imsProjectId === undefined) {
       return {
         index: this.rootIndex,
         status: 'badContent',
