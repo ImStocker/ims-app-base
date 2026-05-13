@@ -18,8 +18,8 @@
       @open="dropdownShown = true"
       @close="dropdownShown = false"
     >
-      <template #no-options>
-        <slot name="no-options">
+      <template #no-options="attrs">
+        <slot name="no-options" v-bind="attrs">
           <div class="ImcSelect-no-options">
             {{ $t('common.controls.noMatchingOptions') }}
           </div>
@@ -64,8 +64,8 @@
           </slot>
         </slot>
       </template>
-      <template #list-footer>
-        <slot name="list-footer"></slot>
+      <template #list-footer="attrs">
+        <slot name="list-footer" v-bind="attrs"></slot>
       </template>
       <!-- <template #default-option="option">
         <slot name="default-option" :option="option">
