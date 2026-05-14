@@ -24,9 +24,14 @@ export default {
       trigger: {
         title: 'Trigger',
         description: 'Call some in-game action',
+        manageCaption: 'Manage triggers',
+        create: 'Create trigger',
       },
       function: {
         title: 'Function',
+        description: 'Call some function of the game engine',
+        manageCaption: 'Manage functions',
+        create: 'Create function',
       },
       branch: {
         title: 'Branch',

@@ -24,9 +24,14 @@ export default {
       trigger: {
         title: 'Триггер',
         description: 'Вызов какого-то внутриигрового действия',
+        manageCaption: 'Управлять триггерами',
+        create: 'Создать триггер',
       },
       function: {
         title: 'Функция',
+        description: 'Вызов какой-либо функции игрового движка',
+        manageCaption: 'Управлять функциями',
+        create: 'Создать функцию',
       },
       branch: {
         title: 'Условие',

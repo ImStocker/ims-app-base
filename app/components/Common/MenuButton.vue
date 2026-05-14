@@ -18,6 +18,7 @@
     <dropdown-element
       v-model:shown="ownShown"
       :attach-position="attachPosition"
+      :attach-to-element="attachToElement"
     >
       <div class="MenuButton-dropdown" @imc-menu-action-executed="hide">
         <slot></slot>
@@ -37,6 +38,10 @@ export default defineComponent({
     DropdownElement,
   },
   props: {
+    attachToElement: {
+      type: Object as PropType<HTMLElement | null>,
+      default: null,
+    },
     tooltip: { type: String, default: '' },
     attachPosition: {
       type: String as PropType<DropdownElementPlacement>,
