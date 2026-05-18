@@ -33,6 +33,10 @@ export default {
         manageCaption: 'Управлять функциями',
         create: 'Создать функцию',
       },
+      callScript: {
+        title: 'Call script',
+        // description: 'TODO',
+      },
       branch: {
         title: 'Условие',
         description: 'Выбор одного из путей сценария в зависимости от условия',
@@ -169,6 +173,10 @@ export default {
       deleteParameterConfirm: 'Вы уверены, что хотите удалить параметр?',
       changeParameter: 'Изменить параметр',
       duplicateParameter: 'Дублировать параметр',
+      wrongParameter: 'Указанный параметр не существует в действии',
+    },
+    callScript: {
+      wrongParameter: 'Указанный параметр не существует в сценарии',
     },
     actions: {
       actionsTitle: 'Действия',
@@ -194,6 +202,7 @@ export default {
       deleteActionConfirm: 'Вы уверены, что хотите удалить действие?',
       atLeastOneOutputParam:
         'Для действия с типом "функция" необходим как минимум один выходной параметр',
+      all: 'Все',
     },
     var: {
       manageVariables: 'Управлять переменными',
@@ -210,12 +219,14 @@ export default {
       noVariablesFound: 'Переменные не найдены',
       name: 'Название',
       type: 'Тип',
+      dataType: 'Тип данных',
       defaultValue: 'Значение по умолчанию',
       variables: 'Переменные',
       description: 'Описание',
       enterName: 'Введите название',
       enterServiceName: 'Введите служебное имя',
-      enterType: 'Выберите тип',
+      enterKind: 'Выберите вид',
+      enterDataType: 'Выберите тип данных',
       enterDescription: 'Введите описание',
       types: {
         any: 'Любой',
@@ -225,6 +236,12 @@ export default {
         text: 'Текст',
         string: 'Строка',
         asset: 'Элемент',
+      },
+      kinds: {
+        local: 'Локальные',
+        in: 'Входные',
+        out: 'Выходные',
+        'in-out': 'Входные/выходные',
       },
     },
     play: {

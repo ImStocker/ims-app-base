@@ -38,7 +38,7 @@ export default defineComponent({
       default: () => [],
     },
     modelValue: {
-      type: [Object, String, Number, Boolean],
+      type: [Object, String, Number, Boolean, null],
       default: null,
     },
     autofocus: {

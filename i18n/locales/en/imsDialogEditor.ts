@@ -33,6 +33,10 @@ export default {
         manageCaption: 'Manage functions',
         create: 'Create function',
       },
+      callScript: {
+        title: 'Call script',
+        // description: 'TODO',
+      },
       branch: {
         title: 'Branch',
         description: 'Select one of the script path depending on conditions',
@@ -170,6 +174,10 @@ export default {
       deleteParameterConfirm: 'Are you sure want to delete parameter?',
       changeParameter: 'Change parameter',
       duplicateParameter: 'Duplicate parameter',
+      wrongParameter: 'The specified parameter does not exist in action',
+    },
+    callScript: {
+      wrongParameter: 'The specified parameter does not exist in script',
     },
     actions: {
       actionsTitle: 'Actions',
@@ -195,6 +203,7 @@ export default {
       deleteActionConfirm: 'Are you sure want to delete action?',
       atLeastOneOutputParam:
         'An action with the «Function» type requires at least one output parameter',
+      all: 'All',
     },
     var: {
       manageVariables: 'Manage variables',
@@ -211,12 +220,14 @@ export default {
       noVariablesFound: 'Variables not found',
       name: 'Name',
       type: 'Type',
+      dataType: 'Data type',
       defaultValue: 'Default value',
       variables: 'Variables',
       description: 'Description',
       enterName: 'Enter name',
       enterServiceName: 'Enter service name',
-      enterType: 'Choose type',
+      enterKind: 'Choose kind',
+      enterDataType: 'Choose data type',
       enterDescription: 'Enter description',
       types: {
         any: 'Any',
@@ -226,6 +237,12 @@ export default {
         text: 'Text',
         string: 'String',
         asset: 'Asset',
+      },
+      kinds: {
+        local: 'Local',
+        in: 'In',
+        out: 'Out',
+        'in-out': 'In-Out',
       },
     },
     play: {
