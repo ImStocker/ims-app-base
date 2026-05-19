@@ -2,6 +2,7 @@ export type CookieOptions = {
   expires?: Date;
   path?: string;
   domain?: string;
+  maxAge?: number;
 };
 
 export interface ICookieContainer {
