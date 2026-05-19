@@ -238,6 +238,7 @@ export default {
         asset: 'Элемент',
       },
       kinds: {
+        global: 'Глобальные',
         local: 'Локальные',
         in: 'Входные',
         out: 'Выходные',

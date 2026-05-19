@@ -239,6 +239,7 @@ export default {
         asset: 'Asset',
       },
       kinds: {
+        global: 'Global',
         local: 'Local',
         in: 'In',
         out: 'Out',
