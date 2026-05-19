@@ -196,6 +196,26 @@ export default defineComponent({
       const { gfm } = await import('@joplin/turndown-plugin-gfm');
       const turndownService = new turndown();
       turndownService.use(gfm);
+      turndownService.addRule('vuepressContainer', {
+        filter: (node: HTMLElement) => {
+          if (!node) return false;
+          return (
+            node.nodeName === 'P' &&
+            node.classList.contains('ql-callout') &&
+            !!node.dataset.type
+          );
+        },
+        replacement: (content: string, node: HTMLElement) => {
+          const allowedTypes = ['tip', 'warning', 'danger', 'details'];
+          const containerType = allowedTypes.includes(
+            node.dataset.type ?? 'tip',
+          )
+            ? node.dataset.type
+            : 'tip';
+          const titlePart = node.dataset.title ? ` ${node.dataset.title}` : '';
+          return `\n\n::: ${containerType}${titlePart}\n${content.trim()}\n:::\n\n`;
+        },
+      });
       const element = this.$refs['export-content'] as HTMLElement;
       const markdown = turndownService.turndown(element);
       const file_title = `${this.outputFileBaseName}.md`;
@@ -204,6 +224,7 @@ export default defineComponent({
     async exportToPDF() {
       const { jsPDF } = await import('jspdf');
       const element = this.$refs['export-content'] as HTMLElement;
+      element.classList.add('pdf-export');
       const doc = new jsPDF({
         format: 'a4',
         unit: 'px',
@@ -440,5 +461,22 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   gap: 5px;
+}
+.pdf-export {
+  :deep(p.ql-callout[data-type='info']) {
+    background-color: #d2ebff;
+  }
+
+  :deep(p.ql-callout[data-type='warning']) {
+    background-color: #fbe3cc;
+  }
+
+  :deep(p.ql-callout[data-type='error']) {
+    background-color: #fbd6da;
+  }
+
+  :deep(p.ql-callout[data-type='solution']) {
+    background-color: #cef1dc;
+  }
 }
 </style>
