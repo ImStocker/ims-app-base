@@ -18,7 +18,7 @@
           :key="column.name"
           :style="{ width: column.width + 'px' }"
         >
-          <value-table-block-row-cell
+          <value-table-block-print-cell
             :key="row.id"
             class="AssetEditorValueTableBlock-rowCell"
             :column="column"
@@ -28,7 +28,7 @@
             :rights="readOnlyRights"
             :row="row"
             :table-data="tableData"
-          ></value-table-block-row-cell>
+          ></value-table-block-print-cell>
         </td>
       </tr>
     </tbody>
@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import { type PropType, defineComponent } from 'vue';
-import ValueTableBlockRowCell from './ValueTableBlockRowCell.vue';
+import ValueTableBlockPrintCell from './ValueTableBlockPrintCell.vue';
 import type { ValueTableBlockData } from './ValueTableBlock';
 import { AssetRights } from '#logic/types/Rights';
 import type { AssetChanger } from '#logic/types/AssetChanger';
@@ -49,7 +49,7 @@ import {
 export default defineComponent({
   name: 'ValueTableBlockPrint',
   components: {
-    ValueTableBlockRowCell,
+    ValueTableBlockPrintCell,
   },
   provide() {
     return {
