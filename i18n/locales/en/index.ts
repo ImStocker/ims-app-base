@@ -371,6 +371,7 @@ export default {
     inheritedValueLock:
       'Value is inherited and can be changed only in parent element',
     inheritedValue: 'Value is inherited',
+    deleteElement: 'Delete element',
     inheritedBlock: 'Block is inherited',
     textBlockChangeText: 'Click to change text',
     textBlockNoText: 'No text here',

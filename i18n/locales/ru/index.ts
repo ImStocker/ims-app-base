@@ -382,6 +382,7 @@ export default {
     inheritedValueLock:
       'Значение унаследовано и может быть изменено только в родительском элементе',
     inheritedValue: 'Значение унаследовано',
+    deleteElement: 'Удалить элемент',
     inheritedBlock: 'Блок унаследован',
     textBlockChangeText: 'Кликните, чтобы изменить текст',
     textBlockNoText: 'Здесь ничего нет',
