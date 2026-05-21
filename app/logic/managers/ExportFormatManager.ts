@@ -1,37 +1,19 @@
+import type { AssetPropField } from '../../components/Asset/SelectAssetPropFields';
 import {
   castAssetPropValueToAsset,
   castAssetPropValueToString,
-  stringifyAssetNewBlockRef,
   type AssetPropsPlainObject,
   type AssetPropValueAsset,
 } from '../types/Props';
 import { AppSubManagerBase } from './IAppManager';
 import ProjectSettingsManager from './ProjectSettingsManager';
 
-export function getExportFormatFieldRef({
-  block_name,
-  block_id,
-  prop_key,
-}: {
-  block_name: string | null;
-  block_id: string | null;
-  prop_key?: string;
-}) {
-  let stringified_block_ref: string | null = null;
-  if (block_name && block_id) {
-    stringified_block_ref = stringifyAssetNewBlockRef(block_name, null);
-  } else {
-    stringified_block_ref = stringifyAssetNewBlockRef(block_name, block_id);
-  }
-  return stringified_block_ref + '|' + prop_key;
-}
-
 export type ExportFormat = {
   title: string;
   assetType: AssetPropValueAsset | null;
   segmentType: string;
   kind: 'full' | 'valuesOnly' | 'selectFields';
-  fields: ExportFormatField[];
+  fields: AssetPropField[];
   params: AssetPropsPlainObject; // JSON - oneFile, CSV - showTitles, delimiter
   jscode?: string | null;
 };
@@ -39,12 +21,6 @@ export type ExportFormat = {
 export type ExportFormatWithId = {
   id: string;
 } & ExportFormat;
-
-export type ExportFormatField = {
-  ref: string;
-  title: string;
-  name: string;
-};
 
 export default class ExportFormatManager extends AppSubManagerBase {
   init() {}

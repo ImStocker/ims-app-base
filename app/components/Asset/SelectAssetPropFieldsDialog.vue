@@ -1,25 +1,34 @@
 <template>
-  <dialog-content class="EditFormatFieldsDialog" :loading="isLoading">
+  <dialog-content class="SelectAssetPropFieldsDialog" :loading="isLoading">
     <div v-if="loadError" class="Dialog-error">
       {{ loadError }}
     </div>
     <template v-else>
-      <div v-if="!fields.length" class="EditFormatFieldsDialog-field">
-        <div class="EditFormatFieldsDialog-field-caption">
-          {{ $t('importExport.formats.settings.noFields') }}
+      <div v-if="!fields.length" class="SelectAssetPropFieldsDialog-field">
+        <div class="SelectAssetPropFieldsDialog-field-caption">
+          {{ $t('asset.fields.noFields') }}
         </div>
       </div>
       <div v-else class="Dialog-body">
-        <div class="EditFormatFieldsDialog-field">
-          <div class="EditFormatFieldsDialog-field-caption">
-            {{ $t('importExport.formats.settings.selectFields') }}
+        <div class="SelectAssetPropFieldsDialog-field">
+          <div class="SelectAssetPropFieldsDialog-field-caption">
+            {{ $t('asset.fields.selectFields') }}
           </div>
-          <div class="EditFormatFieldsDialog-field-control">
-            <div class="EditFormatFieldsDialog-fields-list-item">
-              <div class="EditFormatFieldsDialog-fields-list-item-drag hidden">
+          <select-asset-combo-box
+            v-if="dialog.state.showFilter"
+            class="SelectAssetPropFieldsDialog-filter"
+            :model-value="baseAsset"
+            :where="selectAssetWhere"
+            @update:model-value="selectBaseAsset"
+          ></select-asset-combo-box>
+          <div class="SelectAssetPropFieldsDialog-field-control">
+            <div class="SelectAssetPropFieldsDialog-fields-list-item">
+              <div
+                class="SelectAssetPropFieldsDialog-fields-list-item-drag hidden"
+              >
                 <i class="ri-draggable"></i>
               </div>
-              <div class="EditFormatFieldsDialog-fields-list-item-field">
+              <div class="SelectAssetPropFieldsDialog-fields-list-item-field">
                 <form-check-box
                   :caption="$t('common.dialogs.selectAll')"
                   :value="isAllSelected"
@@ -28,27 +37,31 @@
               </div>
             </div>
             <sortable-list
-              class="EditFormatFieldsDialog-fields-list"
+              class="SelectAssetPropFieldsDialog-fields-list"
               :list="fields"
               :id-key="(item) => item.field.ref"
-              handle-selector=".EditFormatFieldsDialog-fields-list-item-drag"
+              handle-selector=".SelectAssetPropFieldsDialog-fields-list-item-drag"
               @update:list="changeList($event)"
             >
               <template #default="{ item }">
-                <div class="EditFormatFieldsDialog-fields-list-item">
-                  <div class="EditFormatFieldsDialog-fields-list-item-drag">
+                <div class="SelectAssetPropFieldsDialog-fields-list-item">
+                  <div
+                    class="SelectAssetPropFieldsDialog-fields-list-item-drag"
+                  >
                     <i class="ri-draggable"></i>
                   </div>
-                  <div class="EditFormatFieldsDialog-fields-list-item-field">
+                  <div
+                    class="SelectAssetPropFieldsDialog-fields-list-item-field"
+                  >
                     <form-check-box
                       :caption="item.field.name"
                       :value="item.is_selected"
-                      class="EditFormatFieldsDialog-checkbox"
+                      class="SelectAssetPropFieldsDialog-checkbox"
                       @input="item.is_selected = $event"
                     >
-                      <div class="EditFormatFieldsDialog-checkbox-caption">
+                      <div class="SelectAssetPropFieldsDialog-checkbox-caption">
                         <div
-                          class="EditFormatFieldsDialog-checkbox-caption-name"
+                          class="SelectAssetPropFieldsDialog-checkbox-caption-name"
                         >
                           <caption-string
                             v-if="renamingField !== item.field.ref"
@@ -72,15 +85,17 @@
                           ></renamable-text>
                         </div>
                         <caption-string
-                          class="EditFormatFieldsDialog-checkbox-caption-title"
+                          class="SelectAssetPropFieldsDialog-checkbox-caption-title"
                           :value="item.field.title"
                         ></caption-string>
                       </div>
                     </form-check-box>
                   </div>
-                  <div class="EditFormatFieldsDialog-fields-list-item-manage">
+                  <div
+                    class="SelectAssetPropFieldsDialog-fields-list-item-manage"
+                  >
                     <button
-                      class="is-button is-button-icon-outlined EditFormatFieldsDialog-fields-list-item-manage-edit"
+                      class="is-button is-button-icon-outlined SelectAssetPropFieldsDialog-fields-list-item-manage-edit"
                       @click="renamingField = item.field.ref"
                     >
                       <i class="ri-pencil-fill"></i>
@@ -120,38 +135,43 @@ import SortableList from '../Common/SortableList.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import RenamableText from '../Common/RenamableText.vue';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import {
-  getExportFormatFieldRef,
-  type ExportFormatField,
-} from '../../logic/managers/ExportFormatManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import type { AssetFullInstanceR } from '../../logic/types/AssetFullInstance';
 import EditorManager from '../../logic/managers/EditorManager';
 import { BLOCK_NAME_META } from '../../logic/constants';
+import {
+  getAssetPropFieldRef,
+  type AssetPropField,
+} from './SelectAssetPropFields';
+import SelectAssetComboBox from './SelectAssetComboBox.vue';
+import type { AssetPropWhere } from '../../logic/types/PropsWhere';
+import type { AssetForSelection } from '../../logic/types/AssetsType';
 
-type ExportFormatFieldWithSelected = {
+type AssetPropFieldWithSelected = {
   is_selected: boolean;
-  field: ExportFormatField;
+  field: AssetPropField;
 };
 
 type DialogProps = {
   assetId: string | null;
-  fields: ExportFormatField[];
+  fields: AssetPropField[];
   baseFieldsOnly?: boolean;
+  showFilter?: boolean;
 };
 
 type DialogResult = {
-  fields: ExportFormatField[];
+  fields: AssetPropField[];
 } | null;
 
 export default defineComponent({
-  name: 'EditFormatFieldsDialog',
+  name: 'SelectAssetPropFieldsDialog',
   components: {
     DialogContent,
     FormCheckBox,
     SortableList,
     CaptionString,
     RenamableText,
+    SelectAssetComboBox,
   },
   props: {
     dialog: {
@@ -168,22 +188,36 @@ export default defineComponent({
             is_selected: true,
           };
         }),
-      ] as ExportFormatFieldWithSelected[],
+      ] as AssetPropFieldWithSelected[],
       isLoading: false,
       loadError: null as string | null,
       asset: null as AssetFullInstanceR | null,
       renamingField: null as string | null,
+      baseAsset: null as null | AssetForSelection,
     };
   },
   computed: {
     isAllSelected() {
       return !this.fields.some((el) => el.is_selected === false);
     },
+    selectAssetWhere(): AssetPropWhere {
+      const res: AssetPropWhere = {
+        workspaceids:
+          this.$getAppManager()
+            .get(ProjectManager)
+            .getWorkspaceIdByName('gdd') ?? null,
+      };
+      return res;
+    },
   },
   async mounted() {
     await this.load();
   },
   methods: {
+    async selectBaseAsset(val: AssetForSelection | null) {
+      this.baseAsset = val;
+      await this.load(val?.id, true);
+    },
     selectAll(val: boolean) {
       this.fields.map((el) => (el.is_selected = val));
     },
@@ -193,7 +227,7 @@ export default defineComponent({
         to: str.length,
       };
     },
-    async changeList(reordered_fields: ExportFormatFieldWithSelected[]) {
+    async changeList(reordered_fields: AssetPropFieldWithSelected[]) {
       this.fields = reordered_fields;
     },
     async save() {
@@ -201,32 +235,17 @@ export default defineComponent({
         fields: this.fields.reduce((res, field) => {
           if (field.is_selected) res.push(field.field);
           return res;
-        }, [] as ExportFormatField[]),
+        }, [] as AssetPropField[]),
       });
     },
-    async load() {
+    async load(asset_id?: string, reload?: boolean) {
       this.isLoading = true;
       this.loadError = null;
       try {
-        const base_asset_id = this.dialog.state.assetId;
-        if (!base_asset_id) {
-          const gdd_workspace_id = this.$getAppManager()
-            .get(ProjectManager)
-            .getWorkspaceIdByName('gdd');
-
-          this.asset = (
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .getAssetInstancesList({
-                where: { workspaceids: gdd_workspace_id },
-              })
-          ).list[0];
-        } else {
-          this.asset = await this.$getAppManager()
-            .get(CreatorAssetManager)
-            .getAssetInstance(base_asset_id);
+        if (reload) {
+          this.fields = [];
         }
-        if (!this.asset) return;
+        const base_asset_id = asset_id ?? this.dialog.state.assetId;
 
         const base_fields = [
           {
@@ -254,6 +273,26 @@ export default defineComponent({
           this.fields.push(base_field);
         }
 
+        if (!base_asset_id) {
+          return;
+          // const gdd_workspace_id = this.$getAppManager()
+          //   .get(ProjectManager)
+          //   .getWorkspaceIdByName('gdd');
+
+          // this.asset = (
+          //   await this.$getAppManager()
+          //     .get(CreatorAssetManager)
+          //     .getAssetInstancesList({
+          //       where: { workspaceids: gdd_workspace_id },
+          //     })
+          // ).list[0];
+        } else {
+          this.asset = await this.$getAppManager()
+            .get(CreatorAssetManager)
+            .getAssetInstance(base_asset_id);
+        }
+        if (!this.asset) return;
+
         if (this.dialog.state.baseFieldsOnly) {
           return;
         }
@@ -279,11 +318,12 @@ export default defineComponent({
               this.$getAppManager(),
             );
           for (const variable of block_variables) {
-            const ref = getExportFormatFieldRef({
+            const ref = getAssetPropFieldRef({
               block_name: variable.blockName,
               block_id: variable.blockId,
               prop_key: variable.field.propKey,
             });
+            console.log(ref);
             if (this.fields.some((item) => item.field.ref === ref)) {
               continue;
             }
@@ -292,6 +332,7 @@ export default defineComponent({
                 ref,
                 title: variable.title,
                 name: variable.name,
+                type: variable.dataType,
               },
               is_selected: false,
             });
@@ -309,25 +350,25 @@ export default defineComponent({
 <style lang="scss" scoped>
 @use '$style/Form';
 
-.EditFormatFieldsDialog {
+.SelectAssetPropFieldsDialog {
   width: 350px;
 }
-.EditFormatFieldsDialog-field-caption {
+.SelectAssetPropFieldsDialog-field-caption {
   text-align: center;
   margin-bottom: 5px;
   position: relative;
   padding: 0px 20px;
 }
-.EditFormatFieldsDialog-fields-list {
+.SelectAssetPropFieldsDialog-fields-list {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-.EditFormatFieldsDialog-fields-list-item {
+.SelectAssetPropFieldsDialog-fields-list-item {
   display: flex;
   align-items: center;
 
-  .EditFormatFieldsDialog-fields-list-item-drag {
+  .SelectAssetPropFieldsDialog-fields-list-item-drag {
     flex-shrink: 0;
     font-size: 15px;
     color: var(--local-sub-text-color);
@@ -340,30 +381,33 @@ export default defineComponent({
     }
   }
 
-  .EditFormatFieldsDialog-fields-list-item-field {
+  .SelectAssetPropFieldsDialog-fields-list-item-field {
     flex: 1;
     overflow: hidden;
     width: 100%;
     white-space: nowrap;
     text-overflow: ellipsis;
 
-    .EditFormatFieldsDialog-checkbox-caption {
+    .SelectAssetPropFieldsDialog-checkbox-caption {
       display: flex;
       flex-direction: column;
 
-      .EditFormatFieldsDialog-checkbox-caption-title {
+      .SelectAssetPropFieldsDialog-checkbox-caption-title {
         font-size: 12px;
         line-height: 1;
         color: var(--local-sub-text-color);
       }
     }
   }
-  .EditFormatFieldsDialog-fields-list-item-manage {
+  .SelectAssetPropFieldsDialog-fields-list-item-manage {
     display: flex;
     flex-shrink: 0;
   }
 }
-.EditFormatFieldsDialog-field {
+.SelectAssetPropFieldsDialog-field {
+  margin-bottom: 10px;
+}
+.SelectAssetPropFieldsDialog-filter {
   margin-bottom: 10px;
 }
 </style>
