@@ -23,6 +23,7 @@
         @rename="renameEntry(entry, $event)"
         @check="checkEntry(entry, $event)"
         @pre-enter="onItemEnter(entry)"
+        @paste-split="onPasteSplit(entry, $event)"
         @dragover="dragOver($event, entry)"
         @dragleave.prevent="dragLeave($event)"
         @drop="dragChecklistItemDrop($event, entry)"
@@ -55,6 +56,7 @@ import {
 } from '#components/utils/DomElementUtils';
 import {
   getBetweenIndexWithTimestamp,
+  getNextIndexWithTimestamp,
   getPreviousIndexWithTimestamp,
 } from '#components/Asset/Editor/blockUtils';
 import type {
@@ -408,6 +410,37 @@ export default defineComponent({
           }
         }
         this.focusEntry(next);
+      }
+    },
+    async onPasteSplit(
+      entry: ChecklistBlockItemObject,
+      values: AssetPropValue[],
+    ) {
+      const current_pos = this.entries.list.indexOf(entry);
+      if (current_pos < 0) return;
+      const next_entry = this.entries.list[current_pos + 1];
+      const op_id = this.assetChanger.makeOpId();
+      let prev_index = entry.index;
+      const props: Record<string, any> = {};
+      for (const val of values) {
+        if (!isFilledAssetPropValue(val)) continue;
+        const key = uuidv4();
+        const new_index = next_entry
+          ? getBetweenIndexWithTimestamp(prev_index, next_entry.index)
+          : getNextIndexWithTimestamp(prev_index);
+        props[`${key}\\index`] = new_index;
+        props[`${key}\\title`] = val;
+        prev_index = new_index;
+      }
+      if (Object.keys(props).length > 0) {
+        this.assetChanger.setBlockPropKeys(
+          this.resolvedBlock.assetId,
+          makeBlockRef(this.resolvedBlock),
+          null,
+          props,
+          op_id,
+        );
+        await this.save();
       }
     },
     focusEntry(entry: ChecklistBlockItemObject) {

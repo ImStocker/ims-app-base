@@ -403,6 +403,7 @@ export default {
     unregisteredBlockType: "Незарегистрированный тип блока: '{type}'",
     unregisteredFieldType: "Незарегистрированный тип поля: '{type}'",
     checklistBlockNewItem: 'Введите заголовок новой задачи',
+    checklistBlockDeleteItem: 'Удалить пункт',
     blockMenu: {
       rename: 'Изменить заголовок',
       setServiceName: 'Задать служебное имя',

@@ -392,6 +392,7 @@ export default {
     unregisteredBlockType: "Unregistered block type: '{type}'",
     unregisteredFieldType: "Unregistered field type: '{type}'",
     checklistBlockNewItem: 'Enter new task title',
+    checklistBlockDeleteItem: 'Delete item',
     blockMenu: {
       rename: 'Change title',
       setServiceName: 'Set service name',
