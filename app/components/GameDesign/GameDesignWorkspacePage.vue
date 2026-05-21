@@ -215,7 +215,6 @@ export default defineComponent({
     },
     canCreateElements() {
       return (
-        this.userInfo &&
         this.vm.workspace?.rights &&
         this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT
       );
