@@ -528,7 +528,6 @@ export default defineComponent({
   padding-bottom: 10px;
   padding-top: 10px;
   --panel-padding: 0;
-  user-select: all;
   @include devices-mixins.device-type(not-pc) {
     &.has-comments {
       margin-right: 20px;
