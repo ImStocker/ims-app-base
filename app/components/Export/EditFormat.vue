@@ -29,10 +29,7 @@ import FormBuilderModelBindObject from '../Form/FormBuilderModelBindObject';
 import type { AssetQueryWhere, AssetShort } from '../../logic/types/AssetsType';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import { makeProjectContextFromAppManager } from '../../logic/types/IProjectContext';
-import type {
-  ExportFormat,
-  ExportFormatField,
-} from '../../logic/managers/ExportFormatManager';
+import type { ExportFormat } from '../../logic/managers/ExportFormatManager';
 import {
   castAssetPropValueToString,
   type AssetPropValue,
@@ -60,6 +57,7 @@ import {
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
 } from '../../logic/constants';
+import type { AssetPropField } from '../Asset/SelectAssetPropFields';
 
 export default defineComponent({
   name: 'EditFormat',
@@ -427,7 +425,7 @@ export default defineComponent({
     },
     async getSampleAssetByTemplate(
       kind: ExportFormat['kind'],
-      fields: ExportFormatField[],
+      fields: AssetPropField[],
     ) {
       const initialWhere: AssetQueryWhere = this.formatAssetType?.AssetId
         ? { typeids: [this.formatAssetType.AssetId] }

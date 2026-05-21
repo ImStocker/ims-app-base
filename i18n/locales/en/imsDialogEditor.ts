@@ -35,7 +35,10 @@ export default {
       },
       callScript: {
         title: 'Call script',
-        // description: 'TODO',
+        description: 'Run another script inside the current one',
+      },
+      getProps: {
+        title: 'Get properties',
       },
       branch: {
         title: 'Branch',

@@ -34,8 +34,11 @@ export default {
         create: 'Создать функцию',
       },
       callScript: {
-        title: 'Call script',
-        // description: 'TODO',
+        title: 'Вызвать сценарий',
+        description: 'Запустить другой сценарий внутри текущего',
+      },
+      getProps: {
+        title: 'Получить свойства',
       },
       branch: {
         title: 'Условие',
