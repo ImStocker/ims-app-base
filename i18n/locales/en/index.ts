@@ -761,6 +761,11 @@ export default {
       '00000000-0000-0000-0000-000000000039':
         'Markdown\n\nUse to work with Markdown files',
     },
+    fields: {
+      noFields: 'No field was found',
+      selectFields: 'Select fields',
+      clickToSelectFields: 'Click to select fields',
+    },
   },
   discussions: {
     resend: 'Resend',
@@ -795,16 +800,12 @@ export default {
         selectType: 'Select export type',
         selectFormat: 'Select format',
         selectTemplate: 'Select template',
-        selectFields: 'Select fields',
         postProcessing: 'Post-processing',
         enterCustomCode: 'Enter custom JS code form transforming',
         format: 'Format',
         formatPreview: 'Preview format',
         formatEdit: 'Edit format',
-        clickToSelectFields: 'Click to select fields',
         fields: 'Fields',
-        noFields:
-          'No field was found. Please check the selection of elements included in the export.',
         noPreviewAssetLoaded:
           'No elements matched to provider filter. Cannot load preview',
         renameFullAssetInConfig:
