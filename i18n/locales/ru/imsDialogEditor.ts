@@ -209,8 +209,9 @@ export default {
     },
     var: {
       manageVariables: 'Управлять переменными',
-      currentScript: 'Текущий сценарий',
-      baseScript: 'Базовый сценарий',
+      currentScript: 'У текущего сценария',
+      ofScript: 'У «{script}»',
+      baseScript: 'У всех сценариев',
       editVariable: 'Редактировать переменную',
       duplicateVariable: 'Дублировать переменную',
       deleteVariable: 'Удалить переменную',
