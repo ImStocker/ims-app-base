@@ -104,7 +104,7 @@ type AssetHasChildrenRecord = {
 };
 
 export default class CreatorAssetManager extends AppSubManagerBase {
-  private readonly _apiManager: ApiManager;
+  protected _apiManager: ApiManager;
   protected _shortAssetsCache: EntityCache<AssetShort> | undefined;
   private _previewAssetsCache: EntityCache<AssetPreviewInfo> | undefined;
   private _hasChildrenAssetsCache:

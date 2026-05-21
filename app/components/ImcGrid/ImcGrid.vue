@@ -7,65 +7,76 @@
     }"
     @keydown="onKeyDown"
   >
-    <textarea
-      ref="hiddenText"
-      class="ImcGrid-hiddenText"
-      @beforeinput="onHiddenTextBeforeInput($event as InputEvent)"
-      @copy="onHiddenTextCopy"
-      @paste="onHiddenTextPaste"
-      @keydown="onHiddenTextKeyDown"
-    ></textarea>
-    <scrollable-table
-      class="ImcGrid-table"
-      :columns="columns"
-      :rows="rows"
-      row-id-key="id"
-      :get-body-cell-class="getBodyCellClassInner"
-      :allow-resize-columns="allowResizeColumns"
-      :workspace-id="workspaceId"
-      @mousedown="onMouseDown"
-      @mousemove="onMouseMove"
-      @resize-column="$emit('resizeColumn', $event)"
+    <context-menu-zone
+      class="ImcGrid-contextMenuZone"
+      :get-menu-list="getCellContextMenuList"
+      :disabled="editMode"
     >
-      <template
-        v-for="column of columns"
-        :key="column.name"
-        #[`header-${column.name}`]
+      <div
+        class="ImcGrid-contextMenuWrapper"
+        @contextmenu="onCellContextMenu($event)"
       >
-        <slot :name="`header-${column.name}`">{{ column.name }}</slot>
-      </template>
-      <template
-        v-for="(column, column_index) of columns"
-        #[`body-${column.name}`]="{ row, rowIndex }"
-        :key="column.name"
-      >
-        <props-block-value-stack
-          :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
-          class="ImcGrid-cell-inner"
-          :class="getCellClass(rowIndex, column_index)"
-          :form-state="
-            isCellSelected(rowIndex, column_index)
-              ? getPreviewCellFormState(row.values[column_index])
-              : row.values[column_index].formState
-          "
-          :field="row.values[column_index].field"
-          :edit-mode="
-            !readonly &&
-            !row.values[column_index].field.readonly &&
-            !!focusedCell &&
-            focusedCell.row === rowIndex &&
-            focusedCell.col === column_index &&
-            editMode
-          "
-          @input-props="onInputCell(rowIndex, column_index, $event)"
-          @change-props="onInputCell(rowIndex, column_index, $event, true)"
-        ></props-block-value-stack>
-      </template>
-    </scrollable-table>
-    <imc-editor
-      ref="hiddenImcEditor"
-      class="ImcGrid-hiddenImcEditor"
-    ></imc-editor>
+        <textarea
+          ref="hiddenText"
+          class="ImcGrid-hiddenText"
+          @beforeinput="onHiddenTextBeforeInput($event as InputEvent)"
+          @copy="onHiddenTextCopy"
+          @paste="onHiddenTextPaste"
+          @keydown="onHiddenTextKeyDown"
+        ></textarea>
+        <scrollable-table
+          class="ImcGrid-table"
+          :columns="columns"
+          :rows="rows"
+          row-id-key="id"
+          :get-body-cell-class="getBodyCellClassInner"
+          :allow-resize-columns="allowResizeColumns"
+          :workspace-id="workspaceId"
+          @mousedown="onMouseDown"
+          @mousemove="onMouseMove"
+          @resize-column="$emit('resizeColumn', $event)"
+        >
+          <template
+            v-for="column of columns"
+            :key="column.name"
+            #[`header-${column.name}`]
+          >
+            <slot :name="`header-${column.name}`">{{ column.name }}</slot>
+          </template>
+          <template
+            v-for="(column, column_index) of columns"
+            #[`body-${column.name}`]="{ row, rowIndex }"
+            :key="column.name"
+          >
+            <props-block-value-stack
+              :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
+              class="ImcGrid-cell-inner"
+              :class="getCellClass(rowIndex, column_index)"
+              :form-state="
+                isCellSelected(rowIndex, column_index)
+                  ? getPreviewCellFormState(row.values[column_index])
+                  : row.values[column_index].formState
+              "
+              :field="row.values[column_index].field"
+              :edit-mode="
+                !readonly &&
+                !row.values[column_index].field.readonly &&
+                !!focusedCell &&
+                focusedCell.row === rowIndex &&
+                focusedCell.col === column_index &&
+                editMode
+              "
+              @input-props="onInputCell(rowIndex, column_index, $event)"
+              @change-props="onInputCell(rowIndex, column_index, $event, true)"
+            ></props-block-value-stack>
+          </template>
+        </scrollable-table>
+        <imc-editor
+          ref="hiddenImcEditor"
+          class="ImcGrid-hiddenImcEditor"
+        ></imc-editor>
+      </div>
+    </context-menu-zone>
   </div>
 </template>
 
@@ -87,6 +98,8 @@ import {
 } from './ImcGrid';
 import ScrollableTable from '../ScrollableTable/ScrollableTable.vue';
 import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
+import ContextMenuZone from '../Common/ContextMenuZone.vue';
+import type { MenuListItem } from '../../logic/types/MenuList';
 import {
   applyPropsChange,
   AssetPropType,
@@ -112,10 +125,7 @@ import type {
   PropsFormState,
 } from '../../logic/types/PropsForm';
 import EditorManager from '../../logic/managers/EditorManager';
-import {
-  type SetClickOutsideCancel,
-  setImsClickOutside,
-} from '../utils/ui';
+import { type SetClickOutsideCancel, setImsClickOutside } from '../utils/ui';
 import { makeFormStateFromProps } from '../../logic/utils/assets';
 import { logicalTreeContains } from '../utils/logical-tree';
 import { isElementInteractive } from '../utils/DomElementUtils';
@@ -151,6 +161,7 @@ export default defineComponent({
     ScrollableTable,
     PropsBlockValueStack,
     ImcEditor,
+    ContextMenuZone,
   },
   props: {
     columns: { type: Array<ImcGridColumn>, required: true },
@@ -169,6 +180,17 @@ export default defineComponent({
           row_index: number,
           col_index: number,
         ) => string | string[] | Record<string, boolean> | null
+      >,
+      default: null,
+    },
+    getCellContextMenu: {
+      type: [Function, null] as PropType<
+        | ((
+            row: ImcGridRow,
+            row_index: number,
+            col_index: number,
+          ) => MenuListItem[])
+        | null
       >,
       default: null,
     },
@@ -196,6 +218,11 @@ export default defineComponent({
       ),
       focusLock: shallowRef(null as UiFocusLockHandler | null),
       clickOutside: null as SetClickOutsideCancel | null,
+      contextMenuCellInfo: null as {
+        row: ImcGridRow;
+        rowIndex: number;
+        colIndex: number;
+      } | null,
     };
   },
   computed: {
@@ -339,7 +366,7 @@ export default defineComponent({
       if (this.mouseClickContext) return;
 
       let clicked_on_already_focused = false;
-      const onmouseup = (mu_ev) => {
+      const onmouseup = (mu_ev: MouseEvent) => {
         if (!this.mouseClickContext) {
           return;
         }
@@ -350,7 +377,8 @@ export default defineComponent({
           clicked_on_already_focused &&
           this.focusedCell &&
           this.focusedCell.row === mouseup_coord.row &&
-          this.focusedCell.col === mouseup_coord.col
+          this.focusedCell.col === mouseup_coord.col &&
+          mu_ev.button === 0
         ) {
           this.editMode = true;
           if (
@@ -1010,6 +1038,29 @@ export default defineComponent({
       if (!this.$refs['hiddenImcEditor']) return null;
       return (this.$refs['hiddenImcEditor'] as InstanceType<typeof ImcEditor>)
         .quillController;
+    },
+    onCellContextMenu(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      const cell = target.closest<HTMLElement>('.ImcGrid-cell');
+      if (!cell) return;
+      const col_index = parseInt(cell.dataset.col ?? '', 10);
+      const row_index = parseInt(cell.dataset.row ?? '', 10);
+      if (isNaN(row_index) || isNaN(col_index)) return;
+      const row = this.rows[row_index];
+      if (!row) return;
+      this.contextMenuCellInfo = {
+        row,
+        rowIndex: row_index,
+        colIndex: col_index,
+      };
+    },
+    getCellContextMenuList(): MenuListItem[] {
+      if (!this.contextMenuCellInfo || !this.getCellContextMenu) return [];
+      return this.getCellContextMenu(
+        this.contextMenuCellInfo.row,
+        this.contextMenuCellInfo.rowIndex,
+        this.contextMenuCellInfo.colIndex,
+      );
     },
     getBodyCellClassInner(
       row: ImcGridRow,
