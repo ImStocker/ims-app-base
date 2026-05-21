@@ -58,6 +58,10 @@ export default defineComponent({
       type: [Function, null] as PropType<(() => MenuListItem[]) | null>,
       default: null,
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['dropdown-state-change'],
   data() {
@@ -91,6 +95,7 @@ export default defineComponent({
   methods: {
     onContextMenu(event: PointerEvent | TouchEvent) {
       if (!this.contextMenuRect) return;
+      if (this.disabled) return;
       if (
         this.ignoringCssSelector &&
         event.target &&

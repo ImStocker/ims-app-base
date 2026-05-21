@@ -10,6 +10,7 @@
     <context-menu-zone
       class="ImcGrid-contextMenuZone"
       :get-menu-list="getCellContextMenuList"
+      :disabled="editMode"
     >
       <div
         class="ImcGrid-contextMenuWrapper"
@@ -365,7 +366,7 @@ export default defineComponent({
       if (this.mouseClickContext) return;
 
       let clicked_on_already_focused = false;
-      const onmouseup = (mu_ev) => {
+      const onmouseup = (mu_ev: MouseEvent) => {
         if (!this.mouseClickContext) {
           return;
         }
@@ -376,7 +377,8 @@ export default defineComponent({
           clicked_on_already_focused &&
           this.focusedCell &&
           this.focusedCell.row === mouseup_coord.row &&
-          this.focusedCell.col === mouseup_coord.col
+          this.focusedCell.col === mouseup_coord.col &&
+          mu_ev.button === 0
         ) {
           this.editMode = true;
           if (
