@@ -1,29 +1,31 @@
 <template>
   <div class="ValueSwitcher button-group use-buttons-value-switcher">
-    <label
-      v-for="option in options"
-      :key="option[valueProp]"
-      class="ValueSwitcher-item is-button ref-item"
-      :class="{ selected: ownModelValue === option[valueProp] }"
-    >
-      <input
-        v-model="ownModelValue"
-        type="radio"
-        :value="option[valueProp]"
-        name="choose"
-        class="ValueSwitcher-item-input"
-      />
-      <span class="ValueSwitcher-item-label"
-        ><slot
-          name="option"
-          :option="option"
-          :selected="ownModelValue === option[valueProp]"
-          >{{
-            getOptionLabel ? getOptionLabel(option) : option[labelProp]
-          }}</slot
-        ></span
-      >
-    </label>
+    <template v-for="option in options" :key="option[valueProp]">
+      <slot :name="'option-wrapper-' + option[valueProp]" :option="option">
+        <label
+          class="ValueSwitcher-item is-button ref-item"
+          :class="{ selected: ownModelValue === option[valueProp] }"
+        >
+          <input
+            v-model="ownModelValue"
+            type="radio"
+            :value="option[valueProp]"
+            name="choose"
+            class="ValueSwitcher-item-input"
+          />
+          <span class="ValueSwitcher-item-label"
+            ><slot
+              name="option"
+              :option="option"
+              :selected="ownModelValue === option[valueProp]"
+              >{{
+                getOptionLabel ? getOptionLabel(option) : option[labelProp]
+              }}</slot
+            ></span
+          >
+        </label>
+      </slot>
+    </template>
   </div>
 </template>
 <script lang="ts">

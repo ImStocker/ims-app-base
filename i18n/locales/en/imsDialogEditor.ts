@@ -246,6 +246,7 @@ export default {
         local: 'Local',
         in: 'In',
         out: 'Out',
+        more: 'More',
         'in-out': 'In-Out',
       },
     },
