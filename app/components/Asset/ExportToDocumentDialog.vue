@@ -87,6 +87,7 @@ import {
 } from '../../logic/utils/convertToPDF';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { openBlobFile } from '../../logic/utils/dataUtils';
+import { replacementForVuePressGroupedCallout } from '#logic/utils/vue-press';
 
 type DialogProps = {
   assetIds?: string[];
@@ -196,26 +197,10 @@ export default defineComponent({
       const { gfm } = await import('@joplin/turndown-plugin-gfm');
       const turndownService = new turndown();
       turndownService.use(gfm);
-      turndownService.addRule('vuepressContainer', {
-        filter: (node: HTMLElement) => {
-          if (!node) return false;
-          return (
-            node.nodeName === 'P' &&
-            node.classList.contains('ql-callout') &&
-            !!node.dataset.type
-          );
-        },
-        replacement: (content: string, node: HTMLElement) => {
-          const allowedTypes = ['tip', 'warning', 'danger', 'details'];
-          const containerType = allowedTypes.includes(
-            node.dataset.type ?? 'tip',
-          )
-            ? node.dataset.type
-            : 'tip';
-          const titlePart = node.dataset.title ? ` ${node.dataset.title}` : '';
-          return `\n\n::: ${containerType}${titlePart}\n${content.trim()}\n:::\n\n`;
-        },
-      });
+      turndownService.addRule(
+        'vuePressGroupedCallout',
+        replacementForVuePressGroupedCallout(),
+      );
       const element = this.$refs['export-content'] as HTMLElement;
       const markdown = turndownService.turndown(element);
       const file_title = `${this.outputFileBaseName}.md`;
