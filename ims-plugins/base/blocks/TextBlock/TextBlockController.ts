@@ -9,6 +9,10 @@ import {
 
 export class TextBlockController extends BlockEditorController {
   override getContentItems(): BlockContentItem<void>[] {
+    if (!this.resolvedBlock) {
+      return [];
+    }
+
     const anchors_list: BlockContentItem<void>[] = [];
     if (this.resolvedBlock.title) {
       anchors_list.push({
