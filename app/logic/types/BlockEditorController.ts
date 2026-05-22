@@ -1,7 +1,6 @@
 import type { IAppManager } from '../managers/IAppManager';
 import type { ResolvedAssetBlock } from '../utils/assets';
 import type { BlockContentItem } from './BlockTypeDefinition';
-import { assert } from '../utils/typeUtils';
 import type { AssetBlockEditorVM } from '../vm/AssetBlockEditorVM';
 import type { IAssetBlockComponent } from './IAssetBlockComponent';
 import type { ExtendedMenuListItem } from './MenuList';
@@ -33,7 +32,7 @@ export abstract class BlockEditorController {
   getMountedBlockComponent<
     Component extends IAssetBlockComponent,
   >(): Component | null {
-    if (this.assetBlockEditor) {
+    if (this.assetBlockEditor && this.resolvedBlock) {
       return this.assetBlockEditor.getBlockMountedComponent<Component>(
         this.resolvedBlock.id,
       );
@@ -42,13 +41,11 @@ export abstract class BlockEditorController {
   }
 
   get resolvedBlock() {
-    const block = this.getResolvedBlock();
-    assert(block);
-    return block;
+    return this.getResolvedBlock();
   }
 
   getContentItems(): BlockContentItem<any>[] {
-    if (!this.resolvedBlock.title) {
+    if (!this.resolvedBlock?.title) {
       return [];
     }
     return [

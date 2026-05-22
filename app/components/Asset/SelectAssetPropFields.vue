@@ -1,7 +1,7 @@
 <template>
-  <div class="EditFormatFields is-input" @click="selectFields">
+  <div class="SelectAssetPropFields is-input" @click="selectFields">
     <div
-      class="EditFormatFields-content"
+      class="SelectAssetPropFields-content"
       :class="{
         'has-value': Array.isArray(ownModelValue) && ownModelValue.length,
       }"
@@ -16,7 +16,7 @@
         </div>
       </template>
       <template v-else>
-        {{ $t('importExport.formats.settings.clickToSelectFields') }}
+        {{ $t('asset.fields.clickToSelectFields') }}
       </template>
     </div>
   </div>
@@ -25,13 +25,13 @@
 import { defineComponent, type PropType } from 'vue';
 import type { AssetPropsPlainObjectValue } from '../../logic/types/Props';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
-import type { ExportFormatField } from '../../logic/managers/ExportFormatManager';
 import DialogManager from '../../logic/managers/DialogManager';
 import UiManager from '../../logic/managers/UiManager';
-import EditFormatFieldsDialog from './EditFormatFieldsDialog.vue';
+import SelectAssetPropFieldsDialog from '../Asset/SelectAssetPropFieldsDialog.vue';
+import type { AssetPropField } from './SelectAssetPropFields';
 
 export default defineComponent({
-  name: 'EditFormatFields',
+  name: 'SelectAssetPropFields',
   props: {
     modelValue: {
       type: Array as PropType<AssetPropsPlainObjectValue>,
@@ -45,12 +45,16 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showFilter: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:model-value'],
   computed: {
     ownModelValue: {
       get() {
-        return this.modelValue as ExportFormatField[];
+        return this.modelValue as AssetPropField[];
       },
       set(val: AssetPropsPlainObjectValue) {
         this.$emit('update:model-value', val);
@@ -65,10 +69,11 @@ export default defineComponent({
         .doTask(async () => {
           const res = await this.$getAppManager()
             .get(DialogManager)
-            .show(EditFormatFieldsDialog, {
+            .show(SelectAssetPropFieldsDialog, {
               assetId: this.assetId,
               fields: this.ownModelValue,
               baseFieldsOnly: this.baseFieldsOnly,
+              showFilter: this.showFilter,
             });
           if (!res) return;
           this.ownModelValue = res.fields;
@@ -78,12 +83,12 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
-.EditFormatFields {
+.SelectAssetPropFields {
   display: flex;
   cursor: pointer;
   gap: 10px;
 
-  .EditFormatFields-content {
+  .SelectAssetPropFields-content {
     display: flex;
     flex-wrap: wrap;
     font-style: italic;

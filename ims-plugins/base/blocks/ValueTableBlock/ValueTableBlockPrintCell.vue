@@ -1,22 +1,10 @@
 <template>
-  <div class="ValueTableBlockRowCell">
+  <div class="ValueTableBlockPrintCell">
     <props-block-value-stack
-      v-if="column.name !== tableData.primary"
       :form-state="tableData.values"
-      :edit-mode="editMode"
       :field="column"
       :block-id="resolvedBlock.id"
-      :asset-changer="assetChanger"
     ></props-block-value-stack>
-    <props-block-prop
-      v-else
-      :edit-mode="editMode"
-      :computed-state="true"
-      :same-value="true"
-      :model-value="primaryValue"
-      :validate-value="validatePrimaryValue"
-      @update:model-value="setPrimaryValue($event)"
-    ></props-block-prop>
   </div>
 </template>
 
@@ -30,29 +18,15 @@ import type {
   ValueTableBlockRowData,
 } from './ValueTableBlock';
 import PropsBlockValueStack from '../PropsBlock/PropsBlockValueStack.vue';
-import PropsBlockProp from '../PropsBlock/PropsBlockProp.vue';
-import {
-  makeBlockRef,
-  normalizeAssetPropPart,
-} from '#logic/types/Props';
+import { normalizeAssetPropPart } from '#logic/types/Props';
 import { v4 as uuidv4 } from 'uuid';
-import type { AssetChanger } from '#logic/types/AssetChanger';
 
 export default defineComponent({
-  name: 'ValueTableBlockRowCell',
+  name: 'ValueTableBlockPrintCell',
   components: {
     PropsBlockValueStack,
-    PropsBlockProp,
   },
   props: {
-    editMode: {
-      type: Boolean,
-      default: false,
-    },
-    assetChanger: {
-      type: Object as PropType<AssetChanger>,
-      required: true,
-    },
     rights: {
       type: Number as PropType<AssetRights>,
       required: true,
@@ -106,27 +80,6 @@ export default defineComponent({
       new_id = new_id.replace(/^_{2,}/, '_');
       const old_id = this.row.id;
 
-      let new_row_val: string | number | null = val;
-      if (!val) new_row_val = null;
-      else if (/^\d+$/.test(val)) new_row_val = parseInt(val);
-
-      const op = this.assetChanger.makeOpId();
-      this.assetChanger.renameBlockPropKey(
-        this.resolvedBlock.assetId,
-        makeBlockRef(this.resolvedBlock),
-        null,
-        old_id,
-        new_id,
-        op,
-      );
-      this.assetChanger.setBlockPropKey(
-        this.resolvedBlock.assetId,
-        makeBlockRef(this.resolvedBlock),
-        null,
-        `${new_id}\\values\\${this.tableData.primary}`,
-        new_row_val,
-        op,
-      );
       this.$emit('row-primary-changed', {
         old: old_id,
         new: new_id,

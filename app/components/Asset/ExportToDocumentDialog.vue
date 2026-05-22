@@ -87,6 +87,7 @@ import {
 } from '../../logic/utils/convertToPDF';
 import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { openBlobFile } from '../../logic/utils/dataUtils';
+import { replacementForVuePressGroupedCallout } from '#logic/utils/vue-press';
 
 type DialogProps = {
   assetIds?: string[];
@@ -196,6 +197,10 @@ export default defineComponent({
       const { gfm } = await import('@joplin/turndown-plugin-gfm');
       const turndownService = new turndown();
       turndownService.use(gfm);
+      turndownService.addRule(
+        'vuePressGroupedCallout',
+        replacementForVuePressGroupedCallout(),
+      );
       const element = this.$refs['export-content'] as HTMLElement;
       const markdown = turndownService.turndown(element);
       const file_title = `${this.outputFileBaseName}.md`;
@@ -204,6 +209,7 @@ export default defineComponent({
     async exportToPDF() {
       const { jsPDF } = await import('jspdf');
       const element = this.$refs['export-content'] as HTMLElement;
+      element.classList.add('pdf-export');
       const doc = new jsPDF({
         format: 'a4',
         unit: 'px',
@@ -440,5 +446,22 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   gap: 5px;
+}
+.pdf-export {
+  :deep(p.ql-callout[data-type='info']) {
+    background-color: #d2ebff;
+  }
+
+  :deep(p.ql-callout[data-type='warning']) {
+    background-color: #fbe3cc;
+  }
+
+  :deep(p.ql-callout[data-type='error']) {
+    background-color: #fbd6da;
+  }
+
+  :deep(p.ql-callout[data-type='solution']) {
+    background-color: #cef1dc;
+  }
 }
 </style>

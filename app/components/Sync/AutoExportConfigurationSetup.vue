@@ -8,10 +8,10 @@
     <div class="AutoExportConfigurationSetup-controls">
       <div v-if="exportDirLoading" class="loaderSpinner"></div>
       <button
-        v-else
+        v-else-if="configurations.length > 0"
         class="AutoExportConfigurationSetup-rootDir"
         :class="{ warning: !exportRootDir }"
-        disabled
+        :disabled="!exportRootDir"
         @click="changeRootDir"
       >
         <i

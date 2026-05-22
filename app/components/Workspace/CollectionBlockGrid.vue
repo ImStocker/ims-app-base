@@ -7,6 +7,7 @@
       :rows="rows"
       :columns="columns"
       :get-body-cell-class="getBodyCellClass"
+      :get-cell-context-menu="getCellContextMenu"
       @resize-column="onColumnResize"
       @change-cells="changeCells"
       @handle-key="handleGridKey($event)"
@@ -59,7 +60,10 @@ import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import DialogManager from '../../logic/managers/DialogManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
-import { AssetRights } from '../../logic/types/Rights';
+import {
+  AssetRights,
+  MIN_ASSET_RIGHTS_TO_DELETE,
+} from '../../logic/types/Rights';
 import type { SetClickOutsideCancel } from '../utils/ui';
 import { setImsClickOutside } from '../utils/ui';
 import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/WorkspaceCollectionPageVM';
@@ -199,6 +203,64 @@ export default defineComponent({
             ]);
           });
       }
+    },
+    getCellContextMenu(
+      row: ImcGridRow,
+      _row_index: number,
+      _col_index: number,
+    ) {
+      if (!this.userRole) return [];
+      const asset_item = this.vm.assetsContent.items.find(
+        (it) => it.id === row.id,
+      );
+      if (
+        !asset_item ||
+        (asset_item.rights as number) < MIN_ASSET_RIGHTS_TO_DELETE
+      ) {
+        return [];
+      }
+      return [
+        {
+          title: this.$t('assetEditor.deleteElement'),
+          icon: 'delete',
+          danger: true,
+          action: () => {
+            this.deleteRow(row);
+          },
+        },
+      ];
+    },
+    async deleteRow(row: ImcGridRow) {
+      const asset_id = row.id;
+      const asset_item = this.vm.assetsContent.items.find(
+        (it) => it.id === asset_id,
+      );
+      if (
+        !asset_item ||
+        (asset_item.rights as number) < AssetRights.FULL_ACCESS
+      ) {
+        return;
+      }
+      const answer = await this.$getAppManager()
+        .get(DialogManager)
+        .show(
+          ConfirmDialog,
+          {
+            header: this.$t('sourcePage.elements.deleteElements') + '?',
+            message: this.$t('sourcePage.elements.deleteElementsConfirm', {
+              count: 1,
+            }),
+            yesCaption: this.$t('common.dialogs.delete'),
+            danger: true,
+          },
+          this,
+        );
+      if (!answer) return;
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          await this.vm.assetsContent.deleteItemsByIds([asset_id]);
+        });
     },
     async addRow() {
       await this.$getAppManager()

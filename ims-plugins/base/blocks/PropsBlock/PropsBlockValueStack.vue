@@ -120,10 +120,7 @@
 <script lang="ts">
 import { type PropType, defineComponent } from 'vue';
 import type { AssetProps, AssetPropValue } from '#logic/types/Props';
-import type {
-  PropsFormFieldDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import { escapeRegExp } from '#logic/utils/stringUtils';
 import PropsBlockValue from './PropsBlockValue.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';

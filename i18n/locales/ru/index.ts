@@ -382,6 +382,7 @@ export default {
     inheritedValueLock:
       'Значение унаследовано и может быть изменено только в родительском элементе',
     inheritedValue: 'Значение унаследовано',
+    deleteElement: 'Удалить элемент',
     inheritedBlock: 'Блок унаследован',
     textBlockChangeText: 'Кликните, чтобы изменить текст',
     textBlockNoText: 'Здесь ничего нет',
@@ -402,6 +403,7 @@ export default {
     unregisteredBlockType: "Незарегистрированный тип блока: '{type}'",
     unregisteredFieldType: "Незарегистрированный тип поля: '{type}'",
     checklistBlockNewItem: 'Введите заголовок новой задачи',
+    checklistBlockDeleteItem: 'Удалить пункт',
     blockMenu: {
       rename: 'Изменить заголовок',
       setServiceName: 'Задать служебное имя',
@@ -772,6 +774,11 @@ export default {
       '00000000-0000-0000-0000-000000000039':
         'Markdown\n\nИспользуйте для работы с Markdown файлами',
     },
+    fields: {
+      noFields: 'Ни одного поля не найдено',
+      selectFields: 'Выберите поля',
+      clickToSelectFields: 'Нажмите, чтобы выбрать поля',
+    },
   },
   discussions: {
     resend: 'Отправить повторно',
@@ -806,16 +813,14 @@ export default {
         selectType: 'Выберите тип экспорта',
         selectFormat: 'Выберите формат',
         selectTemplate: 'Выберите шаблон',
-        selectFields: 'Выберите поля',
+
         postProcessing: 'Постобработка',
         enterCustomCode: 'Введите JS-код для преобразования',
         format: 'Формат',
         formatPreview: 'Предпросмотр формата',
         formatEdit: 'Редактор формата',
-        clickToSelectFields: 'Нажмите, чтобы выбрать поля',
         fields: 'Поля',
-        noFields:
-          'Ни одного поля не найдено. Пожалуйста, проверьте выбор включаемых в выгрузку элементов',
+
         noPreviewAssetLoaded:
           'Под указанный фильтр не попал ни один элемент. Невозможно отобразить превью',
         renameFullAssetInConfig:
