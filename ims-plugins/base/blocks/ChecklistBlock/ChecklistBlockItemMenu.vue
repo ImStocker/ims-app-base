@@ -38,7 +38,7 @@ export default defineComponent({
       return [
         {
           danger: true,
-          title: this.$t('boardPage.tasks.deleteItem'),
+          title: this.$t('assetEditor.checklistBlockDeleteItem'),
           action: async () =>
             await this.$getAppManager()
               .get(UiManager)

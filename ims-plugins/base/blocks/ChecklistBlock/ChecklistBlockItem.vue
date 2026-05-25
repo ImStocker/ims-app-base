@@ -57,6 +57,8 @@
         @focus="isItemEditorFocused = true"
         @blur="isItemEditorFocused = false"
         @vue:unmounted="isItemEditorFocused = false"
+        @paste="onPaste"
+        @input-value="inputValue = $event"
       />
       <imc-presenter
         v-else
@@ -82,8 +84,10 @@ import ImcEditor from '#components/ImcText/ImcEditor.vue';
 import ImcPresenter from '#components/ImcText/ImcPresenter.vue';
 import {
   type AssetPropValue,
+  type AssetPropValueTextOp,
   isFilledAssetPropValue,
 } from '#logic/types/Props';
+import { packQuillDeltaToPropValue } from '#components/ImcText/ImcContent';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { ChecklistBlockItemObject } from './ChecklistBlock';
 import TaskCheckbox from '#components/Common/TaskCheckbox.vue';
@@ -91,6 +95,7 @@ import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import type ChecklistBlockVM from './ChecklistBlockVM';
 import type { ChecklistBlockDragProps } from './ChecklistBlockVM';
 import ChecklistBlockItemMenu from './ChecklistBlockItemMenu.vue';
+import type { ImcEditorPastedEvent } from '#components/ImcText/ImcClipboard';
 
 export default defineComponent({
   name: 'ChecklistBlockItem',
@@ -139,10 +144,12 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['rename', 'check', 'preEnter', 'blur'],
+  emits: ['rename', 'check', 'preEnter', 'blur', 'pasteSplit'],
   data() {
+    const dirtyValue = this.entry ? this.entry.title : (null as AssetPropValue);
     return {
-      dirtyValue: this.entry ? this.entry.title : (null as AssetPropValue),
+      dirtyValue: dirtyValue,
+      inputValue: dirtyValue,
       isItemEditorFocused: false,
       allowDrag: true,
       isFocused: false,
@@ -170,6 +177,9 @@ export default defineComponent({
     editMode() {
       this.dirtyValue = this.entry ? this.entry.title : null;
     },
+    dirtyValue() {
+      this.inputValue = this.dirtyValue;
+    },
   },
   methods: {
     focusIn() {
@@ -178,6 +188,48 @@ export default defineComponent({
     focusOut() {
       this.isFocused = false;
       this.$emit('blur');
+    },
+    onPaste(event: ImcEditorPastedEvent) {
+      if (this.readonly) return;
+
+      if (isFilledAssetPropValue(this.inputValue)) return;
+
+      const ops = event.value?.Ops;
+      if (!ops || !ops.some((op: AssetPropValueTextOp) => op.insert === '\n'))
+        return;
+
+      event.handled = true;
+
+      const segments: AssetPropValueTextOp[][] = [];
+      let current: AssetPropValueTextOp[] = [];
+      for (const op of ops) {
+        if (op.insert === '\n') {
+          if (current.length > 0) {
+            segments.push(current);
+            current = [];
+          }
+        } else {
+          current.push(op);
+        }
+      }
+      if (current.length > 0) {
+        segments.push(current);
+      }
+
+      if (segments.length === 0) return;
+
+      this.dirtyValue = packQuillDeltaToPropValue({ ops: segments[0] });
+      this.rename(this.dirtyValue);
+
+      if (segments.length > 1) {
+        const remaining = segments
+          .slice(1)
+          .map((seg) => packQuillDeltaToPropValue({ ops: seg }))
+          .filter((v) => isFilledAssetPropValue(v));
+        if (remaining.length > 0) {
+          this.$emit('pasteSplit', remaining);
+        }
+      }
     },
     mouseEnterHandler(event: MouseEvent) {
       if (!event.target) return;

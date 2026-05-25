@@ -20,7 +20,12 @@
 import type { PropType } from 'vue';
 import { defineAsyncComponent, defineComponent } from 'vue';
 import './quill-init';
-import type { AssetPropValue } from '../../logic/types/Props';
+import {
+  AssetPropType,
+  getAssetPropType,
+  type AssetPropValue,
+  type AssetPropValueText,
+} from '../../logic/types/Props';
 import { unpackQuillDeltaFromPropValue } from './ImcContent';
 import type { ProjectInfoForLink } from '../../logic/router/routes-helpers';
 import type { Delta } from 'quill/core';

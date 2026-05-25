@@ -159,7 +159,7 @@ export default defineComponent({
             (this as any)._clickOutside,
             false,
           );
-          window.addEventListener('click', (this as any)._clickOutside, false);
+          window.addEventListener('click', (this as any)._clickOutside, true);
         }
       }
     },

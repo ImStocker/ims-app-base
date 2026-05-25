@@ -19,6 +19,7 @@ export interface IImcEditorComponent {
   onEscape(): Promise<void>;
   onFocus(): Promise<void>;
   onBlur(): Promise<void>;
+  emitPaste(delta: Delta): boolean;
   $getAppManager(): IAppManager;
   onTextChange(content: Delta): void;
   isFocused(): boolean;

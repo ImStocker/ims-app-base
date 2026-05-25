@@ -7,11 +7,17 @@ import type { ImcEditorQuillController } from './ImcEditorQuillController';
 import { base64ToBuffer } from '../../logic/utils/dataUtils';
 import EditorManager from '../../logic/managers/EditorManager';
 import UiManager from '../../logic/managers/UiManager';
+import type { AssetPropValueText } from '#logic/types/Props';
 
 const ALLOWED_MIME_TYPES = {
   'image/jpeg': 'jpeg',
   'image/png': 'png',
   'image/gif': 'gif',
+};
+
+export type ImcEditorPastedEvent = {
+  value: AssetPropValueText;
+  handled: boolean;
 };
 
 export class ImcClipboard extends Clipboard {
@@ -23,11 +29,7 @@ export class ImcClipboard extends Clipboard {
   ) {
     const formats = this.quill.getFormat(range.index);
     const pastedDelta = this.convert({ text, html }, formats);
-    const delta = new Delta()
-      .retain(range.index)
-      .delete(range.length)
-      .concat(pastedDelta);
-    delta.forEach((op: any) => {
+    pastedDelta.forEach((op: any) => {
       if (op.insert && op.insert.image) {
         if (!this.controller) return;
         const image_uri = op.insert.image;
@@ -101,12 +103,19 @@ export class ImcClipboard extends Clipboard {
       }
     });
 
-    this.quill.updateContents(delta, Quill.sources.USER);
-    // range.length contributes to delta.length()
-    this.quill.setSelection(
-      delta.length() - range.length,
-      Quill.sources.SILENT,
-    );
-    this.quill.scrollSelectionIntoView();
+    const handled = this.controller?.component?.emitPaste(pastedDelta);
+    if (!handled) {
+      const applyingDelta = new Delta()
+        .retain(range.index)
+        .delete(range.length)
+        .concat(pastedDelta);
+      this.quill.updateContents(applyingDelta, Quill.sources.USER);
+      // range.length contributes to delta.length()
+      this.quill.setSelection(
+        applyingDelta.length() - range.length,
+        Quill.sources.SILENT,
+      );
+      this.quill.scrollSelectionIntoView();
+    }
   }
 }

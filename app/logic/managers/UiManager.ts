@@ -465,6 +465,18 @@ export default class UiManager extends AppSubManagerBase {
     return true;
   }
 
+  protected _createBeforeUnloadHandler(): ((event: Event) => void) | null {
+    return (event: Event) => {
+      this.blurActiveElement(); // NOTE: don't await
+
+      if (!this.checkNavigationGuards()) {
+        event.preventDefault();
+        // noinspection JSDeprecatedSymbols
+        (event as any).returnValue = '';
+      }
+    };
+  }
+
   setNavigationGuard(
     check: () => boolean,
     pass: () => Promise<boolean> | boolean,
@@ -479,20 +491,13 @@ export default class UiManager extends AppSubManagerBase {
       this.navigationGuards.length === 1 &&
       !this.navigationBeforeUnloadHandler
     ) {
-      this.navigationBeforeUnloadHandler = (event: Event) => {
-        this.blurActiveElement(); // NOTE: don't await
-
-        if (!this.checkNavigationGuards()) {
-          event.preventDefault();
-          // noinspection JSDeprecatedSymbols
-          (event as any).returnValue = '';
-        }
-      };
-
-      window.addEventListener(
-        'beforeunload',
-        this.navigationBeforeUnloadHandler,
-      );
+      this.navigationBeforeUnloadHandler = this._createBeforeUnloadHandler();
+      if (this.navigationBeforeUnloadHandler) {
+        window.addEventListener(
+          'beforeunload',
+          this.navigationBeforeUnloadHandler,
+        );
+      }
     }
 
     return {
