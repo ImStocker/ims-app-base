@@ -264,6 +264,8 @@ export default {
       restart: 'Перезапустить',
       stepBack: 'Шаг назад',
       stepForward: 'Шаг вперед',
+      scriptCompleted: 'Сценарий завершен',
+      finishExecution: 'Завершить выполнение',
     },
     contents: {
       varGet: 'Получить',

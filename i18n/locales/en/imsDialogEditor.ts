@@ -265,6 +265,8 @@ export default {
       restart: 'Restart',
       stepBack: 'Step back',
       stepForward: 'Step forward',
+      scriptCompleted: 'Script completed',
+      finishExecution: 'Finish execution',
     },
     contents: {
       varGet: 'Get',
