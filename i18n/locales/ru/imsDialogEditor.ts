@@ -209,8 +209,9 @@ export default {
     },
     var: {
       manageVariables: 'Управлять переменными',
-      currentScript: 'Текущий сценарий',
-      baseScript: 'Базовый сценарий',
+      currentScript: 'У текущего сценария',
+      ofScript: 'У «{script}»',
+      baseScript: 'У всех сценариев',
       editVariable: 'Редактировать переменную',
       duplicateVariable: 'Дублировать переменную',
       deleteVariable: 'Удалить переменную',
@@ -245,6 +246,7 @@ export default {
         local: 'Локальные',
         in: 'Входные',
         out: 'Выходные',
+        more: 'Больше',
         'in-out': 'Входные/выходные',
       },
     },
@@ -262,6 +264,8 @@ export default {
       restart: 'Перезапустить',
       stepBack: 'Шаг назад',
       stepForward: 'Шаг вперед',
+      scriptCompleted: 'Сценарий завершен',
+      finishExecution: 'Завершить выполнение',
     },
     contents: {
       varGet: 'Получить',

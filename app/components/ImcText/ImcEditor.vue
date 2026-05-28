@@ -88,6 +88,7 @@ import type { ImcLinkDrowdownInterface, ImcLinkOption } from './ImcLinksModule';
 import type ImcEditorAutocomplete from './ImcEditorAutocomplete.vue';
 import {
   type AssetPropValue,
+  convertAssetPropValueTextOpsToStr,
   sameAssetPropValues,
 } from '../../logic/types/Props';
 import {
@@ -116,6 +117,7 @@ import {
   checkYandexBrowser,
 } from '../utils/browser';
 import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
+import type { ImcEditorPastedEvent } from './ImcClipboard';
 
 const BASE_TOOLBAR_OFFSET = 10;
 
@@ -160,6 +162,7 @@ export default defineComponent({
     'escape',
     'view-ready',
     'inputValue',
+    'paste',
   ],
   data() {
     return {
@@ -449,6 +452,18 @@ export default defineComponent({
           }, 1);
         });
       }
+    },
+    emitPaste(delta: Delta): boolean {
+      const conv = convertAssetPropValueTextOpsToStr(delta.ops);
+      const event: ImcEditorPastedEvent = {
+        handled: false,
+        value: {
+          Ops: delta.ops,
+          Str: conv.str,
+        },
+      };
+      this.$emit('paste', event);
+      return event.handled;
     },
   },
 });
