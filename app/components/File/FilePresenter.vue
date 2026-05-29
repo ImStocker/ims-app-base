@@ -88,7 +88,7 @@ import { useFilePresenterParams } from './FilePresenter';
 import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ThumbParams } from '../../logic/utils/files';
-import { getSrcByFileId } from '../../logic/utils/files';
+import FileManager from '../../logic/managers/FileManager';
 import EditorManager from '../../logic/managers/EditorManager';
 
 export default defineComponent({
@@ -124,7 +124,7 @@ export default defineComponent({
     },
     localFilePath() {
       if (this.fileValue?.Store !== 'loc-project') return;
-      return getSrcByFileId(this.$getAppManager(), this.fileValue);
+      return this.$getAppManager().get(FileManager).getFileUrl(this.fileValue);
     },
     fileTitleParts() {
       const title = this.fileValue?.Title ?? '';

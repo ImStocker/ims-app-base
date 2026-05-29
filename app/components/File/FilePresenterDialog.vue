@@ -57,7 +57,7 @@ import {
 } from '../../logic/types/Props';
 import type { DialogInterface } from '../../logic/managers/DialogManager';
 import type { GalleryBlockItemObject } from '~ims-plugin-base/blocks/GalleryBlock/GalleryBlock';
-import { SharpFit } from '../../logic/utils/files';
+import { ThumbParamsFit } from '../../logic/utils/files';
 
 type DialogProps = {
   value: AssetPropValue;
@@ -87,7 +87,7 @@ export default defineComponent({
       thumbParams: {
         width: 1920,
         height: 1080,
-        fit: SharpFit.COVER,
+        fit: ThumbParamsFit.COVER,
       },
     };
   },
