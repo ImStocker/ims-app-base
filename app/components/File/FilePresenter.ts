@@ -7,7 +7,7 @@ import {
   type AssetPropValueFile,
 } from '../../logic/types/Props';
 import type { ThumbParams } from '../../logic/utils/files';
-import { getSrcByFileId } from '../../logic/utils/files';
+import FileManager from '../../logic/managers/FileManager';
 
 export type FilePresenterParams = {
   icon: string;
@@ -85,10 +85,9 @@ export function useFilePresenterParams(
       break;
   }
   const link = file
-    ? getSrcByFileId(
-        appManager,
+    ? appManager.get(FileManager).getFileUrl(
         file,
-        thumbParams && inlineType === 'img' ? thumbParams : null,
+        thumbParams && inlineType === 'img' ? thumbParams : undefined,
       )
     : null;
   return {

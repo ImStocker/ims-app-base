@@ -77,9 +77,7 @@ export default {
             if (document.activeElement) document.activeElement.blur();
             // Класс, ели открыт хотя бы один диалог
             if (this.dialogs.length > 0) {
-                if (document.body.clientHeight < document.body.scrollHeight){
-                    document.body.classList.add('state-dialog-disable-scroll');
-                }
+              document.body.classList.add('state-dialog-disable-scroll');
             }
             else document.body.classList.remove('state-dialog-disable-scroll');
         },
