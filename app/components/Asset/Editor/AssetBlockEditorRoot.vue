@@ -1,12 +1,18 @@
 <template>
   <div class="AssetBlockEditorRoot">
     <slot :asset-block-editor="assetBlockEditor"></slot>
-    <asset-editor-toolbar-widget
+    <slot
       v-if="!isReadonly && isActiveEditor"
-      class="AssetBlockEditor-toolbar"
-      :toolbar-vm="assetBlockEditor"
+      name="toolbar"
+      :asset-block-editor="assetBlockEditor"
       :hide-actions="toolbarHideActions"
-    ></asset-editor-toolbar-widget>
+    >
+      <asset-editor-toolbar-widget
+        class="AssetBlockEditor-toolbar"
+        :toolbar-vm="assetBlockEditor"
+        :hide-actions="toolbarHideActions"
+      ></asset-editor-toolbar-widget>
+    </slot>
   </div>
 </template>
 

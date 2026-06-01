@@ -1,12 +1,13 @@
 <template>
   <div class="SelectWorkspaceListBox">
     <FormSearch
+      v-if="showSearch"
       class="SelectWorkspaceListBox-search"
       :value="searchTextOwn"
       :autofocus="true"
       @change="searchTextOwn = $event"
     ></FormSearch>
-    <div class="SelectWorkspaceListBox-allOptions">
+    <div class="SelectWorkspaceListBox-allOptions ref-list">
       <div class="SelectWorkspaceListBox-items tiny-scrollbars">
         <project-workspaces-presenter
           :workspace-where="workspaceWhereComp"
@@ -51,6 +52,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showSearch: {
+      type: Boolean,
+      default: true,
+    }
   },
   emits: ['update:modelValue', 'update:searchText'],
   data() {

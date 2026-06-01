@@ -86,7 +86,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     if (
       set.assetWhere !== undefined &&
       JSON.stringify(set.assetWhere) !==
-        JSON.stringify(this._options.assetWhere)
+      JSON.stringify(this._options.assetWhere)
     ) {
       this._options.assetWhere = set.assetWhere;
       this._analyzedWhere = null;
@@ -95,7 +95,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     if (
       set.additionalOptions !== undefined &&
       JSON.stringify(set.additionalOptions) !==
-        JSON.stringify(this._options.additionalOptions)
+      JSON.stringify(this._options.additionalOptions)
     ) {
       this._options.additionalOptions = set.additionalOptions;
       need_reload = true;
@@ -110,7 +110,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     if (
       set.hideNonAlternativeWorkspaces !== undefined &&
       set.hideNonAlternativeWorkspaces !==
-        this._options.hideNonAlternativeWorkspaces
+      this._options.hideNonAlternativeWorkspaces
     ) {
       this._options.hideNonAlternativeWorkspaces =
         set.hideNonAlternativeWorkspaces;
@@ -688,7 +688,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
         const old_owner_state = this.findOwnerState(`asset:${asset.id}`);
         const new_owner_id =
           this.options.showWorkspaceTree &&
-          !this.isRootWorkspaceId(asset.workspaceId)
+            !this.isRootWorkspaceId(asset.workspaceId)
             ? `workspace:${asset.workspaceId}`
             : '';
         const new_owner_state = this.getState(new_owner_id);
