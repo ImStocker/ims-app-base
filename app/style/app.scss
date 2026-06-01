@@ -22,7 +22,7 @@ $light-color-selected-dropdown-list-item: #E6E6E6;
 $dark-color-selected-dropdown-list-item: #4C4B48;
 $notification-task-background-color: #999;
 
-:root{
+:root {
   --color-main-yellow: #{$color-main-yellow};
   --color-inherited-value: #{$color-inherited-value};
   --color-ready-value: #{$color-ready-value};
@@ -43,14 +43,16 @@ body {
   overscroll-behavior-x: none;
 }
 
-@include devices-mixins.device-type(pc){
-  body.state-dialog-disable-scroll{
+@include devices-mixins.device-type(pc) {
+  body.state-dialog-disable-scroll {
     overflow: hidden;
     padding-right: 17px;
-    .ProjectLayout-Header{
+
+    .ProjectLayout-Header {
       padding-right: 17px + 12px;
     }
-    .SpaceHeader{
+
+    .SpaceHeader {
       padding-right: 17px;
     }
   }
@@ -66,8 +68,8 @@ body {
   --vs-dropdown-z-index: 9999;
 
   &::-webkit-scrollbar-track {
-      -webkit-box-shadow: 5px 5px 5px -5px rgb(34 60 80 / 20%) inset;
-      background-color: #ffffff;
+    -webkit-box-shadow: 5px 5px 5px -5px rgb(34 60 80 / 20%) inset;
+    background-color: #ffffff;
   }
 }
 
@@ -75,17 +77,19 @@ body {
   .is-button:first-child {
     --button-border-radius: 4px 0px 0px 4px !important;
   }
+
   .is-button:not(:first-child):not(:last-child) {
     --button-border-radius: 0px !important;
     // border-left-width: 0px;
     // border-right-width: 0px;
   }
+
   .is-button:last-child {
     --button-border-radius: 0px 4px 4px 0px !important;
   }
 }
 
-.App-content{
+.App-content {
   background: var(--local-bg-color);
 
   .GameDesignPage {
@@ -99,7 +103,8 @@ body {
     }
   }
 }
-a{
+
+a {
   color: var(--local-link-color);
 }
 
@@ -118,11 +123,13 @@ a{
     width: 900px;
   }
 }
+
 @media (max-width: 954px) {
   .layout-center {
     width: 700px;
   }
 }
+
 @media (max-width: 757px) {
   .layout-center {
     width: 600px;
@@ -136,23 +143,18 @@ a{
   right: 0;
 }
 
-header{
-  background: var(--color-main-yellow) !important;
-  color: #000 !important;
-}
-
-h5{
+h5 {
   margin: 10px auto;
 }
 
-.Dialog-header{
+.Dialog-header {
   font-size: 18px;
   margin-bottom: 20px;
   font-weight: bold;
   text-align: center;
 }
 
-.Dialog-message{
+.Dialog-message {
   font-size: 16px;
   margin-bottom: 20px;
 }
@@ -165,29 +167,31 @@ h5{
   text-align: center;
 }
 
-.FlexDialog-message{
+.FlexDialog-message {
   display: flex;
   margin-bottom: 10px;
   font-size: 16px;
   align-items: center;
 }
 
-.FlexDialog-message-name{
+.FlexDialog-message-name {
   min-width: 150px;
 }
-.FlexDialog-message-input{
+
+.FlexDialog-message-input {
   width: 100%;
 }
 
 
-.Page-ActiveTab-Header{
+.Page-ActiveTab-Header {
   margin-left: 9px;
   color: var(--color-main-yellow);
   font-weight: bold;
-  padding-top:4px;
+  padding-top: 4px;
   padding-bottom: 14px;
 }
-.Page-ActiveTab-Content{
+
+.Page-ActiveTab-Content {
   @include new-vars-mixins.is-panel;
   width: 100%;
   height: auto;
@@ -195,87 +199,100 @@ h5{
   max-height: 520px;
 }
 
-.Page-ActiveTab-Content-Common{
+.Page-ActiveTab-Content-Common {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.Page-ActiveTab-Content-Common-item-header{
+
+.Page-ActiveTab-Content-Common-item-header {
   width: 214px;
 }
-.Page-ActiveTab-Content-Common-item{
+
+.Page-ActiveTab-Content-Common-item {
   min-height: 32px;
   display: flex;
   align-items: center;
 }
-.Page-ActiveTab-Content-Common-item-value-input{
+
+.Page-ActiveTab-Content-Common-item-value-input {
   width: 100%;
 }
-.Page-ActiveTab-Content-Common-item-checkboxes{
+
+.Page-ActiveTab-Content-Common-item-checkboxes {
   align-items: baseline;
 }
-.Page-ActiveTab-Content-Common-item-checkboxes-caption{
+
+.Page-ActiveTab-Content-Common-item-checkboxes-caption {
   width: 100%;
   padding-left: 8px;
   cursor: pointer;
 }
-.Page-ActiveTab-Content-Common-buttons{
+
+.Page-ActiveTab-Content-Common-buttons {
   display: flex;
   gap: 10px;
 }
-.ProfilePage-ActiveTab-Content-buttons{
+
+.ProfilePage-ActiveTab-Content-buttons {
   display: flex;
   gap: 10px;
   margin-top: 14px;
   margin-bottom: 3px;
 }
 
-.q-item:hover{
+.q-item:hover {
   background-color: var(--light-color-selected-dropdown-list-item);
 }
+
 .q-dark .q-item:hover {
   background-color: var(--default-bg-primary);
 }
 
 
-.q-item__label.style-danger{
-  color:var(--color-text-danger);
+.q-item__label.style-danger {
+  color: var(--color-text-danger);
 }
 
 .tiny-scrollbars,
 .vs__dropdown-menu,
 .is-dropdown,
-.Page-ActiveTab-Content{
+.Page-ActiveTab-Content {
   @include scrollbars-mixins.tiny-scrollbars;
 }
+
 .large-scrollbars,
 .PageWithLeftMenu-ActiveTab {
   @include scrollbars-mixins.large-scrollbars;
 }
-.error-message-block{  
+
+.error-message-block {
   text-align: center;
-  padding:15px;
+  padding: 15px;
   border: 1px solid var(--color-main-error);
   border-radius: 4px;
+
   &,
-  a{
-      color: var(--color-main-error);
+  a {
+    color: var(--color-main-error);
   }
 }
 
-.Screen-menu{
+.Screen-menu {
   position: relative;
-  text-align: left; 
+  text-align: left;
   width: 100%;
   max-width: 616px;
   color: #999;
   margin-bottom: 20px;
 }
+
 .SpacePageContent-wrapper {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .SpacePageContent-header-wrapper {
   display: flex;
   width: 100%;
@@ -306,10 +323,12 @@ h5{
     }
   }
 }
-.gray-link{
+
+.gray-link {
   color: #999;
 }
-.gray-link:hover{
+
+.gray-link:hover {
   text-decoration: none;
 }
 
@@ -335,6 +354,7 @@ h5{
     color: var(--local-header-color);
     margin: 0;
   }
+
   .App-header h2 {
     font-size: 20px;
     font-weight: 700;
@@ -356,16 +376,17 @@ h5{
   padding: 0;
   margin-top: -1px;
   color: #666;
+
   &:hover {
     color: #eee;
     cursor: pointer;
   }
 }
 
-.App-fullPage{
+.App-fullPage {
   min-height: 100%;
 }
 
-.disable-page-loading-indicator .App-loadingIndicator{
-  display:none;
+.disable-page-loading-indicator .App-loadingIndicator {
+  display: none;
 }
