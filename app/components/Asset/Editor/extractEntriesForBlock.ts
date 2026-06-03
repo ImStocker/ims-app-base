@@ -1,8 +1,8 @@
+import type { AssetBlockEntity } from '#logic/types/BlocksType';
 import {
   castAssetPropValueToFloat,
   convertAssetPropsToPlainObject,
 } from '../../../logic/types/Props';
-import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
 
 export type ExtractedEntriesForBlockItem = {
   key: string;
@@ -17,7 +17,7 @@ export type ExtractedEntriesForBlock<T extends ExtractedEntriesForBlockItem> = {
 };
 
 export function extractEntriesForBlock<T extends ExtractedEntriesForBlockItem>(
-  block: ResolvedAssetBlock,
+  block: AssetBlockEntity,
   reader: (
     props: Record<string, any>,
     base_entry: ExtractedEntriesForBlockItem,
@@ -38,9 +38,9 @@ export function extractEntriesForBlock<T extends ExtractedEntriesForBlockItem>(
     if (ignore_keys.includes(key)) {
       continue;
     }
-    const index = castAssetPropValueToFloat(entry_props.index) ?? 0;
+    const index = castAssetPropValueToFloat(entry_props?.index) ?? 0;
     const inherited = !!inherited_plain && inherited_plain.hasOwnProperty(key);
-    const entry = reader(entry_props, {
+    const entry = reader(entry_props ?? {}, {
       key,
       index,
       inherited,
