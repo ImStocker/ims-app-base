@@ -47,7 +47,9 @@
     <template #empty>
       <div class="ProjectTreePresenter-empty">
         {{
-          noItemsCaption !== null ? noItemsCaption : $t('gddPage.menu.empty')
+          noItemsCaption !== null
+            ? noItemsCaption
+            : $t('gddPage.menu.noSubFolders')
         }}
       </div>
     </template>
