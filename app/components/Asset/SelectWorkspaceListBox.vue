@@ -11,7 +11,7 @@
       <div class="SelectWorkspaceListBox-items tiny-scrollbars">
         <project-workspaces-presenter
           :workspace-where="workspaceWhereComp"
-          :is-drag-allowed="false"
+          :allow-drag-change="allowDragChange"
           :selection="curSelection"
           @update:selection="changeValue($event[0])"
         ></project-workspaces-presenter>
@@ -55,7 +55,11 @@ export default defineComponent({
     showSearch: {
       type: Boolean,
       default: true,
-    }
+    },
+    allowDragChange: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['update:modelValue', 'update:searchText'],
   data() {
