@@ -1,6 +1,9 @@
 <template>
   <component
-    :is="layoutDescriptor.pageComponent"
+    :is="
+      layoutDescriptor.pageComponent ??
+      defaultAssetLayoutDescriptor.pageComponent
+    "
     v-if="openedAssetId"
     ref="layout"
     class="GameDesignPage"
@@ -53,6 +56,11 @@ export default defineComponent({
       return this.$getAppManager()
         .get(EditorManager)
         .getLayoutDescriptorForAsset(this.currentAssetFull);
+    },
+    defaultAssetLayoutDescriptor() {
+      return this.$getAppManager()
+        .get(EditorManager)
+        .getDefaultLayoutDescriptor();
     },
     currentAssetFull() {
       return this.vm.assetFullEditorVM.getOpenedAssetFull();

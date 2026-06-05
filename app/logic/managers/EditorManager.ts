@@ -34,17 +34,19 @@ export type EditorContextForAssetRequested = {
   release: () => void;
 };
 
+export type AssetLayoutDescriptorProps = {
+  toolbarShowBlockCopyPaste?: boolean;
+  headerLocaleButton?: boolean;
+  headerPropsButton?: boolean;
+  headerHideParent?: boolean;
+};
+
 export type AssetLayoutDescriptor = {
   name: string;
-  pageComponent: Component;
-  editorComponent: Component;
+  pageComponent?: Component;
+  editorComponent?: Component;
   popupComponent?: Component;
-  props: {
-    toolbarShowBlockCopyPaste?: boolean;
-    headerLocaleButton?: boolean;
-    headerPropsButton?: boolean;
-    headerHideParent?: boolean;
-  };
+  props: AssetLayoutDescriptorProps;
 };
 
 type EditorContextForAssetHolder = {
@@ -69,7 +71,7 @@ const AssetLayoutDefault = markRaw({
   popupComponent: defineAsyncComponent(
     () => import('../../components/Asset/AssetPreviewDialog.vue'),
   ),
-  props: {},
+  props: {} as AssetLayoutDescriptorProps,
 });
 
 export default abstract class EditorManager extends AppSubManagerBase {
@@ -245,7 +247,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
             const layout = this.getLayoutDescriptorForAsset(res);
             popup = layout.popupComponent;
           }
-          return popup ?? AssetLayoutDefault.popupComponent;
+          return popup ?? this.getDefaultLayoutDescriptor().popupComponent;
         })
         .then(async (dialogComponent) => {
           const dialog = this.appManager
@@ -488,7 +490,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
     return this._assetLayoutDescriptors.find((b) => b.name === layout) ?? null;
   }
 
-  getDefaultLayoutDescriptor(): AssetLayoutDescriptor {
+  getDefaultLayoutDescriptor() {
     return AssetLayoutDefault;
   }
 

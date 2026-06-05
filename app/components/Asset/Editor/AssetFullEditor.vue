@@ -21,7 +21,10 @@
           :show-comments="showComments"
         >
           <component
-            :is="layoutDescriptor.editorComponent"
+            :is="
+              layoutDescriptor.editorComponent ??
+              defaultAssetLayoutDescriptor.editorComponent
+            "
             ref="editorComp"
             class="AssetFullEditor-blockEditor"
             :asset-block-editor="assetBlockEditor"
@@ -98,6 +101,11 @@ export default defineComponent({
     return {};
   },
   computed: {
+    defaultAssetLayoutDescriptor() {
+      return this.$getAppManager()
+        .get(EditorManager)
+        .getDefaultLayoutDescriptor();
+    },
     layoutDescriptor() {
       if (!this.currentSingleAsset) {
         return this.$getAppManager()

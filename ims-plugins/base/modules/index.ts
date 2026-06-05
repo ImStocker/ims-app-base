@@ -35,10 +35,6 @@ export default function () {
           cancel_callbacks.push(
             appManager.get(EditorManager).registerAssetLayout({
               name: 'detached',
-              pageComponent: defineAsyncComponent(
-                () =>
-                  import('#components/Asset/Layout/AssetDefaultPageLayout.vue'),
-              ),
               editorComponent: defineAsyncComponent(
                 () =>
                   import(
@@ -52,10 +48,6 @@ export default function () {
           cancel_callbacks.push(
             appManager.get(EditorManager).registerAssetLayout({
               name: 'enum',
-              pageComponent: defineAsyncComponent(
-                () =>
-                  import('#components/Asset/Layout/AssetDefaultPageLayout.vue'),
-              ),
               editorComponent: defineAsyncComponent(
                 () =>
                   import(
@@ -71,10 +63,6 @@ export default function () {
           cancel_callbacks.push(
             appManager.get(EditorManager).registerAssetLayout({
               name: 'struct',
-              pageComponent: defineAsyncComponent(
-                () =>
-                  import('#components/Asset/Layout/AssetDefaultPageLayout.vue'),
-              ),
               editorComponent: defineAsyncComponent(
                 () =>
                   import(
