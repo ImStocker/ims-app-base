@@ -302,6 +302,7 @@ export default {
       search: 'Поиск',
       noResults: 'Ничего не найдено',
       empty: 'Пока ничего нет',
+      noSubFolders: 'Вложенных папок пока нет',
       noBaseElement: 'Базовый элемент не найден',
       createElementWithThisName: 'Создать элемент с таким именем',
       startWork: 'Начните с создания вашего первого элемента ↓',

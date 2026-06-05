@@ -19,7 +19,7 @@ export default defineComponent({
   flex: 1;
   display: flex;
   min-width: 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 .FullyFilledContentLayout-content-wrapper {
   width: 100%;

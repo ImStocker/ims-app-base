@@ -35,6 +35,13 @@
           />
         </slot>
       </template>
+      <template #toolbar="{ assetBlockEditor, hideActions }">
+        <slot
+          name="toolbar"
+          :asset-block-editor="assetBlockEditor"
+          :hide-actions="hideActions"
+        ></slot>
+      </template>
     </asset-block-editor-root>
     <right-panel
       v-if="assetEditor.mode === 'history' && assetEditor.historyModeVM"

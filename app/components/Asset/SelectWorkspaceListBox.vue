@@ -1,16 +1,17 @@
 <template>
   <div class="SelectWorkspaceListBox">
     <FormSearch
+      v-if="showSearch"
       class="SelectWorkspaceListBox-search"
       :value="searchTextOwn"
       :autofocus="true"
       @change="searchTextOwn = $event"
     ></FormSearch>
-    <div class="SelectWorkspaceListBox-allOptions">
+    <div class="SelectWorkspaceListBox-allOptions ref-list">
       <div class="SelectWorkspaceListBox-items tiny-scrollbars">
         <project-workspaces-presenter
           :workspace-where="workspaceWhereComp"
-          :is-drag-allowed="false"
+          :allow-drag-change="allowDragChange"
           :selection="curSelection"
           @update:selection="changeValue($event[0])"
         ></project-workspaces-presenter>
@@ -48,6 +49,14 @@ export default defineComponent({
       default: null,
     },
     readonly: {
+      type: Boolean,
+      default: false,
+    },
+    showSearch: {
+      type: Boolean,
+      default: true,
+    },
+    allowDragChange: {
       type: Boolean,
       default: false,
     },

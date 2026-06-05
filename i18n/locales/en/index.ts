@@ -292,6 +292,7 @@ export default {
       search: 'Search',
       noResults: 'Nothing found',
       empty: 'Nothing yet',
+      noSubFolders: 'No subfolders yet',
       noBaseElement: 'Base element not found',
       createElementWithThisName: 'Create element with this name',
       startWork: 'Create your first item there ↓',

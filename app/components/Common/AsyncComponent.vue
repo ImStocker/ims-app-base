@@ -3,6 +3,7 @@
     v-if="loadedComponent.component"
     name="default"
     :component="loadedComponent.component"
+    :class-name="$attrs.class"
   ></slot>
 </template>
 

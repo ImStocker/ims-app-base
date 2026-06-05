@@ -13,7 +13,7 @@ import UiManager from './UiManager';
 import DialogManager from './DialogManager';
 import { makeAnchorTagId } from '../utils/assets';
 import type { AssetPropValueFile } from '../types/Props';
-import { getSrcByFileId } from '../utils/files';
+import FileManager from './FileManager';
 import type { AssetFullInstanceR } from '../types/AssetFullInstance';
 
 export interface UploadingJob {
@@ -444,7 +444,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
   abstract attachFile(_file: Blob, _name: string): UploadingJob;
 
   public async downloadAttachment(file: AssetPropValueFile) {
-    const link = getSrcByFileId(this.appManager, file);
+    const link = this.appManager.get(FileManager).getFileUrl(file);
     const a = document.createElement('a');
     a.download = file.Title;
     a.href = link + '?download=1';
