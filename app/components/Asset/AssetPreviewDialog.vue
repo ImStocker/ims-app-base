@@ -576,6 +576,9 @@ export default defineComponent({
 
   --local-bg-color: var(--editor-bg-color);
 }
+.AssetPreviewDialog-toolbar {
+  display: flex;
+}
 .AssetPreviewDialog-forHistory {
   margin-left: -170px;
 }

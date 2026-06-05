@@ -29,6 +29,9 @@
           :show-comments="true"
           :request-root-toolbar-target="requestToolbarTarget"
         >
+          <template #toolbar="slotProps">
+            <slot name="toolbar" v-bind="slotProps"></slot>
+          </template>
         </asset-full-editor>
       </width-resizer>
     </div>
@@ -76,7 +79,7 @@ import { makeAnchorTagId } from '../../../logic/utils/assets';
 import AssetSystemPanel from '../AssetSystemPanel.vue';
 
 export default defineComponent({
-  name: 'AssetsPageContent',
+  name: 'AssetDefaultPageLayout',
   components: {
     AssetFullEditor,
     WidthResizer,

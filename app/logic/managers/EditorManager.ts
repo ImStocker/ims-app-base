@@ -78,7 +78,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
   private _blockTypeEntities: BlockTypeDefinition[] = [];
   private _fieldTypeEntities: FieldTypeController[] = [];
   private _assetLayoutDescriptors: AssetLayoutDescriptor[] = [
-    AssetLayoutDefault,
+    this.getDefaultLayoutDescriptor(),
   ];
   private _activeEditors: IEditorVM[] = [];
   private _currentEditorPage: IEditorPageComponent | null = null;
@@ -490,7 +490,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
     return this._assetLayoutDescriptors.find((b) => b.name === layout) ?? null;
   }
 
-  getDefaultLayoutDescriptor() {
+  getDefaultLayoutDescriptor(): AssetLayoutDescriptor {
     return AssetLayoutDefault;
   }
 
