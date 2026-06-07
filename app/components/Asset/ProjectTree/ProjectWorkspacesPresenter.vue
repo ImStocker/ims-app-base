@@ -72,12 +72,14 @@ import {
   ProjectWorkspacesPresenterVM,
   type ProjectWorkspacesPresenterVMOptions,
 } from './ProjectWorkspacesPresenterVM';
+import ProjectTreePresenterAdditional from './ProjectTreePresenterAdditional.vue';
 
 export default defineComponent({
   name: 'ProjectWorkspacesPresenter',
   components: {
     TreePresenter,
     ProjectTreePresenterWorkspace,
+    ProjectTreePresenterAdditional
   },
   props: {
     selection: {
