@@ -30,6 +30,8 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
   name = 'props';
   component = async () => (await import('./PropsBlock.vue')).default;
   icon = 'table-2';
+  override aiSpec =
+    'This block contains a table of properties (props). Each row defines one property: key (propKey), type (type), and value (value). Fields and their types are configured through the block editor.';
 
   override getBlockProvidedVariables(
     asset: AssetFullInstanceR,

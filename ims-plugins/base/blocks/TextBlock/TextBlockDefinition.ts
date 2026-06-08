@@ -14,6 +14,8 @@ export class TextBlockDefinition extends BlockTypeDefinition {
   name = 'text';
   component = async () => (await import('./TextBlock.vue')).default;
   icon = 'font-family';
+  override aiSpec =
+    'This block contains formatted text. Values ​​are written in the value field. The text may contain formatting (bold, italics, lists, etc.).';
 
   /*
   override getBlockContentItems(

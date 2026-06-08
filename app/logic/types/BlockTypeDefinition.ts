@@ -62,6 +62,7 @@ export abstract class BlockTypeDefinition {
   focusOnAdded = true;
   resizableBlockHeight = false;
 
+  aiSpec = '';
   acceptAi = false;
   makeAiPrompt(userPrompt: string) {
     return userPrompt;
