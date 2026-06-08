@@ -77,13 +77,16 @@ definePageMeta({
     },
   ],
 });
+console.log(route.query);
+const serviceTitle = (route.query.serviceTitle ?? 'IMS Creators').toString();
+
 usePageHead(() => ({
   title: [
     workspace?.title
       ? convertTranslatedTitle(workspace.title, (key) => t(key))
       : t('translatedTitles.Items'),
     projectInfo.title,
-    'IMS Creators',
+    serviceTitle,
   ].join(' | '),
 }));
 </script>

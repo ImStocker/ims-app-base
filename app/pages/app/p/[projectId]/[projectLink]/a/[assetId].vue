@@ -80,13 +80,15 @@ onMounted(() => {
   }
 });
 
+const serviceTitle = (route.query.serviceTitle ?? 'IMS Creators').toString();
+
 usePageHead(() => ({
   title: [
     caption.length > TITLE_CHAR_LIMIT
       ? caption.slice(0, TITLE_CHAR_LIMIT) + '...'
       : caption,
     projectInfo.title,
-    'IMS Creators',
+    serviceTitle,
   ].join(' | '),
 }));
 </script>
