@@ -79,7 +79,7 @@ export default defineComponent({
   components: {
     TreePresenter,
     ProjectTreePresenterWorkspace,
-    ProjectTreePresenterAdditional
+    ProjectTreePresenterAdditional,
   },
   props: {
     selection: {
