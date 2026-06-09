@@ -95,7 +95,7 @@ export default defineComponent({
   methods: {
     onContextMenu(event: PointerEvent | TouchEvent) {
       if (!this.contextMenuRect) return;
-      if (this.disabled) return;
+      if (this.disabled || this.menuList.length === 0) return;
       if (
         this.ignoringCssSelector &&
         event.target &&
