@@ -702,6 +702,7 @@ export default {
       levelEditor: 'Level editor',
       leveleditor: 'Level editor',
       collection: 'Collection',
+      graph: 'Graph',
     },
     saveBlock: 'Save block',
   },

@@ -715,6 +715,7 @@ export default {
       levelEditor: 'Редактор уровней',
       leveleditor: 'Редактор уровней',
       collection: 'Коллекция',
+      graph: 'Граф',
     },
     saveBlock: 'Сохранить блок',
   },
