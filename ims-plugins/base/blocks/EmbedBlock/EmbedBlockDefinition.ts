@@ -9,6 +9,8 @@ export class EmbedBlockDefinition extends BlockTypeDefinition {
   icon = 'external-link-fill';
 
   override focusOnAdded = false;
+  override aiSpec =
+    'This block stores an embedded external resource. Props: `value` (string — the URL to embed). The block classifies the URL into a DetectedEmbedKind: UNKNOWN, INVALID, GOOGLE_DOC, GOOGLE_SHEET, GOOGLE_PRESENTATION, YOUTUBE, MIRO, FIGMA. For recognized kinds it renders an iframe with the embeddable URL variant; for unknown URLs it shows a plain hyperlink.';
   override async beforeBlockCreate(
     appManager: IAppManager,
     params: { title: string },
