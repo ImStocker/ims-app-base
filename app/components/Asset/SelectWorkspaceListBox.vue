@@ -12,6 +12,7 @@
         <project-workspaces-presenter
           :workspace-where="workspaceWhereComp"
           :allow-drag-change="allowDragChange"
+          :get-workspace-menu="getWorkspaceMenu"
           :selection="curSelection"
           @update:selection="changeValue($event[0])"
         ></project-workspaces-presenter>
@@ -25,8 +26,12 @@ import { defineComponent, type PropType } from 'vue';
 import ProjectWorkspacesPresenter from './ProjectTree/ProjectWorkspacesPresenter.vue';
 import FormSearch from '../Form/FormSearch.vue';
 import type { WorkspaceForSelection } from '../../logic/types/AssetsType';
-import type { WorkspaceQueryDTOWhere } from '../../logic/types/Workspaces';
+import type {
+  WorkspaceQueryDTOWhere,
+  Workspace,
+} from '../../logic/types/Workspaces';
 import type { ProjectTreeSelectedItem } from '../../logic/vm/IProjectTreePresenterVM';
+import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'SelectWorkspaceListBox',
@@ -59,6 +64,12 @@ export default defineComponent({
     allowDragChange: {
       type: Boolean,
       default: false,
+    },
+    getWorkspaceMenu: {
+      type: Function as PropType<
+        (workspace: Workspace) => ExtendedMenuListItem[]
+      >,
+      default: () => [],
     },
   },
   emits: ['update:modelValue', 'update:searchText'],

@@ -34,6 +34,12 @@ export type EditorContextForAssetRequested = {
   release: () => void;
 };
 
+export type CustomAssetExportFormat = {
+  title: string;
+  name?: string;
+  export: () => void;
+};
+
 export type AssetLayoutDescriptorProps = {
   toolbarShowBlockCopyPaste?: boolean;
   headerLocaleButton?: boolean;
@@ -89,6 +95,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
     string,
     EditorContextForAssetHolder
   >();
+  private _customExportFormats = new Map<string, CustomAssetExportFormat[]>();
 
   private _registerEntity<
     T extends BlockTypeDefinition | FieldTypeController | AssetLayoutDescriptor,
@@ -463,6 +470,44 @@ export default abstract class EditorManager extends AppSubManagerBase {
 
   registerAssetLayout(layout: AssetLayoutDescriptor) {
     return this._registerEntity(this._assetLayoutDescriptors, markRaw(layout));
+  }
+
+  registerCustomExportFormatForAsset(
+    assetId: string,
+    export_format: CustomAssetExportFormat,
+  ) {
+    const formats = this._customExportFormats.get(assetId);
+    if (formats) {
+      formats.push(export_format);
+    } else {
+      this._customExportFormats.set(assetId, [export_format]);
+    }
+    return {
+      cancel: () => {
+        const list = this._customExportFormats.get(assetId);
+        if (list) {
+          const idx = list.indexOf(export_format);
+          if (idx >= 0) list.splice(idx, 1);
+          if (list.length === 0) this._customExportFormats.delete(assetId);
+        }
+      },
+    };
+  }
+
+  getCustomExportFormatsForAsset(
+    asset: AssetFullInstanceR,
+  ): CustomAssetExportFormat[] {
+    const exact = this._customExportFormats.get(asset.id);
+    if (exact) {
+      return exact;
+    }
+    for (let i = asset.typeIds.length - 1; i >= 0; i--) {
+      const typeFormats = this._customExportFormats.get(asset.typeIds[i]);
+      if (typeFormats) {
+        return typeFormats;
+      }
+    }
+    return [];
   }
 
   registerAssetLayoutBind(assetId: string, layoutName: string) {

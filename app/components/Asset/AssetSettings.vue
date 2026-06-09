@@ -34,6 +34,7 @@ import type { AssetPropValueAccount } from '../../logic/types/Props';
 import { castAssetPropValueToAccount } from '../../logic/types/Props';
 import ProjectContentManager from '../../logic/managers/ProjectContentManager';
 import SetUpNotificationsDialog from './Rights/SetUpNotificationsDialog.vue';
+import EditorManager from '../../logic/managers/EditorManager';
 
 export default defineComponent({
   name: 'AssetSettings',
@@ -49,6 +50,12 @@ export default defineComponent({
   },
   emits: ['delete'],
   computed: {
+    customExportFormats() {
+      if (!this.currentAssetFull) return [];
+      return this.$getAppManager()
+        .get(EditorManager)
+        .getCustomExportFormatsForAsset(this.currentAssetFull);
+    },
     isAdmin() {
       return this.$getAppManager().get(ProjectManager).isAdmin();
     },
@@ -197,6 +204,10 @@ export default defineComponent({
                   title: this.$t('gddPage.exportWithCustomFormat'),
                   action: () => this.exportWithCustomFormat(),
                 },
+                ...this.customExportFormats.map((f) => ({
+                  title: f.title,
+                  action: f.export,
+                })),
               ],
             }
           : null,
