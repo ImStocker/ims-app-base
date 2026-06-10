@@ -763,6 +763,8 @@ export default {
         'Game mechanics\n\nUse to describe game mechanics',
       '00000000-0000-0000-0000-000000000039':
         'Markdown\n\nUse to work with Markdown files',
+      '00000000-0000-0000-0000-000000000041':
+        'Graph\n\nUse to create plot structure, level progression, technology trees',
     },
     fields: {
       noFields: 'No field was found',

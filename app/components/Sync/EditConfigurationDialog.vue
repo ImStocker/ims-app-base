@@ -41,6 +41,7 @@
                     :where="includingAssetsTypeWhere"
                     :additional-options="baseAssetOptions"
                     :placeholder="$t('importExport.formats.settings.assetsAll')"
+                    :select-base-asset="true"
                   ></select-asset-combo-box>
                 </div>
               </div>
@@ -118,6 +119,7 @@ import {
   ASSET_SELECTION_MARKDOWN,
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
+  ASSET_SELECTION_GRAPH,
 } from '../../logic/constants';
 import ExportFormatManager from '../../logic/managers/ExportFormatManager';
 import type { AssetPropValueSelection } from '../../logic/types/Props';
@@ -189,9 +191,10 @@ export default defineComponent({
         this.$appConfiguration.isDesktop ? ASSET_SELECTION_MARKDOWN : null,
         ASSET_SELECTION_GAME_OBJECT,
         ASSET_SELECTION_GAME_MECHANICS,
-        ASSET_SELECTION_DIAGRAM,
+        ASSET_SELECTION_GRAPH,
         ASSET_SELECTION_SCRIPT,
         ASSET_SELECTION_LEVEL,
+        ASSET_SELECTION_DIAGRAM,
       ]
         .filter((x) => x)
         .map((x) => {

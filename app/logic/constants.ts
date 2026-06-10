@@ -39,6 +39,7 @@ export const GAME_MECHANICS_ASSET_ID = '00000000-0000-0000-0000-000000000037';
 export const MARKDOWN_ASSET_ID = '00000000-0000-0000-0000-000000000039';
 export const ENUM_ASSET_ID = '00000000-0000-0000-0000-000000000023';
 export const STRUCT_ASSET_ID = '00000000-0000-0000-0000-000000000020';
+export const GRAPH_ASSET_ID = '00000000-0000-0000-0000-000000000041';
 
 export const BLOCK_NAME_META = '__meta';
 export const BLOCK_TYPE_META = 'props';
@@ -119,6 +120,13 @@ export const ASSET_SELECTION_LEVEL: AssetForSelection = {
   id: LEVEL_ASSET_ID,
   title: '[[t:LevelMapElement]]',
   icon: 'map-2-line',
+  name: null,
+};
+
+export const ASSET_SELECTION_GRAPH: AssetForSelection = {
+  id: GRAPH_ASSET_ID,
+  title: '[[t:GraphElement]]',
+  icon: 'node-tree',
   name: null,
 };
 

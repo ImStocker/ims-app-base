@@ -408,6 +408,7 @@ export default defineComponent({
           focus.node,
           focus.offset,
         );
+        this.quillController.onSelectionChanged();
       }
     },
     handleFile(file: File) {
