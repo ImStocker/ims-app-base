@@ -160,7 +160,7 @@ export default defineComponent({
           this.pendingSelection = {
             anchorX: rects[0].left,
             anchorY: rects[0].top,
-            focusX: rects[rects.length - 1].left,
+            focusX: rects[rects.length - 1].right,
             focusY: rects[rects.length - 1].top,
           };
           return;

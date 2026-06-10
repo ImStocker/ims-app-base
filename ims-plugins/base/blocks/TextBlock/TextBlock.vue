@@ -42,6 +42,7 @@ import {
 } from '#logic/types/Props';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { AssetChanger } from '#logic/types/AssetChanger';
+import { isElementInteractive } from '#components/utils/DomElementUtils';
 
 export default defineComponent({
   name: 'TextBlock',
@@ -99,6 +100,22 @@ export default defineComponent({
       }
       return [];
     },
+    isBlockActive() {
+      return this.assetBlockEditor.editingBlockId === this.resolvedBlock.id;
+    },
+  },
+  watch: {
+    isBlockActive() {
+      if (this.isBlockActive) {
+        const editor = this.$refs.editor as InstanceType<
+          typeof ImcEditor
+        > | null;
+        if (!editor) return;
+        if (!editor.isFocused()) {
+          editor.focus();
+        }
+      }
+    },
   },
   methods: {
     getHeaderAnchor(
@@ -115,10 +132,31 @@ export default defineComponent({
       return null;
     },
     onEditorFocus() {
-      this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
+      if (!this.isBlockActive) {
+        this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
+      }
     },
     onEditorBlur() {
       this.save();
+    },
+    async enterEditMode(ev?: MouseEvent, useMouseCoord: boolean = false) {
+      if (this.readonly) return;
+      if (ev && isElementInteractive(ev.target as HTMLElement)) return;
+      this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
+
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      if (this.$refs.editor) {
+        if (ev && useMouseCoord) {
+          const coord_x = ev.clientX;
+          const coord_y = ev.clientY;
+          await (this.$refs.editor as InstanceType<typeof ImcEditor>).focusAt(
+            coord_x,
+            coord_y,
+          );
+        } else {
+          await (this.$refs.editor as InstanceType<typeof ImcEditor>).focus();
+        }
+      }
     },
     emitValue(text: any) {
       if (!sameAssetPropValues(this.current.value, text)) {
