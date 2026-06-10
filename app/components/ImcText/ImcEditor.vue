@@ -1,137 +1,79 @@
 <template>
   <div
-    v-logical-focus-out="onBlurEditorElement"
-    class="ImcEditor notranslate"
-    :class="{
-      'state-drag': dragEffect === 1,
-      ['type-toolbar-' + toolbar]: true,
-    }"
+    class="ImcEditor"
+    :class="{ 'state-drag': dragEffect === 1 }"
+    @drop="onDrop"
+    @dragover="_onDragOver"
+    @dragleave="_onDragLeave"
   >
-    <div
-      class="ImcEditor-dropZone"
-      @drop="dropFile"
-      @dragover="dragFileEnter"
-      @dragleave="dragFileLeave"
-    >
-      <div
-        v-if="!editorInited"
-        class="ImcEditor-editor state-sleep"
-        v-html="staticHTML"
-      ></div>
-      <imc-text-augmentation ref="aug" :is-editor="true">
-        <div
-          ref="editor"
-          class="ImcEditor-editor"
-          @vue:mounted="editorMounted"
-        ></div>
-      </imc-text-augmentation>
-      <div class="ImcEditor-drag-overlay"></div>
+    <div class="ImcEditor-dropZone">
+      <div v-show="!hidePresenter" class="ImcEditor-presenter-wrapper">
+        <input
+          v-if="!activated"
+          class="ImcEditor-presenter-focusTrap"
+          type="text"
+          @focus="focus"
+        />
+        <imc-presenter
+          ref="presenter"
+          class="ImcEditor-presenter"
+          :class="{ 'state-leaving': activatedReady }"
+          :value="modelValue"
+          :get-header-anchor="getHeaderAnchor"
+          @click="_onPresenterClick"
+          @view-ready="_onViewReady($event)"
+        ></imc-presenter>
+        <span
+          v-if="!isFilledAssetPropValue(modelValue) && placeholder"
+          class="ImcEditor-placeholder"
+          @click="_onPresenterClick"
+          >{{ placeholder }}</span
+        >
+      </div>
+      <imc-editor-activated
+        v-if="activated"
+        ref="activatedEditor"
+        class="ImcEditor-activated"
+        :class="{ 'state-entering': activatedReady }"
+        :model-value="modelValue"
+        :readonly="readonly"
+        :multiline="multiline"
+        :toolbar="toolbar"
+        :max-height="maxHeight"
+        :allow-tab="allowTab"
+        :placeholder="placeholder"
+        :on-input-value="onInputValue"
+        @update:model-value="$emit('update:modelValue', $event)"
+        @focus="$emit('focus')"
+        @blur="_onActivatedBlur"
+        @enter="$emit('enter')"
+        @pre-enter="$emit('preEnter')"
+        @escape="$emit('escape')"
+        @view-ready="_onViewReady($event)"
+        @input-value="$emit('inputValue', $event)"
+        @paste="$emit('paste', $event)"
+      ></imc-editor-activated>
     </div>
-    <div
-      v-if="quillController.quill && toolbarCoord"
-      class="ImcEditor-toolbar-target"
-      :style="{
-        left: `${toolbarCoord.x}px`,
-        top: `${toolbarCoord.y - toolbarOffset}px`,
-        width: `${toolbarCoord.width}px`,
-        height: `${toolbarCoord.height + toolbarOffset * 2}px`,
-      }"
-    >
-      <dropdown-container
-        attach-position="top"
-        align-position="center"
-        class="ImcEditor-toolbar-container"
-      >
-        <imc-editor-toolbar
-          class="ImcEditor-toolbar-widget"
-          :quill="quillController.quill"
-          :project="projectInfo"
-        ></imc-editor-toolbar
-      ></dropdown-container>
-    </div>
-    <div
-      v-if="autocomplete.shown && quillController.quill && projectInfo"
-      class="ImcEditor-autocomplete-target"
-      :style="{
-        left: `${autocomplete.x}px`,
-        top: `${autocomplete.y}px`,
-        height: `${autocomplete.height}px`,
-      }"
-    >
-      <dropdown-container
-        ref="dropdownContainer"
-        class="ImcEditor-autocomplete ql-ImcEditor-autocomplete"
-      >
-        <imc-editor-autocomplete
-          ref="dropdown"
-          :project="projectInfo"
-          :options="autocomplete.options"
-          :has-more="autocomplete.hasMore"
-          :loading="autocomplete.loading"
-          :error="autocomplete.error ?? undefined"
-          :search-text="autocomplete.searchText"
-          :quill="quillController.quill"
-        ></imc-editor-autocomplete>
-      </dropdown-container>
-    </div>
+    <div class="ImcEditor-drag-overlay"></div>
   </div>
 </template>
 
 <script lang="ts">
-import {
-  defineAsyncComponent,
-  defineComponent,
-  type PropType,
-  shallowRef,
-} from 'vue';
-import type { ImcLinkDrowdownInterface, ImcLinkOption } from './ImcLinksModule';
-import type ImcEditorAutocomplete from './ImcEditorAutocomplete.vue';
+import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
 import {
   type AssetPropValue,
-  convertAssetPropValueTextOpsToStr,
-  sameAssetPropValues,
+  isFilledAssetPropValue,
 } from '../../logic/types/Props';
-import {
-  packQuillDeltaToPropValue,
-  unpackQuillDeltaFromPropValue,
-} from './ImcContent';
-import {
-  getRangeUnderMouse,
-  getScrollParentNode,
-  nodeContainsElement,
-} from '../utils/DomElementUtils';
-import UiManager, {
-  type UiFocusLockHandler,
-} from '../../logic/managers/UiManager';
-import ProjectManager from '../../logic/managers/ProjectManager';
-import type Delta from 'quill-delta';
-import DropdownContainer from '../Common/DropdownContainer.vue';
-import { useImcHTMLRenderer } from './useImcHTMLRenderer';
-import { ImcEditorQuillController } from './ImcEditorQuillController';
-import { quillDeltaSame } from './utils';
-import type ImcTextAugmentation from './ImcTextAugmentation.vue';
-import ImcEditorToolbar from './Toolbar/ImcEditorToolbar.vue';
-import {
-  checkAndroidBrowser,
-  checkIOSBrowser,
-  checkYandexBrowser,
-} from '../utils/browser';
-import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
-import type { ImcEditorPastedEvent } from './ImcClipboard';
-
-const BASE_TOOLBAR_OFFSET = 10;
+import { isElementInteractive } from '../utils/DomElementUtils';
+import type ImcEditorActivated from './ImcEditorActivated.vue';
 
 export default defineComponent({
   name: 'ImcEditor',
   components: {
-    ImcEditorAutocomplete: defineAsyncComponent(
-      () => import('./ImcEditorAutocomplete.vue'),
+    ImcPresenter: defineAsyncComponent(() => import('./ImcPresenter.vue')),
+    ImcEditorActivated: defineAsyncComponent(
+      () => import('./ImcEditorActivated.vue'),
     ),
-    DropdownContainer,
-    ImcTextAugmentation: defineAsyncComponent(
-      () => import('./ImcTextAugmentation.vue'),
-    ),
-    ImcEditorToolbar,
   },
   props: {
     modelValue: {
@@ -152,6 +94,16 @@ export default defineComponent({
       >,
       default: null,
     },
+    readonly: {
+      type: Boolean,
+      default: false,
+    },
+    getHeaderAnchor: {
+      type: Function as PropType<
+        (title: string, level: number, index: number) => null | string
+      >,
+      default: null,
+    },
   },
   emits: [
     'update:modelValue',
@@ -166,304 +118,204 @@ export default defineComponent({
   ],
   data() {
     return {
-      autocomplete: {
-        shown: false,
-        options: [] as ImcLinkOption[],
-        hasMore: false,
-        loading: false,
-        error: null as string | null,
-        searchText: '',
-        x: 0,
-        y: 0,
-        height: 0,
-      },
-      dirtyValue: undefined as Delta | undefined,
+      activated: false,
+      activatedReady: false,
+      hidePresenter: false,
+      activatedReadyPromise: null as Promise<void> | null,
+      activatedReadyResolve: null as (() => void) | null,
+      pendingSelection: null as {
+        anchorX: number;
+        anchorY: number;
+        focusX: number;
+        focusY: number;
+      } | null,
       dragEffect: 0,
-      quillController: shallowRef(new ImcEditorQuillController(this as any)),
-      editorInited: false,
-      focusLock: shallowRef(null as UiFocusLockHandler | null),
-      clickOutside: null as SetClickOutsideCancel | null,
-      toolbarCoord: null as null | DOMRect,
-      toolbarOffset: BASE_TOOLBAR_OFFSET,
+      pendingDropFile: null as File | null,
     };
   },
-  computed: {
-    unpackedModelValue(): Delta {
-      return unpackQuillDeltaFromPropValue(this.modelValue);
-    },
-    quillContent(): Delta {
-      if (this.dirtyValue !== undefined) {
-        return this.dirtyValue;
-      }
-      return this.unpackedModelValue;
-    },
-    dropdownInterface(): ImcLinkDrowdownInterface {
-      return {
-        setShown: (val) => {
-          this.autocomplete.shown = val;
-        },
-        setOptions: (options: ImcLinkOption[], hasMore: boolean) => {
-          this.autocomplete.options = options;
-          this.autocomplete.hasMore = hasMore;
-        },
-        setSearchText: (val: string) => {
-          this.autocomplete.searchText = val;
-        },
-        setLoading: (state: boolean, error: string | null) => {
-          this.autocomplete.loading = state;
-          this.autocomplete.error = error;
-        },
-        setTextBounds: (x: number, y: number, height: number) => {
-          this.autocomplete.x = x;
-          this.autocomplete.y = y;
-          this.autocomplete.height = height + 10;
-          if (this.$refs.dropdownContainer) {
-            (this.$refs.dropdownContainer as any).updateDropdownPosition();
-          }
-        },
-        handleKey: (key: string) => {
-          if (!this.$refs.dropdown) return true;
-          return (
-            this.$refs.dropdown as InstanceType<typeof ImcEditorAutocomplete>
-          ).handleKey(key);
-        },
-        selectCurrent: () => {
-          if (!this.$refs.dropdown) return;
-          (
-            this.$refs.dropdown as InstanceType<typeof ImcEditorAutocomplete>
-          ).selectCurrent();
-        },
-      };
-    },
-    projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
-    },
-    staticHTML() {
-      const project = this.$getAppManager()
-        .get(ProjectManager)
-        .getProjectInfo();
-      return useImcHTMLRenderer()(this.modelValue, {
-        project: project ?? undefined,
-      });
-    },
-  },
-  watch: {
-    unpackedModelValue(new_val, old_val) {
-      if (quillDeltaSame(new_val, old_val)) {
-        return;
-      }
-
-      if (
-        !this.dirtyValue ||
-        (this.dirtyValue && !quillDeltaSame(new_val, this.dirtyValue))
-      ) {
-        this.quillController.setContentSilently(this.unpackedModelValue);
-        this.onTextChange(this.unpackedModelValue);
-      }
-    },
-  },
-  async mounted() {
-    await this.quillController.init();
-    this.editorInited = true;
+  mounted() {
     if (this.$el) {
       this.$el.__imc_editor = this;
-    }
-    this.$emit('view-ready');
-    this.updateTextAugmentation();
-    if (checkYandexBrowser()) {
-      this.toolbarOffset = BASE_TOOLBAR_OFFSET + 25;
-    } else if (checkAndroidBrowser() || checkIOSBrowser()) {
-      this.toolbarOffset = BASE_TOOLBAR_OFFSET + 60;
     }
   },
   beforeUnmount() {
     if (this.$el) {
       this.$el.__imc_editor = null;
     }
-    if (this.focusLock) {
-      this.focusLock.cancel();
-      this.focusLock = null;
-    }
-  },
-  unmounted() {
-    this.resetGlobalClickOutside(false);
-    this.quillController.destroy();
   },
   methods: {
-    async editorMounted() {
-      const refsEditor = this.$refs.editor as HTMLElement;
-      if (!refsEditor) return;
-      this.quillController.onEditorElementMounted(refsEditor);
+    isFilledAssetPropValue,
+    _onPresenterClick(ev: MouseEvent) {
+      if (this.readonly) return;
+      if (isElementInteractive(ev.target as HTMLElement)) return;
+      this._captureSelection(ev);
+      this._activate();
     },
-    emitValue(val: Delta): boolean {
-      const emiting_value = packQuillDeltaToPropValue(val);
-      if (!sameAssetPropValues(emiting_value, this.modelValue)) {
-        this.$emit('update:modelValue', emiting_value);
-        return true;
-      } else return false;
-    },
-    isFocused() {
-      return !!this.focusLock;
-    },
-    emitDirty() {
-      if (this.dirtyValue !== undefined) {
-        return this.emitValue(this.dirtyValue);
-      } else return false;
-    },
-    onBlurEditorElement(_e: FocusEvent) {
-      this.emitDirty();
-      if (
-        !this.quillController.shouldBeFocused() &&
-        window.document.activeElement &&
-        window.document.activeElement !== document.body
-      ) {
-        this.onBlur();
-      }
-    },
-    async onEnter() {
-      this.$emit('preEnter');
-      if (this.emitDirty()) {
-        await this.$nextTick();
-      }
-      this.$emit('enter');
-    },
-    async onEscape() {
-      this.$emit('escape');
-    },
-    async onBlur() {
-      const lock = this.focusLock;
-      this.focusLock = null;
-      if (lock) await lock.unlock();
-      this.toolbarCoord = null;
-      this.resetGlobalClickOutside(false);
-      this.$emit('blur');
-    },
-    async onFocus() {
-      if (!this.focusLock) {
-        this.focusLock = this.$getAppManager()
-          .get(UiManager)
-          .focusLock(async () => {
-            if (this.emitDirty()) {
-              await new Promise((res) => setTimeout(res, 1));
-            }
-          });
-        this.resetGlobalClickOutside(true);
-        this.$emit('focus');
-      }
-    },
-    updateTextAugmentation() {
-      if (this.$refs.aug) {
-        (this.$refs.aug as InstanceType<typeof ImcTextAugmentation>).update();
-      }
-    },
-    onTextChange(new_content: Delta) {
-      const new_dirty = !quillDeltaSame(new_content, this.unpackedModelValue);
-      if (
-        (!this.dirtyValue && !new_dirty) ||
-        (this.dirtyValue && quillDeltaSame(new_content, this.dirtyValue))
-      ) {
-        if (!this.dirtyValue && !new_dirty) {
-          this.updateTextAugmentation();
-        }
-        return;
-      }
-
-      this.dirtyValue = new_dirty ? new_content : undefined;
-      this.updateTextAugmentation();
-      if (this.onInputValue as ((val: AssetPropValue) => void) | null) {
-        const emiting_value =
-          this.dirtyValue !== undefined
-            ? packQuillDeltaToPropValue(this.dirtyValue)
-            : this.modelValue;
-        this.$emit('inputValue', emiting_value);
-      }
-    },
-    async selectAll() {
-      const quill = await this.quillController.awaitQuill();
-      await this.focus();
-      quill.setSelection(0, quill.getLength());
-    },
-    async focus() {
-      const quill = await this.quillController.awaitQuill();
-      quill.focus();
-    },
-    async focusEnd() {
-      const quill = await this.quillController.awaitQuill();
-      await this.focus();
-      quill.setSelection(quill.getLength(), 0);
-    },
-    async focusAt(clientX: number, clientY: number) {
-      const scroller = getScrollParentNode(this.$el);
-      const scrolly =
-        scroller instanceof Element ? scroller.scrollTop : window.scrollY;
-      const scrollx =
-        scroller instanceof Element ? scroller.scrollLeft : window.scrollX;
-      await this.focus();
-      if (scroller instanceof Element) {
-        scroller.scrollTop = scrolly;
-        scroller.scrollLeft = scrollx;
-      } else window.scrollTo(scrollx, scrolly);
-      if (clientX !== undefined && clientY !== undefined) {
-        const { node, offset } = getRangeUnderMouse(clientX, clientY);
-
-        const selection = document.getSelection();
-        if (selection && node) {
-          selection.setBaseAndExtent(node, offset, node, offset);
+    _captureSelection(ev: MouseEvent) {
+      const sel = document.getSelection();
+      if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const rects = range.getClientRects();
+        if (rects.length > 0) {
+          this.pendingSelection = {
+            anchorX: rects[0].left,
+            anchorY: rects[0].top,
+            focusX: rects[rects.length - 1].left,
+            focusY: rects[rects.length - 1].top,
+          };
+          return;
         }
       }
+      this.pendingSelection = {
+        anchorX: ev.clientX,
+        anchorY: ev.clientY,
+        focusX: ev.clientX,
+        focusY: ev.clientY,
+      };
     },
-    dropFile(ev: DragEvent) {
-      const is_file_move =
-        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
-      this.dragEffect = 0;
-      if (is_file_move) {
-        this.quillController.handleFile(ev);
-        ev.preventDefault();
+    async _activate() {
+      if (this.activated) return;
+      this.activated = true;
+      this.activatedReadyPromise = new Promise((resolve) => {
+        this.activatedReadyResolve = resolve;
+      });
+      await this.activatedReadyPromise;
+    },
+    _onViewReady(ev: any) {
+      if (this.activatedReadyResolve) {
+        this.activatedReadyResolve();
+        this.activatedReadyResolve = null;
+        this.activatedReady = true;
+        this._restorePendingSelection();
+        this._forwardPendingDrop();
+        setTimeout(() => {
+          this.hidePresenter = true;
+        }, 200);
+      }
+      this.$emit('view-ready', ev);
+    },
+    _forwardPendingDrop() {
+      if (this.pendingDropFile) {
+        const file = this.pendingDropFile;
+        this.pendingDropFile = null;
+        this._forwardDropFile(file);
       }
     },
-    dragFileEnter(ev: DragEvent) {
-      const is_file_move =
-        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
-      this.dragEffect = is_file_move ? 1 : 0;
-      if (is_file_move) {
-        ev.preventDefault();
-      }
-    },
-    dragFileLeave(ev: DragEvent) {
-      if (!nodeContainsElement(this.$el, ev.relatedTarget as Node)) {
-        this.dragEffect = 0;
-      }
-    },
-    resetDirtyValue() {
-      this.quillController.setContentSilently(this.unpackedModelValue);
-      this.onTextChange(this.unpackedModelValue);
-    },
-    resetGlobalClickOutside(restart: boolean) {
-      if (this.clickOutside) {
-        this.clickOutside();
-        this.clickOutside = null;
-      }
-      if (restart && this.$el) {
-        this.clickOutside = setImsClickOutside(this.$el, () => {
-          setTimeout(() => {
-            if (!this.quillController.shouldBeFocused()) {
-              this.onBlur();
-            }
-          }, 1);
+    _restorePendingSelection() {
+      if (this.pendingSelection && this.$refs.activatedEditor) {
+        const sel = this.pendingSelection;
+        this.pendingSelection = null;
+        this.$nextTick(() => {
+          (
+            this.$refs.activatedEditor as InstanceType<
+              typeof ImcEditorActivated
+            >
+          ).restoreSelection(sel.anchorX, sel.anchorY, sel.focusX, sel.focusY);
         });
       }
     },
-    emitPaste(delta: Delta): boolean {
-      const conv = convertAssetPropValueTextOpsToStr(delta.ops);
-      const event: ImcEditorPastedEvent = {
-        handled: false,
-        value: {
-          Ops: delta.ops,
-          Str: conv.str,
-        },
-      };
-      this.$emit('paste', event);
-      return event.handled;
+    _onActivatedBlur() {
+      this.$emit('blur');
+      this.deactivate();
+    },
+    async _ensureReady() {
+      if (!this.activated) {
+        await this._activate();
+      } else if (this.activatedReadyPromise) {
+        await this.activatedReadyPromise;
+      }
+    },
+    async focus() {
+      await this._ensureReady();
+      if (this.$refs.activatedEditor) {
+        await (this.$refs.activatedEditor as any).focus();
+      }
+    },
+    async focusEnd() {
+      await this._ensureReady();
+      if (this.$refs.activatedEditor) {
+        await (this.$refs.activatedEditor as any).focusEnd();
+      }
+    },
+    async focusAt(clientX: number, clientY: number) {
+      this.pendingSelection = null;
+      await this._ensureReady();
+      if (this.$refs.activatedEditor) {
+        await (this.$refs.activatedEditor as any).focusAt(clientX, clientY);
+      }
+    },
+    async selectAll() {
+      await this._ensureReady();
+      if (this.$refs.activatedEditor) {
+        await (this.$refs.activatedEditor as any).selectAll();
+      }
+    },
+    emitDirty() {
+      if (this.$refs.activatedEditor) {
+        return (this.$refs.activatedEditor as any).emitDirty();
+      }
+      return false;
+    },
+    isFocused() {
+      if (this.$refs.activatedEditor) {
+        return (this.$refs.activatedEditor as any).isFocused();
+      }
+      return false;
+    },
+    resetDirtyValue() {
+      if (this.$refs.activatedEditor) {
+        (this.$refs.activatedEditor as any).resetDirtyValue();
+      }
+    },
+    async onDrop(ev: DragEvent) {
+      const isFileMove =
+        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
+      this.dragEffect = 0;
+      if (!isFileMove) return;
+      ev.preventDefault();
+      const file = ev.dataTransfer?.files[0];
+      if (!file) return;
+      if (!this.activated) {
+        this.pendingDropFile = file;
+        await this._activate();
+      } else {
+        this._forwardDropFile(file);
+      }
+    },
+    _forwardDropFile(file: File) {
+      if (this.$refs.activatedEditor) {
+        (this.$refs.activatedEditor as any).handleFile(file);
+      }
+    },
+    _onDragOver(ev: DragEvent) {
+      const isFileMove =
+        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
+      this.dragEffect = isFileMove ? 1 : 0;
+      if (isFileMove) {
+        ev.preventDefault();
+      }
+    },
+    _onDragLeave(ev: DragEvent) {
+      if (!this.$el.contains(ev.relatedTarget as Node)) {
+        this.dragEffect = 0;
+      }
+    },
+    async deactivate() {
+      this.activated = false;
+      this.activatedReady = false;
+      this.hidePresenter = false;
+      this.pendingSelection = null;
+      this.activatedReadyPromise = null;
+      this.activatedReadyResolve = null;
+      this.pendingDropFile = null;
+    },
+    getSelection(): { index: number; length: number } | null {
+      const activatedEditor = this.$refs['activatedEditor'] as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (!activatedEditor) return null;
+      if (!activatedEditor.quillController.quill) return null;
+      return activatedEditor.quillController.quill.getSelection();
     },
   },
 });
@@ -471,21 +323,50 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .ImcEditor {
+  display: grid;
   position: relative;
-  &.state-drag-ok {
-    border-color: var(--color-main-yellow);
-  }
-  &.state-drag-error {
-    border-color: var(--color-main-error);
+}
+.ImcEditor-dropZone {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+}
+.ImcEditor-presenter-wrapper,
+.ImcEditor-activated {
+  grid-column: 1;
+  grid-row: 1;
+}
+.ImcEditor-presenter-wrapper {
+  position: relative;
+}
+.ImcEditor-presenter {
+  opacity: 1;
+  transition: opacity 0.05s ease;
+  pointer-events: auto;
+  &.state-leaving {
+    opacity: 0;
+    pointer-events: none;
   }
 }
-.ImcEditor-autocomplete {
-  z-index: 3000;
+.ImcEditor-placeholder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  color: var(--color-placeholder);
+  font-style: italic;
 }
-.ImcEditor.state-drag {
-  .ImcEditor-drag-overlay {
-    display: block;
+.ImcEditor-activated {
+  opacity: 0;
+  transition: opacity 0.05s ease;
+  pointer-events: none;
+  &.state-entering {
+    opacity: 1;
+    pointer-events: auto;
   }
+}
+.ImcEditor.state-drag .ImcEditor-drag-overlay {
+  display: block;
 }
 .ImcEditor-drag-overlay {
   display: none;
@@ -496,16 +377,15 @@ export default defineComponent({
   bottom: 0;
   background: rgba(238, 216, 17, 0.02);
   z-index: 100;
+  grid-column: 1;
+  grid-row: 1;
 }
-.ImcEditor-autocomplete-target,
-.ImcEditor-toolbar-target {
+.ImcEditor-presenter-focusTrap {
   position: absolute;
-  pointer-events: none;
-}
-
-.ImcEditor-dropZone {
-  position: relative;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 </style>
-
-<style lang="scss"></style>
