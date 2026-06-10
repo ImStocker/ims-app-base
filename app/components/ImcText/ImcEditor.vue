@@ -502,6 +502,10 @@ export default defineComponent({
   position: absolute;
   pointer-events: none;
 }
+
+.ImcEditor-dropZone {
+  position: relative;
+}
 </style>
 
 <style lang="scss"></style>
