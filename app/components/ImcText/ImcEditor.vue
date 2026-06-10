@@ -55,6 +55,15 @@
       ></imc-editor-activated>
     </div>
     <div class="ImcEditor-drag-overlay"></div>
+    <div
+      v-if="cursorIndicator"
+      class="ImcEditor-cursor-indicator"
+      :style="{
+        left: cursorIndicator.x + 'px',
+        top: cursorIndicator.y + 'px',
+        height: cursorIndicator.height + 'px',
+      }"
+    ></div>
   </div>
 </template>
 
@@ -131,6 +140,9 @@ export default defineComponent({
       } | null,
       dragEffect: 0,
       pendingDropFile: null as File | null,
+      pendingDropCoords: null as { x: number; y: number } | null,
+      cursorIndicator: null as { x: number; y: number; height: number } | null,
+      cursorIndicatorRAF: null as number | null,
     };
   },
   mounted() {
@@ -139,6 +151,9 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
+    if (this.cursorIndicatorRAF) {
+      cancelAnimationFrame(this.cursorIndicatorRAF);
+    }
     if (this.$el) {
       this.$el.__imc_editor = null;
     }
@@ -181,24 +196,26 @@ export default defineComponent({
       });
       await this.activatedReadyPromise;
     },
-    _onViewReady(ev: any) {
+    async _onViewReady(ev: any) {
       if (this.activatedReadyResolve) {
         this.activatedReadyResolve();
         this.activatedReadyResolve = null;
         this.activatedReady = true;
         this._restorePendingSelection();
-        this._forwardPendingDrop();
+        await this._forwardPendingDrop();
         setTimeout(() => {
           this.hidePresenter = true;
         }, 200);
       }
       this.$emit('view-ready', ev);
     },
-    _forwardPendingDrop() {
+    async _forwardPendingDrop() {
       if (this.pendingDropFile) {
         const file = this.pendingDropFile;
+        const coords = this.pendingDropCoords;
         this.pendingDropFile = null;
-        this._forwardDropFile(file);
+        this.pendingDropCoords = null;
+        await this._forwardDropFile(file, coords?.x, coords?.y);
       }
     },
     _restorePendingSelection() {
@@ -271,21 +288,65 @@ export default defineComponent({
       const isFileMove =
         ev.dataTransfer && ev.dataTransfer.types.includes('Files');
       this.dragEffect = 0;
+      this.cursorIndicator = null;
       if (!isFileMove) return;
       ev.preventDefault();
       const file = ev.dataTransfer?.files[0];
       if (!file) return;
+      this.pendingSelection = null;
+      this.pendingDropCoords = { x: ev.clientX, y: ev.clientY };
       if (!this.activated) {
         this.pendingDropFile = file;
         await this._activate();
       } else {
-        this._forwardDropFile(file);
+        await this._forwardDropFile(file, ev.clientX, ev.clientY);
       }
     },
-    _forwardDropFile(file: File) {
-      if (this.$refs.activatedEditor) {
-        (this.$refs.activatedEditor as any).handleFile(file);
+    async _forwardDropFile(file: File, clientX?: number, clientY?: number) {
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (!editor) return;
+      if (clientX !== undefined && clientY !== undefined) {
+        await editor.focusAt(clientX, clientY);
       }
+      editor.handleFile(file);
+    },
+    _updateCursorIndicator(clientX: number, clientY: number) {
+      if (this.cursorIndicatorRAF) {
+        cancelAnimationFrame(this.cursorIndicatorRAF);
+      }
+      this.cursorIndicatorRAF = requestAnimationFrame(() => {
+        this.cursorIndicatorRAF = null;
+        const editorRect = this.$el?.getBoundingClientRect();
+        if (!editorRect) return;
+        const pos =
+          (document as any).caretPositionFromPoint?.(clientX, clientY) ??
+          (document as any).caretRangeFromPoint?.(clientX, clientY);
+        let node: Node | null = null;
+        let offset = 0;
+        if (pos) {
+          node =
+            (pos as CaretPosition).offsetNode ?? (pos as Range).startContainer;
+          offset = (pos as CaretPosition).offset ?? (pos as Range).startOffset;
+        }
+        if (!node) return;
+        try {
+          const range = document.createRange();
+          range.setStart(node, offset);
+          range.setEnd(node, offset);
+          const rect = range.getClientRects()[0];
+          if (rect) {
+            this.cursorIndicator = {
+              x: rect.left - editorRect.left,
+              y: rect.top - editorRect.top,
+              height: rect.height,
+            };
+          }
+        } catch {
+          // ignore errors for readonly ranges
+        }
+      });
     },
     _onDragOver(ev: DragEvent) {
       const isFileMove =
@@ -293,14 +354,20 @@ export default defineComponent({
       this.dragEffect = isFileMove ? 1 : 0;
       if (isFileMove) {
         ev.preventDefault();
+        this._updateCursorIndicator(ev.clientX, ev.clientY);
       }
     },
     _onDragLeave(ev: DragEvent) {
       if (!this.$el.contains(ev.relatedTarget as Node)) {
         this.dragEffect = 0;
+        this.cursorIndicator = null;
       }
     },
     async deactivate() {
+      if (this.cursorIndicatorRAF) {
+        cancelAnimationFrame(this.cursorIndicatorRAF);
+        this.cursorIndicatorRAF = null;
+      }
       this.activated = false;
       this.activatedReady = false;
       this.hidePresenter = false;
@@ -308,6 +375,8 @@ export default defineComponent({
       this.activatedReadyPromise = null;
       this.activatedReadyResolve = null;
       this.pendingDropFile = null;
+      this.pendingDropCoords = null;
+      this.cursorIndicator = null;
     },
     getSelection(): { index: number; length: number } | null {
       const activatedEditor = this.$refs['activatedEditor'] as InstanceType<
@@ -376,6 +445,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background: rgba(238, 216, 17, 0.02);
+  pointer-events: none;
   z-index: 100;
   grid-column: 1;
   grid-row: 1;
@@ -387,5 +457,18 @@ export default defineComponent({
   width: 1px;
   height: 1px;
   opacity: 0;
+}
+.ImcEditor-cursor-indicator {
+  position: absolute;
+  width: 2px;
+  background: var(--local-text-color);
+  z-index: 200;
+  pointer-events: none;
+  animation: imc-cursor-blink 1s step-end infinite;
+}
+@keyframes imc-cursor-blink {
+  50% {
+    opacity: 0;
+  }
 }
 </style>
