@@ -17,7 +17,6 @@
         <imc-presenter
           ref="presenter"
           class="ImcEditor-presenter"
-          :class="{ 'state-leaving': activatedReady }"
           :value="modelValue"
           :get-header-anchor="getHeaderAnchor"
           @click="_onPresenterClick"
@@ -34,7 +33,6 @@
         v-if="activated"
         ref="activatedEditor"
         class="ImcEditor-activated"
-        :class="{ 'state-entering': activatedReady }"
         :model-value="modelValue"
         :readonly="readonly"
         :multiline="multiline"
@@ -73,7 +71,10 @@ import {
   type AssetPropValue,
   isFilledAssetPropValue,
 } from '../../logic/types/Props';
-import { isElementInteractive } from '../utils/DomElementUtils';
+import {
+  isElementInteractive,
+  isSelectionInsideNode,
+} from '../utils/DomElementUtils';
 import type ImcEditorActivated from './ImcEditorActivated.vue';
 
 export default defineComponent({
@@ -143,9 +144,10 @@ export default defineComponent({
       pendingDropCoords: null as { x: number; y: number } | null,
       cursorIndicator: null as { x: number; y: number; height: number } | null,
       cursorIndicatorRAF: null as number | null,
+      activateEpoch: 0,
     };
   },
-  mounted() {
+  async mounted() {
     if (this.$el) {
       this.$el.__imc_editor = this;
     }
@@ -166,7 +168,7 @@ export default defineComponent({
       this._captureSelection(ev);
       this._activate();
     },
-    _captureSelection(ev: MouseEvent) {
+    _captureSelection(ev?: MouseEvent) {
       const sel = document.getSelection();
       if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
@@ -181,15 +183,18 @@ export default defineComponent({
           return;
         }
       }
-      this.pendingSelection = {
-        anchorX: ev.clientX,
-        anchorY: ev.clientY,
-        focusX: ev.clientX,
-        focusY: ev.clientY,
-      };
+      if (ev) {
+        this.pendingSelection = {
+          anchorX: ev.clientX,
+          anchorY: ev.clientY,
+          focusX: ev.clientX,
+          focusY: ev.clientY,
+        };
+      }
     },
     async _activate() {
       if (this.activated) return;
+      this.activateEpoch++;
       this.activated = true;
       this.activatedReadyPromise = new Promise((resolve) => {
         this.activatedReadyResolve = resolve;
@@ -198,14 +203,19 @@ export default defineComponent({
     },
     async _onViewReady(ev: any) {
       if (this.activatedReadyResolve) {
+        const epoch = this.activateEpoch;
         this.activatedReadyResolve();
         this.activatedReadyResolve = null;
         this.activatedReady = true;
         this._restorePendingSelection();
         await this._forwardPendingDrop();
-        setTimeout(() => {
-          this.hidePresenter = true;
-        }, 200);
+        if (this.activated && this.activateEpoch === epoch) {
+          setTimeout(() => {
+            if (this.activated && this.activateEpoch === epoch) {
+              this.hidePresenter = true;
+            }
+          }, 1);
+        }
       }
       this.$emit('view-ready', ev);
     },
@@ -243,11 +253,19 @@ export default defineComponent({
       }
     },
     async focus(options?: { preventScroll?: boolean }) {
+      if (!this.activatedReady) {
+        const selection_inside = this.$el && isSelectionInsideNode(this.$el);
+        if (selection_inside) {
+          this._captureSelection();
+          await this._activate();
+          return;
+        }
+      }
       await this._ensureReady();
       const editor = this.$refs.activatedEditor as InstanceType<
         typeof ImcEditorActivated
       > | null;
-      if (editor && !editor.isFocused) {
+      if (editor && !editor.isFocused()) {
         await editor.focus(options);
       }
     },
@@ -429,15 +447,6 @@ export default defineComponent({
 .ImcEditor-presenter-wrapper {
   position: relative;
 }
-.ImcEditor-presenter {
-  opacity: 1;
-  transition: opacity 0.05s ease;
-  pointer-events: auto;
-  &.state-leaving {
-    opacity: 0;
-    pointer-events: none;
-  }
-}
 .ImcEditor-placeholder {
   position: absolute;
   left: 0;
@@ -445,15 +454,6 @@ export default defineComponent({
   pointer-events: auto;
   color: var(--color-placeholder);
   font-style: italic;
-}
-.ImcEditor-activated {
-  opacity: 0;
-  transition: opacity 0.05s ease;
-  pointer-events: none;
-  &.state-entering {
-    opacity: 1;
-    pointer-events: auto;
-  }
 }
 .ImcEditor.state-drag .ImcEditor-drag-overlay {
   display: block;
