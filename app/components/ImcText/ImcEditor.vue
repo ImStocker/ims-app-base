@@ -12,7 +12,7 @@
           v-if="!activated"
           class="ImcEditor-presenter-focusTrap"
           type="text"
-          @focus="focus"
+          @focus="focus()"
         />
         <imc-presenter
           ref="presenter"
@@ -242,46 +242,67 @@ export default defineComponent({
         await this.activatedReadyPromise;
       }
     },
-    async focus() {
+    async focus(options?: { preventScroll?: boolean }) {
       await this._ensureReady();
-      if (this.$refs.activatedEditor) {
-        await (this.$refs.activatedEditor as any).focus();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor && !editor.isFocused) {
+        await editor.focus(options);
       }
     },
     async focusEnd() {
       await this._ensureReady();
-      if (this.$refs.activatedEditor) {
-        await (this.$refs.activatedEditor as any).focusEnd();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        await editor.focusEnd();
       }
     },
     async focusAt(clientX: number, clientY: number) {
       this.pendingSelection = null;
       await this._ensureReady();
-      if (this.$refs.activatedEditor) {
-        await (this.$refs.activatedEditor as any).focusAt(clientX, clientY);
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        await editor.focusAt(clientX, clientY);
       }
     },
     async selectAll() {
       await this._ensureReady();
-      if (this.$refs.activatedEditor) {
-        await (this.$refs.activatedEditor as any).selectAll();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        await editor.selectAll();
       }
     },
     emitDirty() {
-      if (this.$refs.activatedEditor) {
-        return (this.$refs.activatedEditor as any).emitDirty();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        return editor.emitDirty();
       }
       return false;
     },
     isFocused() {
-      if (this.$refs.activatedEditor) {
-        return (this.$refs.activatedEditor as any).isFocused();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        return editor.isFocused();
       }
       return false;
     },
     resetDirtyValue() {
-      if (this.$refs.activatedEditor) {
-        (this.$refs.activatedEditor as any).resetDirtyValue();
+      const editor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (editor) {
+        editor.resetDirtyValue();
       }
     },
     async onDrop(ev: DragEvent) {

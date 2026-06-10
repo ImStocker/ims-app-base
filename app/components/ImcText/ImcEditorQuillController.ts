@@ -52,7 +52,7 @@ export class ImcEditorQuillController {
         ]);
         this.quillInitedInterface = quillInitedInterface;
 
-        const { Quill, ImcEditorModule } = await initQuillClientSide();
+        const { Quill, ImcEditorModule } = quillInitedInterface;
         const quill = new Quill(editorElement, {
           theme: 'imcbuble',
           placeholder: this.component.placeholder,

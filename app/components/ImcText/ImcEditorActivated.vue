@@ -360,9 +360,9 @@ export default defineComponent({
       await this.focus();
       quill.setSelection(0, quill.getLength());
     },
-    async focus() {
+    async focus(options?: { preventScroll?: boolean }) {
       const quill = await this.quillController.awaitQuill();
-      quill.focus();
+      quill.focus(options);
     },
     async focusEnd() {
       const quill = await this.quillController.awaitQuill();
@@ -395,7 +395,9 @@ export default defineComponent({
       focusY: number,
     ) {
       await this.quillController.awaitQuill();
-      await this.focus();
+      await this.focus({
+        preventScroll: true,
+      });
       const anchor = getRangeUnderMouse(anchorX, anchorY);
       const focus = getRangeUnderMouse(focusX, focusY);
       const selection = document.getSelection();
