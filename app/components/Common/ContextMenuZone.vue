@@ -39,6 +39,12 @@ import MenuList from './MenuList.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
 import DropdownElement from './DropdownElement.vue';
 
+type ContextMenuData = {
+  shown: boolean;
+  x: number;
+  y: number;
+};
+
 export default defineComponent({
   name: 'ContextMenuZone',
   components: {
@@ -71,7 +77,7 @@ export default defineComponent({
         shown: false,
         x: 0,
         y: 0,
-      },
+      } as ContextMenuData,
     };
   },
   computed: {
@@ -81,11 +87,6 @@ export default defineComponent({
       }
       return this.menuList;
     },
-    contextMenuRect() {
-      const element = this.$refs.contextMenuZone as HTMLElement;
-      if (!element) return;
-      return element.getBoundingClientRect();
-    },
   },
   watch: {
     'contextMenu.shown'() {
@@ -94,7 +95,9 @@ export default defineComponent({
   },
   methods: {
     onContextMenu(event: PointerEvent | TouchEvent) {
-      if (!this.contextMenuRect) return;
+      const contextMenuZone = this.$refs.contextMenuZone as HTMLElement;
+      if (!contextMenuZone) return;
+
       if (this.disabled || this.menuList.length === 0) return;
       if (
         this.ignoringCssSelector &&
@@ -112,20 +115,32 @@ export default defineComponent({
       }
       event.preventDefault();
 
-      let clientX;
-      let clientY;
+      const contextMenuRect = contextMenuZone.getBoundingClientRect();
 
-      if (event instanceof PointerEvent) {
-        clientX = event.clientX;
-        clientY = event.clientY;
-      } else {
-        clientX = event.touches[0].clientX;
-        clientY = event.touches[0].clientY;
+      const newContextMenu: ContextMenuData = {
+        shown: true,
+        x: 0,
+        y: 0,
+      };
+      if (contextMenuRect.width > 0 && contextMenuRect.height > 0) {
+        let clientX: number;
+        let clientY: number;
+
+        const scaleX = contextMenuZone.clientWidth / contextMenuRect.width;
+        const scaleY = contextMenuZone.clientHeight / contextMenuRect.height;
+
+        if (event instanceof PointerEvent) {
+          clientX = event.clientX;
+          clientY = event.clientY;
+        } else {
+          clientX = event.touches[0].clientX;
+          clientY = event.touches[0].clientY;
+        }
+
+        newContextMenu.x = scaleX * (clientX - contextMenuRect.left);
+        newContextMenu.y = scaleY * (clientY - contextMenuRect.top);
       }
-
-      this.contextMenu.x = clientX - this.contextMenuRect.left;
-      this.contextMenu.y = clientY - this.contextMenuRect.top;
-      this.contextMenu.shown = true;
+      this.contextMenu = newContextMenu;
       event.stopPropagation();
     },
   },
