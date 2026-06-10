@@ -54,7 +54,6 @@ import FileAttachButton from '../../../../app/components/File/FileAttachButton.v
 import ImcEditor from '../../../../app/components/ImcText/ImcEditor.vue';
 import {
   joinAssetPropValueTexts,
-  type AssetPropType,
   type AssetPropValue,
   type AssetPropValueFile,
 } from '../../../../app/logic/types/Props';
@@ -82,7 +81,7 @@ export default defineComponent({
   emits: ['send', 'update:target-message'],
   data() {
     return {
-      message: {} as AssetPropValue,
+      message: null as AssetPropValue,
     };
   },
   computed: {
@@ -113,7 +112,7 @@ export default defineComponent({
       ) {
         this.message = this.targetMessage.message.content[''];
       } else {
-        this.message = {} as AssetPropValue;
+        this.message = null;
       }
 
       if (this.targetMessage) {
@@ -136,7 +135,7 @@ export default defineComponent({
     },
     sendMessage() {
       this.$emit('send', { content: this.message });
-      this.message = {} as AssetPropType;
+      this.message = null;
     },
   },
 });
