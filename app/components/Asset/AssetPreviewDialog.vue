@@ -183,6 +183,7 @@ import {
   LEVEL_ASSET_ID,
   SCRIPT_ASSET_ID,
   TASK_ASSET_ID,
+  GRAPH_ASSET_ID
 } from '../../logic/constants';
 import { calcResolvedBlocks } from '../../logic/types/AssetFullInstance';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
