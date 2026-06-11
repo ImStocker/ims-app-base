@@ -3,6 +3,7 @@
     v-logical-focus-out="onBlurEditorElement"
     class="ImcEditor ImcEditorActivated notranslate"
     :class="{ ['type-toolbar-' + toolbar]: true }"
+    :data-inited="editorInited"
   >
     <imc-text-augmentation ref="aug" :is-editor="true">
       <div
