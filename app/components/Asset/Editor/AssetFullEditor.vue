@@ -21,7 +21,10 @@
           :show-comments="showComments"
         >
           <component
-            :is="layoutDescriptor.editorComponent"
+            :is="
+              layoutDescriptor.editorComponent ??
+              defaultAssetLayoutDescriptor.editorComponent
+            "
             ref="editorComp"
             class="AssetFullEditor-blockEditor"
             :asset-block-editor="assetBlockEditor"
@@ -31,6 +34,13 @@
             @update:is-dirty="$emit('update:is-dirty', $event)"
           />
         </slot>
+      </template>
+      <template #toolbar="{ assetBlockEditor, hideActions }">
+        <slot
+          name="toolbar"
+          :asset-block-editor="assetBlockEditor"
+          :hide-actions="hideActions"
+        ></slot>
       </template>
     </asset-block-editor-root>
     <right-panel
@@ -98,6 +108,11 @@ export default defineComponent({
     return {};
   },
   computed: {
+    defaultAssetLayoutDescriptor() {
+      return this.$getAppManager()
+        .get(EditorManager)
+        .getDefaultLayoutDescriptor();
+    },
     layoutDescriptor() {
       if (!this.currentSingleAsset) {
         return this.$getAppManager()

@@ -6,6 +6,7 @@
     :placeholder="placeholder"
     :where="selectAssetWhere"
     :additional-options="additionalOptions"
+    :select-base-asset="true"
     @update:model-value="changeParent($event)"
   ></select-asset-combo-box>
 </template>

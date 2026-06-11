@@ -52,7 +52,7 @@ export class ImcEditorQuillController {
         ]);
         this.quillInitedInterface = quillInitedInterface;
 
-        const { Quill, ImcEditorModule } = await initQuillClientSide();
+        const { Quill, ImcEditorModule } = quillInitedInterface;
         const quill = new Quill(editorElement, {
           theme: 'imcbuble',
           placeholder: this.component.placeholder,
@@ -85,35 +85,7 @@ export class ImcEditorQuillController {
           if (eventName === 'text-change') {
             this.component.onTextChange(quill.getContents());
           } else if (eventName === 'selection-change') {
-            const imceditor = quill.getModule('imceditor') as ImcEditorModule;
-            if (!imceditor) return;
-
-            const selection = quill.getSelection();
-
-            const shoud_be_focused = this.shouldBeFocused();
-            const is_focused = this.component.isFocused();
-            if (shoud_be_focused && !is_focused) {
-              this.component.onFocus();
-            }
-
-            if (selection) {
-              if (selection.length > 0) {
-                const bounds = quill.getBounds(
-                  selection.index,
-                  selection.length,
-                );
-                if (bounds) {
-                  this.component.toolbarCoord = new DOMRect(
-                    bounds.left,
-                    bounds.top,
-                    bounds.width,
-                    bounds.height,
-                  );
-                }
-              } else {
-                this.component.toolbarCoord = null;
-              }
-            }
+            this.onSelectionChanged();
           }
         });
 
@@ -140,6 +112,38 @@ export class ImcEditorQuillController {
       });
     }
     return await this._initPromise;
+  }
+
+  onSelectionChanged() {
+    if (!this.quill) {
+      return;
+    }
+    const imceditor = this.quill.getModule('imceditor') as ImcEditorModule;
+    if (!imceditor) return;
+
+    const selection = this.quill.getSelection();
+
+    const shoud_be_focused = this.shouldBeFocused();
+    const is_focused = this.component.isFocused();
+    if (shoud_be_focused && !is_focused) {
+      this.component.onFocus();
+    }
+
+    if (selection) {
+      if (selection.length > 0) {
+        const bounds = this.quill.getBounds(selection.index, selection.length);
+        if (bounds) {
+          this.component.toolbarCoord = new DOMRect(
+            bounds.left,
+            bounds.top,
+            bounds.width,
+            bounds.height,
+          );
+        }
+      } else {
+        this.component.toolbarCoord = null;
+      }
+    }
   }
 
   shouldBeFocused() {

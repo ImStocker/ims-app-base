@@ -47,7 +47,9 @@
     <template #empty>
       <div class="ProjectTreePresenter-empty">
         {{
-          noItemsCaption !== null ? noItemsCaption : $t('gddPage.menu.empty')
+          noItemsCaption !== null
+            ? noItemsCaption
+            : $t('gddPage.menu.noSubFolders')
         }}
       </div>
     </template>
@@ -70,12 +72,14 @@ import {
   ProjectWorkspacesPresenterVM,
   type ProjectWorkspacesPresenterVMOptions,
 } from './ProjectWorkspacesPresenterVM';
+import ProjectTreePresenterAdditional from './ProjectTreePresenterAdditional.vue';
 
 export default defineComponent({
   name: 'ProjectWorkspacesPresenter',
   components: {
     TreePresenter,
     ProjectTreePresenterWorkspace,
+    ProjectTreePresenterAdditional,
   },
   props: {
     selection: {

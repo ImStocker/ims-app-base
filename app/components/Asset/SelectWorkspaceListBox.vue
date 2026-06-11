@@ -1,16 +1,18 @@
 <template>
   <div class="SelectWorkspaceListBox">
     <FormSearch
+      v-if="showSearch"
       class="SelectWorkspaceListBox-search"
       :value="searchTextOwn"
       :autofocus="true"
       @change="searchTextOwn = $event"
     ></FormSearch>
-    <div class="SelectWorkspaceListBox-allOptions">
+    <div class="SelectWorkspaceListBox-allOptions ref-list">
       <div class="SelectWorkspaceListBox-items tiny-scrollbars">
         <project-workspaces-presenter
           :workspace-where="workspaceWhereComp"
-          :is-drag-allowed="false"
+          :allow-drag-change="allowDragChange"
+          :get-workspace-menu="getWorkspaceMenu"
           :selection="curSelection"
           @update:selection="changeValue($event[0])"
         ></project-workspaces-presenter>
@@ -24,8 +26,12 @@ import { defineComponent, type PropType } from 'vue';
 import ProjectWorkspacesPresenter from './ProjectTree/ProjectWorkspacesPresenter.vue';
 import FormSearch from '../Form/FormSearch.vue';
 import type { WorkspaceForSelection } from '../../logic/types/AssetsType';
-import type { WorkspaceQueryDTOWhere } from '../../logic/types/Workspaces';
+import type {
+  WorkspaceQueryDTOWhere,
+  Workspace,
+} from '../../logic/types/Workspaces';
 import type { ProjectTreeSelectedItem } from '../../logic/vm/IProjectTreePresenterVM';
+import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'SelectWorkspaceListBox',
@@ -50,6 +56,20 @@ export default defineComponent({
     readonly: {
       type: Boolean,
       default: false,
+    },
+    showSearch: {
+      type: Boolean,
+      default: true,
+    },
+    allowDragChange: {
+      type: Boolean,
+      default: false,
+    },
+    getWorkspaceMenu: {
+      type: Function as PropType<
+        (workspace: Workspace) => ExtendedMenuListItem[]
+      >,
+      default: () => [],
     },
   },
   emits: ['update:modelValue', 'update:searchText'],

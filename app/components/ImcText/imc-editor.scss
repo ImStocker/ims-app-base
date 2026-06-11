@@ -331,7 +331,7 @@ body[data-theme="ims-dark"] {
 
     &:before{
         content: "";
-        display: inline-block;
+        display: inline;
         position: static;
         margin: 0;
         transform: none;
@@ -341,6 +341,7 @@ body[data-theme="ims-dark"] {
         color:inherit;
         background: none;
         top: -1px;
+        vertical-align: bottom;
     }
 
 }

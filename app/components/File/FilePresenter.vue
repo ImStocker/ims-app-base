@@ -28,8 +28,8 @@
     class="FilePresenter type-inline is-interactive"
     :src="fileInfo?.link ?? undefined"
     :title="tooltip"
-    :width="width"
-    :height="height"
+    :width="width ?? undefined"
+    :height="height ?? undefined"
     @click="$emit('click', $event)"
     @error="$emit('error')"
   />
@@ -37,8 +37,8 @@
     v-else-if="fileInfo?.inlineType === 'video'"
     class="FilePresenter type-inline is-interactive"
     :title="tooltip"
-    :width="width"
-    :height="height"
+    :width="width ?? undefined"
+    :height="height ?? undefined"
     controls
     :src="fileInfo?.link ?? undefined"
   ></video>
@@ -60,8 +60,8 @@
       ['type-ext-' + fileInfo?.ext]: true,
     }"
     :title="tooltip"
-    :width="width"
-    :height="height"
+    :width="width ?? undefined"
+    :height="height ?? undefined"
     :src="fileInfo?.link ?? undefined"
   ></iframe>
   <span v-else class="FilePresenter type-inline">
@@ -106,8 +106,8 @@ export default defineComponent({
     inline: { type: Boolean, default: false },
     tooltip: { type: String, default: '' },
     isStatic: { type: Boolean, default: false },
-    width: { type: Number, default: null },
-    height: { type: Number, default: null },
+    width: { type: [Number, null], default: null },
+    height: { type: [Number, null], default: null },
     thumbParams: {
       type: [Object, null] as PropType<ThumbParams | null>,
       default: null,

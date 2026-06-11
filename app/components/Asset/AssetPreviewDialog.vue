@@ -183,6 +183,7 @@ import {
   LEVEL_ASSET_ID,
   SCRIPT_ASSET_ID,
   TASK_ASSET_ID,
+  GRAPH_ASSET_ID
 } from '../../logic/constants';
 import { calcResolvedBlocks } from '../../logic/types/AssetFullInstance';
 import type { SubscriberHandler } from '../../logic/types/Subscriber';
@@ -250,7 +251,8 @@ export default defineComponent({
         const blocks = calcResolvedBlocks(opened_asset);
         if (
           opened_asset.typeIds.includes(SCRIPT_ASSET_ID) ||
-          opened_asset.typeIds.includes(LEVEL_ASSET_ID)
+          opened_asset.typeIds.includes(LEVEL_ASSET_ID) ||
+          opened_asset.typeIds.includes(GRAPH_ASSET_ID)
         ) {
           hasProps = blocks.list.some(
             (b) => b.name === 'props' && b.type === 'props',
@@ -575,6 +577,9 @@ export default defineComponent({
   padding: 0px 0px 20px 0px;
 
   --local-bg-color: var(--editor-bg-color);
+}
+.AssetPreviewDialog-toolbar {
+  display: flex;
 }
 .AssetPreviewDialog-forHistory {
   margin-left: -170px;

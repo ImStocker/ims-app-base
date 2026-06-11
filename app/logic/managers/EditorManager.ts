@@ -34,17 +34,25 @@ export type EditorContextForAssetRequested = {
   release: () => void;
 };
 
+export type CustomAssetExportFormat = {
+  title: string;
+  name?: string;
+  export: () => void;
+};
+
+export type AssetLayoutDescriptorProps = {
+  toolbarShowBlockCopyPaste?: boolean;
+  headerLocaleButton?: boolean;
+  headerPropsButton?: boolean;
+  headerHideParent?: boolean;
+};
+
 export type AssetLayoutDescriptor = {
   name: string;
-  pageComponent: Component;
-  editorComponent: Component;
+  pageComponent?: Component;
+  editorComponent?: Component;
   popupComponent?: Component;
-  props: {
-    toolbarShowBlockCopyPaste?: boolean;
-    headerLocaleButton?: boolean;
-    headerPropsButton?: boolean;
-    headerHideParent?: boolean;
-  };
+  props: AssetLayoutDescriptorProps;
 };
 
 type EditorContextForAssetHolder = {
@@ -69,14 +77,14 @@ const AssetLayoutDefault = markRaw({
   popupComponent: defineAsyncComponent(
     () => import('../../components/Asset/AssetPreviewDialog.vue'),
   ),
-  props: {},
+  props: {} as AssetLayoutDescriptorProps,
 });
 
 export default abstract class EditorManager extends AppSubManagerBase {
   private _blockTypeEntities: BlockTypeDefinition[] = [];
   private _fieldTypeEntities: FieldTypeController[] = [];
   private _assetLayoutDescriptors: AssetLayoutDescriptor[] = [
-    AssetLayoutDefault,
+    this.getDefaultLayoutDescriptor(),
   ];
   private _activeEditors: IEditorVM[] = [];
   private _currentEditorPage: IEditorPageComponent | null = null;
@@ -87,6 +95,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
     string,
     EditorContextForAssetHolder
   >();
+  private _customExportFormats = new Map<string, CustomAssetExportFormat[]>();
 
   private _registerEntity<
     T extends BlockTypeDefinition | FieldTypeController | AssetLayoutDescriptor,
@@ -245,7 +254,7 @@ export default abstract class EditorManager extends AppSubManagerBase {
             const layout = this.getLayoutDescriptorForAsset(res);
             popup = layout.popupComponent;
           }
-          return popup ?? AssetLayoutDefault.popupComponent;
+          return popup ?? this.getDefaultLayoutDescriptor().popupComponent;
         })
         .then(async (dialogComponent) => {
           const dialog = this.appManager
@@ -461,6 +470,44 @@ export default abstract class EditorManager extends AppSubManagerBase {
 
   registerAssetLayout(layout: AssetLayoutDescriptor) {
     return this._registerEntity(this._assetLayoutDescriptors, markRaw(layout));
+  }
+
+  registerCustomExportFormatForAsset(
+    assetId: string,
+    export_format: CustomAssetExportFormat,
+  ) {
+    const formats = this._customExportFormats.get(assetId);
+    if (formats) {
+      formats.push(export_format);
+    } else {
+      this._customExportFormats.set(assetId, [export_format]);
+    }
+    return {
+      cancel: () => {
+        const list = this._customExportFormats.get(assetId);
+        if (list) {
+          const idx = list.indexOf(export_format);
+          if (idx >= 0) list.splice(idx, 1);
+          if (list.length === 0) this._customExportFormats.delete(assetId);
+        }
+      },
+    };
+  }
+
+  getCustomExportFormatsForAsset(
+    asset: AssetFullInstanceR,
+  ): CustomAssetExportFormat[] {
+    const exact = this._customExportFormats.get(asset.id);
+    if (exact) {
+      return exact;
+    }
+    for (let i = asset.typeIds.length - 1; i >= 0; i--) {
+      const typeFormats = this._customExportFormats.get(asset.typeIds[i]);
+      if (typeFormats) {
+        return typeFormats;
+      }
+    }
+    return [];
   }
 
   registerAssetLayoutBind(assetId: string, layoutName: string) {

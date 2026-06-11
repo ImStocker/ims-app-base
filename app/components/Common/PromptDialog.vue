@@ -16,6 +16,7 @@
       </div>
       <div class="Dialog-message">
         <FormInput
+          ref="input"
           :autofocus="true"
           :value="dialog.state.value ? dialog.state.value : undefined"
           :placeholder="dialog.state.placeholder"
@@ -122,6 +123,12 @@ export default defineComponent({
     }
     if (this.dialog.state.value) {
       this.value = this.dialog.state.value;
+      const input = this.$refs['input'] as InstanceType<
+        typeof FormInput
+      > | null;
+      if (input) {
+        input.selectAll();
+      }
     }
   },
   methods: {
