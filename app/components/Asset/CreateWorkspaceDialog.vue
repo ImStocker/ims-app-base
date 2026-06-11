@@ -57,6 +57,7 @@
                 :additional-options="additionalOptions"
                 :has-create-new-option="true"
                 :add-button-title="$t('sourcePage.types.create')"
+                :select-base-asset="true"
               >
               </select-asset-combo-box>
             </div>
@@ -106,6 +107,7 @@ import {
   ASSET_SELECTION_ENUM,
   ASSET_SELECTION_GAME_MECHANICS,
   ASSET_SELECTION_GAME_OBJECT,
+  ASSET_SELECTION_GRAPH,
   ASSET_SELECTION_LEVEL,
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
@@ -160,9 +162,10 @@ export default defineComponent({
       return [
         ASSET_SELECTION_GAME_OBJECT,
         ASSET_SELECTION_GAME_MECHANICS,
-        ASSET_SELECTION_DIAGRAM,
+        ASSET_SELECTION_GRAPH,
         ASSET_SELECTION_SCRIPT,
         ASSET_SELECTION_LEVEL,
+        ASSET_SELECTION_DIAGRAM,
         ASSET_SELECTION_STRUCTURE,
         ASSET_SELECTION_ENUM,
       ];

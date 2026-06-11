@@ -317,12 +317,9 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       const imc_editor = (field_node as any).__imc_editor as InstanceType<
         typeof ImcEditor
       >;
-      if (imc_editor.quillController.quill) {
-        const imc_editor_selection =
-          imc_editor.quillController.quill.getSelection();
-        if (imc_editor_selection) {
-          cursor.offset = imc_editor_selection.index;
-        }
+      const imc_editor_selection = imc_editor.getSelection();
+      if (imc_editor_selection) {
+        cursor.offset = imc_editor_selection.index;
       }
     }
 

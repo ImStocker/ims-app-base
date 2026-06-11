@@ -10,6 +10,7 @@
     :has-create-new-option="hasCreateNewOption"
     :where="where"
     :additional-options="additionalOptions"
+    :select-base-asset="true"
     @update:model-value="onSelected($event)"
   ></select-asset-combo-box>
 </template>

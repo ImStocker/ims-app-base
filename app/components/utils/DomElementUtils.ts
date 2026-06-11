@@ -252,6 +252,15 @@ export function getRangeUnderMouse(
   };
 }
 
+export function isSelectionInsideNode(container: Node, selection?: Selection) {
+  if (!selection) selection = document.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    return false;
+  }
+  const anchorNode = selection.anchorNode;
+  return container.contains(anchorNode);
+}
+
 export function isElementInteractive(
   element: HTMLElement,
   interactiveClass = 'is-interactive',

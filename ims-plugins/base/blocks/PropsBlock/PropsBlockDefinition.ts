@@ -31,7 +31,7 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
   component = async () => (await import('./PropsBlock.vue')).default;
   icon = 'table-2';
   override aiSpec =
-    'This block contains a table of properties (props). Each row defines one property: key (propKey), type (type), and value (value). Fields and their types are configured through the block editor.';
+    'This block stores a table of named properties. Each property row consists of: a value stored directly at `{propKey}` as AssetPropValue (null, string, number, boolean, number[], or an object like AssetPropValueText {Str, Ops}, AssetPropValueFile {FileId, Title, Size, Dir, Store}, AssetPropValueAsset {AssetId, Title, Name}, AssetPropValueEnum {Enum, Name, Title}, AssetPropValueAccount {AccountId, Name}, AssetPropValueTimestamp {Str, Ts}, AssetPropValueProject {ProjectId, Title}, etc.); plus metadata stored under `__props\\{propKey}\\` containing index (number), title (string), name (string, optional), type (string | null — field type controller: "text", "string", "number", "integer", "checkbox", "enum", "enumRadio", "date", "dateTime", "email", "phone", "assetSelector", "attachment", "struct", "textAttachment", "textCut", "attributeType", "projectUser", "nameTitle", "gddElementSelector", "buttonDateTime", "fieldParams"), multiple (boolean — if true, value is stored as array with sub-keys), hint (string, optional), and params (AssetProps, controller-specific sub-fields).';
 
   override getBlockProvidedVariables(
     asset: AssetFullInstanceR,

@@ -68,6 +68,10 @@ export default defineComponent({
       type: Array<AssetForSelection>,
       default: () => [],
     },
+    selectBaseAsset: {
+      type: Boolean,
+      default: false,
+    },
     readonly: {
       type: Boolean,
       default: false,
@@ -129,6 +133,10 @@ export default defineComponent({
       (this.$refs.search as InstanceType<typeof ProjectTreeSearch>).focus();
     },
     async onItemClick(e: TreePresenterItemEvent<ProjectTreeItemPayload>) {
+      if (!this.selectBaseAsset) {
+        return;
+      }
+
       // Select collection's bound asset
       if (e.target.item.payload.type !== 'workspace') {
         return;

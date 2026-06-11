@@ -2,45 +2,22 @@
   <div>
     <div class="AssetEditorTextBlock">
       <imc-editor
-        v-if="editMode"
         ref="editor"
         class="AssetEditorTextBlock-editor AssetEditorTextBlock-inner"
-        :model-value="current.value"
-        :multiline="true"
-        data-ims-block-key="value"
-        @blur="save()"
-        @focus="onFocus()"
-        @update:model-value="emitValue($event)"
-        @view-ready="$emit('view-ready', $event)"
-      ></imc-editor>
-      <div
-        v-else-if="!current.same"
-        class="AssetEditorTextBlock-messages AssetEditorTextBlock-inner"
-        :title="$t('assetEditor.textBlockChangeText')"
-        @click="enterEditMode($event, false)"
-      >
-        {{ $t('assetEditor.differentValues') }}
-      </div>
-      <div
-        v-else-if="!current.value"
-        class="AssetEditorTextBlock-messages AssetEditorTextBlock-inner"
-        :title="readonly ? '' : $t('assetEditor.textBlockChangeText')"
-        @click="enterEditMode($event, false)"
-      >
-        {{ $t('assetEditor.textBlockNoText') }}
-      </div>
-      <imc-presenter
-        v-else
-        class="AssetEditorTextBlock-presenter AssetEditorTextBlock-inner"
         :class="{
           'state-inherited': displayMode === 'normal' && current.inherited,
         }"
-        :title="readonly ? '' : $t('assetEditor.textBlockChangeText')"
-        :value="current.value"
+        :model-value="current.value"
+        :readonly="readonly"
+        :multiline="true"
         :get-header-anchor="getHeaderAnchor"
-        @click="enterEditMode($event, true)"
+        :placeholder="$t('assetEditor.textBlockNoText')"
+        data-ims-block-key="value"
+        @focus="onEditorFocus"
+        @blur="onEditorBlur"
+        @update:model-value="emitValue($event)"
         @view-ready="$emit('view-ready', $event)"
-      ></imc-presenter>
+      ></imc-editor>
     </div>
   </div>
 </template>
@@ -54,7 +31,6 @@ import {
   type ResolvedAssetBlock,
 } from '#logic/utils/assets';
 import ImcEditor from '#components/ImcText/ImcEditor.vue';
-import ImcPresenter from '#components/ImcText/ImcPresenter.vue';
 import {
   AssetPropType,
   type AssetPropValue,
@@ -64,13 +40,13 @@ import {
   makeBlockRef,
   sameAssetPropValues,
 } from '#logic/types/Props';
-import { isElementInteractive } from '#components/utils/DomElementUtils';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import type { AssetChanger } from '#logic/types/AssetChanger';
+import { isElementInteractive } from '#components/utils/DomElementUtils';
 
 export default defineComponent({
   name: 'TextBlock',
-  components: { ImcPresenter, ImcEditor },
+  components: { ImcEditor },
   props: {
     assetBlockEditor: {
       type: Object as PropType<AssetBlockEditorVM>,
@@ -117,15 +93,28 @@ export default defineComponent({
         inherited,
       };
     },
-    editMode() {
-      return this.assetBlockEditor.isBlockEditing(this.resolvedBlock.id);
-    },
     generatedBlockAnchors() {
       const value = this.resolvedBlock.computed['value'];
       if (getAssetPropType(value) === AssetPropType.TEXT) {
         return extractHeaderAnchorsFromText(value as AssetPropValueText);
       }
       return [];
+    },
+    isBlockActive() {
+      return this.assetBlockEditor.editingBlockId === this.resolvedBlock.id;
+    },
+  },
+  watch: {
+    isBlockActive() {
+      if (this.isBlockActive) {
+        const editor = this.$refs.editor as InstanceType<
+          typeof ImcEditor
+        > | null;
+        if (!editor) return;
+        if (!editor.isFocused()) {
+          editor.focus();
+        }
+      }
     },
   },
   methods: {
@@ -142,6 +131,14 @@ export default defineComponent({
       }
       return null;
     },
+    onEditorFocus() {
+      if (!this.isBlockActive) {
+        this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
+      }
+    },
+    onEditorBlur() {
+      this.save();
+    },
     async enterEditMode(ev?: MouseEvent, useMouseCoord: boolean = false) {
       if (this.readonly) return;
       if (ev && isElementInteractive(ev.target as HTMLElement)) return;
@@ -152,9 +149,12 @@ export default defineComponent({
         if (ev && useMouseCoord) {
           const coord_x = ev.clientX;
           const coord_y = ev.clientY;
-          await (this.$refs.editor as any).focusAt(coord_x, coord_y);
+          await (this.$refs.editor as InstanceType<typeof ImcEditor>).focusAt(
+            coord_x,
+            coord_y,
+          );
         } else {
-          await (this.$refs.editor as any).focus();
+          await (this.$refs.editor as InstanceType<typeof ImcEditor>).focus();
         }
       }
     },
@@ -173,7 +173,6 @@ export default defineComponent({
       this.$emit('save');
       this.assetBlockEditor.exitEditMode();
     },
-    onFocus() {},
   },
 });
 </script>
@@ -194,11 +193,6 @@ export default defineComponent({
   border-radius: 4px;
   box-sizing: border-box;
   border: 1px solid var(--local-bg-color);
-}
-
-.AssetEditorTextBlock-messages {
-  font-style: italic;
-  color: #999;
 }
 
 .AssetEditorTextBlock-presenter {

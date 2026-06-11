@@ -55,6 +55,7 @@ import {
   ASSET_SELECTION_DIAGRAM,
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_LEVEL,
+  ASSET_SELECTION_GRAPH,
 } from '../../logic/constants';
 
 type ParentElement = {
@@ -125,9 +126,10 @@ export default defineComponent({
         },
         ASSET_SELECTION_GAME_OBJECT,
         ASSET_SELECTION_GAME_MECHANICS,
-        ASSET_SELECTION_DIAGRAM,
+        ASSET_SELECTION_GRAPH,
         ASSET_SELECTION_SCRIPT,
         ASSET_SELECTION_LEVEL,
+        ASSET_SELECTION_DIAGRAM,
       ];
     },
   },

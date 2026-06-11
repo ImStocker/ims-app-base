@@ -5,30 +5,26 @@
       ['asset-icon-' +
       (displayingAssetIcon ? displayingAssetIcon : 'file-fill')]: !assetImage,
     }"
-    ><file-presenter
+    ><asset-icon-image
       v-if="assetImage"
-      :value="assetImage"
       class="AssetIcon-image"
-      :inline="true"
+      :asset="asset"
       :width="16"
       :height="16"
-      :thumb-params="{ width: 32, height: 32, fit: 'cover' }"
-    ></file-presenter
-  ></span>
+    ></asset-icon-image>
+  </span>
 </template>
 
 <script type="text/ecmascript-6" lang="ts">
 import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import type { AssetLink } from '../../logic/types/AssetsType';
-import type { AssetPropValueFile } from '../../logic/types/Props';
+import { getAssetImageFromPreview } from './AssetIconImage.vue';
 
 export default defineComponent({
   name: 'AssetIcon',
   components: {
-    FilePresenter: defineAsyncComponent(
-      () => import('../File/FilePresenter.vue'),
-    ),
+    AssetIconImage: defineAsyncComponent(() => import('./AssetIconImage.vue')),
   },
   props: {
     asset: { type: Object as PropType<AssetLink>, required: true },
@@ -72,14 +68,7 @@ export default defineComponent({
       }
       const cached_preview = this.cachedAssetPreview;
       if (!cached_preview) return null;
-      if (
-        !cached_preview.mainImage ||
-        cached_preview.mainImage.type !== 'file' ||
-        !(cached_preview.mainImage.value as AssetPropValueFile).FileId
-      ) {
-        return null;
-      }
-      return cached_preview.mainImage.value as AssetPropValueFile;
+      return getAssetImageFromPreview(cached_preview);
     },
     displayingAssetIcon(): string | null {
       if (this.cachedAsset) {

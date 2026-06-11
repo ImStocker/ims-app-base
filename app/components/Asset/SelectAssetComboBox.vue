@@ -58,6 +58,7 @@
         :additional-options="additionalOptions"
         :where="where"
         :has-create-new-option="hasCreateNewOption"
+        :select-base-asset="selectBaseAsset"
         class="is-dropdown SelectAssetComboBox-dropdown"
         @update:model-value="onSelected($event)"
       >
@@ -140,6 +141,10 @@ export default defineComponent({
     addButtonTitle: {
       type: [String, null],
       default: null,
+    },
+    selectBaseAsset: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['update:modelValue'],

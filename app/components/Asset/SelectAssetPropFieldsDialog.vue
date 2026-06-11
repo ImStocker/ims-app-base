@@ -19,6 +19,7 @@
             class="SelectAssetPropFieldsDialog-filter"
             :model-value="baseAsset"
             :where="selectAssetWhere"
+            :select-base-asset="true"
             @update:model-value="selectBaseAsset"
           ></select-asset-combo-box>
           <div class="SelectAssetPropFieldsDialog-field-control">

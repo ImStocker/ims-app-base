@@ -17,6 +17,7 @@
             <select-asset-combo-box
               v-model="collectionType"
               :where="collectionTypeWhere"
+              :select-base-asset="true"
             ></select-asset-combo-box>
           </div>
         </div>

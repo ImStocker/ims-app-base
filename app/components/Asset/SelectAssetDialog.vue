@@ -9,6 +9,7 @@
         class="SelectAssetDialog-list"
         :where="dialog.state.where ?? null"
         :additional-options="dialog.state.additionalOptions ?? []"
+        :select-base-asset="dialog.state.selectBaseAsset"
         @update:model-value="choose($event)"
       ></select-asset-list-box>
     </div>
@@ -36,6 +37,7 @@ type DialogProps = {
   where?: AssetPropWhere | null;
   searchValue?: AssetPropValueSelection | null;
   additionalOptions?: AssetForSelection[];
+  selectBaseAsset?: boolean;
 };
 
 type DialogResult = AssetForSelection;

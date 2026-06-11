@@ -68,6 +68,7 @@ export default {
     DiagramElement: 'Диаграмма',
     DialogElement: 'Диалог',
     LevelMapElement: 'Уровень',
+    GraphElement: 'Граф',
     ScriptElement: 'Сценарий',
     ProjectSettings: 'Настройки проекта',
     MenuSettings: 'Настройка меню',

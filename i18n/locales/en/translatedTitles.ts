@@ -69,6 +69,7 @@ export default {
     DialogElement: 'Dialog',
     ScriptElement: 'Script',
     LevelMapElement: 'Level',
+    GraphElement: 'Graph',
     ProjectSettings: 'Project settings',
     MenuSettings: 'Menu settings',
     Content: 'Content',
