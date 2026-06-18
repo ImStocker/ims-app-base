@@ -71,7 +71,7 @@ export default async function analyzeAssetSearchWhere(
           break;
         case 'inside':
           for (const val_item of val_arr) {
-            if (isUUID(val_item)) {
+            if (isUUID(val_item, 'loose')) {
               workspace_ids.push(val_item);
             } else {
               workspace_names.push(val_item);
