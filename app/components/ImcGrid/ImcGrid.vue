@@ -111,10 +111,10 @@ import {
   type AssetPropsPlainObjectValue,
   type AssetPropValue,
   type AssetPropValueType,
-} from '../../logic/types/Props.js';
+} from '../../logic/types/Props';
 import UiManager, {
   type UiFocusLockHandler,
-} from '../../logic/managers/UiManager.js';
+} from '../../logic/managers/UiManager';
 import { useImcHTMLRenderer } from '../ImcText/useImcHTMLRenderer';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ImcEditorQuillController } from '../ImcText/ImcEditorQuillController';
