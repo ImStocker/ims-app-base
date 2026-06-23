@@ -48,27 +48,49 @@
             #[`body-${column.name}`]="{ row, rowIndex }"
             :key="column.name"
           >
-            <props-block-value-stack
-              :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
-              class="ImcGrid-cell-inner"
+            <div
+              class="ImcGrid-cell-body-content"
               :class="getCellClass(rowIndex, column_index)"
-              :form-state="
-                isCellSelected(rowIndex, column_index)
-                  ? getPreviewCellFormState(row.values[column_index])
-                  : row.values[column_index].formState
-              "
-              :field="row.values[column_index].field"
-              :edit-mode="
-                !readonly &&
-                !row.values[column_index].field.readonly &&
-                !!focusedCell &&
-                focusedCell.row === rowIndex &&
-                focusedCell.col === column_index &&
-                editMode
-              "
-              @input-props="onInputCell(rowIndex, column_index, $event)"
-              @change-props="onInputCell(rowIndex, column_index, $event, true)"
-            ></props-block-value-stack>
+            >
+              <props-block-value-stack
+                :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
+                class="ImcGrid-cell-inner"
+                :class="{
+                  'state-value-number': isValueNumber(rowIndex, column_index),
+                }"
+                :form-state="
+                  isCellSelected(rowIndex, column_index)
+                    ? getPreviewCellFormState(row.values[column_index])
+                    : row.values[column_index].formState
+                "
+                :field="row.values[column_index].field"
+                :edit-mode="
+                  !readonly &&
+                  !row.values[column_index].field.readonly &&
+                  !!focusedCell &&
+                  focusedCell.row === rowIndex &&
+                  focusedCell.col === column_index &&
+                  editMode
+                "
+                @input-props="onInputCell(rowIndex, column_index, $event)"
+                @change-props="
+                  onInputCell(rowIndex, column_index, $event, true)
+                "
+              ></props-block-value-stack>
+              <slot
+                :name="`cell-append-${column.name}`"
+                :row="row"
+                :row-index="rowIndex"
+                :column="column"
+                :column-index="column_index"
+                :is-editing="
+                  editMode &&
+                  !!focusedCell &&
+                  focusedCell.row === rowIndex &&
+                  focusedCell.col === column_index
+                "
+              ></slot>
+            </div>
           </template>
         </scrollable-table>
         <imc-editor
@@ -316,6 +338,15 @@ export default defineComponent({
         );
       });
     },
+    isValueNumber(rowIndex: number, colIndex: number) {
+      const row = this.rows[rowIndex];
+      if (!row) return false;
+      const column = row.values[colIndex];
+      if (!column) return false;
+      return (
+        typeof column.formState.combined[column.field.propKey] === 'number'
+      );
+    },
     getCellClass(rowIndex: number, colIndex: number) {
       let is_selected = false;
       let sel_left = true;
@@ -337,16 +368,6 @@ export default defineComponent({
         }
       }
 
-      let value_is_number = false;
-      const row = this.rows[rowIndex];
-      if (row) {
-        const column = row.values[colIndex];
-        if (column) {
-          value_is_number =
-            typeof column.formState.combined[column.field.propKey] === 'number';
-        }
-      }
-
       return {
         'state-focused':
           this.focusedCell &&
@@ -357,7 +378,6 @@ export default defineComponent({
         'state-sel-top': is_selected && sel_top,
         'state-sel-right': is_selected && sel_right,
         'state-sel-bottom': is_selected && sel_bottom,
-        'state-value-number': value_is_number,
       };
     },
     onMouseDown(md_ev: MouseEvent) {
@@ -1108,8 +1128,15 @@ export default defineComponent({
   pointer-events: none;
 }
 
+.ImcGrid-cell-body-content {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
 .ImcGrid.state-focus-inside {
-  .ImcGrid-cell-inner {
+  .ImcGrid-cell-body-content {
     &.state-sel-left {
       border-left: 2px solid var(--imc-grid-selection-border-color);
       margin-left: -1px;
@@ -1133,8 +1160,9 @@ export default defineComponent({
   }
 }
 
-.ImcGrid:not(.ImcGrid.state-focus-inside) .ImcGrid-cell-inner.state-selected,
-.ImcGrid-cell-inner.state-selected:not(.state-focused) {
+.ImcGrid:not(.ImcGrid.state-focus-inside)
+  .ImcGrid-cell-body-content.state-selected,
+.ImcGrid-cell-body-content.state-selected:not(.state-focused) {
   position: relative;
   z-index: 5;
   &:after {
@@ -1151,8 +1179,9 @@ export default defineComponent({
   }
 }
 .ImcGrid-cell-inner {
+  flex: 1;
   min-height: 100%;
-  min-width: 100%;
+  min-width: 0;
   padding: 1px;
   &.state-value-number {
     text-align: right;
