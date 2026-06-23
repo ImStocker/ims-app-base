@@ -31,6 +31,7 @@
       "
       :allow-resize-columns="!readonly"
       :readonly="readonly"
+      :get-cell-context-menu="getCellContextMenu"
       @change-cells="changeCells($event)"
       @resize-column="onColumnResize"
       @update:selected-ranges="onSelectionUpdated"
@@ -182,6 +183,7 @@ import type { AssetChanger } from '#logic/types/AssetChanger';
 import ValueTableBlockPrint from './ValueTableBlockPrint.vue';
 import type {
   ImcGridChangeCell,
+  ImcGridRow,
   ImcGridSelectedRange,
 } from '#components/ImcGrid/ImcGrid';
 import { generateNextUniqueNameNumber } from '#logic/utils/stringUtils';
@@ -696,6 +698,25 @@ export default defineComponent({
           op,
         );
       }
+    },
+    getCellContextMenu(
+      row: ImcGridRow,
+      _row_index: number,
+      _col_index: number,
+    ): MenuListItem[] {
+      if (this.readonly) return [];
+      const table_row = this.tableData.rows.find((r) => r.id === row.id);
+      if (!table_row) return [];
+      return [
+        {
+          title: this.$t('assetEditor.blockMenu.delete'),
+          icon: 'delete',
+          danger: true,
+          action: () => {
+            this.deleteRow(table_row);
+          },
+        },
+      ];
     },
     deleteRow(row: ValueTableBlockRowData) {
       this.assetChanger.deleteBlockPropKey(
