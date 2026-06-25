@@ -17,6 +17,7 @@ import {
   MIN_ASSET_RIGHTS_TO_CHANGE,
   MIN_ASSET_RIGHTS_TO_DELETE,
   MIN_ASSET_RIGHTS_TO_HISTORY,
+  MIN_ASSET_RIGHTS_TO_READ,
 } from '../../logic/types/Rights';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import {
@@ -141,7 +142,10 @@ export default defineComponent({
               action: this.openSetUpNotificationsDialog,
             }
           : null,
-        !this.isDiscussion && !this.isArticle && !this.isGuest
+        !this.isDiscussion &&
+          !this.isArticle &&
+          !!this.currentSingleAsset &&
+          this.currentAssetFullRights >= MIN_ASSET_RIGHTS_TO_READ
           ? {
               title: this.$t('gddPage.showLinks'),
               icon: 'links',
