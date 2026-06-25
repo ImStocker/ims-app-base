@@ -7,6 +7,14 @@
       :open-popup="true"
       ><caption-string :value="assetLink.title"></caption-string
     ></asset-link>
+    <button
+      v-if="!editMode"
+      class="CollectionAssetTitlePropPresenter-button is-button is-button-icon"
+      :title="$t('common.contextMenu.open')"
+      @click.stop="openAsset()"
+    >
+      <i class="ri-external-link-line"></i>
+    </button>
   </div>
 </template>
 
@@ -22,6 +30,7 @@ import type { IProjectContext } from '../../logic/types/IProjectContext';
 import { assert } from '../../logic/utils/typeUtils';
 import AssetLink from '../Asset/AssetLink.vue';
 import CaptionString from '../Common/CaptionString.vue';
+import EditorManager from '#logic/managers/EditorManager';
 
 export default defineComponent({
   name: 'CollectionAssetTitlePropPresenter',
@@ -37,6 +46,10 @@ export default defineComponent({
     },
     formState: {
       type: Object as PropType<PropsFormState>,
+      required: true,
+    },
+    editMode: {
+      type: Boolean,
       required: true,
     },
   },
@@ -62,7 +75,11 @@ export default defineComponent({
       };
     },
   },
-  methods: {},
+  methods: {
+    openAsset() {
+      this.$getAppManager().get(EditorManager).openAsset(this.assetId, 'self');
+    },
+  },
 });
 </script>
 
@@ -74,5 +91,13 @@ export default defineComponent({
 .CollectionAssetTitlePropPresenter-link {
   display: inline-flex;
   text-decoration: none;
+}
+.CollectionAssetTitlePropPresenter-button {
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.6;
+  &:hover {
+    opacity: 1;
+  }
 }
 </style>

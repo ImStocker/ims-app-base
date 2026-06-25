@@ -33,20 +33,6 @@
           <i v-if="getColumnSort(column)" class="ri-arrow-down-s-fill"></i>
         </div>
       </template>
-      <template
-        v-for="column of columns"
-        :key="column.name"
-        #[`cell-append-${column.name}`]="{ row, isEditing }"
-      >
-        <button
-          v-if="column.type === 'collectionAssetTitle' && !isEditing"
-          class="CollectionBlockGrid-nav-button is-button is-button-icon"
-          :title="$t('common.contextMenu.open')"
-          @click.stop="openAsset(row)"
-        >
-          <i class="ri-external-link-line"></i>
-        </button>
-      </template>
     </imc-grid>
     <div
       v-if="userRole"
@@ -72,7 +58,6 @@ import ImcGrid from '../ImcGrid/ImcGrid.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import DialogManager from '../../logic/managers/DialogManager';
-import EditorManager from '../../logic/managers/EditorManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import UiManager from '../../logic/managers/UiManager';
 import {
@@ -284,11 +269,6 @@ export default defineComponent({
           await this.vm.assetsContent.addItem();
         });
     },
-
-    openAsset(row: ImcGridRow) {
-      this.$getAppManager().get(EditorManager).openAsset(row.id, 'self');
-    },
-
     onColumnResize(ev: { name: string; width: number }) {
       const current_view = this.vm.modifiedCurrentView;
       const prop_index = current_view.props.findIndex(
@@ -347,14 +327,6 @@ export default defineComponent({
 .WorkspaceCollectionContent-header-cell {
   padding: 5px;
   font-weight: 500;
-}
-.CollectionBlockGrid-nav-button {
-  flex-shrink: 0;
-  margin-left: auto;
-  opacity: 0.6;
-  &:hover {
-    opacity: 1;
-  }
 }
 </style>
 
