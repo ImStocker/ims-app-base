@@ -206,7 +206,7 @@ export default defineComponent({
                 },
                 ...this.customExportFormats.map((f) => ({
                   title: f.title,
-                  action: f.export,
+                  action: () => f.export(this.currentAssetFull),
                 })),
               ],
             }

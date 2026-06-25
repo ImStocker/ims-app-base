@@ -59,17 +59,17 @@ export type ToastStateChange = Partial<
 
 export type DoTaskResult<T> =
   | {
-      success: true;
-      aborted: boolean;
-      result: T;
-      error: null;
-    }
+    success: true;
+    aborted: boolean;
+    result: T;
+    error: null;
+  }
   | {
-      success: false;
-      aborted: boolean;
-      result: null;
-      error: Error;
-    };
+    success: false;
+    aborted: boolean;
+    result: null;
+    error: Error;
+  };
 
 export class Toast {
   readonly id: string;
@@ -181,7 +181,7 @@ export default class UiManager extends AppSubManagerBase {
 
   $i18n: VueI18n | null = null;
   $cookies: ICookieContainer | null = null;
-  private currentTheme = DEFAULT_COLOR_THEME;
+  protected currentTheme = DEFAULT_COLOR_THEME;
   public pageNavigateState = new UiPageNavigateState();
 
   constructor(app_manager: IAppManager) {

@@ -37,7 +37,7 @@ export type EditorContextForAssetRequested = {
 export type CustomAssetExportFormat = {
   title: string;
   name?: string;
-  export: () => void;
+  export: (asset: AssetFullInstanceR) => void;
 };
 
 export type AssetLayoutDescriptorProps = {
