@@ -59,17 +59,17 @@ export type ToastStateChange = Partial<
 
 export type DoTaskResult<T> =
   | {
-    success: true;
-    aborted: boolean;
-    result: T;
-    error: null;
-  }
+      success: true;
+      aborted: boolean;
+      result: T;
+      error: null;
+    }
   | {
-    success: false;
-    aborted: boolean;
-    result: null;
-    error: Error;
-  };
+      success: false;
+      aborted: boolean;
+      result: null;
+      error: Error;
+    };
 
 export class Toast {
   readonly id: string;
@@ -543,7 +543,7 @@ export default class UiManager extends AppSubManagerBase {
       const locale = i18n_locale.toLowerCase();
       if (locale === 'en' || locale.startsWith('en-')) return 'en';
       if (locale === 'ru' || locale.startsWith('ru-')) return 'ru';
-      if (locale === 'de' || locale.startsWith('de')) return 'de';
+      if (locale === 'de' || locale.startsWith('de-')) return 'de';
     }
     return 'en';
   }
