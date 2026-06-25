@@ -55,6 +55,11 @@ export default defineComponent({
           title: 'Русский',
           enTitle: 'Russian',
         },
+        {
+          name: Lang.DE,
+          title: 'Deutsche',
+          enTitle: 'German',
+        },
       ];
     },
   },
