@@ -84,6 +84,7 @@ export class EditorContextForAsset {
         else res_ids_by_block.set(parsed_id[1], [parsed_id[2]]);
       }
     }
+
     for (const [block_id, controller_holder] of this._blockControllers) {
       if (controller_holder && controller_holder.controller) {
         controller_holder.controller.setSelectedContentItemIds(
@@ -142,8 +143,8 @@ export class EditorContextForAsset {
         const editor_manager = raw.appManager.get(EditorManager);
         return editor_manager.activeEditor
           ? editor_manager.activeEditor.getAssetBlockEditorForAsset(
-              instance.editingAsset.id,
-            )
+            instance.editingAsset.id,
+          )
           : null;
       },
       (active_editor) => {
@@ -157,7 +158,7 @@ export class EditorContextForAsset {
     return instance as EditorContextForAsset;
   }
 
-  destroy() {}
+  destroy() { }
 
   getContentItems(): BlockContentItem<any>[] {
     let content: BlockContentItem<any>[] = [];
@@ -202,8 +203,8 @@ export class EditorContextForAsset {
         .getBlockTypeDefinition(block.type);
       const controller = definition
         ? definition.createController(this.appManager, () => {
-            return this.resolvedBlocks.mapIds[block.id] ?? null;
-          })
+          return this.resolvedBlocks.mapIds[block.id] ?? null;
+        })
         : null;
       this._blockControllers.set(block_id, {
         type: block.type,

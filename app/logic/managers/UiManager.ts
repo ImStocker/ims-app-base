@@ -59,17 +59,17 @@ export type ToastStateChange = Partial<
 
 export type DoTaskResult<T> =
   | {
-      success: true;
-      aborted: boolean;
-      result: T;
-      error: null;
-    }
+    success: true;
+    aborted: boolean;
+    result: T;
+    error: null;
+  }
   | {
-      success: false;
-      aborted: boolean;
-      result: null;
-      error: Error;
-    };
+    success: false;
+    aborted: boolean;
+    result: null;
+    error: Error;
+  };
 
 export class Toast {
   readonly id: string;
@@ -126,7 +126,7 @@ export class Toast {
   }
 
   resume() {
-    if (this.type === ToastTypes.PROGRESS && this.progress) return;
+    if (this.type === ToastTypes.PROGRESS) return;
     if (this.timeout) clearTimeout(this.timeout);
     this.timeout = setTimeout(() => this.close(), this.time);
   }
