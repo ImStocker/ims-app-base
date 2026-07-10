@@ -181,7 +181,7 @@ export default class UiManager extends AppSubManagerBase {
 
   $i18n: VueI18n | null = null;
   $cookies: ICookieContainer | null = null;
-  private currentTheme = DEFAULT_COLOR_THEME;
+  protected currentTheme = DEFAULT_COLOR_THEME;
   public pageNavigateState = new UiPageNavigateState();
 
   constructor(app_manager: IAppManager) {
@@ -543,6 +543,7 @@ export default class UiManager extends AppSubManagerBase {
       const locale = i18n_locale.toLowerCase();
       if (locale === 'en' || locale.startsWith('en-')) return 'en';
       if (locale === 'ru' || locale.startsWith('ru-')) return 'ru';
+      if (locale === 'de' || locale.startsWith('de-')) return 'de';
     }
     return 'en';
   }
@@ -567,6 +568,7 @@ export default class UiManager extends AppSubManagerBase {
 
     let lang_code = 'en';
     if (lang === 'ru') lang_code = 'ru';
+    else if (lang === 'de') lang_code = 'de';
     await this.setLanguageSave(lang_code);
   }
 

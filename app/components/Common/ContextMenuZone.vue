@@ -98,7 +98,8 @@ export default defineComponent({
       const contextMenuZone = this.$refs.contextMenuZone as HTMLElement;
       if (!contextMenuZone) return;
 
-      if (this.disabled || this.menuList.length === 0) return;
+      if (this.disabled || !this.menuListComp || this.menuListComp.length === 0)
+        return;
       if (
         this.ignoringCssSelector &&
         event.target &&

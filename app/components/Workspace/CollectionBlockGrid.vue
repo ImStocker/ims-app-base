@@ -269,7 +269,6 @@ export default defineComponent({
           await this.vm.assetsContent.addItem();
         });
     },
-
     onColumnResize(ev: { name: string; width: number }) {
       const current_view = this.vm.modifiedCurrentView;
       const prop_index = current_view.props.findIndex(

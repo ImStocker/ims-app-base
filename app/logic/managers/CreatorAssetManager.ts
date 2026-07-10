@@ -308,8 +308,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
 
         const base_asset = (params.props?.asset as any)?.AssetId
           ? await this.getAssetInstance(
-              (params.props?.asset as any)?.AssetId as string,
-            )
+            (params.props?.asset as any)?.AssetId as string,
+          )
           : null;
         if (base_asset) {
           columns = [...columns, ...gatherColumns(base_asset, this.appManager)];
@@ -362,8 +362,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
             index?: number;
           }[];
         } = info_block?.computed
-          ? convertAssetPropsToPlainObject(info_block?.computed)
-          : { items: [] };
+            ? convertAssetPropsToPlainObject(info_block?.computed)
+            : { items: [] };
         if (task_columns.items) {
           for (const item of task_columns.items) {
             props[item.name ?? normalizeAssetPropPart(item.title)] = {
@@ -916,8 +916,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     const res = await (options
       ? this.getAssetsView<T>(query, options)
       : (this.getAssetsView<AssetProps>(query) as Promise<
-          ApiResultListWithTotal<T>
-        >));
+        ApiResultListWithTotal<T>
+      >));
     let has_more = res.total > res.list.length;
     let next_offset = res.list.length;
     while (has_more) {
@@ -928,8 +928,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       const chunk = await (options
         ? this.getAssetsView<T>(chunk_query, options)
         : (this.getAssetsView<AssetProps>(chunk_query) as Promise<
-            ApiResultListWithTotal<T>
-          >));
+          ApiResultListWithTotal<T>
+        >));
       if (chunk.list.length === 0) break;
       next_offset += chunk.list.length;
       res.list = [...res.list, ...chunk.list];
@@ -1485,8 +1485,8 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     if (!full) throw new Error('Asset not found');
     let blocks:
       | {
-          [blockKey: string]: AssetBlockParamsDTO;
-        }
+        [blockKey: string]: AssetBlockParamsDTO;
+      }
       | undefined = undefined;
     for (const r of full.blocks) {
       const key = stringifyAssetNewBlockRef(null, r.id);
@@ -1706,7 +1706,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
                 custom_where = true;
                 break;
               }
-              if (isUUID(v)) {
+              if (isUUID(v, 'loose')) {
                 val_ids.push(v);
               } else {
                 const workspace = this.getWorkspaceByNameViaCacheSync(v);
@@ -1734,7 +1734,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
                 custom_where = true;
                 break;
               }
-              if (isUUID(v)) {
+              if (isUUID(v, 'loose')) {
                 val_ids.push(v);
               } else {
                 const asset = this.getAssetShortByNameViaCacheSync(v);

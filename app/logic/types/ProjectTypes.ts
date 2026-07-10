@@ -100,9 +100,10 @@ export type User = ProjectMember & {
 export enum Lang {
   EN = 'en',
   RU = 'ru',
+  DE = 'de',
 }
 
-export type LangStr = 'en' | 'ru';
+export type LangStr = 'en' | 'ru' | 'de';
 
 export type Member = User & {
   role: IProjectUserRole;
