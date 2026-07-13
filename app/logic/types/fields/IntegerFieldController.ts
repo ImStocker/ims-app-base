@@ -8,6 +8,9 @@ export class IntegerFieldController extends FieldTypeController {
   title = '[[t:IntegerField]]';
   editor = async () => NumberPropEditor;
   presenter = async () => StringPropPresenter;
+  override aiSpec =
+    'Whole number (integer) field. Value is stored as a JavaScript number (integer). ' +
+    'Use for numeric values that must be whole numbers: counters, quantities, levels, IDs, health points, etc.';
   override dataTypes = [
     {
       Type: AssetPropType.INTEGER,

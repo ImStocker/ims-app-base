@@ -20,4 +20,5 @@ export abstract class FieldTypeController {
   presenterProps: Record<string, any> | undefined = undefined;
   parameters: FieldTypeControllerParameter[] = [];
   dataTypes?: AssetPropValueType[];
+  aiSpec = '';
 }

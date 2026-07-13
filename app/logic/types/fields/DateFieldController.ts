@@ -8,6 +8,10 @@ export class DateFieldController extends FieldTypeController {
   title = '[[t:DateField]]';
   editor = async () => DatePropEditor;
   presenter = async () => DatePropPresenter;
+  override aiSpec =
+    'Date-only picker field (no time component). Value is stored as a plain date string. ' +
+    'Use when only the calendar date matters without time (e.g. birth date, release date). ' +
+    'For date+time use `dateTime` instead.';
   override dataTypes = [
     {
       Type: AssetPropType.STRING,

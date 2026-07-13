@@ -6,5 +6,16 @@ export class BlockMirrorBlockDefinition extends BlockTypeDefinition {
   icon = 'ims-icon-font-block-link';
   override hideInAdding = true;
   override aiSpec =
-    'This block mirrors a block from another asset as read-only. Props: `asset` (AssetPropValueAsset: {AssetId, Title, Name} — target asset reference), `block_ref` (string — target block identifier, parsed as either {blockName} or {blockId}). The block fetches the target asset and renders the specified block\'s content inline. System-internal (hideInAdding=true), auto-created when a mirror relationship is needed.';
+    'BlockMirrorBlock renders a read-only copy of a block from another asset inline. ' +
+    'Use when the same content needs to appear in multiple places without duplication — ' +
+    'e.g. reusing a character stats table across multiple scenes, or displaying a shared lore entry in different documents. ' +
+    'The mirrored block stays in sync with the source automatically.\n\n' +
+    'Structure:\n' +
+    '- `asset` — AssetPropValueAsset: target asset reference with `AssetId` (UUID), `Title`, and `Name`\n' +
+    '- `block_ref` — string: target block identifier, either `{blockName}` or `@` + `{blockId}` (e.g. `"stats"` or `"@4cccae9d-..."`)\n\n' +
+    'Example:\n' +
+    '{\n' +
+    '  "asset": { "AssetId": "0e7c6606-6003-4942-8baf-9e230bc5572c", "Title": "Player Character", "Name": null },\n' +
+    '  "block_ref": "@4cccae9d-5b1f-424d-8d58-89e97d8529f8"\n' +
+    '}';
 }

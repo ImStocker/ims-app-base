@@ -31,6 +31,10 @@ export class EnumFieldController extends FieldTypeController {
     },
   ];
 
+  override aiSpec =
+    'Single-selection enum field. Value is stored as AssetPropValueEnum with `Enum` (enum type name), `Name` (key), and `Title` (display name). ' +
+    'Use when a property must be chosen from a predefined set of options (e.g. difficulty level, character class, item category). ' +
+    'Parameters: `type` (gddElementSelector — selects which enum definition to use), `nullable` (checkbox — allows empty/unset value).';
   override dataTypes = [
     {
       Type: AssetPropType.ENUM,

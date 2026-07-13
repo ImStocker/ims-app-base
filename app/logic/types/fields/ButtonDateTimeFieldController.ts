@@ -24,6 +24,11 @@ export class ButtonDateTimeFieldController extends FieldTypeController {
       params: {},
     },
   ];
+  override aiSpec =
+    'Button-triggered dateTime stamp field. Value is stored as AssetPropValueTimestamp. ' +
+    'Unlike `dateTime` which shows a continuous picker, this displays a button that sets the timestamp on click. ' +
+    'Use for single-click actions like "Mark as published", "Approve", "Start review". ' +
+    'Parameters: `caption` (string — button label), `confirm` (checkbox — require confirmation before setting).';
   override dataTypes = [
     {
       Type: AssetPropType.TIMESTAMP,

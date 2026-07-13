@@ -9,6 +9,10 @@ export class TextFieldController extends FieldTypeController {
   editor = async () => TextPropEditor;
   presenter = async () => TextPropPresenter;
 
+  override aiSpec =
+    'Rich text field supporting formatted content (bold, italic, headers, lists, links, etc.). ' +
+    'Value is stored as AssetPropValueText with `Str` (plain text rendering) and `Ops` (Quill Delta operations). ' +
+    'Use for multi-line formatted descriptions, notes, or any rich content.';
   override dataTypes = [
     {
       Type: AssetPropType.TEXT,

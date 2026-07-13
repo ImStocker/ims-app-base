@@ -8,6 +8,10 @@ export class AttributeTypeFieldController extends FieldTypeController {
   title = '[[t:AttributeTypeField]]';
   editor = async () => AttributeTypePropEditor;
   presenter = async () => AttributeTypePropPresenter;
+  override aiSpec =
+    'Attribute type selector field. Value is stored as a string representing an attribute type key. ' +
+    'Use for selecting or defining attribute types (e.g. character stats like strength, agility, intelligence) ' +
+    'from the project\'s attribute type registry.';
   override dataTypes = [
     {
       Type: AssetPropType.STRING,

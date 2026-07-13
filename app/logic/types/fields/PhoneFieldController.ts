@@ -11,6 +11,10 @@ export class PhoneFieldController extends FieldTypeController {
   override editorProps = {
     type: 'tel',
   };
+  override aiSpec =
+    'Phone number field with input mode optimization. Value is stored as a string. ' +
+    'The editor applies `type="tel"` for proper mobile keyboard. ' +
+    'Use for contact phone numbers, support lines, or any telephone input.';
   override dataTypes = [
     {
       Type: AssetPropType.STRING,

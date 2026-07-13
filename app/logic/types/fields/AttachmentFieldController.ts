@@ -18,6 +18,11 @@ export class AttachmentFieldController extends FieldTypeController {
       hint: '[[t:|en:File extensions separated by comma: .jpg, .jpeg, .png|ru:Расширения файлов через запятую: .jpg, .jpeg, .png]]',
     },
   ];
+  override aiSpec =
+    'File attachment field. Value is stored as AssetPropValueFile with `FileId`, `Title`, `Size`, `Dir`, and `Store`. ' +
+    'Use to attach files: images, documents, audio, or any binary resource. ' +
+    'Parameter `accept` (string) filters allowed file extensions (e.g. ".jpg,.jpeg,.png"). ' +
+    'Files are uploaded to the configured file storage backend.';
   override dataTypes = [
     {
       Type: AssetPropType.FILE,

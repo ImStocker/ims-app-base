@@ -15,7 +15,13 @@ export class TextBlockDefinition extends BlockTypeDefinition {
   component = async () => (await import('./TextBlock.vue')).default;
   icon = 'font-family';
   override aiSpec =
-    'This block stores formatted rich text in the "value" prop. The value can be either: (a) an AssetPropValueText object: { Str: string (plain text rendering), Ops: { insert?: any, attributes?: any }[] (Quill Delta operations for rich text with bold, italic, headers, lists, links, etc.) }; or (b) a plain string (which is auto-converted to Delta on read). The block exposes the "value" field as a localizable TEXT-type field and as a block variable if name/title is set.';
+    'TextBlock stores a single rich text or plain text value. ' +
+    'Use it for any textual content: descriptions, notes, articles, dialogues, or any formatted text. ' +
+    'The block supports all Quill Delta formatting (bold, italic, headers, lists, links, colors, etc.).\n\n' +
+    'The value is stored in the `value` prop and can be in two forms:\n' +
+    '- A plain string (simple unformatted text)\n' +
+    '- An AssetPropValueText object with `Str` (plain text rendering) and `Ops` (Quill Delta operations for rich formatting)\n' +
+    'When read, plain strings are auto-converted to Delta format. ';
 
   /*
   override getBlockContentItems(

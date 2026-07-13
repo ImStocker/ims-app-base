@@ -23,6 +23,11 @@ export class GddElementSelectorFieldController extends FieldTypeController {
     },
   ];
 
+  override aiSpec =
+    'GDD element selector — references an asset filtered by a specific element type. ' +
+    'Value is stored as AssetPropValueAsset. ' +
+    'Use to link a property to a specific type of GDD element (e.g. a character, item, location, quest). ' +
+    'Parameter `type` filters which element types are shown in the picker.';
   override dataTypes = [
     {
       Type: AssetPropType.ASSET,

@@ -30,6 +30,10 @@ export class EnumRadioFieldController extends FieldTypeController {
     },
   ];
 
+  override aiSpec =
+    'Enum field displayed as radio buttons instead of a dropdown. Value is stored as AssetPropValueEnum. ' +
+    'Same as `enum` but uses a radio button UI for quick visual selection. Best for enums with few options (2-5). ' +
+    'Parameters: `type` (gddElementSelector — selects which enum definition to use), `nullable` (checkbox).';
   override dataTypes = [
     {
       Type: AssetPropType.ENUM,

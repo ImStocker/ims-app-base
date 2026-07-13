@@ -8,6 +8,10 @@ export class StructFieldController extends FieldTypeController {
   editor = async () => StructPropEditor;
   presenter = async () => StructPropEditor;
 
+  override aiSpec =
+    'Structured sub-object field. Value is stored as a nested AssetProps object following a structure definition. ' +
+    'Use when a property requires multiple related sub-fields (e.g. an address with city/street/zip, or a skill with name/level/cooldown). ' +
+    'Parameter `type` (gddElementSelector) selects which structure template to use for the sub-fields.';
   override parameters = [
     {
       name: 'type',
