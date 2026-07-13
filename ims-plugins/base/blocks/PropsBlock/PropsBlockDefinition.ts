@@ -34,7 +34,7 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
     'PropsBlock stores a flexible table of named key-value properties on an asset. ' +
     'Use it to add structured metadata, settings, or any set of named fields — such as dates, numbers, text, links to assets, files, enums, project users, etc.\n\n' +
     'Each property is stored as:\n' +
-    '- `{propKey}` — the value itself (type depends on the field controller; see the "AssetPropValue types" leaf value reference for possible shapes)\n' +
+    '- `{propKey}` — the value itself (type depends on the field controller; see the "AssetPropValue types" reference for possible shapes)\n' +
     '- `__props\\{propKey}\\index` — sort order (number)\n' +
     '- `__props\\{propKey}\\title` — display title (string)\n' +
     '- `__props\\{propKey}\\name` — optional service name (string)\n' +
