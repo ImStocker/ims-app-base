@@ -1,5 +1,6 @@
 import type { Component } from 'vue';
 import type { AssetProps, AssetPropValueType } from './Props';
+import type { BlockAiSpec } from './BlockTypeDefinition';
 
 export type FieldTypeControllerParameter = {
   name: string;
@@ -20,5 +21,5 @@ export abstract class FieldTypeController {
   presenterProps: Record<string, any> | undefined = undefined;
   parameters: FieldTypeControllerParameter[] = [];
   dataTypes?: AssetPropValueType[];
-  aiSpec = '';
+  aiSpec: BlockAiSpec = { brief: '' };
 }

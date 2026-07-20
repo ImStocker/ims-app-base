@@ -6,24 +6,25 @@
       :autofocus="true"
       @change="searchText = $event"
     ></FormSearch>
-    <div v-if="filteredIcons.length"
+    <div
+      v-if="filteredIcons.length"
       class="SelectAssetIconDropdownContent-icons tiny-scrollbars use-buttons-dropdown-item"
     >
-        <button
-          v-for="icon in filteredIcons"
-          :key="icon.name"
-          class="is-button"
-          :title="`${$tTitle(icon.title)} (${icon.name})`"
-          @click="$emit('input', icon.name)"
-        >
-          <i
-            :class="[
-              'asset-icon-' + icon.name,
-              'SelectAssetIconDropdownContent-icon',
-              value === icon.name ? 'selected' : null,
-            ]"
-          ></i>
-        </button>
+      <button
+        v-for="icon in filteredIcons"
+        :key="icon.name"
+        class="is-button"
+        :title="`${$tTitle(icon.title)} (${icon.name})`"
+        @click="$emit('input', icon.name)"
+      >
+        <i
+          :class="[
+            'asset-icon-' + icon.name,
+            'SelectAssetIconDropdownContent-icon',
+            value === icon.name ? 'selected' : null,
+          ]"
+        ></i>
+      </button>
     </div>
     <span v-else class="SelectAssetIconDropdownContent-noResults">
       {{ $t('gddPage.menu.noResults') }}

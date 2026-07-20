@@ -198,7 +198,8 @@ export default {
       currentTasks: 'Aktuelle Aufgaben',
       current: 'Aktuelle Aufgaben',
       all: 'Alle Aufgaben',
-      currentTasksInfo: 'Aufgaben, die sich nicht im Backlog oder Archiv befinden',
+      currentTasksInfo:
+        'Aufgaben, die sich nicht im Backlog oder Archiv befinden',
       board: 'Board',
       checklist: 'Checkliste',
     },
@@ -276,7 +277,8 @@ export default {
     isAbstractHelp:
       'Element als Vorlage markieren. Wenn die Fortschrittsverfolgung aktiviert ist, wirkt sich die Vorlage selbst nicht auf den Gesamtfortschritt aus',
     isTrackProgress: 'Fortschritt verfolgen',
-    isTrackProgressHelp: 'Dieses Element beeinflusst den Gesamtfortschritt des Projekts',
+    isTrackProgressHelp:
+      'Dieses Element beeinflusst den Gesamtfortschritt des Projekts',
   },
   auth: {
     noAccessToOpenPage: 'Du hast keinen Zugriff auf diese Seite',
@@ -437,7 +439,8 @@ export default {
     duplicateProp: 'Eigenschaft duplizieren',
     copyProp: 'Eigenschaft kopieren',
     pasteProp: 'Eigenschaft einfügen',
-    propsBlockPasteFromBufferEmpty: 'Keine Tabelleneigenschaft in der Zwischenablage',
+    propsBlockPasteFromBufferEmpty:
+      'Keine Tabelleneigenschaft in der Zwischenablage',
     propsBlockCopied: 'Eigenschaft kopiert',
     propsBlockFieldUntitled: 'Ohne Titel',
     propsBlockFieldType: 'Feldtyp',
@@ -474,7 +477,8 @@ export default {
     collectionGamesBlockChangeCardView: 'Darstellung einrichten',
     collectionGamesBlockGameNotFilled: 'Spielkarte ist nicht ausgefüllt',
     collectionGamesBlockGameDeleteDraft: 'Entwurf löschen',
-    collectionGamesBlockShallPublishGame: 'Möchtest du das Spiel veröffentlichen?',
+    collectionGamesBlockShallPublishGame:
+      'Möchtest du das Spiel veröffentlichen?',
     collectionGamesBlockUnpublushedWillBeInNotIncludedSection:
       'Das nicht veröffentlichte Spiel wird als Entwurf gespeichert.\n\nDu kannst es später im Bereich „Nicht enthaltene Spiele" veröffentlichen',
     collectionGamesExportApplication: 'Bewerbungen exportieren',
@@ -513,7 +517,8 @@ export default {
     enum: {
       addElement: 'Element hinzufügen',
       deleteElement: 'Element löschen',
-      deleteElementConfirm: 'Möchtest du das Aufzählungselement wirklich löschen?',
+      deleteElementConfirm:
+        'Möchtest du das Aufzählungselement wirklich löschen?',
       revertServiceNameChange: 'Dienstnamensänderung rückgängig machen',
       serviceName: 'Dienstname',
       serviceNameAlreadyInUse: 'Dienstname wird bereits verwendet',
@@ -627,7 +632,8 @@ export default {
         toBacklog: 'In den Backlog verschieben',
         delete: 'Zusammen mit dem Board löschen',
       },
-      selectActionWithColumnTasks: 'Was soll mit den Aufgaben der Spalte passieren?',
+      selectActionWithColumnTasks:
+        'Was soll mit den Aufgaben der Spalte passieren?',
     },
     elements: {
       change: 'Element ändern',
@@ -793,7 +799,8 @@ export default {
       formatMismatchAssetType:
         'Das gewählte Format entspricht nicht diesem Elementtyp',
       formatAlreadyExists: 'Ein Format mit diesem Namen existiert bereits',
-      formatsSuitable: 'Es werden Formate angezeigt, die für den Elementtyp geeignet sind',
+      formatsSuitable:
+        'Es werden Formate angezeigt, die für den Elementtyp geeignet sind',
       new: 'Neu',
       deleteFormat: 'Format löschen',
       deleteFormatConfirm: 'Möchtest du das Format wirklich löschen?',
@@ -806,7 +813,8 @@ export default {
         selectFormat: 'Format auswählen',
         selectTemplate: 'Vorlage auswählen',
         postProcessing: 'Nachbearbeitung',
-        enterCustomCode: 'Benutzerdefinierten JS-Code zur Transformation eingeben',
+        enterCustomCode:
+          'Benutzerdefinierten JS-Code zur Transformation eingeben',
         format: 'Format',
         formatPreview: 'Format-Vorschau',
         formatEdit: 'Format bearbeiten',
@@ -893,7 +901,8 @@ export default {
     selectFile: 'Datei {format} auswählen',
     exportSettingsTitle: 'Exporteinstellungen',
     exportProjectDialogHeader: 'Projekt exportieren',
-    exportProjectDialogMessage: 'Wähle die Elemente aus, die exportiert werden sollen',
+    exportProjectDialogMessage:
+      'Wähle die Elemente aus, die exportiert werden sollen',
     exportSettings: {
       gdd: 'Game Design Document',
       tasks: 'Aufgaben',
@@ -1000,11 +1009,13 @@ export default {
       includingAssetsType: 'Typ',
     },
     configraitionNameAlreadyUsed: 'Dieser Name wird bereits verwendet',
-    configraitionSaveAsAlreadyUsed: 'Eine andere Konfiguration schreibt in diese Datei',
+    configraitionSaveAsAlreadyUsed:
+      'Eine andere Konfiguration schreibt in diese Datei',
     configurationSaeAsInvalidFileName: 'Ungültiger Dateiname',
     configraitionSaveAsWrongSymbols: 'Speichername enthält ungültige Zeichen',
     deleteConfiguration: 'Konfiguration löschen',
-    deleteConfigurationConfirm: 'Möchtest du die Konfiguration wirklich löschen?',
+    deleteConfigurationConfirm:
+      'Möchtest du die Konfiguration wirklich löschen?',
     editConfiguration: 'Konfiguration bearbeiten',
     downloadResult: 'Ergebnis herunterladen',
   },

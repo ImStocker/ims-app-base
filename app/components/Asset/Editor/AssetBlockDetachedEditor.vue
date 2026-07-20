@@ -35,7 +35,10 @@ import ProjectManager from '../../../logic/managers/ProjectManager';
 import { AssetRights } from '../../../logic/types/Rights';
 import UiManager from '../../../logic/managers/UiManager';
 import SortableList from '../../Common/SortableList.vue';
-import { COLLECTION_PID, COLLECTION_GAME_ASSET_ID } from '../../../logic/constants';
+import {
+  COLLECTION_PID,
+  COLLECTION_GAME_ASSET_ID,
+} from '../../../logic/constants';
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
 import EditorManager from '../../../logic/managers/EditorManager';

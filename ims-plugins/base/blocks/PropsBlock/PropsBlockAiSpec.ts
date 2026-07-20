@@ -1,0 +1,12 @@
+import type { AiSpecEntry } from '#logic/types/AiSpec';
+
+export const propsBlockAiSpec: AiSpecEntry = {
+  name: 'props',
+  icon: 'table-2',
+  aiSpec: {
+    brief:
+      'Flexible table of named key-value properties. Use for structured metadata, settings, or configuration data.',
+    spec: 'Each property is stored as:\n- `{propKey}` — the value itself (type depends on the field controller; see the "AssetPropValue types" reference for possible shapes)\n- `__props\\{propKey}\\index` — sort order (number)\n- `__props\\{propKey}\\title` — display title (string)\n- `__props\\{propKey}\\name` — optional service name (string)\n- `__props\\{propKey}\\type` — field type controller name (string | null). Determines how the value is edited and presented; see the "Field type controllers reference" section.\n- `__props\\{propKey}\\multiple` — if true, the value is stored as an array with numeric sub-keys (boolean)\n- `__props\\{propKey}\\hint` — optional hint/description (string)\n- `__props\\{propKey}\\params` — controller-specific sub-fields (object)\n\nExample (character config PropsBlock with various field types):\n{\n  "max_health": 100,\n  "__props\\\\max_health\\\\type": "integer",\n  "__props\\\\max_health\\\\index": 1,\n  "__props\\\\max_health\\\\title": "Max Health",\n  "description": { "Str": "A seasoned hero forged in battle.\\n", "Ops": [{ "insert": "A seasoned hero forged in battle.\\n" }] },\n  "__props\\\\description\\\\type": "text",\n  "__props\\\\description\\\\index": 2,\n  "__props\\\\description\\\\title": "Description",\n  "difficulty": { "Enum": "game_difficulty", "Name": "hard", "Title": "Hard" },\n  "__props\\\\difficulty\\\\type": "enum",\n  "__props\\\\difficulty\\\\index": 3,\n  "__props\\\\difficulty\\\\title": "Difficulty",\n  "icon": { "AssetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "Title": "WarriorIcon", "Name": "warrior_icon" },\n  "__props\\\\icon\\\\type": "assetSelector",\n  "__props\\\\icon\\\\index": 4,\n  "__props\\\\icon\\\\title": "Icon",\n  "voice_actor": { "AccountId": "42", "Name": "John Smith" },\n  "__props\\\\voice_actor\\\\type": "projectUser",\n  "__props\\\\voice_actor\\\\index": 5,\n  "__props\\\\voice_actor\\\\title": "Voice Actor",\n  "__props\\\\voice_actor\\\\hint": "Select the voice actor for this character",\n  "unlock_date": { "Ts": 1767225600, "Str": "2025-12-31T20:00:00.000Z" },\n  "__props\\\\unlock_date\\\\type": "dateTime",\n  "__props\\\\unlock_date\\\\index": 6,\n  "__props\\\\unlock_date\\\\title": "Unlock Date"\n}',
+    needSpec: true,
+  },
+};

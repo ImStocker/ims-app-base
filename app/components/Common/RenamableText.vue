@@ -36,10 +36,7 @@
 <script lang="ts" type="text/ecmascript-6">
 import { defineComponent, type PropType } from 'vue';
 import ImsTextInput from './ImsTextInput.vue';
-import {
-  setImsClickOutside,
-  type SetClickOutsideCancel,
-} from '../utils/ui';
+import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
 
 export default defineComponent({
   name: 'RenamableText',

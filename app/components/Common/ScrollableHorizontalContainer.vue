@@ -1,13 +1,14 @@
 <template>
   <div class="ScrollableHorizontalContainer">
-    <slot name="left-overflow" :hasOverflow="leftOverflow">
+    <slot name="left-overflow" :has-overflow="leftOverflow">
       <transition name="fade">
         <span
           v-if="leftOverflow"
           :class="{
-          'ScrollableHorizontalContainer-overflow-marker': true,
-          'ScrollableHorizontalContainer-overflow-marker-left': true,
-          'ScrollableHorizontalContainer-overflow-marker-visible': leftOverflow,
+            'ScrollableHorizontalContainer-overflow-marker': true,
+            'ScrollableHorizontalContainer-overflow-marker-left': true,
+            'ScrollableHorizontalContainer-overflow-marker-visible':
+              leftOverflow,
           }"
         >
           ...
@@ -15,8 +16,8 @@
       </transition>
     </slot>
     <div
-      class="ScrollableHorizontalContainer-scrollable"
       ref="container"
+      class="ScrollableHorizontalContainer-scrollable"
       @wheel.prevent="handleWheel"
       @scroll="updateOverflow"
     >
@@ -24,14 +25,15 @@
         <slot name="content"></slot>
       </div>
     </div>
-    <slot name="right-overflow" :hasOverflow="rightOverflow">
+    <slot name="right-overflow" :has-overflow="rightOverflow">
       <transition name="fade">
         <span
           v-if="rightOverflow"
           :class="{
-          'ScrollableHorizontalContainer-overflow-marker': true,
-          'ScrollableHorizontalContainer-overflow-marker-right': true,
-          'ScrollableHorizontalContainer-overflow-marker-visible': rightOverflow,
+            'ScrollableHorizontalContainer-overflow-marker': true,
+            'ScrollableHorizontalContainer-overflow-marker-right': true,
+            'ScrollableHorizontalContainer-overflow-marker-visible':
+              rightOverflow,
           }"
         >
           ...
@@ -45,95 +47,97 @@
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-    props: {
-        contentChangedKey: {
-            /**
-             * Use to update state of content
-             * And to recheck overflow
-             */
-            type: Number,
-            required: true,
-        },
+  props: {
+    contentChangedKey: {
+      /**
+       * Use to update state of content
+       * And to recheck overflow
+       */
+      type: Number,
+      required: true,
     },
-    data() {
-        return {
-            leftOverflow: false,
-            rightOverflow: false,
-        };
+  },
+  data() {
+    return {
+      leftOverflow: false,
+      rightOverflow: false,
+    };
+  },
+  watch: {
+    contentChangedKey() {
+      this.$nextTick(() => {
+        this.updateOverflow();
+        this.resetPosition();
+      });
     },
-    watch: {
-        contentChangedKey() {
-            this.$nextTick(() => {
-                this.updateOverflow();
-                this.resetPosition();
-            });
-        },
+  },
+  methods: {
+    handleWheel(e) {
+      (this.$refs.container as HTMLDivElement).scrollLeft += e.deltaY;
     },
-    methods: {
-        handleWheel(e) {
-            (this.$refs.container as HTMLDivElement).scrollLeft += e.deltaY;
-        },
-        updateOverflow() {
-            const el = this.$refs.container as HTMLDivElement;
-            this.leftOverflow = el.scrollLeft > 0;
-            this.rightOverflow = el.scrollLeft + el.clientWidth < el.scrollWidth - 20;
-        },
-        resetPosition() {
-            const el = this.$refs.container as HTMLDivElement;
-            el.scrollLeft = el.scrollWidth;
-        },
-    }
+    updateOverflow() {
+      const el = this.$refs.container as HTMLDivElement;
+      this.leftOverflow = el.scrollLeft > 0;
+      this.rightOverflow = el.scrollLeft + el.clientWidth < el.scrollWidth - 20;
+    },
+    resetPosition() {
+      const el = this.$refs.container as HTMLDivElement;
+      el.scrollLeft = el.scrollWidth;
+    },
+  },
 });
 </script>
 
 <style scoped lang="scss">
 .ScrollableHorizontalContainer {
-    position: relative;
-    overflow: hidden;
+  position: relative;
+  overflow: hidden;
 }
 
 .ScrollableHorizontalContainer-scrollable {
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    white-space: nowrap;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .ScrollableHorizontalContainer-content-container {
-    width: 100%;
-    display: inline-block;
-    transition: transform 0.3s ease;
-    will-change: transform;
+  width: 100%;
+  display: inline-block;
+  transition: transform 0.3s ease;
+  will-change: transform;
 }
 
 .ScrollableHorizontalContainer-overflow-marker {
-    position: absolute;
-    padding-left: 5px;
-    padding-right: 5px;
-    transition: 0.1s;
-    opacity: 0;
-    top: 0;
-    z-index: 2;
+  position: absolute;
+  padding-left: 5px;
+  padding-right: 5px;
+  transition: 0.1s;
+  opacity: 0;
+  top: 0;
+  z-index: 2;
 }
 
 .ScrollableHorizontalContainer-overflow-marker-right {
-    background: linear-gradient(0.75turn, var(--local-bg-color) 80%, transparent);
-    right: 0;
+  background: linear-gradient(0.75turn, var(--local-bg-color) 80%, transparent);
+  right: 0;
 }
 
 .ScrollableHorizontalContainer-overflow-marker-left {
-    background: linear-gradient(0.25turn, var(--local-bg-color) 80%, transparent);
-    left: 0;
+  background: linear-gradient(0.25turn, var(--local-bg-color) 80%, transparent);
+  left: 0;
 }
 
 .ScrollableHorizontalContainer-overflow-marker-visible {
-    opacity: 1;
+  opacity: 1;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.2s;
 }
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 </style>

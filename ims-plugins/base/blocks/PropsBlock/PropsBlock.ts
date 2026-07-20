@@ -13,10 +13,7 @@ import {
   isPropInherited,
   type AssetPropValue,
 } from '#logic/types/Props';
-import type {
-  PropsFormFieldDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
 
 function checkFieldIsHidden(

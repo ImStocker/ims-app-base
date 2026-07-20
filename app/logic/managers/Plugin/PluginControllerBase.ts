@@ -120,7 +120,7 @@ export default abstract class PluginControllerBase {
     return false;
   }
 
-  async load(): Promise<void> { }
+  async load(): Promise<void> {}
 
   constructor(appManager: IAppManager) {
     this.appManager = appManager;
@@ -187,7 +187,7 @@ export default abstract class PluginControllerBase {
       this._activated = true;
       return true;
     });
-    this._activationLock = promise.then(null, () => { });
+    this._activationLock = promise.then(null, () => {});
     return await promise;
   }
 
@@ -202,7 +202,7 @@ export default abstract class PluginControllerBase {
       this._activated = false;
       return true;
     });
-    this._activationLock = promise.then(null, () => { });
+    this._activationLock = promise.then(null, () => {});
     return await promise;
   }
 

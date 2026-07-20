@@ -126,7 +126,8 @@ export default {
     AttributeCoverImage: 'Spiel-Cover-Bild',
     AttributeCoverImageHint: 'Bild mit der Größe 460x215 hochladen',
     AttributeBackground: 'Hintergrund',
-    AttributeBackgroundHint: 'Bild mit der Größe 960x540 oder 1920x1080 hochladen',
+    AttributeBackgroundHint:
+      'Bild mit der Größe 960x540 oder 1920x1080 hochladen',
     AttributeTaskColumn: 'Aufgabenspalte',
     AttributeProjectParticipant: 'Projektmitglied',
     AttributeHintForAttribute: 'Hinweis für Attribut',
@@ -135,7 +136,8 @@ export default {
     AttributeUsedForAssetsForAttributeHint:
       'Attribut ist nur für Elemente mit dem angegebenen Typ verfügbar',
     AttributeArchivedAtForTask: 'Aufgabe archiviert am',
-    AttributeAutogeneratePulsePostsForProjectProps: 'Pulse-Events automatisch generieren',
+    AttributeAutogeneratePulsePostsForProjectProps:
+      'Pulse-Events automatisch generieren',
     AttributeAutogeneratePulsePostsForProjectPropsHint:
       'Pulse-Events werden automatisch basierend auf deinen Aktionen im Projekt generiert',
     // Fields

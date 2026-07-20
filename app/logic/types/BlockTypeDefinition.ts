@@ -19,6 +19,8 @@ import {
   type BlockEditorController,
 } from './BlockEditorController';
 
+export type { BlockAiSpec } from './AiSpec';
+
 export type BlockContentItem<U> = {
   blockId: string;
   itemId: string;
@@ -62,7 +64,7 @@ export abstract class BlockTypeDefinition {
   focusOnAdded = true;
   resizableBlockHeight = false;
 
-  aiSpec = '';
+  aiSpec: BlockAiSpec = { brief: '' };
   acceptAi = false;
   makeAiPrompt(userPrompt: string) {
     return userPrompt;

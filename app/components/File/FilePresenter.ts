@@ -85,10 +85,12 @@ export function useFilePresenterParams(
       break;
   }
   const link = file
-    ? appManager.get(FileManager).getFileUrl(
-        file,
-        thumbParams && inlineType === 'img' ? thumbParams : undefined,
-      )
+    ? appManager
+        .get(FileManager)
+        .getFileUrl(
+          file,
+          thumbParams && inlineType === 'img' ? thumbParams : undefined,
+        )
     : null;
   return {
     icon,

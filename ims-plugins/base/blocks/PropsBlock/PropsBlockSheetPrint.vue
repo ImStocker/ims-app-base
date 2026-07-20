@@ -23,10 +23,7 @@
 import { type PropType, defineComponent } from 'vue';
 import { convertTranslatedTitle } from '#logic/utils/assets';
 import PropsBlockValueStack from './PropsBlockValueStack.vue';
-import type {
-  PropsFormDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormDef, PropsFormState } from '#logic/types/PropsForm';
 
 export default defineComponent({
   name: 'PropsBlockSheetPrint',

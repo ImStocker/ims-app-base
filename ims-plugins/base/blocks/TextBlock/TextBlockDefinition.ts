@@ -9,19 +9,13 @@ import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
 import type { IAppManager } from '#logic/managers/IAppManager';
 import { TextBlockController } from './TextBlockController';
 import type { BlockEditorController } from '#logic/types/BlockEditorController';
+import { textBlockAiSpec } from './TextBlockAiSpec';
 
 export class TextBlockDefinition extends BlockTypeDefinition {
   name = 'text';
   component = async () => (await import('./TextBlock.vue')).default;
   icon = 'font-family';
-  override aiSpec =
-    'TextBlock stores a single rich text or plain text value. ' +
-    'Use it for any textual content: descriptions, notes, articles, dialogues, or any formatted text. ' +
-    'The block supports all Quill Delta formatting (bold, italic, headers, lists, links, colors, etc.).\n\n' +
-    'The value is stored in the `value` prop and can be in two forms:\n' +
-    '- A plain string (simple unformatted text)\n' +
-    '- An AssetPropValueText object with `Str` (plain text rendering) and `Ops` (Quill Delta operations for rich formatting)\n' +
-    'When read, plain strings are auto-converted to Delta format. ';
+  override aiSpec = textBlockAiSpec.aiSpec;
 
   /*
   override getBlockContentItems(

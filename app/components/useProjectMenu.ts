@@ -3,7 +3,10 @@ import { useAppManager } from '../composables/useAppManager';
 import UiManager, { ScreenSize } from '../logic/managers/UiManager';
 import { useAppConfiguration } from '../composables/useAppConfiguration';
 import CreatorAssetManager from '../logic/managers/CreatorAssetManager';
-import { DISCUSSION_WORKSPACE_NAME, TASKS_WORKSPACE_NAME } from '../logic/constants';
+import {
+  DISCUSSION_WORKSPACE_NAME,
+  TASKS_WORKSPACE_NAME,
+} from '../logic/constants';
 import {
   WORKSPACE_BACKLOG_NAME,
   WORKSPACE_CHECKLIST_NAME,

@@ -2,6 +2,7 @@ import { BlockTypeDefinition } from '#logic/types/BlockTypeDefinition';
 import type { IAppManager } from '#logic/managers/IAppManager';
 import type { AssetProps } from '#logic/types/Props';
 import DialogManager from '#logic/managers/DialogManager';
+import { embedBlockAiSpec } from './EmbedBlockAiSpec';
 
 export class EmbedBlockDefinition extends BlockTypeDefinition {
   name = 'embed';
@@ -9,9 +10,7 @@ export class EmbedBlockDefinition extends BlockTypeDefinition {
   icon = 'external-link-fill';
 
   override focusOnAdded = false;
-  override aiSpec =
-    'Embeds a URL (Figma, Google Docs/Sheets/Slides, YouTube, Miro). Renders an iframe for recognized services or a clickable link otherwise. ' +
-    'Prop: `value` (string — the URL).\n\n';
+  override aiSpec = embedBlockAiSpec.aiSpec;
 
   override async beforeBlockCreate(
     appManager: IAppManager,

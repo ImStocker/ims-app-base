@@ -112,10 +112,7 @@ import {
   type AssetPropValue,
   convertAssetPropsToPlainObject,
 } from '#logic/types/Props';
-import type {
-  PropsFormFieldDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import FormBuilderFieldTooltip from '#components/Form/FormBuilderFieldTooltip.vue';
 import StringPropPresenter from '#components/Props/StringPropPresenter.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';

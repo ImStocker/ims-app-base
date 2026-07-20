@@ -10,10 +10,7 @@ import {
   convertAssetPropsToPlainObject,
   isPropInherited,
 } from '#logic/types/Props';
-import type {
-  PropsFormFieldDef,
-  PropsFormState,
-} from '#logic/types/PropsForm';
+import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
 
 export type ValueTableBlockColumn = PropsFormFieldDef & {

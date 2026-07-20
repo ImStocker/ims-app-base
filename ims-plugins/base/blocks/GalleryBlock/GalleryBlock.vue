@@ -91,10 +91,7 @@
 <script lang="ts">
 import { type PropType, defineComponent } from 'vue';
 import UiManager from '#logic/managers/UiManager';
-import type {
-  AssetDisplayMode,
-  ResolvedAssetBlock,
-} from '#logic/utils/assets';
+import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import {
   extractGalleryBlockEntries,
   type GalleryBlockExtractedEntries,
