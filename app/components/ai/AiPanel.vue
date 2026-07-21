@@ -7,12 +7,47 @@
       </div>
       <div class="AiPanel-header-right">
         <slot name="header-actions" />
-        <button
-          class="is-button AiPanel-header-btn"
-          :title="t('aiAssistant.settings')"
-          @click="setupAiModel()"
-        >
-          <i class="ri-settings-3-line" />
+        <menu-button>
+          <template #button="{ toggle }">
+            <button class="is-button is-button-icon" @click="toggle">
+              <i class="ri-more-line"></i>
+            </button>
+          </template>
+          <menu-list :menu-list="menu">
+            <template #item-session="{ item }">
+              <li class="MenuList-item use-buttons-dropdown-item AiPanel-menu-item">
+                <button class="is-button MenuList-item-inner" @click="item.action">
+                  <div class="MenuList-item-inner-label">{{ item.title }}</div>
+                </button>
+                <div class="MenuList-item-actions use-buttons-icon-small">
+                  <button
+                    class="is-button AiPanel-menu-item-btn"
+                    :title="t('aiAssistant.renameSession')"
+                    @click.stop="renameSession(item.params?.sessionId)"
+                  >
+                    <i class="ri-pencil-line" />
+                  </button>
+                  <span
+                    v-if="selectedSessionId === item.params?.sessionId"
+                    class="AiPanel-menu-item-checkmark"
+                  >
+                    <i class="ri-check-line" />
+                  </span>
+                  <button
+                    v-else
+                    class="is-button AiPanel-menu-item-btn AiPanel-menu-item-btn--danger"
+                    :title="t('aiAssistant.deleteSession')"
+                    @click.stop="deleteSessionById(item.params?.sessionId)"
+                  >
+                    <i class="ri-delete-bin-line" />
+                  </button>
+                </div>
+              </li>
+            </template>
+          </menu-list>
+        </menu-button>
+        <button class="is-button is-button-icon AiPanel-close" @click="$emit('close')">
+          <i class="ri-close-line"></i>
         </button>
       </div>
     </div>
@@ -107,7 +142,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick, watch } from 'vue';
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue';
+import MenuButton from '~ims-app-base/components/Common/MenuButton.vue';
+import MenuList from '~ims-app-base/components/Common/MenuList.vue';
 import AiPanelSend from './AiPanelSend.vue';
 import AiToolCall from './AiToolCall.vue';
 import { useAppManager, useI18n } from '#imports';
@@ -117,6 +154,7 @@ import type { AiModelDescriptor } from '~ims-app-base/logic/ai-core/AiModelDescr
 import DialogManager from '~ims-app-base/logic/managers/DialogManager';
 import UiManager from '~ims-app-base/logic/managers/UiManager';
 import AiModelSettingsDialog from '~ims-app-base/components/generation/AiModelSettingsDialog.vue';
+import type { MenuListItem } from '~ims-app-base/logic/types/MenuList';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -126,6 +164,10 @@ const props = withDefaults(defineProps<{
   title: 'AI Assistant',
 });
 
+defineEmits<{
+  (e: 'close'): void;
+}>();
+
 const { t } = useI18n();
 const appManager = useAppManager();
 const aiEditManager = appManager.get(AiEditManager);
@@ -134,6 +176,70 @@ const messagesRef = ref<HTMLElement | null>(null);
 const thinkingOpen = reactive(new WeakSet<{ type: 'thinking'; text: string }>());
 const userScrolledAway = ref(false);
 const scrollThreshold = 40;
+const selectedSessionId = ref<string | null>(null);
+
+function buildMenu(): MenuListItem[] {
+  const sessionItems: MenuListItem[] = aiEditManager.sessions.map(s => ({
+    name: 'session',
+    title: s.title,
+    params: { sessionId: s.id },
+    action: async () => {
+      selectedSessionId.value = s.id;
+      await aiEditManager.selectSession(s.id);
+      await nextTick();
+      userScrolledAway.value = false;
+      scrollToBottom();
+    },
+  }));
+
+  return [
+    {
+      title: t('aiAssistant.settings'),
+      icon: 'ri-settings-3-line',
+      action: async () => await setupAiModel(),
+    },
+    {
+      title: t('aiAssistant.sessions'),
+      icon: 'ri-chat-ai-fill',
+      children: [
+        ...sessionItems,
+        { type: 'separator' },
+        {
+          title: t('aiAssistant.newSession'),
+          icon: 'ri-add-line',
+          action: async () => await newSession(),
+        },
+      ],
+    },
+    {
+      type: 'separator',
+    },
+    {
+      title: t('aiAssistant.deleteMessages'),
+      icon: 'ri-delete-bin-line',
+      danger: true,
+      action: async () => await onDeleteMessages(),
+    },
+  ];
+}
+
+const menu = ref<MenuListItem[]>([]);
+
+onMounted(async () => {
+  await aiEditManager.loadSessions();
+  if (aiEditManager.sessions.length === 0) {
+    const session = await aiEditManager.createSession(t('aiAssistant.defaultSessionName'));
+    selectedSessionId.value = session.id;
+  }
+  menu.value = buildMenu();
+  if (aiEditManager.sessions.length > 0) {
+    const first = aiEditManager.sessions[0];
+    if (first) {
+      selectedSessionId.value = first.id;
+      await aiEditManager.selectSession(first.id);
+    }
+  }
+});
 
 function onScroll() {
   const el = messagesRef.value;
@@ -149,18 +255,52 @@ function toggleThinking(action: { type: 'thinking'; text: string }) {
   }
 }
 
-onMounted(async () => {
-  await aiEditManager.loadSessions();
-  if (aiEditManager.sessions.length === 0) {
-    await aiEditManager.createSession(t('aiAssistant.defaultSessionName'));
+async function setupAiModel(provider?: AiModelDescriptor) {
+  await appManager.get(DialogManager).show(AiModelSettingsDialog, {
+    setProviderName: provider ? provider.name : undefined
+  });
+}
+
+async function newSession() {
+  await aiEditManager.createSession(t('aiAssistant.defaultSessionName'));
+  selectedSessionId.value = aiEditManager.currentSessionId;
+  appManager.get(UiManager).showSuccess(t('aiAssistant.newSessionCreated'));
+  menu.value = buildMenu();
+  await nextTick();
+  userScrolledAway.value = false;
+  scrollToBottom();
+}
+
+async function deleteSessionById(id: string) {
+  if (aiEditManager.sessions.length <= 1) return;
+  await aiEditManager.deleteSession(id);
+  if (selectedSessionId.value === id) {
+    selectedSessionId.value = '';
   }
-  if (aiEditManager.sessions.length > 0) {
+  if (aiEditManager.sessions.length > 0 && !selectedSessionId.value) {
     const first = aiEditManager.sessions[0];
     if (first) {
+      selectedSessionId.value = first.id;
       await aiEditManager.selectSession(first.id);
     }
   }
-});
+  appManager.get(UiManager).showSuccess(t('aiAssistant.sessionDeleted'));
+  menu.value = buildMenu();
+}
+
+async function renameSession(id: string) {
+  const session = aiEditManager.sessions.find(s => s.id === id);
+  if (!session) return;
+  const newTitle = window.prompt(t('aiAssistant.renameSessionPrompt'), session.title);
+  if (newTitle && newTitle.trim() && newTitle !== session.title) {
+    await aiEditManager.renameSession(id, newTitle.trim());
+    menu.value = buildMenu();
+  }
+}
+
+async function onDeleteMessages() {
+  await aiEditManager.deleteMessagesOfCurrentSessionId();
+}
 
 watch(() => aiEditManager.turnVersion, async () => {
   await nextTick();
@@ -169,9 +309,9 @@ watch(() => aiEditManager.turnVersion, async () => {
   }
 });
 
-function getMarkedText(text: string){
+function getMarkedText(text: string) {
   const toolCallStart = text.indexOf('<tool_call>');
-  if (toolCallStart >= 0){
+  if (toolCallStart >= 0) {
     text = text.substring(0, toolCallStart);
   }
   return DOMPurify.sanitize(marked.parse(text).toString());
@@ -181,12 +321,6 @@ function scrollToBottom() {
   if (messagesRef.value) {
     messagesRef.value.scrollTop = messagesRef.value.scrollHeight;
   }
-}
-
-async function setupAiModel(provider?: AiModelDescriptor){
-  await appManager.get(DialogManager).show(AiModelSettingsDialog, {
-    setProviderName: provider ? provider.name : undefined
-  })
 }
 
 async function revertAllChanges() {
@@ -247,9 +381,35 @@ function stopGeneration() {
   gap: 4px;
 }
 
-.AiPanel-header-btn {
+.AiPanel-close {
   font-size: 16px;
-  padding: 4px 6px;
+}
+
+.AiPanel-menu-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.AiPanel-menu-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.AiPanel-menu-item-btn--danger {
+  color: var(--color-danger, #e53935) !important;
+}
+
+.AiPanel-menu-item-checkmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  padding: 2px 4px;
+  color: var(--color-accent);
 }
 
 .AiPanel-messages {
@@ -260,7 +420,9 @@ function stopGeneration() {
   gap: 12px;
   word-break: break-word;
 }
-.AiPanel, .AiPanel-messages {
+
+.AiPanel,
+.AiPanel-messages {
   min-width: 0;
 }
 
@@ -282,7 +444,7 @@ function stopGeneration() {
     justify-content: flex-start;
   }
 
-  &:deep(pre){
+  &:deep(pre) {
     overflow-x: auto;
     max-width: 100%;
     @include scrollbars-mixins.tiny-scrollbars;
@@ -319,7 +481,9 @@ function stopGeneration() {
 }
 
 @keyframes blink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 .AiPanel-changeIds {
@@ -371,7 +535,7 @@ function stopGeneration() {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  background: var(--local-box-color, rgba(255,255,255,0.05));
+  background: var(--local-box-color, rgba(255, 255, 255, 0.05));
   cursor: pointer;
   user-select: none;
   color: var(--color-placeholder, #888);
@@ -379,7 +543,10 @@ function stopGeneration() {
   .ri-arrow-down-s-line {
     margin-left: auto;
     transition: transform 0.15s;
-    &.open { transform: rotate(180deg); }
+
+    &.open {
+      transform: rotate(180deg);
+    }
   }
 }
 
