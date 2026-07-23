@@ -1,15 +1,27 @@
-import { AppSubManagerBase, type IAppManager } from "~ims-app-base/logic/managers/IAppManager";
+import {
+  AppSubManagerBase,
+  type IAppManager,
+} from '#logic/managers/IAppManager';
 import { v4 as uuidv4 } from 'uuid';
-import ProjectManager from '~ims-app-base/logic/managers/ProjectManager';
-import type { AiSession, AiTurn, AiThinkingAction, AiTextAction } from './AiTypes';
-import AiManager from "./AiManager";
-import { streamText } from "ai";
-import CreatorAssetManager from "~ims-app-base/logic/managers/CreatorAssetManager";
-import type { IProjectDatabase } from '~ims-app-base/logic/types/IProjectDatabase';
-import { AiProjectTools, ASSETPROPVALUE_TYPES, PROPS_FORMAT } from '~ims-app-base/logic/ai-core/AiProjectTools';
-import EditorManager from '~ims-app-base/logic/managers/EditorManager';
-import { decodeLLMJSONWithAi } from "./llm-utils";
-import type { IAiSessionStorage } from './AiTypes';
+import ProjectManager from '#logic/managers/ProjectManager';
+import type {
+  AiSession,
+  AiTurn,
+  AiThinkingAction,
+  AiTextAction,
+  IAiSessionStorage,
+} from './AiTypes';
+import AiManager from './AiManager';
+import { streamText } from 'ai';
+import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
+import type { IProjectDatabase } from '#logic/types/IProjectDatabase';
+import {
+  AiProjectTools,
+  ASSETPROPVALUE_TYPES,
+  PROPS_FORMAT,
+} from '#logic/ai-core/AiProjectTools';
+import EditorManager from '#logic/managers/EditorManager';
+import { decodeLLMJSONWithAi } from './llm-utils';
 
 export default class AiEditManager extends AppSubManagerBase {
   sessions: AiSession[] = [];
@@ -49,32 +61,74 @@ export default class AiEditManager extends AppSubManagerBase {
     if (projectDb) return projectDb;
 
     return {
-      assetsGetShort: async () => { throw new Error('No active project'); },
-      assetsGetFull: async () => { throw new Error('No active project'); },
-      assetsGetView: (async () => { throw new Error('No active project'); }) as any,
-      assetsGraph: async () => { throw new Error('No active project'); },
-      assetsCreate: async () => { throw new Error('No active project'); },
-      assetsChange: async () => { throw new Error('No active project'); },
-      assetsChangeUndo: async () => { throw new Error('No active project'); },
-      assetsChangeBatch: async () => { throw new Error('No active project'); },
-      assetsDelete: async () => { throw new Error('No active project'); },
-      assetsRestore: async () => { throw new Error('No active project'); },
-      assetsCreateRef: async () => { throw new Error('No active project'); },
-      assetsDeleteRef: async () => { throw new Error('No active project'); },
-      assetsMove: async () => { throw new Error('No active project'); },
-      assetsGetHistory: async () => { throw new Error('No active project'); },
-      getAssetLocalPath: async () => { throw new Error('No active project'); },
-      workspacesGet: async () => { throw new Error('No active project'); },
-      workspacesCreate: async () => { throw new Error('No active project'); },
-      workspacesChange: async () => { throw new Error('No active project'); },
-      workspacesDelete: async () => { throw new Error('No active project'); },
-      workspacesMove: async () => { throw new Error('No active project'); },
-      getWorkspaceLocalPathFolder: async () => { throw new Error('No active project'); },
+      assetsGetShort: async () => {
+        throw new Error('No active project');
+      },
+      assetsGetFull: async () => {
+        throw new Error('No active project');
+      },
+      assetsGetView: (async () => {
+        throw new Error('No active project');
+      }) as any,
+      assetsGraph: async () => {
+        throw new Error('No active project');
+      },
+      assetsCreate: async () => {
+        throw new Error('No active project');
+      },
+      assetsChange: async () => {
+        throw new Error('No active project');
+      },
+      assetsChangeUndo: async () => {
+        throw new Error('No active project');
+      },
+      assetsChangeBatch: async () => {
+        throw new Error('No active project');
+      },
+      assetsDelete: async () => {
+        throw new Error('No active project');
+      },
+      assetsRestore: async () => {
+        throw new Error('No active project');
+      },
+      assetsCreateRef: async () => {
+        throw new Error('No active project');
+      },
+      assetsDeleteRef: async () => {
+        throw new Error('No active project');
+      },
+      assetsMove: async () => {
+        throw new Error('No active project');
+      },
+      assetsGetHistory: async () => {
+        throw new Error('No active project');
+      },
+      getAssetLocalPath: async () => {
+        throw new Error('No active project');
+      },
+      workspacesGet: async () => {
+        throw new Error('No active project');
+      },
+      workspacesCreate: async () => {
+        throw new Error('No active project');
+      },
+      workspacesChange: async () => {
+        throw new Error('No active project');
+      },
+      workspacesDelete: async () => {
+        throw new Error('No active project');
+      },
+      workspacesMove: async () => {
+        throw new Error('No active project');
+      },
+      getWorkspaceLocalPathFolder: async () => {
+        throw new Error('No active project');
+      },
       subscribeEvents: () => ({
-        cancel: () => { },
+        cancel: () => {},
         isConnected: () => false,
-        listenContent: () => { },
-        listenComment: () => ({ cancel: () => { } }),
+        listenContent: () => {},
+        listenComment: () => ({ cancel: () => {} }),
       }),
     };
   }
@@ -94,10 +148,7 @@ export default class AiEditManager extends AppSubManagerBase {
   async loadSessions(): Promise<void> {
     const db = this._db;
     if (!db) return;
-    try {
-      this.sessions = await db.loadSessions();
-    } finally {
-    }
+    this.sessions = await db.loadSessions();
   }
 
   async createSession(title?: string): Promise<AiSession> {
@@ -132,7 +183,7 @@ export default class AiEditManager extends AppSubManagerBase {
   async renameSession(id: string, title: string): Promise<void> {
     const db = this._db;
     if (!db) return;
-    const idx = this.sessions.findIndex(s => s.id === id);
+    const idx = this.sessions.findIndex((s) => s.id === id);
     if (idx < 0) return;
     const updated = {
       ...this.sessions[idx],
@@ -147,7 +198,7 @@ export default class AiEditManager extends AppSubManagerBase {
     const db = this._db;
     if (!db) return;
     await db.deleteSession(id);
-    this.sessions = this.sessions.filter(s => s.id !== id);
+    this.sessions = this.sessions.filter((s) => s.id !== id);
     if (this.currentSessionId === id) {
       this.currentSessionId = null;
       this.turns = [];
@@ -214,7 +265,8 @@ export default class AiEditManager extends AppSubManagerBase {
         this.changeIds = [...new Set([...this.changeIds, ...turn.changeIds])];
       }
       await db.updateTurn(turn);
-      this.turnVersion++; this.turns = [...this.turns];
+      this.turnVersion++;
+      this.turns = [...this.turns];
     }
   }
 
@@ -224,71 +276,77 @@ export default class AiEditManager extends AppSubManagerBase {
       throw new Error('AI model is not selected');
     }
 
-    turn.status = 'streaming'
+    turn.status = 'streaming';
     const instructions = this._buildInstructions();
 
     const core = this._core;
-    const toolImpls: Record<string, (args: any, turn: AiTurn) => Promise<any>> = {
-      getContents: async () => {
-        const rootWorkspace = await this.appManager.get(CreatorAssetManager).getWorkspaceByNameViaCache('gdd');
-        const [assets, workspaces] = await Promise.all([
-          this.appManager.get(CreatorAssetManager).getAssetShortsList({
-            where: {
-              issystem: false,
-              workspaceids: rootWorkspace ? rootWorkspace.id : null,
-            },
-          }),
-          this.appManager.get(CreatorAssetManager).getWorkspacesListAll({
-            where: {
-              insideId: rootWorkspace ? rootWorkspace.id : null,
-              isSystem: false,
-            },
-          }),
-        ]);
-        return {
-          assets: assets.list.map(a => ({
-            id: a.id,
-            name: a.name,
-            title: a.title,
-            workspaceId: a.workspaceId,
-            typeIds: a.typeIds,
-            createdAt: a.createdAt,
-            updatedAt: a.updatedAt,
-          })),
-          workspaces: workspaces.list.map(w => ({
-            id: w.id,
-            name: w.name,
-            title: w.title,
-            parentId: w.parentId,
-            props: JSON.parse(JSON.stringify(w.props)),
-            createdAt: w.createdAt,
-            updatedAt: w.updatedAt,
-          })),
-        };
-      },
-      getAsset: async ({ id }: { id: string }) => {
-        if (!id) throw new Error('Missing required parameter "id". Provide a valid asset ID string from the getContents result.');
-        return await core.get_asset.handler({ id });
-      },
-      changeAsset: async (input: any, turn: AiTurn) => {
-        const result = await core.change_asset.handler(input);
-        if (!result.success) throw new Error(result.error);
-        if (result.changeId) turn.changeIds.push(result.changeId);
-        return result;
-      },
-      createAsset: async (args: any, turn: AiTurn) => {
-        const result = await core.create_asset.handler(args);
-        if (!result.success) throw new Error(result.error);
-        if (result.changeId) turn.changeIds.push(result.changeId);
-        return result;
-      },
-      deleteAsset: async (args: any, turn: AiTurn) => {
-        const result = await core.delete_asset.handler(args);
-        if (!result.success) throw new Error(result.error);
-        if (result.changeId) turn.changeIds.push(result.changeId);
-        return result;
-      },
-    };
+    const toolImpls: Record<string, (args: any, turn: AiTurn) => Promise<any>> =
+      {
+        getContents: async () => {
+          const rootWorkspace = await this.appManager
+            .get(CreatorAssetManager)
+            .getWorkspaceByNameViaCache('gdd');
+          const [assets, workspaces] = await Promise.all([
+            this.appManager.get(CreatorAssetManager).getAssetShortsList({
+              where: {
+                issystem: false,
+                workspaceids: rootWorkspace ? rootWorkspace.id : null,
+              },
+            }),
+            this.appManager.get(CreatorAssetManager).getWorkspacesListAll({
+              where: {
+                insideId: rootWorkspace ? rootWorkspace.id : null,
+                isSystem: false,
+              },
+            }),
+          ]);
+          return {
+            assets: assets.list.map((a) => ({
+              id: a.id,
+              name: a.name,
+              title: a.title,
+              workspaceId: a.workspaceId,
+              typeIds: a.typeIds,
+              createdAt: a.createdAt,
+              updatedAt: a.updatedAt,
+            })),
+            workspaces: workspaces.list.map((w) => ({
+              id: w.id,
+              name: w.name,
+              title: w.title,
+              parentId: w.parentId,
+              props: JSON.parse(JSON.stringify(w.props)),
+              createdAt: w.createdAt,
+              updatedAt: w.updatedAt,
+            })),
+          };
+        },
+        getAsset: async ({ id }: { id: string }) => {
+          if (!id)
+            throw new Error(
+              'Missing required parameter "id". Provide a valid asset ID string from the getContents result.',
+            );
+          return await core.get_asset.handler({ id });
+        },
+        changeAsset: async (input: any, turn: AiTurn) => {
+          const result = await core.change_asset.handler(input);
+          if (!result.success) throw new Error(result.error);
+          if (result.changeId) turn.changeIds.push(result.changeId);
+          return result;
+        },
+        createAsset: async (args: any, turn: AiTurn) => {
+          const result = await core.create_asset.handler(args);
+          if (!result.success) throw new Error(result.error);
+          if (result.changeId) turn.changeIds.push(result.changeId);
+          return result;
+        },
+        deleteAsset: async (args: any, turn: AiTurn) => {
+          const result = await core.delete_asset.handler(args);
+          if (!result.success) throw new Error(result.error);
+          if (result.changeId) turn.changeIds.push(result.changeId);
+          return result;
+        },
+      };
 
     const messages: any[] = this._buildMessages();
     let thinkingOnlyRetries = 0;
@@ -320,12 +378,15 @@ export default class AiEditManager extends AppSubManagerBase {
             turn.actions.push({ type: 'thinking', text: '' });
             reasoningActionIdx = turn.actions.length - 1;
           }
-          (turn.actions[reasoningActionIdx] as AiThinkingAction).text = reasoningText;
-          this.turnVersion++; this.turns = [...this.turns];
+          (turn.actions[reasoningActionIdx] as AiThinkingAction).text =
+            reasoningText;
+          this.turnVersion++;
+          this.turns = [...this.turns];
 
           if (this._isTokenLoop(reasoningText)) {
             turn.status = 'error';
-            turn.error = 'The AI got stuck in a repetition loop. Please try again with a simpler request.';
+            turn.error =
+              'The AI got stuck in a repetition loop. Please try again with a simpler request.';
             return;
           }
         } else if (part.type === 'text-delta') {
@@ -335,33 +396,49 @@ export default class AiEditManager extends AppSubManagerBase {
             textActionIdx = turn.actions.length - 1;
           }
           (turn.actions[textActionIdx] as AiTextAction).content = textContent;
-          this.turnVersion++; this.turns = [...this.turns];
+          this.turnVersion++;
+          this.turns = [...this.turns];
 
           if (this._isTokenLoop(textContent)) {
-            throw new Error('The AI got stuck in a repetition loop. Please try again with a simpler request.');
+            throw new Error(
+              'The AI got stuck in a repetition loop. Please try again with a simpler request.',
+            );
           }
-        }
-        else if (part.type === 'error') {
-          throw part.error
+        } else if (part.type === 'error') {
+          throw part.error;
         }
       }
 
       if (signal.aborted) return;
 
-      const allMatches = Array.from(textContent.matchAll(/<tool_call>([\s\S]*?)<\/tool_call>/g));
+      const allMatches = Array.from(
+        textContent.matchAll(/<tool_call>([\s\S]*?)<\/tool_call>/g),
+      );
 
       if (allMatches.length === 0) {
         const unclosedMatch = textContent.match(/<tool_call>([\s\S]*?)$/);
         if (unclosedMatch) {
           messages.push({ role: 'assistant', content: textContent });
-          messages.push({ role: 'user', content: '[System: The tool call above is incomplete — it\'s missing the closing </tool_call> tag. Repeat the exact same tool call with the full JSON and proper closing tag.]' });
+          messages.push({
+            role: 'user',
+            content:
+              "[System: The tool call above is incomplete — it's missing the closing </tool_call> tag. Repeat the exact same tool call with the full JSON and proper closing tag.]",
+          });
           continue;
         }
 
-        if (reasoningText && !textContent && thinkingOnlyRetries < MAX_THINKING_RETRIES) {
+        if (
+          reasoningText &&
+          !textContent &&
+          thinkingOnlyRetries < MAX_THINKING_RETRIES
+        ) {
           thinkingOnlyRetries++;
           messages.push({ role: 'assistant', content: reasoningText });
-          messages.push({ role: 'user', content: 'You provided reasoning but no answer. Answer the user\'s question based on your reasoning above. Output only the answer, no thinking this time.' });
+          messages.push({
+            role: 'user',
+            content:
+              "You provided reasoning but no answer. Answer the user's question based on your reasoning above. Output only the answer, no thinking this time.",
+          });
           continue;
         }
 
@@ -369,14 +446,19 @@ export default class AiEditManager extends AppSubManagerBase {
           const cleanText = textContent.replace(/<DONE>\s*$/, '').trim();
           if (textActionIdx !== null && cleanText) {
             (turn.actions[textActionIdx] as AiTextAction).content = cleanText;
-            this.turnVersion++; this.turns = [...this.turns];
+            this.turnVersion++;
+            this.turns = [...this.turns];
           }
           return;
         }
 
         if (step < MAX_STEPS - 1) {
           messages.push({ role: 'assistant', content: textContent });
-          messages.push({ role: 'user', content: '[System: You have not yet completed the user\'s request. If you are finished, end your response with <DONE>. Otherwise continue working — make the necessary tool calls to complete the task.]' });
+          messages.push({
+            role: 'user',
+            content:
+              "[System: You have not yet completed the user's request. If you are finished, end your response with <DONE>. Otherwise continue working — make the necessary tool calls to complete the task.]",
+          });
           continue;
         }
         return;
@@ -389,13 +471,15 @@ export default class AiEditManager extends AppSubManagerBase {
         const textBefore = textContent.slice(lastEnd, match.index);
         const toolCallJson = match[1]!.trim();
 
-        const assistantContent = textBefore + `<tool_call>${toolCallJson}</tool_call>`;
+        const assistantContent =
+          textBefore + `<tool_call>${toolCallJson}</tool_call>`;
         messages.push({ role: 'assistant', content: assistantContent });
 
         if (!firstTextActionHandled) {
           if (textBefore) {
             if (textActionIdx !== null) {
-              (turn.actions[textActionIdx] as AiTextAction).content = textBefore;
+              (turn.actions[textActionIdx] as AiTextAction).content =
+                textBefore;
             } else {
               turn.actions.push({ type: 'text', content: textBefore });
             }
@@ -404,7 +488,8 @@ export default class AiEditManager extends AppSubManagerBase {
             textActionIdx = null;
           }
           firstTextActionHandled = true;
-          this.turnVersion++; this.turns = [...this.turns];
+          this.turnVersion++;
+          this.turns = [...this.turns];
         }
 
         let parsed: any;
@@ -419,14 +504,18 @@ export default class AiEditManager extends AppSubManagerBase {
         const toolFn = toolImpls[toolName];
 
         if (!toolFn) {
-          messages.push({ role: 'user', content: `[Error: Unknown tool "${toolName}". Available: ${Object.keys(toolImpls).join(', ')}]` });
+          messages.push({
+            role: 'user',
+            content: `[Error: Unknown tool "${toolName}". Available: ${Object.keys(toolImpls).join(', ')}]`,
+          });
           turn.actions.push({
             type: 'tool-call',
             toolName,
             args,
             result: { success: false, error: `Unknown tool "${toolName}"` },
           });
-          this.turnVersion++; this.turns = [...this.turns];
+          this.turnVersion++;
+          this.turns = [...this.turns];
           lastEnd = match.index! + match[0].length;
           continue;
         }
@@ -439,8 +528,13 @@ export default class AiEditManager extends AppSubManagerBase {
           error = err.message;
         }
 
-        const wrapped: any = error ? { success: false, error } : { success: true, result: resultVal };
-        messages.push({ role: 'user', content: `[Tool "${toolName}" result]: ${JSON.stringify(wrapped)}` });
+        const wrapped: any = error
+          ? { success: false, error }
+          : { success: true, result: resultVal };
+        messages.push({
+          role: 'user',
+          content: `[Tool "${toolName}" result]: ${JSON.stringify(wrapped)}`,
+        });
 
         turn.actions.push({
           type: 'tool-call',
@@ -458,12 +552,14 @@ export default class AiEditManager extends AppSubManagerBase {
       if (trailingText) {
         messages.push({ role: 'assistant', content: trailingText });
         turn.actions.push({ type: 'text', content: trailingText });
-        this.turnVersion++; this.turns = [...this.turns];
+        this.turnVersion++;
+        this.turns = [...this.turns];
       }
     }
 
     turn.actions.push({ type: 'text', content: 'Max iterations reached.' });
-    this.turnVersion++; this.turns = [...this.turns];
+    this.turnVersion++;
+    this.turns = [...this.turns];
   }
 
   private _buildBlockSpecs(): string {
@@ -651,9 +747,15 @@ createAsset parameter format (blocks as array):
         if (action.type === 'text' && action.content) {
           messages.push({ role: 'assistant', content: action.content });
         } else if (action.type === 'tool-call') {
-          messages.push({ role: 'assistant', content: `<tool_call>${JSON.stringify({ name: action.toolName, args: action.args })}</tool_call>` });
+          messages.push({
+            role: 'assistant',
+            content: `<tool_call>${JSON.stringify({ name: action.toolName, args: action.args })}</tool_call>`,
+          });
           if (action.result) {
-            messages.push({ role: 'user', content: `[Tool "${action.toolName}" result]: ${JSON.stringify(action.result)}` });
+            messages.push({
+              role: 'user',
+              content: `[Tool "${action.toolName}" result]: ${JSON.stringify(action.result)}`,
+            });
           }
         }
       }

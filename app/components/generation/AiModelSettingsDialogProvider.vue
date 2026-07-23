@@ -2,48 +2,55 @@
   <div class="AiModelProvider">
     <template v-for="prop in provider.properties" :key="prop.name">
       <div class="AiModelProvider-row">
-        <label :for="prop.name" class="AiModelProvider-label">{{ formatLabel(prop.name) }}</label>
-        <Password
-          v-if="prop.name === 'apiKey'"
-          :model-value="(modelValue[prop.name] as string | undefined)"
-          @update:model-value="changeValue(prop.name, $event)"
+        <label :for="prop.name" class="AiModelProvider-label">{{
+          formatLabel(prop.name)
+        }}</label>
+        <ImsInput
           :id="prop.name"
-          :placeholder="prop.placeholder ?? getDefaultPlaceholder(prop.name)"
-          class="AiModelProvider-input"
-          inputClass="AiModelProvider-passwordInput"
-          autocomplete="off"
-          toggle-mask
-          :feedback="false"
-        />
-        <InputText
-          v-else
-          :model-value="(modelValue[prop.name] as string | undefined)"
-          @update:model-value="changeValue(prop.name, $event)"
-          :id="prop.name"
+          :model-value="modelValue[prop.name] as string | undefined"
+          :type="
+            prop.name === 'apiKey' && !passwordVisible[prop.name]
+              ? 'password'
+              : 'text'
+          "
           :placeholder="prop.placeholder ?? getDefaultPlaceholder(prop.name)"
           class="AiModelProvider-input"
           autocomplete="off"
-        />
+          @update:model-value="changeValue(prop.name, $event)"
+        >
+          <template v-if="prop.name === 'apiKey'" #append>
+            <button
+              type="button"
+              class="AiModelProvider-passwordToggle"
+              @click="togglePasswordVisibility(prop.name)"
+            >
+              <i
+                :class="
+                  passwordVisible[prop.name] ? 'ri-eye-off-line' : 'ri-eye-line'
+                "
+              />
+            </button>
+          </template>
+        </ImsInput>
       </div>
     </template>
     <div v-if="provider.fetchModels" class="AiModelProvider-row">
-      <label for="model" class="AiModelProvider-label">{{ t('aiSettings.model') }}</label>
+      <label for="model" class="AiModelProvider-label">{{
+        t('aiSettings.model')
+      }}</label>
       <div class="AiModelProvider-inputWrap">
-        <Select
+        <ImsSelect
           v-model="selectedModel"
           :options="modelOptions"
           :placeholder="t('aiSettings.selectOrTypeModel')"
           class="AiModelProvider-input"
-          :editable="true"
+          :taggable="true"
           :disabled="!canFetchModels"
-          @show="dropdownOpen = true"
-          @hide="dropdownOpen = false"
+        />
+        <div
+          v-if="provider.fetchModels?.tags?.length"
+          class="AiModelProvider-tags"
         >
-          <template #dropdownicon>
-            <i class="ri-arrow-down-s-line" :class="{ 'AiModelProvider-selectIcon--open': dropdownOpen }" />
-          </template>
-        </Select>
-        <div v-if="provider.fetchModels?.tags?.length" class="AiModelProvider-tags">
           <button
             v-for="tag in provider.fetchModels.tags"
             :key="tag.name"
@@ -58,14 +65,17 @@
       </div>
     </div>
     <div v-else class="AiModelProvider-row">
-      <label for="model" class="AiModelProvider-label">{{ t('aiSettings.model') }}</label>
+      <label for="model" class="AiModelProvider-label">{{
+        t('aiSettings.model')
+      }}</label>
       <div class="AiModelProvider-inputWrap">
-        <InputText
-          v-model="selectedModel"
+        <ImsInput
           id="model"
+          :model-value="selectedModel"
           :placeholder="t('aiSettings.enterModelName')"
           class="AiModelProvider-input"
           autocomplete="off"
+          @update:model-value="selectedModel = $event"
         />
       </div>
     </div>
@@ -79,10 +89,11 @@
 </template>
 
 <script setup lang="ts">
-import { InputText, Password, Select } from 'primevue';
-import { type PropType, ref, watch, computed } from 'vue';
-import { type AiModelDescriptor } from '~ims-app-base/logic/ai-core/AiModelDescriptors'
-import type { AiSettingsModel } from '~ims-app-base/logic/ai-core/AiSettings';
+import ImsInput from '#components/Common/ImsInput.vue';
+import ImsSelect from '#components/Common/ImsSelect.vue';
+import { type PropType, ref, reactive, watch, computed } from 'vue';
+import type { AiModelDescriptor } from '#logic/ai-core/AiModelDescriptors';
+import type { AiSettingsModel } from '#logic/ai-core/AiSettings';
 import { useI18n } from '#imports';
 
 const { t } = useI18n();
@@ -94,91 +105,106 @@ const props = defineProps({
   },
   modelValue: {
     type: Object as PropType<Partial<AiSettingsModel>>,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue']);
 
-const dropdownOpen = ref(false)
-const loadingModels = ref(false)
-const modelOptions = ref<string[]>([])
-const modelsError = ref<string | null>(null)
-let fetchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+const passwordVisible = reactive<Record<string, boolean>>({});
+
+function togglePasswordVisibility(name: string) {
+  passwordVisible[name] = !passwordVisible[name];
+}
+
+const loadingModels = ref(false);
+const modelOptions = ref<string[]>([]);
+const modelsError = ref<string | null>(null);
+let fetchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const selectedModel = computed({
   get: () => props.modelValue.model ?? '',
-  set: (val) => changeValue('model', val)
-})
+  set: (val) => changeValue('model', val),
+});
 
 const canFetchModels = computed(() => {
-  if (!props.provider.fetchModels) return false
+  if (!props.provider.fetchModels) return false;
   if (props.provider.fetchModels.requireApiKey) {
-    return !!props.modelValue.apiKey
+    return !!props.modelValue.apiKey;
   }
-  return true
-})
+  return true;
+});
 
-watch(() => props.provider, () => {
-  fetchModelsIfNeeded()
-}, { immediate: true })
+watch(
+  () => props.provider,
+  () => {
+    fetchModelsIfNeeded();
+  },
+  { immediate: true },
+);
 
-watch(() => props.modelValue.apiKey, () => {
-  fetchModelsIfNeeded()
-})
+watch(
+  () => props.modelValue.apiKey,
+  () => {
+    fetchModelsIfNeeded();
+  },
+);
 
-watch(() => props.modelValue.baseUrl, () => {
-  fetchModelsIfNeeded()
-})
+watch(
+  () => props.modelValue.baseUrl,
+  () => {
+    fetchModelsIfNeeded();
+  },
+);
 
 function fetchModelsIfNeeded() {
-  modelOptions.value = []
-  modelsError.value = null
-  if (!props.provider.fetchModels) return
+  modelOptions.value = [];
+  modelsError.value = null;
+  if (!props.provider.fetchModels) return;
   if (!canFetchModels.value) {
-    modelOptions.value = []
-    return
+    modelOptions.value = [];
+    return;
   }
-  if (fetchDebounceTimer) clearTimeout(fetchDebounceTimer)
-  fetchDebounceTimer = setTimeout(fetchModels, 400)
+  if (fetchDebounceTimer) clearTimeout(fetchDebounceTimer);
+  fetchDebounceTimer = setTimeout(fetchModels, 400);
 }
 
 async function fetchModels() {
-  if (!props.provider.fetchModels) return
-  if (!canFetchModels.value) return
+  if (!props.provider.fetchModels) return;
+  if (!canFetchModels.value) return;
 
-  loadingModels.value = true
-  modelsError.value = null
+  loadingModels.value = true;
+  modelsError.value = null;
 
   try {
-    const results = await props.provider.fetchModels.fetch(props.modelValue)
-    modelOptions.value = results.map(r => r.name)
+    const results = await props.provider.fetchModels.fetch(props.modelValue);
+    modelOptions.value = results.map((r) => r.name);
   } catch (err: any) {
-    console.warn('Failed to fetch models:', err)
-    modelsError.value = err.message ?? t('aiSettings.failedToLoadModels')
-    modelOptions.value = []
+    console.warn('Failed to fetch models:', err);
+    modelsError.value = err.message ?? t('aiSettings.failedToLoadModels');
+    modelOptions.value = [];
   } finally {
-    loadingModels.value = false
+    loadingModels.value = false;
   }
 }
 
 function changeValue(prop: string, value: any) {
   const newValue = {
     ...props.modelValue,
-    [prop]: value
-   }
-  emit('update:modelValue', newValue)
+    [prop]: value,
+  };
+  emit('update:modelValue', newValue);
 }
 
 function formatLabel(name: string): string {
   return name
     .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim()
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
 }
 
 function getDefaultPlaceholder(name: string): string {
-  return ''
+  return '';
 }
 </script>
 
@@ -214,8 +240,20 @@ function getDefaultPlaceholder(name: string): string {
   gap: 0.5rem;
 }
 
-.AiModelProvider-passwordInput {
-  width: 100%;
+.AiModelProvider-passwordToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--local-sub-text-color);
+  font-size: var(--input-font-size);
+
+  &:hover {
+    color: var(--root-text-color);
+  }
 }
 
 .AiModelProvider-error {
@@ -230,14 +268,6 @@ function getDefaultPlaceholder(name: string): string {
   font-size: 0.875rem;
   margin: 0;
   color: var(--color-danger);
-}
-
-.AiModelProvider-selectIcon--open {
-  transform: rotate(180deg);
-}
-
-:deep(.ri-arrow-down-s-line) {
-  transition: transform 0.15s;
 }
 
 .AiModelProvider-tags {

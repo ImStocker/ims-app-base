@@ -6,10 +6,10 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createDeepSeek } from '@ai-sdk/deepseek'
 import { createXai } from '@ai-sdk/xai'
-import { AppSubManagerBase } from '~ims-app-base/logic/managers/IAppManager';
+import { AppSubManagerBase } from '#logic/managers/IAppManager';
 import type { AiModelDef } from './AiModelDef';
 import { AiModelDescriptorList } from './AiModelDescriptors';
-import DialogManager from '~ims-app-base/logic/managers/DialogManager';
+import DialogManager from '#logic/managers/DialogManager';
 import { defineAsyncComponent } from 'vue';
 
 const AI_SETTINGS_KEY = 'aiSettings';
@@ -171,7 +171,7 @@ export default class AiManager extends AppSubManagerBase {
     const modelDef = this.getAiModelDef();
     if (!modelDef) {
       const AiModelSettingsDialog = defineAsyncComponent(
-        () => import('~ims-app-base/components/generation/AiModelSettingsDialog.vue')
+        () => import('#components/generation/AiModelSettingsDialog.vue')
       );
       await this.appManager.get(DialogManager).show(AiModelSettingsDialog, {
         setProviderName: undefined

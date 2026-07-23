@@ -7,7 +7,9 @@
     <template #content>
       <form v-focustrap @submit.prevent>
         <div class="AiModelSettingsDialog-row">
-          <label for="provider" class="AiModelSettingsDialog-label">{{ t('aiSettings.aiProvider') }}</label>
+          <label for="provider" class="AiModelSettingsDialog-label">{{
+            t('aiSettings.aiProvider')
+          }}</label>
           <ImsSelect
             v-model="selectedProviderName"
             :options="AiModelDescriptorList"
@@ -21,12 +23,26 @@
         <AiModelSettingsDialogProvider
           v-if="selectedProvider"
           ref="providerRef"
-          :provider="selectedProvider"
           v-model="formValues"
+          :provider="selectedProvider"
         ></AiModelSettingsDialogProvider>
         <div class="AiModelSettingsDialog-actions">
-          <button type="button" @click="dialog.close()" class="is-button is-button-action">{{ t('aiSettings.close') }}</button>
-          <button v-if="selectedProvider" :disabled="!canSave" type="button" class="is-button is-button-action accent" @click="saveSettings">{{ t('aiSettings.save') }}</button>
+          <button
+            type="button"
+            class="is-button is-button-action"
+            @click="dialog.close()"
+          >
+            {{ t('aiSettings.close') }}
+          </button>
+          <button
+            v-if="selectedProvider"
+            :disabled="!canSave"
+            type="button"
+            class="is-button is-button-action accent"
+            @click="saveSettings"
+          >
+            {{ t('aiSettings.save') }}
+          </button>
         </div>
       </form>
     </template>
@@ -34,22 +50,21 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, Button, InputText } from 'primevue';
-import ImsSelect from '~ims-app-base/components/Common/ImsSelect.vue';
+import ImsSelect from '#components/Common/ImsSelect.vue';
 import { computed, ref, type PropType } from 'vue';
-import { AiModelDescriptorList } from '~ims-app-base/logic/ai-core/AiModelDescriptors'
-import { type AiSettingsModel } from '~ims-app-base/logic/ai-core/AiSettings'
+import { AiModelDescriptorList } from '#logic/ai-core/AiModelDescriptors';
+import type { AiSettingsModel } from '#logic/ai-core/AiSettings';
 import AiModelSettingsDialogProvider from './AiModelSettingsDialogProvider.vue';
 import { useAppManager, useI18n } from '#imports';
-import AiManager from '~ims-app-base/logic/ai-core/AiManager';
-import type { DialogInterface } from '~ims-app-base/logic/managers/DialogManager';
-import DialogContent from '~ims-app-base/components/Dialog/DialogContent.vue';
+import AiManager from '#logic/ai-core/AiManager';
+import type { DialogInterface } from '#logic/managers/DialogManager';
+import DialogContent from '#components/Dialog/DialogContent.vue';
 
 type DialogProps = {
-  setProviderName?: string
-}
+  setProviderName?: string;
+};
 
-type DialogResult = void
+type DialogResult = void;
 
 const appManager = useAppManager();
 const { t } = useI18n();
@@ -59,40 +74,48 @@ const props = defineProps({
     type: Object as PropType<DialogInterface<DialogProps, DialogResult>>,
     required: true,
   },
-})
+});
 
 const currentSettings = computed(() => {
-  return appManager.get(AiManager).getSettings()
-})
+  return appManager.get(AiManager).getSettings();
+});
 
-const selectedProviderName = ref(props.dialog.state.setProviderName ?? currentSettings.value?.selectedModel)
+const selectedProviderName = ref(
+  props.dialog.state.setProviderName ?? currentSettings.value?.selectedModel,
+);
 const selectedProvider = computed(() => {
   if (!selectedProviderName.value) return null;
-  return AiModelDescriptorList.find(provider => provider.name === selectedProviderName.value) ?? null;
-})
+  return (
+    AiModelDescriptorList.find(
+      (provider) => provider.name === selectedProviderName.value,
+    ) ?? null
+  );
+});
 
-const formValues = ref<Partial<AiSettingsModel>>({})
+const formValues = ref<Partial<AiSettingsModel>>({});
 updateFormValues();
 
 const canSave = computed(() => {
   if (!selectedProvider.value) return false;
-  return !!(formValues.value.model ?? '').trim()
-})
+  return !!(formValues.value.model ?? '').trim();
+});
 
-function updateFormValues(){
-  const provider = selectedProvider.value
-  if (!provider){
-    formValues.value = {}
+function updateFormValues() {
+  const provider = selectedProvider.value;
+  if (!provider) {
+    formValues.value = {};
     return;
   }
-  const currentValues = currentSettings.value.models.find(model => model.name === provider.name)
+  const currentValues = currentSettings.value.models.find(
+    (model) => model.name === provider.name,
+  );
   formValues.value = {
     name: provider.name,
-    ...(currentValues ? currentValues : {})
-  }
+    ...(currentValues ? currentValues : {}),
+  };
   for (const prop of provider.properties) {
-    if (formValues.value[prop.name] === undefined){
-      formValues.value[prop.name] = prop.default
+    if (formValues.value[prop.name] === undefined) {
+      formValues.value[prop.name] = prop.default;
     }
   }
 }
@@ -104,10 +127,10 @@ function onProviderChange() {
 function saveSettings() {
   if (!formValues.value.name) return;
 
-  appManager.get(AiManager).addModel(formValues.value as AiSettingsModel)
-  appManager.get(AiManager).selectModel(formValues.value.name)
+  appManager.get(AiManager).addModel(formValues.value as AiSettingsModel);
+  appManager.get(AiManager).selectModel(formValues.value.name);
 
-  props.dialog.close()
+  props.dialog.close();
 }
 </script>
 
