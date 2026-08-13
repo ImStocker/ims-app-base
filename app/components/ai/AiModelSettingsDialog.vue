@@ -5,7 +5,7 @@
   >
     <template #header>{{ t('aiSettings.header') }}</template>
     <template #content>
-      <form v-focustrap @submit.prevent>
+      <form @submit.prevent>
         <div class="AiModelSettingsDialog-row">
           <label for="provider" class="AiModelSettingsDialog-label">{{
             t('aiSettings.aiProvider')

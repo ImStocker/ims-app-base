@@ -1085,7 +1085,7 @@ export default {
     },
   },
   aiAssistant: {
-    title: '',
+    title: 'KI-Assistent',
     arguments: 'Argumente',
     changes: 'Änderungen',
     defaultMessage: 'Hallo! Wie kann ich Ihnen helfen?',
