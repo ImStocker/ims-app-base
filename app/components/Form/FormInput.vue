@@ -19,12 +19,16 @@ import ImsInput from '../Common/ImsInput.vue';
 
 export default defineComponent({
   title: 'FormInput',
+  meta: {
+    modelProp: 'value',
+    modelEvent: 'input',
+  },
   components: {
     ImsInput,
   },
   props: {
     value: {
-      type: String,
+      type: [String, Number] as PropType<string | number>,
       default: () => '',
     },
     placeholder: {
@@ -55,19 +59,14 @@ export default defineComponent({
     },
   },
   emits: ['input', 'change'],
-  data() {
-    return {
-      editingValue: this.value,
-    };
-  },
-  watch: {
-    value() {
-      if (this.editingValue !== this.value) {
-        this.editingValue = this.value;
-      }
-    },
-    editingValue() {
-      this.$emit('input', this.editingValue);
+  computed: {
+    editingValue: {
+      get() {
+        return this.value;
+      },
+      set(val: string | number) {
+        this.$emit('input', val);
+      },
     },
   },
   methods: {

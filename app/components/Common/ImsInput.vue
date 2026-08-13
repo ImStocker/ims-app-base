@@ -66,7 +66,7 @@ export default defineComponent({
       default: false,
     },
     modelValue: {
-      type: String,
+      type: [String, Number] as PropType<string | number | null>,
       default: null,
     },
     disabled: {

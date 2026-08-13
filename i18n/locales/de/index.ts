@@ -1,6 +1,8 @@
 export default {
   localeName: 'de',
   common: {
+    showPassword: 'Passwort anzeigen',
+    hidePassword: 'Passwort ausblenden',
     goHome: 'Zur Startseite',
     welcome: 'Willkommen bei Creators, {user}',
     contextMenu: {
@@ -1081,5 +1083,60 @@ export default {
       strokeColor: 'Kontur',
       setColor: 'Farbe setzen',
     },
+  },
+  aiAssistant: {
+    title: '',
+    arguments: 'Argumente',
+    changes: 'Änderungen',
+    defaultMessage: 'Hallo! Wie kann ich Ihnen helfen?',
+    defaultSessionName: 'Standard',
+    deleteMessages: 'Nachrichten löschen',
+    deleteMessagesConfirm: 'Möchten Sie die Nachrichten wirklich löschen?',
+    deleteSession: 'Sitzung löschen',
+    deleteSessionConfirm: 'Möchten Sie diese Sitzung wirklich löschen?',
+    newSession: 'Neue Sitzung',
+    newSessionCreated: 'Neue Sitzung erstellt',
+    placeholder: 'Fragen Sie die KI zu Ihrem Projekt...',
+    renameSession: 'Sitzung umbenennen',
+    result: 'Ergebnis',
+    revertAll: 'Alle Änderungen rückgängig machen',
+    sessionDeleted: 'Sitzung gelöscht',
+    sessions: 'Sitzungen',
+    settings: 'Einstellungen',
+    thought: 'Gedanke',
+  },
+  aiSettings: {
+    header: 'AI-Modelleinstellungen',
+    aiProvider: 'AI-Anbieter',
+    selectAiProvider: 'AI-Anbieter auswählen',
+    model: 'Modell',
+    selectOrTypeModel: 'Modell auswählen oder eingeben',
+    enterModelName: 'Modellname eingeben',
+    close: 'Schließen',
+    save: 'Speichern',
+    failedToLoadModels: 'Modelle konnten nicht geladen werden',
+    setupAiModel: 'AI-Modell einrichten',
+  },
+  aiModelNames: {
+    openrouter: 'OpenRouter',
+    ollama: 'Ollama',
+    gemini: 'Gemini',
+    openai: 'OpenAI (GPT)',
+    grok: 'Grok',
+    deepseek: 'DeepSeek',
+    anthropic: 'Anthropic (Claude)',
+    custom: 'Benutzerdefiniert',
+  },
+  aiNotes: {
+    openrouter:
+      'OpenRouter bietet Zugang zu vielen AI-Modellen. Holen Sie sich Ihren API-Schlüssel bei openrouter.ai',
+    ollama:
+      'Führen Sie AI-Modelle lokal mit Ollama aus. Installieren Sie von ollama.com',
+    gemini:
+      'Google Gemini AI. Holen Sie sich Ihren API-Schlüssel von Google AI Studio.',
+    custom: 'Verbinden Sie sich mit jedem OpenAI-kompatiblen API-Endpunkt.',
+  },
+  aiTags: {
+    gemma4: 'Google Gemma 4 31B — kompakt, aber leistungsfähig',
   },
 };
