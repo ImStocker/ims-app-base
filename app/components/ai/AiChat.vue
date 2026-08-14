@@ -493,7 +493,7 @@ defineExpose({
   font-family: monospace;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--color-placeholder, #888);
+  color: var(--sub-text-color, #888);
   border-top: 1px solid var(--local-border-color, #333);
   max-height: 300px;
   overflow-y: auto;
