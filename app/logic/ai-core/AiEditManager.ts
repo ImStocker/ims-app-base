@@ -18,6 +18,7 @@ import {
 } from '#logic/ai-core/AiProjectTools';
 import EditorManager from '#logic/managers/EditorManager';
 import { decodeLLMJSONWithAi } from './llm-utils';
+import { formatDate } from '#logic/utils/format';
 
 export default class AiEditManager extends AppSubManagerBase {
   sessions: AiSession[] = [];
@@ -80,7 +81,13 @@ export default class AiEditManager extends AppSubManagerBase {
     const session: AiSession = {
       id: uuidv4(),
       projectId: info.id,
-      title: title || this.appManager.$t('aiAssistant.defaultSessionName'),
+      title:
+        title ||
+        (this.sessions.length === 0
+          ? this.appManager.$t('aiAssistant.defaultSessionName')
+          : this.appManager.$t('aiAssistant.sessionName', {
+              date: formatDate(now),
+            })),
       createdAt: now,
       updatedAt: now,
     };

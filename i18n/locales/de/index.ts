@@ -1090,6 +1090,7 @@ export default {
     changes: 'Änderungen',
     defaultMessage: 'Hallo! Wie kann ich Ihnen helfen?',
     defaultSessionName: 'Standard',
+    sessionName: 'Sitzung {date}',
     deleteMessages: 'Nachrichten löschen',
     deleteMessagesConfirm: 'Möchten Sie die Nachrichten wirklich löschen?',
     deleteSession: 'Sitzung löschen',

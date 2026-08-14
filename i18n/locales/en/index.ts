@@ -1079,6 +1079,7 @@ export default {
     changes: 'Changes',
     defaultMessage: 'Hello! How can I help you?',
     defaultSessionName: 'Default',
+    sessionName: 'Session {date}',
     deleteMessages: 'Delete messages',
     deleteMessagesConfirm: 'Are you sure you want to delete messages?',
     deleteSession: 'Delete session',

@@ -1097,6 +1097,7 @@ export default {
     changes: 'Изменения',
     defaultMessage: 'Здравствуйте! Чем я могу вам помочь?',
     defaultSessionName: 'По умолчанию',
+    sessionName: 'Сессия {date}',
     deleteMessages: 'Удалить сообщения',
     deleteMessagesConfirm: 'Вы уверены, что хотите удалить сообщения?',
     deleteSession: 'Удалить сессию',
