@@ -269,7 +269,7 @@ export default defineComponent({
     },
     baseAssetOptions() {
       const base_assets = [
-        this.$appConfiguration.isDesktop ? ASSET_SELECTION_MARKDOWN : null,
+        ASSET_SELECTION_MARKDOWN,
         ASSET_SELECTION_GAME_OBJECT,
         ASSET_SELECTION_GAME_MECHANICS,
         ASSET_SELECTION_GRAPH,

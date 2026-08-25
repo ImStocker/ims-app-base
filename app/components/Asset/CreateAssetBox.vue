@@ -122,9 +122,7 @@ export default defineComponent({
           icon: 'file-fill',
         },
       ];
-      if (this.$appConfiguration.isDesktop) {
-        default_options.push(ASSET_SELECTION_MARKDOWN);
-      }
+      default_options.push(ASSET_SELECTION_MARKDOWN);
       default_options.push(
         ...[
           ASSET_SELECTION_GAME_OBJECT,
