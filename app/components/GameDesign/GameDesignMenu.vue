@@ -178,7 +178,7 @@ export default defineComponent({
           ? {
               title: this.$t(
                 'mainMenu.' +
-                  (process.platform === 'darwin'
+                  (typeof process !== 'undefined' && process.platform === 'darwin'
                     ? 'openInFinder'
                     : 'openInExplorer'),
               ),
