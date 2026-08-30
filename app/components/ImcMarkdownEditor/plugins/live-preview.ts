@@ -2,11 +2,15 @@ import {
   Decoration,
   ViewPlugin,
   WidgetType,
+  EditorView,
   type DecorationSet,
-  type EditorView,
   type ViewUpdate,
 } from '@codemirror/view';
-import type { Range } from '@codemirror/state';
+import {
+  StateField,
+  type EditorState,
+  type Range,
+} from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import katex from 'katex';
 
@@ -130,8 +134,105 @@ class SubSupWidget extends WidgetType {
   }
 }
 
+// Renders a fenced `` ```mermaid`` code block as a diagram image in live
+// preview. The diagram is generated locally with the `mermaid` package, which
+// is loaded on demand; the raw source stays editable by placing the caret
+// inside the block (the widget is dropped while the selection overlaps it).
+let mermaidWidgetSeq = 0;
+
+// `document.body` carries the IMS theme (`ims-dark` / `ims-light`), which
+// drives which mermaid color scheme the diagram is rendered with.
+function mermaidTheme(): 'dark' | 'default' {
+  return document.body.getAttribute('data-theme') === 'ims-dark'
+    ? 'dark'
+    : 'default';
+}
+
+class MermaidWidget extends WidgetType {
+  private themeObserver: MutationObserver | null = null;
+  private renderSeq = 0;
+
+  constructor(readonly code: string) {
+    super();
+  }
+
+  override eq(other: MermaidWidget): boolean {
+    return other.code === this.code;
+  }
+
+  override toDOM(): HTMLElement {
+    const container = document.createElement('div');
+    container.className = 'cm-md-mermaid-render';
+    const loading = document.createElement('span');
+    loading.className = 'cm-md-mermaid-loading';
+    loading.textContent = 'Loading diagram…';
+    container.appendChild(loading);
+    void this.renderDiagram(container);
+    // The widget instance is reused while the document is unchanged, so no
+    // decoration rebuild happens on a theme toggle; re-render in place.
+    if (!this.themeObserver) {
+      this.themeObserver = new MutationObserver(() =>
+        this.renderDiagram(container),
+      );
+      this.themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
+    }
+    return container;
+  }
+
+  override destroy() {
+    if (this.themeObserver) {
+      this.themeObserver.disconnect();
+      this.themeObserver = null;
+    }
+  }
+
+  private async renderDiagram(container: HTMLElement) {
+    const seq = ++this.renderSeq;
+    try {
+      const { default: mermaid } = await import('mermaid');
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: mermaidTheme(),
+        themeVariables: {
+          background: 'transparent',
+        },
+      });
+      const { svg } = await mermaid.render(
+        'cm-md-mermaid-' + mermaidWidgetSeq++,
+        this.code,
+      );
+      if (seq !== this.renderSeq) return;
+      container.replaceChildren();
+      const holder = document.createElement('div');
+      holder.className = 'cm-md-mermaid-svg';
+      holder.innerHTML = svg;
+      container.appendChild(holder);
+    } catch (err) {
+      if (seq !== this.renderSeq) return;
+      container.replaceChildren();
+      const errEl = document.createElement('div');
+      errEl.className = 'cm-md-mermaid-error';
+      errEl.textContent =
+        err instanceof Error
+          ? err.message
+          : String(err ?? 'Mermaid render failed');
+      container.appendChild(errEl);
+    }
+  }
+
+  override ignoreEvent(): boolean {
+    return false;
+  }
+}
+
 export function livePreview() {
-  return livePreviewPlugin;
+  // A multi-line replace (fenced mermaid diagram → image) may only be provided
+  // as a static decoration (state field), not through a plugin's `decorations`,
+  // so both the marker/layout plugin and the mermaid state field are returned.
+  return [livePreviewPlugin, mermaidDecorations];
 }
 
 const livePreviewPlugin = ViewPlugin.fromClass(
@@ -152,6 +253,56 @@ const livePreviewPlugin = ViewPlugin.fromClass(
     decorations: (inst) => inst.decorations,
   },
 );
+
+// Builds the multi-line replace decorations that swap fenced `mermaid` blocks
+// for a rendered diagram. Plugins may not emit replaces crossing line breaks,
+// so this lives in a StateField exposed through the (static) `decorations`
+// facet. The block is only replaced while the caret stays outside it; placing
+// the caret inside reveals the raw source for editing.
+function buildMermaidDecorations(state: EditorState): DecorationSet {
+  const doc = state.doc;
+  const sels = state.selection.ranges;
+  const ranges: Range<Decoration>[] = [];
+
+  syntaxTree(state).iterate({
+    enter: (ref) => {
+      if (ref.name !== 'FencedCode') return;
+      const infoNode = ref.node.getChild('CodeInfo');
+      const lang = infoNode
+        ? doc.sliceString(infoNode.from, infoNode.to).trim()
+        : '';
+      if (lang.split(/\s+/)[0]?.toLowerCase() !== 'mermaid') return;
+      if (sels.some((r) => r.from <= ref.to && r.to >= ref.from)) return;
+
+      const codeNode = ref.node.getChild('CodeText');
+      const code = codeNode
+        ? doc.sliceString(codeNode.from, codeNode.to)
+        : doc
+            .sliceString(ref.from, ref.to)
+            .replace(/^[^\n]*\n/, '')
+            .replace(/\n[ \t]*```[ \t]*$/, '');
+      ranges.push(
+        Decoration.replace({ widget: new MermaidWidget(code) }).range(
+          ref.from,
+          ref.to,
+        ),
+      );
+    },
+  });
+
+  return Decoration.set(ranges, true);
+}
+
+const mermaidDecorations = StateField.define<DecorationSet>({
+  create(state) {
+    return buildMermaidDecorations(state);
+  },
+  update(value, tr) {
+    if (!tr.docChanged && !tr.selection) return value.map(tr.changes);
+    return buildMermaidDecorations(tr.state);
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 
 function build(view: EditorView): DecorationSet {
   const doc = view.state.doc;
@@ -194,6 +345,22 @@ function build(view: EditorView): DecorationSet {
       to: vr.to,
       enter: (ref) => {
         const name = ref.name;
+
+        // Fenced `mermaid` blocks are replaced with a rendered diagram by the
+        // `mermaidDecorations` state field (multi-line replace decorations are
+        // not allowed from plugin decorations). Skip the fence's internals so
+        // the background backtick hiding / language chip don't overlap the
+        // replace: while the caret is outside the block the replace hides it,
+        // and while editing, the raw source stays fully visible.
+        if (name === 'FencedCode') {
+          const infoNode = ref.node.getChild('CodeInfo');
+          const lang = infoNode
+            ? view.state.doc.sliceString(infoNode.from, infoNode.to).trim()
+            : '';
+          if (lang.split(/\s+/)[0]?.toLowerCase() === 'mermaid') {
+            return false;
+          }
+        }
 
         // Track the lines covered by list items so we can draw the connecting
         // guide line on the *empty* line between two items (Obsidian-style).

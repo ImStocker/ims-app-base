@@ -952,6 +952,40 @@ body[data-theme='ims-dark'] {
     padding: 0 0.4em;
     border-radius: 0.3em;
   }
+  .cm-md-mermaid-render {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0.5em 0;
+    padding: 0.75em 1em;
+    background: var(
+      --ink-internal-block-background-color,
+      rgba(127, 127, 127, 0.08)
+    );
+    border-radius: 6px;
+    cursor: default;
+  }
+  .cm-md-mermaid-loading,
+  .cm-md-mermaid-error {
+    color: var(--ink-internal-syntax-comment-color, #8b949e);
+    font-size: 0.9em;
+  }
+  .cm-md-mermaid-error {
+    font-family: var(--ink-internal-code-font-family, monospace);
+    white-space: pre-wrap;
+  }
+  .cm-md-mermaid-svg {
+    width: 100%;
+    overflow-x: auto;
+
+    svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+  }
 }
 </style>
 
