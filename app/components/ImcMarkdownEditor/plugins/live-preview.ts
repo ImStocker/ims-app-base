@@ -57,23 +57,90 @@ const LINE_LIST = 'cm-md-line-list';
 const LINE_HR = 'cm-md-line-hr';
 const GAP_LINE = 'cm-md-list-gap';
 
-class CodeLangWidget extends WidgetType {
-  readonly lang: string;
+const COPY_ICON_CLASS = 'ri-file-copy-line';
+const CHECK_ICON_CLASS = 'ri-check-line';
 
-  constructor(lang: string) {
+// Builds the copy button shared by the code header widget. It intercepts its
+// own clicks so the editor never shifts the caret into the block (which would
+// reveal the raw source / drop the widget).
+function buildCopyButton(code: string): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.className = 'cm-md-code-copy';
+  btn.type = 'button';
+  btn.title = 'Copy code';
+  const icon = document.createElement('i');
+  icon.className = `ri ${COPY_ICON_CLASS}`;
+  btn.appendChild(icon);
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(code);
+      icon.className = `ri ${CHECK_ICON_CLASS}`;
+      setTimeout(() => {
+        icon.className = `ri ${COPY_ICON_CLASS}`;
+      }, 1500);
+    } catch {
+      /* ignore */
+    }
+  });
+  return btn;
+}
+
+// Renders the fenced code block's header in live preview: the language label
+// plus a copy button, shown side by side on the opening fence line (replacing
+// the raw `CodeInfo` text) while the caret is outside the block.
+class CodeLangWidget extends WidgetType {
+  constructor(
+    readonly lang: string,
+    readonly code: string,
+  ) {
     super();
-    this.lang = lang;
   }
 
   override eq(other: CodeLangWidget): boolean {
-    return other.lang === this.lang;
+    return other.lang === this.lang && other.code === this.code;
   }
 
   toDOM(): HTMLElement {
-    const span = document.createElement('span');
-    span.className = 'cm-md-code-lang';
-    span.textContent = this.lang;
-    return span;
+    const wrap = document.createElement('span');
+    wrap.className = 'cm-md-code-tools';
+
+    const lang = document.createElement('span');
+    lang.className = 'cm-md-code-lang';
+    lang.textContent = this.lang;
+    wrap.appendChild(lang);
+
+    wrap.appendChild(buildCopyButton(this.code));
+
+    return wrap;
+  }
+
+  override ignoreEvent(): boolean {
+    return true;
+  }
+}
+
+// Standalone copy button used when the fenced code block has no language, so
+// a copy affordance is still available next to the opening fence.
+class CodeCopyWidget extends WidgetType {
+  constructor(readonly code: string) {
+    super();
+  }
+
+  override eq(other: CodeCopyWidget): boolean {
+    return other.code === this.code;
+  }
+
+  toDOM(): HTMLElement {
+    const wrap = document.createElement('span');
+    wrap.className = 'cm-md-code-tools';
+    wrap.appendChild(buildCopyButton(this.code));
+    return wrap;
+  }
+
+  override ignoreEvent(): boolean {
+    return true;
   }
 }
 
@@ -360,6 +427,21 @@ function build(view: EditorView): DecorationSet {
           if (lang.split(/\s+/)[0]?.toLowerCase() === 'mermaid') {
             return false;
           }
+          // No language: still offer a copy button on the opening fence when
+          // the caret is outside the block (preview mode). With a language, the
+          // `CodeInfo` branch renders the combined lang + copy header instead.
+          if (!lang && !overlaps(ref.from, ref.to)) {
+            const codeNode = ref.node.getChild('CodeText');
+            const code = codeNode
+              ? view.state.doc.sliceString(codeNode.from, codeNode.to)
+              : '';
+            widgetRanges.push(
+              Decoration.widget({
+                widget: new CodeCopyWidget(code),
+                side: -1,
+              }).range(ref.from),
+            );
+          }
         }
 
         // Track the lines covered by list items so we can draw the connecting
@@ -390,16 +472,20 @@ function build(view: EditorView): DecorationSet {
           }
           return;
         } else if (name === 'CodeInfo') {
-          // Show the language as a chip only when the caret is *outside* the
-          // fenced block (preview mode). Inside the block the raw text stays
-          // visible so the user can edit it.
+          // Show the language chip + copy button only when the caret is
+          // *outside* the fenced block (preview mode). Inside the block the
+          // raw text stays visible so the user can edit it.
           const owner = ref.node.parent;
           if (!owner || overlaps(owner.from, owner.to)) return;
           const lang = view.state.doc.sliceString(ref.from, ref.to);
           if (lang) {
+            const codeNode = owner.getChild('CodeText');
+            const code = codeNode
+              ? view.state.doc.sliceString(codeNode.from, codeNode.to)
+              : '';
             widgetRanges.push(
               Decoration.replace({
-                widget: new CodeLangWidget(lang),
+                widget: new CodeLangWidget(lang, code),
               }).range(ref.from, ref.to),
             );
           }

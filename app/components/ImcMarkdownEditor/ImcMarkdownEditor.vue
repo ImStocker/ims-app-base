@@ -941,8 +941,13 @@ body[data-theme='ims-dark'] {
   .cm-md-link * {
     color: var(--local-link-color, #4a90d9) !important;
   }
-  .cm-md-code-lang {
+  .cm-md-code-tools {
+    display: inline-flex;
+    align-items: center;
     float: right;
+    gap: 0.35em;
+  }
+  .cm-md-code-lang {
     font-size: 0.75em;
     color: var(--ink-internal-syntax-comment-color, #8b949e);
     background: var(
@@ -951,6 +956,36 @@ body[data-theme='ims-dark'] {
     );
     padding: 0 0.4em;
     border-radius: 0.3em;
+  }
+  .cm-md-code-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6em;
+    height: 1.6em;
+    margin: 0.2em 0;
+    padding: 0;
+    border: none;
+    border-radius: 0.3em;
+    background: transparent;
+    color: var(--ink-internal-syntax-comment-color, #8b949e);
+    cursor: pointer;
+    transition:
+      background-color 0.12s,
+      color 0.12s;
+
+    &:hover {
+      background: var(
+        --ink-internal-block-background-color,
+        rgba(127, 127, 127, 0.15)
+      );
+      color: var(--ink-internal-color, #cfcfcf);
+    }
+
+    .ri {
+      font-size: 1em;
+      line-height: 1;
+    }
   }
   .cm-md-mermaid-render {
     display: flex;
