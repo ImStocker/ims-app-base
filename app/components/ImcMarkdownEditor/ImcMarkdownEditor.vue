@@ -1023,5 +1023,20 @@ body[data-theme='ims-dark'] {
       font-size: 0.9em;
     }
   }
+
+  // The opening/closing fence lines hold only the backticks (and the lang chip).
+  // In live preview the backticks are hidden, so those rows have no line box and
+  // CodeMirror's <br> height hack does not fire (it only does for lines whose
+  // *total* length is 0) -- the rows collapse to their padding and the block
+  // height looks inconsistent. Force them to occupy one full editor row.
+  &.cm-live-preview :deep(.ink-mde) {
+    .cm-line.cm-codeblock-open,
+    .cm-line.cm-codeblock-close {
+      font-size: var(--ink-internal-editor-font-size, 1em);
+      min-height: var(--ink-internal-editor-line-height, 2em);
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
 }
 </style>

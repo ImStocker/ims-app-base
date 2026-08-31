@@ -390,8 +390,11 @@ function build(view: EditorView): DecorationSet {
           }
           return;
         } else if (name === 'CodeInfo') {
-          // Render the fenced-code language as a small label chip instead of
-          // hiding it (Obsidian shows `js`/`ts` at the top of the block).
+          // Show the language as a chip only when the caret is *outside* the
+          // fenced block (preview mode). Inside the block the raw text stays
+          // visible so the user can edit it.
+          const owner = ref.node.parent;
+          if (!owner || overlaps(owner.from, owner.to)) return;
           const lang = view.state.doc.sliceString(ref.from, ref.to);
           if (lang) {
             widgetRanges.push(
