@@ -162,12 +162,12 @@ export default defineComponent({
         this.templates = all.filter(
           (p: TemplateItem) => p.lang === lang && p.id,
         );
-        this.templates.push({
-          id: 'dkg2gFzq',
-          title: 'тест',
-          description: 'тест',
-          lang,
-        });
+        // this.templates.push({
+        //   id: 'dkg2gFzq',
+        //   title: 'тест',
+        //   description: 'тест',
+        //   lang,
+        // });
 
         if (this.modelValue !== null && this.templates.some((t) => t.id === this.modelValue)) {
           this.selectedId = this.modelValue;
