@@ -219,17 +219,48 @@ class MermaidWidget extends WidgetType {
   private themeObserver: MutationObserver | null = null;
   private renderSeq = 0;
 
-  constructor(readonly code: string) {
+  constructor(
+    readonly code: string,
+    readonly from: number,
+    readonly to: number,
+    readonly editAt: number,
+  ) {
     super();
   }
 
   override eq(other: MermaidWidget): boolean {
-    return other.code === this.code;
+    return (
+      other.code === this.code &&
+      other.from === this.from &&
+      other.to === this.to &&
+      other.editAt === this.editAt
+    );
   }
 
   override toDOM(): HTMLElement {
     const container = document.createElement('div');
     container.className = 'cm-md-mermaid-render';
+
+    // Edit affordance (top-right) — switches to editing the raw markdown.
+    const tools = document.createElement('div');
+    tools.className = 'cm-md-mermaid-tools';
+    tools.contentEditable = 'false';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'cm-md-mermaid-edit';
+    editBtn.type = 'button';
+    editBtn.title = 'Edit source';
+    const editIcon = document.createElement('i');
+    editIcon.className = 'ri ri-edit-line';
+    editBtn.appendChild(editIcon);
+    editBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.enterEdit(container);
+    });
+    tools.appendChild(editBtn);
+    container.appendChild(tools);
+
     const loading = document.createElement('span');
     loading.className = 'cm-md-mermaid-loading';
     loading.textContent = 'Loading diagram…';
@@ -246,6 +277,7 @@ class MermaidWidget extends WidgetType {
         attributeFilter: ['data-theme'],
       });
     }
+    bindMermaidInteractions(container, this);
     return container;
   }
 
@@ -272,14 +304,30 @@ class MermaidWidget extends WidgetType {
         this.code,
       );
       if (seq !== this.renderSeq) return;
-      container.replaceChildren();
+      container
+        .querySelectorAll('.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error')
+        .forEach((el) => el.remove());
       const holder = document.createElement('div');
       holder.className = 'cm-md-mermaid-svg';
       holder.innerHTML = svg;
+      // Mermaid emits `width="100%"` with no height, which collapses to 0x0.
+      // Pin the width to the SVG's intrinsic viewBox width (CSS `max-width` then
+      // scales it down responsively, and `height: auto` keeps the aspect ratio).
+      const svgEl = holder.querySelector('svg');
+      const vb = svgEl?.getAttribute('viewBox');
+      if (svgEl && vb) {
+        const parts = vb.trim().split(/\s+/).map(Number);
+        if (parts.length === 4 && parts[2] > 0) {
+          svgEl.setAttribute('width', String(parts[2]));
+          svgEl.removeAttribute('height');
+        }
+      }
       container.appendChild(holder);
     } catch (err) {
       if (seq !== this.renderSeq) return;
-      container.replaceChildren();
+      container
+        .querySelectorAll('.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error')
+        .forEach((el) => el.remove());
       const errEl = document.createElement('div');
       errEl.className = 'cm-md-mermaid-error';
       errEl.textContent =
@@ -290,9 +338,46 @@ class MermaidWidget extends WidgetType {
     }
   }
 
-  override ignoreEvent(): boolean {
-    return false;
+  // Choose the whole fenced block (so later copy/delete acts on the markdown).
+  selectBlock(dom: HTMLElement) {
+    const view = EditorView.findFromDOM(dom);
+    view?.dispatch({
+      selection: { anchor: this.from, head: this.to },
+      scrollIntoView: true,
+    });
   }
+
+  // Drop the widget by placing the caret inside the block (reveals raw source).
+  enterEdit(dom: HTMLElement) {
+    const view = EditorView.findFromDOM(dom);
+    view?.dispatch({
+      selection: { anchor: this.editAt, head: this.editAt },
+      scrollIntoView: true,
+    });
+  }
+
+  override ignoreEvent(): boolean {
+    return true;
+  }
+}
+
+function bindMermaidInteractions(container: HTMLElement, widget: MermaidWidget) {
+  container.addEventListener('mousedown', (e) => {
+    if ((e.target as HTMLElement).closest('.cm-md-mermaid-edit')) return;
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  container.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('.cm-md-mermaid-edit')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    widget.selectBlock(container);
+  });
+  container.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    widget.enterEdit(container);
+  });
 }
 
 export function livePreview() {
@@ -339,20 +424,31 @@ function buildMermaidDecorations(state: EditorState): DecorationSet {
         ? doc.sliceString(infoNode.from, infoNode.to).trim()
         : '';
       if (lang.split(/\s+/)[0]?.toLowerCase() !== 'mermaid') return;
-      if (sels.some((r) => r.from <= ref.to && r.to >= ref.from)) return;
+
+      const from = ref.from;
+      const to = ref.to;
+      // Show the diagram unless the selection is *strictly inside* the block.
+      // A selection that merely contains the whole block (e.g. after clicking
+      // the diagram to select it, so copy/delete act on the markdown) keeps the
+      // diagram visible; only a caret/selection inside the block enters edit.
+      const strictlyInside = sels.some(
+        (r) =>
+          r.from < to && r.to > from && !(r.from <= from && r.to >= to),
+      );
+      if (strictlyInside) return;
 
       const codeNode = ref.node.getChild('CodeText');
       const code = codeNode
         ? doc.sliceString(codeNode.from, codeNode.to)
         : doc
-            .sliceString(ref.from, ref.to)
+            .sliceString(from, to)
             .replace(/^[^\n]*\n/, '')
             .replace(/\n[ \t]*```[ \t]*$/, '');
+      const editAt = codeNode ? codeNode.from : from + 1;
       ranges.push(
-        Decoration.replace({ widget: new MermaidWidget(code) }).range(
-          ref.from,
-          ref.to,
-        ),
+        Decoration.replace({
+          widget: new MermaidWidget(code, from, to, editAt),
+        }).range(from, to),
       );
     },
   });

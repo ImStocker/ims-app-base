@@ -988,11 +988,12 @@ body[data-theme='ims-dark'] {
     }
   }
   .cm-md-mermaid-render {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    margin: 0.5em 0;
+    margin: 0;
     padding: 0.75em 1em;
     background: var(
       --ink-internal-block-background-color,
@@ -1001,17 +1002,56 @@ body[data-theme='ims-dark'] {
     border-radius: 6px;
     cursor: default;
   }
-  .cm-md-mermaid-loading,
-  .cm-md-mermaid-error {
+  .cm-md-mermaid-tools {
+    position: absolute;
+    top: 0.35em;
+    right: 0.35em;
+    display: flex;
+    gap: 0.25em;
+    z-index: 1;
+  }
+  .cm-md-mermaid-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7em;
+    height: 1.7em;
+    padding: 0;
+    border: none;
+    border-radius: 0.3em;
+    background: transparent;
     color: var(--ink-internal-syntax-comment-color, #8b949e);
-    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+
+    &:hover {
+      background: var(
+        --ink-internal-block-background-color,
+        rgba(127, 127, 127, 0.15)
+      );
+      color: var(--ink-internal-color, #cfcfcf);
+    }
+
+    .ri {
+      font-size: 1.1em;
+      line-height: 1;
+    }
+  }
+  .cm-md-mermaid-loading {
+    display: block;
+    padding: 0.5em 0;
   }
   .cm-md-mermaid-error {
     font-family: var(--ink-internal-code-font-family, monospace);
     white-space: pre-wrap;
   }
+  .cm-md-mermaid-loading,
+  .cm-md-mermaid-error {
+    color: var(--ink-internal-syntax-comment-color, #8b949e);
+    font-size: 0.9em;
+  }
   .cm-md-mermaid-svg {
-    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
 
     svg {
@@ -1020,6 +1060,17 @@ body[data-theme='ims-dark'] {
       height: auto;
       margin: 0 auto;
     }
+  }
+  // The replace widget covering the fenced mermaid block renders on its own
+  // line; CodeMirror inserts a `.cm-widgetBuffer` image before/after it. Those
+  // inline images otherwise occupy full line boxes, producing an empty line
+  // above and below the diagram. Neutralize only the buffer images (never the
+  // render element, which the `+` selector would have matched) without touching
+  // the line's height, so the rendered SVG keeps its size.
+  .cm-line:has(.cm-md-mermaid-render) .cm-widgetBuffer {
+    width: 0;
+    height: 0;
+    vertical-align: top;
   }
 }
 </style>
