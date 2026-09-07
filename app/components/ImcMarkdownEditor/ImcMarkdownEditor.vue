@@ -1062,15 +1062,11 @@ body[data-theme='ims-dark'] {
     }
   }
   // The replace widget covering the fenced mermaid block renders on its own
-  // line; CodeMirror inserts a `.cm-widgetBuffer` image before/after it. Those
-  // inline images otherwise occupy full line boxes, producing an empty line
-  // above and below the diagram. Neutralize only the buffer images (never the
-  // render element, which the `+` selector would have matched) without touching
-  // the line's height, so the rendered SVG keeps its size.
-  .cm-line:has(.cm-md-mermaid-render) .cm-widgetBuffer {
-    width: 0;
-    height: 0;
-    vertical-align: top;
+  // line; CodeMirror inserts `.cm-widgetBuffer` images before/after it inside
+  // the same `.cm-line`. Those inline images occupy full line boxes, producing
+  // an empty line above and below the diagram. Hide them completely.
+  .cm-line:has(.cm-md-mermaid-render) > .cm-widgetBuffer {
+    display: none;
   }
 }
 </style>
