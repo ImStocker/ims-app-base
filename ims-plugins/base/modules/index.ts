@@ -1,7 +1,11 @@
 import { defineAsyncComponent } from 'vue';
 import EditorManager from '#logic/managers/EditorManager';
 import type { IAppManager } from '#logic/managers/IAppManager';
-import { STRUCT_ASSET_ID, ENUM_ASSET_ID } from '#logic/constants';
+import {
+  STRUCT_ASSET_ID,
+  ENUM_ASSET_ID,
+  MARKDOWN_ASSET_ID,
+} from '#logic/constants';
 
 export default function () {
   return [
@@ -73,6 +77,24 @@ export default function () {
                 toolbarShowBlockCopyPaste: false,
               },
             }),
+          );
+
+          cancel_callbacks.push(
+            appManager.get(EditorManager).registerAssetLayout({
+              name: 'markdown',
+              editorComponent: defineAsyncComponent(
+                () => import('./AssetEditors/MarkdownEditor.vue'),
+              ),
+              props: {
+                headerHideParent: true,
+              },
+            }),
+          );
+
+          cancel_callbacks.push(
+            appManager
+              .get(EditorManager)
+              .registerAssetLayoutBind(MARKDOWN_ASSET_ID, 'markdown'),
           );
 
           cancel_callbacks.push(
