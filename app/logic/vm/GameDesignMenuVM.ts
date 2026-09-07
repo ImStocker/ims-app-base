@@ -194,7 +194,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       assetActions.push({
         title: this.appManager.$t(
           'mainMenu.' +
-            (process.platform === 'darwin' ? 'showInFinder' : 'showInExplorer'),
+            (typeof process !== 'undefined' && process.platform === 'darwin' ? 'showInFinder' : 'showInExplorer'),
         ),
         icon: 'ri-folder-open-line',
         action: async () => {
@@ -368,7 +368,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       workspaceActions.push({
         title: this.appManager.$t(
           'mainMenu.' +
-            (process.platform === 'darwin' ? 'openInFinder' : 'openInExplorer'),
+            (typeof process !== 'undefined' && process.platform === 'darwin' ? 'openInFinder' : 'openInExplorer'),
         ),
         icon: 'ri-folder-open-line',
         action: async () => {
