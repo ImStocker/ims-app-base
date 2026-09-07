@@ -455,10 +455,6 @@ export default defineComponent({
         this.linkPickerDebounce = null;
       }
       const query = (this.linkPickerQuery ?? '').trim();
-      const gdd_workspace = this.$getAppManager()
-        .get(ProjectManager)
-        .getWorkspaceByName('gdd');
-      if (!gdd_workspace) return;
       this.linkPickerDebounce = window.setTimeout(async () => {
         this.linkPickerLoading = true;
         try {
@@ -467,8 +463,9 @@ export default defineComponent({
             .getAssetShortsList({
               where: {
                 query,
-                workspaceids: gdd_workspace.id,
+                inside: 'gdd',
               },
+              count: 10,
             });
           if (!this.linkPickerVisible) return;
           this.linkPickerOptions = res.list.map((asset) => ({
