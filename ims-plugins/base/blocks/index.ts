@@ -10,6 +10,7 @@ import { ChecklistBlockDefinition } from './ChecklistBlock/ChecklistBlockDefinit
 import { MarkdownBlockDefinition } from './MarkdownBlock/MarkdownBlockDefinition';
 
 const list = [
+  new TextBlockDefinition(),
   new MarkdownBlockDefinition(),
   new ValueTableDefinition(),
   new PropsBlockDefinition(),
@@ -19,7 +20,6 @@ const list = [
   new ChecklistBlockDefinition(),
   new CollectionBlockDefinition(),
   new BlockMirrorBlockDefinition(),
-  new TextBlockDefinition(),
 ];
 
 export default function () {
