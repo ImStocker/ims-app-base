@@ -6,11 +6,7 @@ import {
   type DecorationSet,
   type ViewUpdate,
 } from '@codemirror/view';
-import {
-  StateField,
-  type EditorState,
-  type Range,
-} from '@codemirror/state';
+import { StateField, type EditorState, type Range } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import katex from 'katex';
 
@@ -215,6 +211,13 @@ function mermaidTheme(): 'dark' | 'default' {
     : 'default';
 }
 
+function mermaidCacheKey(code: string, theme: string): string {
+  return code + '\0' + theme;
+}
+
+type MermaidSvgCache = Map<string, string>;
+const MAX_MERMAID_CACHE = 50;
+
 class MermaidWidget extends WidgetType {
   private themeObserver: MutationObserver | null = null;
   private renderSeq = 0;
@@ -224,6 +227,7 @@ class MermaidWidget extends WidgetType {
     readonly from: number,
     readonly to: number,
     readonly editAt: number,
+    readonly svgCache: MermaidSvgCache,
   ) {
     super();
   }
@@ -261,11 +265,20 @@ class MermaidWidget extends WidgetType {
     tools.appendChild(editBtn);
     container.appendChild(tools);
 
-    const loading = document.createElement('span');
-    loading.className = 'cm-md-mermaid-loading';
-    loading.textContent = 'Loading diagram…';
-    container.appendChild(loading);
-    void this.renderDiagram(container);
+    // Check the cache — if this exact code+theme was rendered before, show it
+    // immediately without the "Loading diagram…" flash.
+    const theme = mermaidTheme();
+    const cacheKey = mermaidCacheKey(this.code, theme);
+    const cached = this.svgCache.get(cacheKey);
+    if (cached) {
+      this.appendSvg(container, cached);
+    } else {
+      const loading = document.createElement('span');
+      loading.className = 'cm-md-mermaid-loading';
+      loading.textContent = 'Loading diagram…';
+      container.appendChild(loading);
+      void this.renderDiagram(container);
+    }
     // The widget instance is reused while the document is unchanged, so no
     // decoration rebuild happens on a theme toggle; re-render in place.
     if (!this.themeObserver) {
@@ -288,13 +301,35 @@ class MermaidWidget extends WidgetType {
     }
   }
 
+  private appendSvg(container: HTMLElement, svg: string) {
+    container
+      .querySelectorAll(
+        '.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error',
+      )
+      .forEach((el) => el.remove());
+    const holder = document.createElement('div');
+    holder.className = 'cm-md-mermaid-svg';
+    holder.innerHTML = svg;
+    const svgEl = holder.querySelector('svg');
+    const vb = svgEl?.getAttribute('viewBox');
+    if (svgEl && vb) {
+      const parts = vb.trim().split(/\s+/).map(Number);
+      if (parts.length === 4 && parts[2] > 0) {
+        svgEl.setAttribute('width', String(parts[2]));
+        svgEl.removeAttribute('height');
+      }
+    }
+    container.appendChild(holder);
+  }
+
   private async renderDiagram(container: HTMLElement) {
     const seq = ++this.renderSeq;
     try {
       const { default: mermaid } = await import('mermaid');
+      const theme = mermaidTheme();
       mermaid.initialize({
         startOnLoad: false,
-        theme: mermaidTheme(),
+        theme,
         themeVariables: {
           background: 'transparent',
         },
@@ -304,29 +339,20 @@ class MermaidWidget extends WidgetType {
         this.code,
       );
       if (seq !== this.renderSeq) return;
-      container
-        .querySelectorAll('.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error')
-        .forEach((el) => el.remove());
-      const holder = document.createElement('div');
-      holder.className = 'cm-md-mermaid-svg';
-      holder.innerHTML = svg;
-      // Mermaid emits `width="100%"` with no height, which collapses to 0x0.
-      // Pin the width to the SVG's intrinsic viewBox width (CSS `max-width` then
-      // scales it down responsively, and `height: auto` keeps the aspect ratio).
-      const svgEl = holder.querySelector('svg');
-      const vb = svgEl?.getAttribute('viewBox');
-      if (svgEl && vb) {
-        const parts = vb.trim().split(/\s+/).map(Number);
-        if (parts.length === 4 && parts[2] > 0) {
-          svgEl.setAttribute('width', String(parts[2]));
-          svgEl.removeAttribute('height');
-        }
+      // Cache the rendered SVG so future widgets with the same code+theme
+      // can display immediately without the "Loading diagram…" flash.
+      const cacheKey = mermaidCacheKey(this.code, theme);
+      if (this.svgCache.size >= MAX_MERMAID_CACHE) {
+        this.svgCache.clear();
       }
-      container.appendChild(holder);
+      this.svgCache.set(cacheKey, svg);
+      this.appendSvg(container, svg);
     } catch (err) {
       if (seq !== this.renderSeq) return;
       container
-        .querySelectorAll('.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error')
+        .querySelectorAll(
+          '.cm-md-mermaid-loading, .cm-md-mermaid-svg, .cm-md-mermaid-error',
+        )
         .forEach((el) => el.remove());
       const errEl = document.createElement('div');
       errEl.className = 'cm-md-mermaid-error';
@@ -361,7 +387,10 @@ class MermaidWidget extends WidgetType {
   }
 }
 
-function bindMermaidInteractions(container: HTMLElement, widget: MermaidWidget) {
+function bindMermaidInteractions(
+  container: HTMLElement,
+  widget: MermaidWidget,
+) {
   container.addEventListener('mousedown', (e) => {
     if ((e.target as HTMLElement).closest('.cm-md-mermaid-edit')) return;
     e.preventDefault();
@@ -384,6 +413,21 @@ export function livePreview() {
   // A multi-line replace (fenced mermaid diagram → image) may only be provided
   // as a static decoration (state field), not through a plugin's `decorations`,
   // so both the marker/layout plugin and the mermaid state field are returned.
+  // The SVG cache is scoped to this editor instance (created per
+  // `livePreview()` call) so it never leaks into SSR globals.
+  const svgCache: MermaidSvgCache = new Map();
+
+  const mermaidDecorations = StateField.define<DecorationSet>({
+    create(state) {
+      return buildMermaidDecorations(state, svgCache);
+    },
+    update(value, tr) {
+      if (!tr.docChanged && !tr.selection) return value.map(tr.changes);
+      return buildMermaidDecorations(tr.state, svgCache);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+  });
+
   return [livePreviewPlugin, mermaidDecorations];
 }
 
@@ -411,7 +455,10 @@ const livePreviewPlugin = ViewPlugin.fromClass(
 // so this lives in a StateField exposed through the (static) `decorations`
 // facet. The block is only replaced while the caret stays outside it; placing
 // the caret inside reveals the raw source for editing.
-function buildMermaidDecorations(state: EditorState): DecorationSet {
+function buildMermaidDecorations(
+  state: EditorState,
+  svgCache: MermaidSvgCache,
+): DecorationSet {
   const doc = state.doc;
   const sels = state.selection.ranges;
   const ranges: Range<Decoration>[] = [];
@@ -432,8 +479,7 @@ function buildMermaidDecorations(state: EditorState): DecorationSet {
       // the diagram to select it, so copy/delete act on the markdown) keeps the
       // diagram visible; only a caret/selection inside the block enters edit.
       const strictlyInside = sels.some(
-        (r) =>
-          r.from < to && r.to > from && !(r.from <= from && r.to >= to),
+        (r) => r.from < to && r.to > from && !(r.from <= from && r.to >= to),
       );
       if (strictlyInside) return;
 
@@ -447,7 +493,7 @@ function buildMermaidDecorations(state: EditorState): DecorationSet {
       const editAt = codeNode ? codeNode.from : from + 1;
       ranges.push(
         Decoration.replace({
-          widget: new MermaidWidget(code, from, to, editAt),
+          widget: new MermaidWidget(code, from, to, editAt, svgCache),
         }).range(from, to),
       );
     },
@@ -455,17 +501,6 @@ function buildMermaidDecorations(state: EditorState): DecorationSet {
 
   return Decoration.set(ranges, true);
 }
-
-const mermaidDecorations = StateField.define<DecorationSet>({
-  create(state) {
-    return buildMermaidDecorations(state);
-  },
-  update(value, tr) {
-    if (!tr.docChanged && !tr.selection) return value.map(tr.changes);
-    return buildMermaidDecorations(tr.state);
-  },
-  provide: (field) => EditorView.decorations.from(field),
-});
 
 function build(view: EditorView): DecorationSet {
   const doc = view.state.doc;
