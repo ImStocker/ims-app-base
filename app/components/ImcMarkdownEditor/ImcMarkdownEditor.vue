@@ -1061,11 +1061,12 @@ body[data-theme='ims-dark'] {
       margin: 0 auto;
     }
   }
-  // The replace widget covering the fenced mermaid block renders on its own
-  // line; CodeMirror inserts `.cm-widgetBuffer` images before/after it inside
-  // the same `.cm-line`. Those inline images occupy full line boxes, producing
-  // an empty line above and below the diagram. Hide them completely.
-  .cm-line:has(.cm-md-mermaid-render) > .cm-widgetBuffer {
+  // Replace widgets (fenced mermaid diagram, table) render on their own line;
+  // CodeMirror inserts `.cm-widgetBuffer` images before/after them inside the
+  // same `.cm-line`. Those inline images occupy full line boxes, producing an
+  // empty line above and below the widget. Hide them completely.
+  .cm-line:has(.cm-md-mermaid-render) > .cm-widgetBuffer,
+  .cm-line:has(.cm-table-container) > .cm-widgetBuffer {
     display: none;
   }
 }
