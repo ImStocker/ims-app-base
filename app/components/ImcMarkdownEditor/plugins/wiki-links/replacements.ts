@@ -7,6 +7,7 @@ import type { PluginConfig } from './index';
 import CreatorAssetManager from '../../../../logic/managers/CreatorAssetManager';
 import type { IAppManager } from '../../../../logic/managers/IAppManager';
 import EditorManager from '../../../../logic/managers/EditorManager';
+import UiManager from '../../../../logic/managers/UiManager';
 import { getProjectLinkHref } from '../../../../logic/router/routes-helpers';
 import ProjectManager from '../../../../logic/managers/ProjectManager';
 import {
@@ -75,6 +76,30 @@ function openWikiLinkAddress(
         });
       break;
   }
+}
+
+async function openAssetByTitle(appManager: IAppManager, title: string) {
+  await appManager.get(UiManager).doTask(async () => {
+    const asset_manager = appManager.get(CreatorAssetManager);
+    const cached_asset = asset_manager.getAssetShortByTitleViaCacheSync(title);
+    if (cached_asset?.id) {
+      appManager.get(EditorManager).openAsset(cached_asset.id, 'popup');
+      return;
+    }
+    const res = await asset_manager.getAssetShortsList({
+      where: {
+        title,
+        inside: 'gdd',
+        isSystem: false,
+      },
+      count: 1,
+    });
+    const first = res?.list?.[0];
+    if (!first?.id) {
+      throw new Error(appManager.$t('markdownBlock.assetNotFound', { title }));
+    }
+    appManager.get(EditorManager).openAsset(first.id, 'popup');
+  });
 }
 
 function createWikiLinkWidget(
@@ -186,7 +211,19 @@ export const replacements = (config: PluginConfig): Extension[] => {
         if (parsed_wiki_link) {
           const address = parseLinkAddress(parsed_wiki_link.address);
 
-          if (address.kind === 'title') return;
+          if (address.kind === 'title') {
+            const widget = createWikiLinkWidget(
+              {
+                title: parsed_wiki_link.label || address.title,
+                key: `title:${address.title}`,
+                onClick: () =>
+                  openAssetByTitle(config.appManager, address.title),
+              },
+              config.appManager,
+            );
+            widgets.push(Decoration.replace({ widget }).range(from, to));
+            return;
+          }
 
           if (address.kind === 'localHeader') {
             const widget = createWikiLinkWidget(
@@ -258,25 +295,39 @@ export const replacements = (config: PluginConfig): Extension[] => {
         }
 
         // Legacy wiki links: `[[[title](#asset:id)]]` or `[[title]]`.
-        const cached_asset = getLegacyCachedAssetFromString(
+        const legacy_parsed = getLegacyCachedAssetFromString(
           wiki_link,
           config.appManager,
         );
-        if (cached_asset) {
+        if (legacy_parsed && legacy_parsed.id) {
           const widget = createWikiLinkWidget(
             {
-              title: cached_asset.title ?? `Asset ${cached_asset.id}`,
-              id: cached_asset.id,
-              key: `asset:${cached_asset.id}`,
+              title: legacy_parsed.title ?? `Asset ${legacy_parsed.id}`,
+              id: legacy_parsed.id,
+              key: `asset:${legacy_parsed.id}`,
               onClick: () =>
-                appManager
+                config.appManager
                   .get(EditorManager)
-                  .openAsset(cached_asset.id, 'popup'),
+                  .openAsset(legacy_parsed.id, 'popup'),
             },
             config.appManager,
           );
           widgets.push(Decoration.replace({ widget }).range(from, to));
+          return;
         }
+
+        // Plain `[[Asset title]]` — resolve the asset by title on click.
+        const link_title = wiki_link.trim();
+        if (!link_title) return;
+        const widget = createWikiLinkWidget(
+          {
+            title: link_title,
+            key: `title:${link_title}`,
+            onClick: () => openAssetByTitle(config.appManager, link_title),
+          },
+          config.appManager,
+        );
+        widgets.push(Decoration.replace({ widget }).range(from, to));
       },
     });
 

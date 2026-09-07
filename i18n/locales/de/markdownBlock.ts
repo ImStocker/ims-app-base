@@ -9,5 +9,6 @@ export default {
     tableAddRowAfter: 'Zeile darunter einfügen',
     tableAddColumnBefore: 'Spalte links einfügen',
     tableAddColumnAfter: 'Spalte rechts einfügen',
+    assetNotFound: 'Asset nicht gefunden: "{title}"',
   },
 };

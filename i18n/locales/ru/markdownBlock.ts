@@ -9,5 +9,6 @@ export default {
     tableAddRowAfter: 'Добавить строку ниже',
     tableAddColumnBefore: 'Добавить столбец слева',
     tableAddColumnAfter: 'Добавить столбец справа',
+    assetNotFound: 'Элемент не найден: "{title}"',
   },
 };

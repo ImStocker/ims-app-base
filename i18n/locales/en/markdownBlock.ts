@@ -9,5 +9,6 @@ export default {
     tableAddRowAfter: 'Add row after',
     tableAddColumnBefore: 'Add column before',
     tableAddColumnAfter: 'Add column after',
+    assetNotFound: 'Asset not found: "{title}"',
   },
 };
