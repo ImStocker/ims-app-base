@@ -337,7 +337,7 @@ export const replacements = (config: PluginConfig): Extension[] => {
               ) {
                 return;
               }
-              const cached_asset = appManager
+              const cached_asset = config.appManager
                 .get(CreatorAssetManager)
                 .getAssetShortViaCacheSync(address.assetId);
               if (cached_asset === undefined) {

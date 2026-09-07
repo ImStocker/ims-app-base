@@ -37,19 +37,19 @@
       v-if="linkPickerVisible && linkPickerRect"
       class="MarkdownBlockEditor-link-picker"
       :style="linkPickerStyle"
-      @mousedown.stop
     >
-      <MarkdownLinkAutocomplete
-        ref="linkPicker"
-        :project="linkPickerProject"
-        :search-text="linkPickerQuery"
-        :loading="linkPickerLoading"
-        :options="linkPickerOptions"
-        :has-more="linkPickerHasMore"
-        :error="linkPickerError"
-        :headers="linkPickerHeaders"
-        @select="onLinkPickerSelect"
-      ></MarkdownLinkAutocomplete>
+      <dropdown-container class="MarkdownBlockEditor-link-picker-container">
+        <MarkdownLinkAutocomplete
+          ref="linkPicker"
+          :project="linkPickerProject"
+          :search-text="linkPickerQuery"
+          :loading="linkPickerLoading"
+          :options="linkPickerOptions"
+          :has-more="linkPickerHasMore"
+          :error="linkPickerError"
+          @select="onLinkPickerSelect"
+        ></MarkdownLinkAutocomplete>
+      </dropdown-container>
     </div>
   </div>
 </template>
@@ -92,7 +92,6 @@ import type { LinkPickerOpenRequest } from './plugins/link-picker';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import { buildWikiLink } from './plugins/wiki-links/format';
-import { extractHeaderAnchorsFromMarkdown } from '../../logic/utils/assets';
 import { viewToInkLike } from './editor-adapter';
 import SelectionToolbar from './SelectionToolbar.vue';
 import DropdownContainer from '../Common/DropdownContainer.vue';
@@ -169,11 +168,6 @@ export default defineComponent({
       linkPickerOptions: [] as any[],
       linkPickerHasMore: false,
       linkPickerError: '',
-      linkPickerHeaders: [] as {
-        title: string;
-        level: number;
-        anchor: string;
-      }[],
       linkPickerVisibleTimer: null as number | null,
       linkPickerDebounce: null as number | null,
       linkPickerKeyHandlerInstalled: false,
@@ -202,11 +196,11 @@ export default defineComponent({
     linkPickerStyle(): Record<string, string> {
       const r = this.linkPickerRect;
       if (!r) return {};
-      const root_rect = (this.$el as HTMLElement).getBoundingClientRect();
       return {
-        position: 'absolute',
-        left: `${r.left - root_rect.left}px`,
-        top: `${Math.max(r.bottom - root_rect.top, 8)}px`,
+        left: `${r.left}px`,
+        top: `${r.bottom}px`,
+        width: `${Math.max(r.right - r.left, 1)}px`,
+        height: `${Math.max(r.bottom - r.top, 1)}px`,
       };
     },
     linkPickerProject() {
@@ -361,13 +355,7 @@ export default defineComponent({
       ];
     },
   },
-  watch: {
-    modelValue() {
-      this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
-        this.editor ? this.editor.getDoc() : (this.modelValue ?? ''),
-      );
-    },
-  },
+  watch: {},
   beforeUnmount() {
     this.removeLinkPickerKeyHandler();
   },
@@ -413,12 +401,6 @@ export default defineComponent({
           this.linkPickerVisibleTimer = null;
           if (!this.linkPickerRect) return;
           this.linkPickerVisible = true;
-          this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
-            this.linkPickerView?.state.doc.toString() ??
-              this.editor?.getDoc?.() ??
-              this.modelValue ??
-              '',
-          );
           this.loadLinkPickerOptions();
           this.installLinkPickerKeyHandler();
         }, 0);
@@ -436,7 +418,6 @@ export default defineComponent({
       this.linkPickerOptions = [];
       this.linkPickerHasMore = false;
       this.linkPickerError = '';
-      this.linkPickerHeaders = [];
       this.removeLinkPickerKeyHandler();
     },
     openLinkPickerForRange(sel: SelectionInfo | null, view: EditorView | null) {
@@ -461,9 +442,6 @@ export default defineComponent({
       this.linkPickerRect = rect;
       this.linkPickerQuery = sel?.text ?? '';
       this.linkPickerVisible = true;
-      this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
-        this.editor ? this.editor.getDoc() : (this.modelValue ?? ''),
-      );
       this.loadLinkPickerOptions();
       this.installLinkPickerKeyHandler();
       this.$nextTick(() => {
@@ -1332,7 +1310,8 @@ body[data-theme='ims-dark'] {
   @include imc-text-format.imc-text-format;
   position: relative;
 
-  .MarkdownBlockEditor-toolbar-target {
+  .MarkdownBlockEditor-toolbar-target,
+  .MarkdownBlockEditor-link-picker {
     position: fixed;
     pointer-events: none;
   }

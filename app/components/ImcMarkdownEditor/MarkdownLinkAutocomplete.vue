@@ -11,9 +11,6 @@
       {{ error }}
     </div>
     <template v-else>
-      <div v-if="headers.length > 0" class="MarkdownLinkAutocomplete-heading">
-        {{ headerSectionTitle }}
-      </div>
       <div
         v-for="(opt, opt_index) of shownOptions"
         :key="opt.value"
@@ -107,7 +104,7 @@ import { convertTranslatedTitle } from '../../logic/utils/assets';
 import { MARKDOWN_ASSET_ID } from '../../logic/constants';
 
 export type MarkdownLinkOption = {
-  type: 'asset' | 'header' | 'button';
+  type: 'asset' | 'button';
   value: string;
   title: string;
   raw?: any;
@@ -137,13 +134,6 @@ export default defineComponent({
     options: { type: Array as PropType<MarkdownLinkOption[]>, required: true },
     hasMore: { type: Boolean, default: false },
     error: { type: String, default: '' },
-    headers: {
-      type: Array as PropType<
-        { title: string; level: number; anchor: string }[]
-      >,
-      default: () => [],
-    },
-    headerSectionTitle: { type: String, default: 'Headers' },
   },
   emits: ['select'],
   data() {
@@ -159,15 +149,7 @@ export default defineComponent({
         : null;
     },
     shownOptions() {
-      const options: MarkdownLinkOption[] = [];
-      for (const header of this.headers) {
-        options.push({
-          type: 'header',
-          value: header.anchor,
-          title: header.title,
-        });
-      }
-      options.push(...this.options);
+      const options: MarkdownLinkOption[] = [...this.options];
       if (this.hasMore) {
         options.push({
           type: 'button',
@@ -286,14 +268,6 @@ export default defineComponent({
         return;
       }
 
-      if (option.type === 'header') {
-        this.$emit('select', {
-          address: '#' + option.value,
-          label: option.title,
-        });
-        return;
-      }
-
       const asset = option.raw;
       let address = 'asset:' + option.value;
       let label = option.title;
@@ -309,7 +283,10 @@ export default defineComponent({
             (block.anchor ? '~' + block.anchor : '');
         }
         if (block.title) {
-          label = convertTranslatedTitle(block.title, (key) => this.$t(key));
+          label =
+            option.title +
+            '#' +
+            convertTranslatedTitle(block.title, (key) => this.$t(key));
         }
       }
 
@@ -322,6 +299,9 @@ export default defineComponent({
 <style lang="scss" scoped>
 .MarkdownLinkAutocomplete {
   transform: translate(-10px, 0);
+}
+.MarkdownLinkAutocomplete,
+.MarkdownLinkAutocomplete-row-subitems {
   max-width: 400px;
   text-align: left;
   background-color: var(--dropdown-bg-color);
@@ -331,7 +311,7 @@ export default defineComponent({
   margin: 0;
   list-style: none;
   border-radius: var(--dropdown-border-radius);
-  max-height: 70vh;
+  max-height: var(--DropdownContainer-freeHeight);
   overflow-y: auto;
 }
 
@@ -340,15 +320,6 @@ export default defineComponent({
   top: 0;
   left: 0;
   right: 0;
-}
-
-.MarkdownLinkAutocomplete-heading {
-  padding: 6px 10px 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--local-sub-text-color);
 }
 
 .MarkdownLinkAutocomplete-row {
