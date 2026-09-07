@@ -14,7 +14,7 @@
         <div
           v-if="menu === 'h'"
           class="SelectionToolbar-menu"
-          @mousedown.prevent
+          @mousedown.self.prevent
         >
           <button
             v-for="lvl of headingLevels"
@@ -60,7 +60,7 @@
         <div
           v-if="menu === 'list'"
           class="SelectionToolbar-menu"
-          @mousedown.prevent
+          @mousedown.self.prevent
         >
           <button
             class="SelectionToolbar-button is-button"
@@ -132,7 +132,7 @@
         <div
           v-if="menu === 'notice'"
           class="SelectionToolbar-menu"
-          @mousedown.prevent
+          @mousedown.self.prevent
         >
           <button
             v-for="c of calloutTypes"
@@ -190,7 +190,7 @@
         <div
           v-if="menu === 'link'"
           class="SelectionToolbar-menu SelectionToolbar-linkMenu"
-          @mousedown.prevent
+          @mousedown.self.prevent
         >
           <div class="SelectionToolbar-linkSection">
             <button
@@ -281,7 +281,7 @@
         <div
           v-if="menu === 'more'"
           class="SelectionToolbar-menu"
-          @mousedown.prevent
+          @mousedown.self.prevent
         >
           <button
             v-for="t of inlineOnly ? inlineTools : otherTools"

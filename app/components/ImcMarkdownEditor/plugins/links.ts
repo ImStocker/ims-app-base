@@ -44,7 +44,9 @@ const decorate = (
   const ranges: Range<Decoration>[] = [];
 
   const cursorInside = (from: number, to: number) =>
-    state.selection.ranges.some((r) => r.from <= to && r.to >= from);
+    state.selection.ranges.some(
+      (r) => Math.max(from, r.from) <= Math.min(to, r.to),
+    );
 
   // Walk the URL nodes (also matched/hidden by the live-preview plugin) and
   // mark their enclosing Link/Autolink as clickable.

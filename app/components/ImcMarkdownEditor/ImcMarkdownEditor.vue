@@ -273,6 +273,8 @@ export default defineComponent({
             ]
           : []),
         ...blurHandler(() => {
+          const active_element = document.activeElement as HTMLElement | null;
+          if (active_element?.closest?.('.SelectionToolbar')) return;
           this.$emit('blur');
         }),
         ...headingId(),
