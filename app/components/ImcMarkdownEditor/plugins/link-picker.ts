@@ -1,4 +1,6 @@
 import { type EditorView, type ViewUpdate, ViewPlugin } from '@codemirror/view';
+import { syntaxTree } from '@codemirror/language';
+import type { EditorState } from '@codemirror/state';
 
 export type LinkPickerOpenRequest = {
   view: EditorView;
@@ -18,6 +20,19 @@ export type LinkPickerOpenRequest = {
 export function linkPickerTrigger(
   onChange: (request: LinkPickerOpenRequest | null) => void,
 ) {
+  const isInsideExistingWikiLink = (state: EditorState, anchorPos: number) => {
+    let inside = false;
+    syntaxTree(state).iterate({
+      enter: (ref) => {
+        if (inside || ref.name !== 'WikiLink') return;
+        if (ref.from !== anchorPos) return;
+        const content = state.doc.sliceString(ref.from + 2, ref.to - 2);
+        if (content.includes('|')) inside = true;
+      },
+    });
+    return inside;
+  };
+
   const trigger = ViewPlugin.fromClass(
     class {
       constructor(private view: EditorView) {}
@@ -40,6 +55,18 @@ export function linkPickerTrigger(
         }
 
         const anchorPos = sel.from - match[0].length;
+
+        // Do not open the picker when editing an already-inserted wiki link
+        // (`[[address|label]]` — its content already contains the `|`).
+        if (isInsideExistingWikiLink(update.state, anchorPos)) {
+          onChange(null);
+          return;
+        }
+
+        // A pure caret move (clicking back into a link, arrow keys) may close
+        // the picker but never reopen it — only typing `[[` opens it.
+        if (!update.docChanged) return;
+
         const query = match[0].slice(2);
         const caretPos = sel.from;
 
