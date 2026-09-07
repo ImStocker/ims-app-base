@@ -56,7 +56,8 @@
           <i class="ri-external-link-line"></i>
         </a>
         <div v-if="showThumbs" class="TemplateSlider-thumb">
-          <i class="ri-file-list-3-line"></i>
+          <img v-if="thumbByTitle[tpl.title]" :src="thumbByTitle[tpl.title]" alt="Template preview" class="TemplateSlider-thumbImg" />
+          <i v-else class="ri-file-list-3-line"></i>
         </div>
         <div class="TemplateSlider-title">
           <span class="TemplateSlider-radio"></span>
@@ -73,16 +74,12 @@
       :class="{ selected: selectedId === null }"
       @click="select(null)"
     >
-      <span class="TemplateSlider-plus">
-        <i class="ri-add-line"></i>
-      </span>
-      <div>
-        <div class="TemplateSlider-title">
-          {{ $t('tryOnboarding.blankTemplate') }}
-        </div>
-        <div class="TemplateSlider-desc">
-          {{ $t('tryOnboarding.blankTemplateDesc') }}
-        </div>
+      <div class="TemplateSlider-title">
+        <span class="TemplateSlider-radio"></span>
+        {{ $t('tryOnboarding.blankTemplate') }}
+      </div>
+      <div class="TemplateSlider-desc">
+        {{ $t('tryOnboarding.blankTemplateDesc') }}
       </div>
     </div>
   </div>
@@ -92,6 +89,8 @@
 import { defineComponent, type PropType } from 'vue';
 import ProjectManager from '~ims-app-base/logic/managers/ProjectManager';
 import UiManager from '~ims-app-base/logic/managers/UiManager';
+import starterTemplateImg from '~ims-app-base/assets/temp/starter-template.png';
+import wingsTemplateImg from '~ims-app-base/assets/temp/wings-template.png';
 
 type TemplateItem = {
   id: string;
@@ -118,6 +117,15 @@ export default defineComponent({
     initialTemplateId: {
       type: String as PropType<string | null>,
       default: null,
+    },
+    thumbByTitle: {
+      type: Object as PropType<Record<string, string>>,
+      default: () => ({
+        'Starter template': starterTemplateImg,
+        'Wings of Freedom': wingsTemplateImg,
+        'Стартовый шаблон': starterTemplateImg,
+        'Крылья свободы': wingsTemplateImg,
+      }),
     },
   },
   emits: ['update:modelValue'],
@@ -413,7 +421,7 @@ export default defineComponent({
 
 .TemplateSlider-thumb {
   width: 100%;
-  height: 60px;
+  height: 120px;
   border-radius: 11px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: var(--local-box-color);
@@ -422,6 +430,13 @@ export default defineComponent({
   justify-content: center;
   font-size: 24px;
   color: var(--local-sub-text-color);
+  overflow: hidden;
+}
+
+.TemplateSlider-thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .TemplateSlider-title {
@@ -470,21 +485,7 @@ export default defineComponent({
 }
 
 .TemplateSlider-empty {
-  align-items: center;
-  gap: 12px;
-  flex-direction: row;
-}
-
-.TemplateSlider-plus {
-  width: 34px;
-  height: 34px;
-  flex: none;
-  border-radius: 10px;
-  border: 1px dashed var(--local-border-color);
-  display: grid;
-  place-items: center;
-  font-size: 18px;
-  color: var(--local-sub-text-color);
+  align-items: flex-start;
 }
 
 .no-thumbs {
