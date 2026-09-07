@@ -23,12 +23,13 @@ interface WikiLinkWidget extends WidgetType {
 }
 
 function scrollToElementTag(view: EditorView, tag_id: string) {
-  const cm_scroller = view.dom.closest('.cm-scroller');
-  if (cm_scroller) {
-    const element = cm_scroller.querySelector(`#${CSS.escape(tag_id)}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+  if (!view.scrollDOM) return;
+  const element =
+    view.scrollDOM.querySelector(
+      `[data-md-header-anchor="${CSS.escape(tag_id)}"]`,
+    ) ?? view.scrollDOM.querySelector(`#${CSS.escape(tag_id)}`);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 

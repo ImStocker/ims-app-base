@@ -56,8 +56,9 @@
 <script lang="ts">
 import { defineComponent, toRaw } from 'vue';
 import type { Options as InkOptions, Instance as InkInstance } from 'ink-mde';
-import type { EditorView } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 import InkMde from 'ink-mde/vue';
+import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import UiManager from '../../logic/managers/UiManager';
 import { assert } from '../../logic/utils/typeUtils';
 import {
@@ -68,7 +69,7 @@ import {
 import { imcImages } from './plugins/imc-images';
 import EditorManager from '../../logic/managers/EditorManager';
 import { blurHandler } from './plugins/blur-handler';
-import { headingId } from './plugins/heading-id';
+import { getHeadingAnchors, headingId } from './plugins/heading-id';
 import { tables } from './plugins/tables';
 import { selectionToolbar } from './plugins/selection-toolbar';
 import type { SelectionInfo } from './plugins/selection-toolbar';
@@ -145,12 +146,17 @@ export default defineComponent({
       type: String,
       default: '',
     },
+    blockId: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['focus', 'update:model-value', 'blur'],
 
   data() {
     return {
       editor: null as InkInstance | null,
+      headingView: null as EditorView | null,
       livePreview: true,
       toolbarSelection: null as SelectionInfo | null,
       toolbarRect: null as SelectionInfo['rect'] | null,
@@ -277,7 +283,12 @@ export default defineComponent({
           if (active_element?.closest?.('.SelectionToolbar')) return;
           this.$emit('blur');
         }),
-        ...headingId(),
+        ...headingId({
+          blockId: this.blockId,
+          onView: (view) => {
+            this.headingView = view;
+          },
+        }),
         ...tables(this.$.appContext, {
           grammar: wikiLinkGrammar,
           extensions: [
@@ -379,6 +390,48 @@ export default defineComponent({
     focus() {
       if (!this.editor) return;
       this.editor.focus();
+    },
+    scrollToHeaderAnchor(anchor: string): boolean {
+      const view = this.headingView;
+      if (!view) return false;
+      const slug = anchor.startsWith('h-') ? anchor.slice(2) : anchor;
+      const header = getHeadingAnchors(view.state).find(
+        (item) => item.anchor === slug,
+      );
+      if (!header) return false;
+
+      // CodeMirror virtualizes lines, so a heading outside the viewport has no
+      // DOM node yet: scroll the editor first (renders the line), then bring
+      // the now-existing node into the page viewport.
+      view.dispatch({
+        effects: EditorView.scrollIntoView(header.from, { y: 'center' }),
+      });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // `view.dom` is the `.cm-editor` wrapper (the scroller is a child),
+          // so the scroll element is exposed directly as `view.scrollDOM`.
+          const line = view.scrollDOM.querySelector(
+            `[data-md-header-anchor="${CSS.escape(slug)}"]`,
+          ) as HTMLElement | null;
+          if (line) {
+            scrollIntoViewIfNeeded(line, {
+              behavior: 'smooth',
+              block: 'start',
+              scrollMode: 'if-needed',
+            });
+            return;
+          }
+          // The line may not be rendered yet (CodeMirror renders lazily): fall
+          // back to scrolling the editor's scroller into the page viewport.
+          scrollIntoViewIfNeeded(view.scrollDOM, {
+            behavior: 'smooth',
+            block: 'start',
+            scrollMode: 'if-needed',
+          });
+        });
+      });
+      return true;
     },
     onLinkPickerChange(request: LinkPickerOpenRequest | null) {
       if (!request) {

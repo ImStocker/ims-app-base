@@ -18,7 +18,6 @@
 <script lang="ts">
 import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
-import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
 import ProjectManager from '#logic/managers/ProjectManager';
 import type EditorBlock from '#components/Asset/Editor/EditorBlock.vue';
 
@@ -84,22 +83,14 @@ export default defineComponent({
   },
   methods: {
     async revealAssetBlock(blockId: string, anchor?: string): Promise<boolean> {
-      if (!this.$el) {
+      if (this.resolvedBlock?.id !== blockId) {
         return false;
       }
-      if (!anchor) return false;
-
-      const element = window.document.getElementById(anchor);
-      if (!element) {
-        return false;
-      }
-
-      scrollIntoViewIfNeeded(element as HTMLElement, {
-        behavior: 'smooth',
-        scrollMode: 'if-needed',
-      });
-
-      return true;
+      const editor = this.$refs['editor'] as InstanceType<
+        typeof EditorBlock
+      > | null;
+      if (!editor) return false;
+      return editor.revealBlock(anchor);
     },
   },
 });

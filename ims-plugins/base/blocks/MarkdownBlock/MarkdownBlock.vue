@@ -22,6 +22,7 @@
       ref="editor"
       :readonly="readonly"
       :model-value="body"
+      :block-id="resolvedBlock.id"
       class="MarkdownBlock-editor"
       @update:model-value="onBodyChange($event)"
       @focus="enterEditMode()"
@@ -241,6 +242,15 @@ export default defineComponent({
 
       this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
       this.resetGlobalClickOutside(true);
+    },
+    async revealBlockAnchor(anchor: string): Promise<boolean> {
+      if (!anchor) return false;
+      await this.mountPromise;
+      const editor = this.$refs['editor'] as InstanceType<
+        typeof MarkdownEditor
+      > | null;
+      if (!editor) return false;
+      return editor.scrollToHeaderAnchor(anchor);
     },
     async save() {
       if (this.readonly) return;
