@@ -9,37 +9,95 @@ import type { IAppManager } from '../../../../logic/managers/IAppManager';
 import EditorManager from '../../../../logic/managers/EditorManager';
 import { getProjectLinkHref } from '../../../../logic/router/routes-helpers';
 import ProjectManager from '../../../../logic/managers/ProjectManager';
-
-function parseIMSWikiLink(text: string): { title: string; id: string } | null {
-  const match = text.match(/^\[(.+?)\]\(#asset:([0-9a-f-]+)\)$/i);
-  if (match) {
-    return { title: match[1].trim(), id: match[2] };
-  }
-  return null;
-}
+import {
+  parseLinkAddress,
+  parseWikiLink,
+  type WikiLinkAddress,
+} from './format';
+import { getLegacyCachedAssetFromString } from './legacy-format';
 
 interface WikiLinkWidget extends WidgetType {
   compare: (widget: WikiLinkWidget) => boolean;
-  assetId: string;
+  key: string;
+}
+
+function scrollToElementTag(view: EditorView, tag_id: string) {
+  const cm_scroller = view.dom.closest('.cm-scroller');
+  if (cm_scroller) {
+    const element = cm_scroller.querySelector(`#${CSS.escape(tag_id)}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
+function openWikiLinkAddress(
+  address: WikiLinkAddress,
+  appManager: IAppManager,
+) {
+  const editor_manager = appManager.get(EditorManager);
+
+  switch (address.kind) {
+    case 'asset':
+      editor_manager.openAsset(address.assetId, 'popup');
+      break;
+    case 'assetBlock':
+      editor_manager.openAsset(
+        address.assetId,
+        'popup',
+        address.blockId,
+        address.anchor,
+      );
+      break;
+    case 'assetHeader':
+      editor_manager
+        .requestEditorContextForAsset(address.assetId)
+        .promise.then((context) => {
+          const item = context
+            ?.getContentItems()
+            .find((content_item) => content_item.anchor === address.anchor);
+          if (item) {
+            editor_manager.revealBlockContentIds(
+              address.assetId,
+              item.blockId,
+              [item.itemId],
+            );
+          }
+          editor_manager.openAsset(
+            address.assetId,
+            'popup',
+            item?.blockId,
+            address.anchor,
+          );
+        })
+        .catch(() => {
+          editor_manager.openAsset(address.assetId, 'popup');
+        });
+      break;
+  }
 }
 
 function createWikiLinkWidget(
   link_data: {
     title: string;
-    id: string;
+    id?: string;
+    key: string;
+    address?: WikiLinkAddress;
+    href?: string;
+    onClick?: (e: MouseEvent) => void;
   },
   appManager: IAppManager,
 ): WikiLinkWidget {
   return {
     coordsAt: () => null,
     compare: (other) => {
-      return other.assetId === link_data.id;
+      return other.key === link_data.key;
     },
     destroy: () => {},
     eq: (other: WikiLinkWidget) => {
-      return other.assetId === link_data.id;
+      return other.key === link_data.key;
     },
-    assetId: link_data.id,
+    key: link_data.key,
     estimatedHeight: -1,
     ignoreEvent: () => true,
     lineBreaks: 0,
@@ -47,13 +105,16 @@ function createWikiLinkWidget(
       const a = document.createElement('a');
       const project_info = appManager.get(ProjectManager).getProjectInfo();
 
+      a.className = 'cm-md-link';
       a.innerText = link_data.title;
       a.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        appManager.get(EditorManager).openAsset(link_data.id, 'popup');
+        if (link_data.onClick) {
+          e.preventDefault();
+          e.stopPropagation();
+          link_data.onClick(e);
+        }
       };
-      if (project_info) {
+      if (!link_data.href && project_info && link_data.id) {
         a.href = getProjectLinkHref(
           appManager.getRouter(),
           project_info,
@@ -65,12 +126,30 @@ function createWikiLinkWidget(
           },
           true,
         );
+      } else if (link_data.href) {
+        a.href = link_data.href;
       }
 
       return a;
     },
     updateDOM: () => false,
   };
+}
+
+function getCachedAssetForAddress(
+  address: WikiLinkAddress,
+  appManager: IAppManager,
+) {
+  if (
+    address.kind === 'asset' ||
+    address.kind === 'assetHeader' ||
+    address.kind === 'assetBlock'
+  ) {
+    return appManager
+      .get(CreatorAssetManager)
+      .getAssetShortViaCacheSync(address.assetId);
+  }
+  return undefined;
 }
 
 function isCursorInRange(
@@ -81,22 +160,6 @@ function isCursorInRange(
   return state.selection.ranges.some((range) => {
     return Math.max(from, range.from) <= Math.min(to, range.to);
   });
-}
-
-function getCachedAssetFromString(
-  asset_string: string,
-  appManager: IAppManager,
-) {
-  const parsed_asset_data = parseIMSWikiLink(asset_string);
-  if (parsed_asset_data) {
-    return appManager
-      .get(CreatorAssetManager)
-      .getAssetShortViaCacheSync(parsed_asset_data.id);
-  } else {
-    return appManager
-      .get(CreatorAssetManager)
-      .getAssetShortByTitleViaCacheSync(asset_string);
-  }
 }
 
 // Define a state effect to trigger a refresh of decorations
@@ -115,26 +178,104 @@ export const replacements = (config: PluginConfig): Extension[] => {
 
         // Skip empty WikiLinks and those the cursor is inside.
         if (rto <= rfrom) return;
-        if (isCursorInRange(state, rfrom, rto)) return;
+        if (isCursorInRange(state, from, to)) return;
 
-        const asset_string = state.sliceDoc(rfrom, rto);
+        const wiki_link = state.sliceDoc(rfrom, rto);
 
-        const cached_asset = getCachedAssetFromString(
-          asset_string,
-          config.appManager,
-        );
+        const parsed_wiki_link = parseWikiLink(wiki_link);
+        if (parsed_wiki_link) {
+          const address = parseLinkAddress(parsed_wiki_link.address);
 
-        if (cached_asset) {
-          const decoration = Decoration.replace({
-            widget: createWikiLinkWidget(
+          if (address.kind === 'title') return;
+
+          if (address.kind === 'localHeader') {
+            const widget = createWikiLinkWidget(
               {
-                title: cached_asset.title ?? `Asset ${cached_asset.id}`,
-                id: cached_asset.id,
+                title: parsed_wiki_link.label || `#${address.anchor}`,
+                key: `local:${address.anchor}`,
+                href: `#${address.anchor}`,
               },
               config.appManager,
-            ),
-          });
-          widgets.push(decoration.range(rfrom, rto));
+            );
+            widgets.push(Decoration.replace({ widget }).range(from, to));
+            return;
+          }
+
+          const cached_asset = getCachedAssetForAddress(
+            address,
+            config.appManager,
+          );
+          if (!cached_asset) return;
+
+          const title: string =
+            parsed_wiki_link.label ||
+            cached_asset.title ||
+            `Asset ${cached_asset.id}`;
+
+          if (address.kind === 'assetBlock') {
+            const widget = createWikiLinkWidget(
+              {
+                title,
+                id: cached_asset.id,
+                key: `asset:${cached_asset.id}`,
+                address,
+                onClick: () => openWikiLinkAddress(address, config.appManager),
+              },
+              config.appManager,
+            );
+            widgets.push(Decoration.replace({ widget }).range(from, to));
+            return;
+          }
+
+          if (address.kind === 'assetHeader') {
+            const widget = createWikiLinkWidget(
+              {
+                title,
+                id: cached_asset.id,
+                key: `asset:${cached_asset.id}#${address.anchor}`,
+                address,
+                onClick: () => openWikiLinkAddress(address, config.appManager),
+              },
+              config.appManager,
+            );
+            widgets.push(Decoration.replace({ widget }).range(from, to));
+            return;
+          }
+
+          // kind === 'asset'
+          const widget = createWikiLinkWidget(
+            {
+              title,
+              id: cached_asset.id,
+              key: `asset:${cached_asset.id}`,
+              address,
+              onClick: () => openWikiLinkAddress(address, config.appManager),
+            },
+            config.appManager,
+          );
+          widgets.push(Decoration.replace({ widget }).range(from, to));
+          return;
+        }
+
+        // Legacy wiki links: `[[[title](#asset:id)]]` or `[[title]]`.
+        const cached_asset = getLegacyCachedAssetFromString(
+          wiki_link,
+          config.appManager,
+        );
+        if (cached_asset) {
+          const widget = createWikiLinkWidget(
+            {
+              title: cached_asset.title ?? `Asset ${cached_asset.id}`,
+              id: cached_asset.id,
+              key: `asset:${cached_asset.id}`,
+              onClick: () =>
+                appManager
+                  .get(EditorManager)
+                  .openAsset(cached_asset.id, 'popup'),
+            },
+            config.appManager,
+          );
+          widgets.push(Decoration.replace({ widget }).range(from, to));
         }
       },
     });
@@ -164,9 +305,7 @@ export const replacements = (config: PluginConfig): Extension[] => {
     },
   });
 
-  type MissedAssetQuery =
-    | { kind: 'byId'; id: string }
-    | { kind: 'byTitle'; title: string };
+  type MissedAssetQuery = { kind: 'byId'; id: string };
 
   // ViewPlugin to handle async fetching
   const asyncFetcher = ViewPlugin.fromClass(
@@ -184,20 +323,38 @@ export const replacements = (config: PluginConfig): Extension[] => {
             if (type.name !== 'WikiLink') return;
             if (from + 2 === to - 2) return;
 
-            const asset_string = state.sliceDoc(from + 2, to - 2);
+            const wiki_link = state.sliceDoc(from + 2, to - 2);
 
-            const cached_asset = getCachedAssetFromString(
-              asset_string,
+            const parsed_wiki_link = parseWikiLink(wiki_link);
+            if (parsed_wiki_link) {
+              const address = parseLinkAddress(parsed_wiki_link.address);
+              if (
+                !(
+                  address.kind === 'asset' ||
+                  address.kind === 'assetHeader' ||
+                  address.kind === 'assetBlock'
+                )
+              ) {
+                return;
+              }
+              const cached_asset = appManager
+                .get(CreatorAssetManager)
+                .getAssetShortViaCacheSync(address.assetId);
+              if (cached_asset === undefined) {
+                missingAssets.add({ kind: 'byId', id: address.assetId });
+              }
+              return;
+            }
+
+            const cached_asset = getLegacyCachedAssetFromString(
+              wiki_link,
               config.appManager,
             );
-
-            if (cached_asset === undefined) {
-              const parsed_asset_data = parseIMSWikiLink(asset_string);
-              if (parsed_asset_data) {
-                missingAssets.add({ kind: 'byId', id: parsed_asset_data.id });
-              } else {
-                missingAssets.add({ kind: 'byTitle', title: asset_string });
-              }
+            const parsed_legacy = /^\[(.+?)\]\(#asset:([0-9a-f-]+)\)$/i.exec(
+              wiki_link,
+            );
+            if (cached_asset === undefined && parsed_legacy) {
+              missingAssets.add({ kind: 'byId', id: parsed_legacy[2] });
             }
           },
         });
@@ -206,35 +363,35 @@ export const replacements = (config: PluginConfig): Extension[] => {
           if (this.pending.has(asset_query)) continue;
           this.pending.add(asset_query);
 
-          if (asset_query.kind === 'byId') {
-            config.appManager
-              .get(CreatorAssetManager)
-              .getAssetShortViaCache(asset_query.id)
-              .then(() => {
-                this.pending.delete(asset_query);
-                this._view.dispatch({ effects: refreshDecorations.of(null) });
-              })
-              .finally(() => {
-                this.pending.delete(asset_query);
-              });
-          } else {
-            config.appManager
-              .get(CreatorAssetManager)
-              .getAssetShortsList({ where: { query: asset_query.title } })
-              .then((res) => {
-                this.pending.delete(asset_query);
-                if (res.list.length) {
-                  this._view.dispatch({ effects: refreshDecorations.of(null) });
-                }
-              })
-              .finally(() => {
-                this.pending.delete(asset_query);
-              });
-          }
+          config.appManager
+            .get(CreatorAssetManager)
+            .getAssetShortViaCache(asset_query.id)
+            .then(() => {
+              this.pending.delete(asset_query);
+              this._view.dispatch({ effects: refreshDecorations.of(null) });
+            })
+            .finally(() => {
+              this.pending.delete(asset_query);
+            });
         }
       }
     },
   );
 
-  return [stateField, asyncFetcher];
+  return [
+    stateField,
+    asyncFetcher,
+    EditorView.domEventHandlers({
+      click(event, view) {
+        const target = event.target as HTMLElement | null;
+        const anchor = target?.closest('a[href^="#"]');
+        if (!anchor) return false;
+        const tag_id = decodeURIComponent(
+          anchor.getAttribute('href')!.slice(1),
+        );
+        scrollToElementTag(view, tag_id);
+        return true;
+      },
+    }),
+  ];
 };

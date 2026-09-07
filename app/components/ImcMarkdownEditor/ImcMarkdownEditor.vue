@@ -33,6 +33,24 @@
         ></SelectionToolbar>
       </dropdown-container>
     </div>
+    <div
+      v-if="linkPickerVisible && linkPickerRect"
+      class="MarkdownBlockEditor-link-picker"
+      :style="linkPickerStyle"
+      @mousedown.stop
+    >
+      <MarkdownLinkAutocomplete
+        ref="linkPicker"
+        :project="linkPickerProject"
+        :search-text="linkPickerQuery"
+        :loading="linkPickerLoading"
+        :options="linkPickerOptions"
+        :has-more="linkPickerHasMore"
+        :error="linkPickerError"
+        :headers="linkPickerHeaders"
+        @select="onLinkPickerSelect"
+      ></MarkdownLinkAutocomplete>
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -68,13 +86,18 @@ import { markStyles } from './plugins/mark-styles';
 import { livePreview } from './plugins/live-preview';
 import { taskCheckbox } from './plugins/task-checkbox';
 import { linkWidgets } from './plugins/links';
+import MarkdownLinkAutocomplete from './MarkdownLinkAutocomplete.vue';
+import { linkPickerTrigger } from './plugins/link-picker';
+import type { LinkPickerOpenRequest } from './plugins/link-picker';
+import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import ProjectManager from '../../logic/managers/ProjectManager';
+import { buildWikiLink } from './plugins/wiki-links/format';
+import { extractHeaderAnchorsFromMarkdown } from '../../logic/utils/assets';
 import { viewToInkLike } from './editor-adapter';
 import SelectionToolbar from './SelectionToolbar.vue';
 import DropdownContainer from '../Common/DropdownContainer.vue';
 import ContextMenuZone from '../Common/ContextMenuZone.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
-import DialogManager from '../../logic/managers/DialogManager';
-import SelectAssetDialog from '../Asset/SelectAssetDialog.vue';
 import katexCss from 'katex/dist/katex.min.css?inline';
 
 // KaTeX scoping: beat ink-mde's `.ink-mde .cm-line span { display: inline }` (0,2,1)
@@ -110,6 +133,7 @@ export default defineComponent({
   components: {
     InkMde,
     SelectionToolbar,
+    MarkdownLinkAutocomplete,
     DropdownContainer,
     ContextMenuZone,
   },
@@ -136,6 +160,23 @@ export default defineComponent({
       toolbarInCell: false,
       toolbarTargetView: null as EditorView | null,
       contextSelection: null as SelectionInfo | null,
+      linkPickerVisible: false,
+      linkPickerRect: null as SelectionInfo['rect'] | null,
+      linkPickerView: null as EditorView | null,
+      linkPickerReplaceFrom: 0,
+      linkPickerQuery: '',
+      linkPickerLoading: false,
+      linkPickerOptions: [] as any[],
+      linkPickerHasMore: false,
+      linkPickerError: '',
+      linkPickerHeaders: [] as {
+        title: string;
+        level: number;
+        anchor: string;
+      }[],
+      linkPickerVisibleTimer: null as number | null,
+      linkPickerDebounce: null as number | null,
+      linkPickerKeyHandlerInstalled: false,
     };
   },
   computed: {
@@ -157,6 +198,19 @@ export default defineComponent({
       set(val: string) {
         this.$emit('update:model-value', val);
       },
+    },
+    linkPickerStyle(): Record<string, string> {
+      const r = this.linkPickerRect;
+      if (!r) return {};
+      const root_rect = (this.$el as HTMLElement).getBoundingClientRect();
+      return {
+        position: 'absolute',
+        left: `${r.left - root_rect.left}px`,
+        top: `${Math.max(r.bottom - root_rect.top, 8)}px`,
+      };
+    },
+    linkPickerProject() {
+      return this.$getAppManager().get(ProjectManager).getProjectInfo() as any;
     },
     colorTheme() {
       return this.$getAppManager().get(UiManager).getColorTheme();
@@ -213,6 +267,7 @@ export default defineComponent({
     },
     plugins() {
       return [
+        ...linkPickerTrigger((request) => this.onLinkPickerChange(request)),
         ...wikiLinks({ appManager: this.$getAppManager() }),
         ...imcImages({ appManager: this.$getAppManager() }),
         ...(this.livePreview
@@ -306,6 +361,16 @@ export default defineComponent({
       ];
     },
   },
+  watch: {
+    modelValue() {
+      this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
+        this.editor ? this.editor.getDoc() : (this.modelValue ?? ''),
+      );
+    },
+  },
+  beforeUnmount() {
+    this.removeLinkPickerKeyHandler();
+  },
   mounted() {
     const editor = this.$refs['editor'] as InstanceType<typeof InkMde> | null;
     assert(editor?.instance);
@@ -324,6 +389,193 @@ export default defineComponent({
     focus() {
       if (!this.editor) return;
       this.editor.focus();
+    },
+    onLinkPickerChange(request: LinkPickerOpenRequest | null) {
+      if (!request) {
+        this.closeLinkPicker();
+        return;
+      }
+      const was_open = this.linkPickerVisible;
+      this.linkPickerView = request.view;
+      this.linkPickerReplaceFrom = request.anchorPos;
+      this.linkPickerRect = request.rect;
+      this.linkPickerQuery = request.query;
+      if (this.readonly) {
+        this.closeLinkPicker();
+        return;
+      }
+      if (was_open) {
+        this.loadLinkPickerOptions();
+      } else {
+        if (this.linkPickerVisibleTimer) return;
+        clearTimeout(this.linkPickerVisibleTimer);
+        this.linkPickerVisibleTimer = window.setTimeout(() => {
+          this.linkPickerVisibleTimer = null;
+          if (!this.linkPickerRect) return;
+          this.linkPickerVisible = true;
+          this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
+            this.linkPickerView?.state.doc.toString() ??
+              this.editor?.getDoc?.() ??
+              this.modelValue ??
+              '',
+          );
+          this.loadLinkPickerOptions();
+          this.installLinkPickerKeyHandler();
+        }, 0);
+      }
+    },
+    closeLinkPicker() {
+      if (this.linkPickerVisibleTimer) {
+        clearTimeout(this.linkPickerVisibleTimer);
+        this.linkPickerVisibleTimer = null;
+      }
+      this.linkPickerVisible = false;
+      this.linkPickerRect = null;
+      this.linkPickerView = null;
+      this.linkPickerQuery = '';
+      this.linkPickerOptions = [];
+      this.linkPickerHasMore = false;
+      this.linkPickerError = '';
+      this.linkPickerHeaders = [];
+      this.removeLinkPickerKeyHandler();
+    },
+    openLinkPickerForRange(sel: SelectionInfo | null, view: EditorView | null) {
+      if (this.readonly) return;
+      this.closeLinkPicker();
+      const from = sel?.from ?? 0;
+      let rect = sel?.rect && sel.rect.right > sel.rect.left ? sel.rect : null;
+      if (!rect && view) {
+        const caret_rect = view.coordsAtPos(from);
+        if (caret_rect) {
+          rect = {
+            left: caret_rect.left,
+            top: caret_rect.bottom,
+            right: caret_rect.right,
+            bottom: caret_rect.bottom,
+          };
+        }
+      }
+      if (!rect) return;
+      this.linkPickerView = view ?? this.toolbarTargetView;
+      this.linkPickerReplaceFrom = from;
+      this.linkPickerRect = rect;
+      this.linkPickerQuery = sel?.text ?? '';
+      this.linkPickerVisible = true;
+      this.linkPickerHeaders = extractHeaderAnchorsFromMarkdown(
+        this.editor ? this.editor.getDoc() : (this.modelValue ?? ''),
+      );
+      this.loadLinkPickerOptions();
+      this.installLinkPickerKeyHandler();
+      this.$nextTick(() => {
+        const picker = this.$refs['linkPicker'] as any;
+        picker?.focus?.();
+      });
+    },
+    async loadLinkPickerOptions() {
+      if (this.linkPickerDebounce) {
+        clearTimeout(this.linkPickerDebounce);
+        this.linkPickerDebounce = null;
+      }
+      const query = (this.linkPickerQuery ?? '').trim();
+      const gdd_workspace = this.$getAppManager()
+        .get(ProjectManager)
+        .getWorkspaceByName('gdd');
+      if (!gdd_workspace) return;
+      this.linkPickerDebounce = window.setTimeout(async () => {
+        this.linkPickerLoading = true;
+        try {
+          const res = await this.$getAppManager()
+            .get(CreatorAssetManager)
+            .getAssetShortsList({
+              where: {
+                query,
+                workspaceids: gdd_workspace.id,
+              },
+            });
+          if (!this.linkPickerVisible) return;
+          this.linkPickerOptions = res.list.map((asset) => ({
+            type: 'asset',
+            value: asset.id,
+            title: asset.title ?? asset.id,
+            raw: asset,
+          }));
+          this.linkPickerHasMore = res.list.length < res.total;
+          this.linkPickerError = '';
+        } catch (err: any) {
+          this.linkPickerError = err?.message ?? String(err);
+        } finally {
+          this.linkPickerLoading = false;
+        }
+      }, 200);
+    },
+    installLinkPickerKeyHandler() {
+      if (this.linkPickerKeyHandlerInstalled) return;
+      this.linkPickerKeyHandlerInstalled = true;
+      window.addEventListener('keydown', this.onLinkPickerKey, true);
+    },
+    removeLinkPickerKeyHandler() {
+      if (!this.linkPickerKeyHandlerInstalled) return;
+      this.linkPickerKeyHandlerInstalled = false;
+      window.removeEventListener('keydown', this.onLinkPickerKey, true);
+    },
+    onLinkPickerKey(ev: KeyboardEvent) {
+      if (!this.linkPickerVisible) return;
+      const target = ev.target as HTMLElement | null;
+      if (target && target.closest('.MarkdownLinkAutocomplete')) return;
+      const picker = this.$refs['linkPicker'] as any;
+      if (!picker) return;
+      const key = ev.key;
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        picker.moveCursor(key === 'ArrowUp' ? -1 : 1);
+      } else if (key === 'ArrowRight') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        picker.openContents();
+      } else if (key === 'Enter') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        picker.selectCurrent();
+      } else if (key === 'Escape') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.closeLinkPicker();
+      }
+    },
+    onLinkPickerSelect(payload: { address: string; label: string }) {
+      const view = this.linkPickerView;
+      const target = view ? viewToInkLike(view) : this.editor;
+      if (target) {
+        const from = this.linkPickerReplaceFrom;
+        const to = view ? view.state.selection.main.head : from;
+        const text = buildWikiLink(payload.address, payload.label);
+
+        // The editor auto-closes brackets (typing `[` produces `[]` with the
+        // caret between them), so the wiki-link prefix `[[` leaves `]]` right
+        // after the caret. Skip that already-existing closing pair so we don't
+        // insert a duplicated one.
+        const after = view
+          ? view.state.doc.sliceString(to, to + 2)
+          : this.editor
+            ? this.editor.getDoc().slice(to, to + 2)
+            : '';
+        let closeMatch = 0;
+        for (const ch of after) {
+          if (ch !== ']') break;
+          closeMatch++;
+        }
+        const insertText =
+          closeMatch > 0 ? text.slice(0, text.length - closeMatch) : text;
+
+        target.insert(insertText, { start: from, end: to });
+        const caretPos = from + insertText.length + closeMatch;
+        target.select({
+          selection: { start: caretPos, end: caretPos },
+        });
+        target.focus();
+      }
+      this.closeLinkPicker();
     },
     onToolbarFormat(payload: { type: FormatType; payload?: FormatPayload }) {
       if (!this.toolbarSelection) return;
@@ -386,7 +638,8 @@ export default defineComponent({
           title: 'Insert link',
           name: 'ctx-insert-link',
           icon: 'ri-link',
-          action: () => this.insertAssetLink(sel),
+          action: () =>
+            this.openLinkPickerForRange(sel, this.toolbarTargetView),
         },
         {
           title: 'Insert external link',
@@ -595,21 +848,6 @@ export default defineComponent({
           action: () => this.selectAllText(),
         },
       ];
-    },
-    insertAssetLink(sel: SelectionInfo) {
-      const ed = this.editor;
-      if (!ed) return;
-      const dialog = this.$getAppManager()
-        .get(DialogManager)
-        .show(SelectAssetDialog, {}, this);
-      dialog.then((res) => {
-        if (res && (res as { id?: string }).id) {
-          const id = (res as { id: string }).id;
-          const name = (res as { name?: string }).name ?? '';
-          applyFormat(ed, sel, 'link', { internal: id, internalName: name });
-          ed.focus();
-        }
-      });
     },
     insertExternalLink(sel: SelectionInfo) {
       const ed = this.editor;
@@ -1022,7 +1260,9 @@ body[data-theme='ims-dark'] {
     background: transparent;
     color: var(--ink-internal-syntax-comment-color, #8b949e);
     cursor: pointer;
-    transition: background-color 0.12s, color 0.12s;
+    transition:
+      background-color 0.12s,
+      color 0.12s;
 
     &:hover {
       background: var(

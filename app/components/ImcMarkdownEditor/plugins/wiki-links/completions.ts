@@ -6,10 +6,6 @@ import type {
 import type { PluginConfig } from './index';
 import CreatorAssetManager from '../../../../logic/managers/CreatorAssetManager';
 import ProjectManager from '../../../../logic/managers/ProjectManager';
-import {
-  castAssetPropValueToString,
-  type AssetPropValueAsset,
-} from '../../../../logic/types/Props';
 
 async function loadOptions(query: string, config: PluginConfig) {
   return await config.appManager.get(CreatorAssetManager).getAssetShortsList({
@@ -40,11 +36,9 @@ export const completions = (config: PluginConfig): CompletionSource => {
       from: match.from + 2,
       options: options.list.map((asset) => {
         return {
-          apply: `${castAssetPropValueToString({
-            AssetId: asset.id,
-            Name: asset.name ?? undefined,
-            Title: asset.title ?? undefined,
-          } as AssetPropValueAsset)}]]`,
+          apply: asset.title
+            ? `asset:${asset.id}|${asset.title}]]`
+            : `asset:${asset.id}]]`,
           label: asset.title ?? asset.id,
           type: 'text',
         };

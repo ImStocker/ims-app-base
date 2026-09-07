@@ -39,7 +39,7 @@ const linkMark = Decoration.mark({ class: 'cm-md-link' });
 
 const decorate = (
   state: EditorState,
-  appManager: IAppManager,
+  _appManager: IAppManager,
 ): DecorationSet => {
   const ranges: Range<Decoration>[] = [];
 
@@ -55,6 +55,11 @@ const decorate = (
       if (!link) return;
       const linkName = link.name;
       if (linkName !== 'Link' && linkName !== 'Autolink') return;
+
+      // Skip incomplete links (`[]()` / `[text]()`): there is nothing to open,
+      // and marking them clickable would be misleading.
+      const url = state.doc.sliceString(ref.from, ref.to);
+      if (!url) return;
 
       const from = link.from;
       const to = link.to;
@@ -100,7 +105,7 @@ export const linkWidgets = (config: PluginConfig): Extension => {
       const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
       if (pos == null) return false;
 
-      let node = syntaxTree(view.state).resolve(pos, -1);
+      const node = syntaxTree(view.state).resolve(pos, -1);
       let link = node;
       while (link && link.name !== 'Link' && link.name !== 'Autolink') {
         link = link.parent;

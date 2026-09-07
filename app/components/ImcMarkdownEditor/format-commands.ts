@@ -1,6 +1,7 @@
 import type { Instance as InkInstance } from 'ink-mde';
 import type { SelectionInfo } from './plugins/selection-toolbar';
 import type { InkLike } from './editor-adapter';
+import { buildWikiLink, parseLinkAddress } from './plugins/wiki-links/format';
 
 type EditorTarget = InkInstance | InkLike;
 
@@ -29,6 +30,7 @@ export type FormatPayload = {
   url?: string;
   internal?: string;
   internalName?: string;
+  address?: string;
   text?: string;
   calloutType?: string;
   reset?: boolean;
@@ -95,17 +97,47 @@ function detectLinkAt(
   doc: string,
   from: number,
   to: number,
-): {
-  kind: 'url' | 'asset';
-  value: string;
-  title: string;
-  from: number;
-  to: number;
-} | null {
+):
+  | {
+      kind: 'url';
+      value: string;
+      title: string;
+      from: number;
+      to: number;
+    }
+  | {
+      kind: 'asset' | 'assetHeader' | 'assetBlock' | 'localHeader' | 'title';
+      value: string;
+      assetId: string | null;
+      title: string;
+      from: number;
+      to: number;
+    }
+  | null {
   const lineStart = doc.lastIndexOf('\n', from - 1) + 1;
   const lineEnd = doc.indexOf('\n', from);
   const lineEndClamped = lineEnd === -1 ? doc.length : lineEnd;
   const line = doc.slice(lineStart, lineEndClamped);
+
+  const wikiRe = /\[\[([^|\]\n]+)\|([^\]|\n]*)\]\]/g;
+  for (const m of line.matchAll(wikiRe)) {
+    const s = lineStart + (m.index ?? 0);
+    const e = s + m[0].length;
+    if (s <= to && e >= from) {
+      const address = parseLinkAddress(m[1]);
+      return {
+        kind: address.kind,
+        value: m[1],
+        assetId:
+          address.kind === 'title' || address.kind === 'localHeader'
+            ? null
+            : address.assetId,
+        title: m[2],
+        from: s,
+        to: e,
+      };
+    }
+  }
 
   const assetRe = /\[\[\[(.+?)\]\(#asset:([0-9a-f-]+)\)\]\]/g;
   for (const m of line.matchAll(assetRe)) {
@@ -353,13 +385,11 @@ export function applyFormat(
         if (link) {
           editor.insert(link.title, { start: link.from, end: link.to });
         }
-      } else if (payload.internal) {
+      } else if (payload.address || payload.internal) {
+        const address = payload.address ?? `asset:${payload.internal}`;
         const linkText =
           payload.text ?? info.text ?? payload.internalName ?? 'link';
-        editor.insert(
-          `[[[${linkText}](#asset:${payload.internal})]]`,
-          selection,
-        );
+        editor.insert(buildWikiLink(address, linkText), selection);
       } else {
         const url = payload.url ?? '';
         editor.wrap({ before: '[', after: `](${url})`, selection });
@@ -438,12 +468,13 @@ export function detectActive(
   }
 
   const link = detectLinkAt(doc, info.from, info.to);
-  active.link = link
-    ? link.kind === 'asset'
-      ? `#asset:${link.value}`
-      : link.value
-    : null;
-  active.linkAsset = link?.kind === 'asset' ? link.value : null;
+  active.link = link ? link.value : null;
+  active.linkAsset =
+    link && 'assetId' in link
+      ? link.assetId
+      : link?.kind === 'asset'
+        ? link.value
+        : null;
   active.linkTitle = link?.title ?? null;
 
   return active;

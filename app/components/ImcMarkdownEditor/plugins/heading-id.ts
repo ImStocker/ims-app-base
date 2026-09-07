@@ -51,7 +51,10 @@ const headingIdPlugin = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || syntaxTree(update.state) !== syntaxTree(update.startState)) {
+      if (
+        update.docChanged ||
+        syntaxTree(update.state) !== syntaxTree(update.startState)
+      ) {
         this.decorations = this.buildDecorations();
       }
     }
@@ -93,9 +96,7 @@ const headingIdPlugin = ViewPlugin.fromClass(
 
             const line = this.view.state.doc.lineAt(ctx.from);
 
-            const id = 'h-' + anchor;
-
-            if (!id) return;
+            const id = anchor;
 
             builder.push(
               Decoration.line({

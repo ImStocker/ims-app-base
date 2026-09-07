@@ -409,6 +409,23 @@ function bindMermaidInteractions(
   });
 }
 
+// Returns true when a `Link`/`Image` node's target is empty or malformed
+// (e.g. `[]()` or `[text]()`). The markers of such a broken fragment must stay
+// visible — hiding them would leave the user with nothing to edit.
+function isIncompleteLinkTarget(owner: any, doc: any): boolean {
+  const urlNode = owner.getChild('URL');
+  const urlText = urlNode ? doc.sliceString(urlNode.from, urlNode.to) : '';
+  // Bare anchor fragments (`[text](#heading)`) are intentional; hide normally.
+  if (urlText.startsWith('#')) return false;
+  if (!urlText) return true;
+  // A well-formed target has 4 `LinkMark` nodes: `[`, `]`, `(`, `)`.
+  let markCount = 0;
+  owner.getChildren('LinkMark').forEach(() => {
+    markCount++;
+  });
+  return markCount < 4;
+}
+
 export function livePreview() {
   // A multi-line replace (fenced mermaid diagram → image) may only be provided
   // as a static decoration (state field), not through a plugin's `decorations`,
@@ -629,6 +646,19 @@ function build(view: EditorView): DecorationSet {
         if (!node) return;
         const owner = node.parent;
         if (!owner) return;
+
+        // Incomplete/empty links and images (`[]()`, `[text]()`, `[](url)`)
+        // must not be hidden — otherwise their markers vanish and the user is
+        // left with either nothing or an uneditable fragment. Only hide the
+        // markers of a *fully-formed* link/image (both label and target set).
+        if (
+          INLINE_MARK_NODES.has(name) &&
+          (name === 'LinkMark' || name === 'URL') &&
+          isIncompleteLinkTarget(owner, doc)
+        ) {
+          return;
+        }
+
         let active: boolean;
         if (LINE_MARK_NODES.has(name)) {
           const startLine = doc.lineAt(owner.from).number;

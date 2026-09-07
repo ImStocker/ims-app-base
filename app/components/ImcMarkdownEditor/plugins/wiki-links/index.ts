@@ -102,7 +102,6 @@ const theme = syntaxHighlighting(
 
 export const wikiLinks = (config: PluginConfig) => {
   return [
-    { type: 'completion', value: completions(config) },
     { type: 'default', value: theme },
     { type: 'default', value: replacements(config) },
     { type: 'grammar', value: grammar },
