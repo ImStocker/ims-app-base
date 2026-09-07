@@ -53,7 +53,7 @@ export const TASK_COLUMN_ENUM = '00000000-0000-0000-0000-000000000038';
 
 export const TITLE_CHAR_LIMIT = 20;
 
-export const TEXT_ELEMENT_ID = 'text-element';
+export const EMPTY_ELEMENT_ID = 'empty-element';
 
 export const ASSET_VALUE_STRUCTURE: AssetPropValueAsset = {
   AssetId: STRUCT_ASSET_ID,
@@ -90,7 +90,7 @@ export const ASSET_SELECTION_GAME_OBJECT: AssetForSelection = {
 
 export const ASSET_SELECTION_MARKDOWN: AssetForSelection = {
   id: MARKDOWN_ASSET_ID,
-  title: '[[t:Markdown]]',
+  title: '[[t:TextMdElement]]',
   icon: 'markdown-fill',
   name: null,
 };

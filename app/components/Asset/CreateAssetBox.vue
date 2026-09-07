@@ -76,7 +76,7 @@ import {
   ASSET_SELECTION_MARKDOWN,
   ASSET_SELECTION_SCRIPT,
   ASSET_SELECTION_STRUCTURE,
-  TEXT_ELEMENT_ID,
+  EMPTY_ELEMENT_ID,
 } from '../../logic/constants';
 import type {
   AssetForSelection,
@@ -114,14 +114,7 @@ export default defineComponent({
       return this.$getAppManager().get(ProjectManager).getProjectInfo();
     },
     defaultOptions(): (AssetForSelection & { tooltip: string })[] {
-      const default_options: AssetForSelection[] = [
-        {
-          id: TEXT_ELEMENT_ID,
-          title: '[[t:TextElement]]',
-          name: null,
-          icon: 'file-fill',
-        },
-      ];
+      const default_options: AssetForSelection[] = [];
       default_options.push(ASSET_SELECTION_MARKDOWN);
       default_options.push(
         ...[
@@ -146,6 +139,12 @@ export default defineComponent({
         ...this.defaultOptions,
         ASSET_SELECTION_STRUCTURE,
         ASSET_SELECTION_ENUM,
+        {
+          id: EMPTY_ELEMENT_ID,
+          title: '[[t:EmptyElement]]',
+          name: null,
+          icon: 'file-fill',
+        },
       ];
     },
     projectTreeWhere(): AssetPropWhere {
@@ -172,7 +171,7 @@ export default defineComponent({
   methods: {
     async choose() {
       if (this.searchValue && this.searchValue.Str !== '') {
-        await this.createAsset(TEXT_ELEMENT_ID, this.searchValue.Str);
+        await this.createAsset(EMPTY_ELEMENT_ID, this.searchValue.Str);
       }
     },
     dispatchMenuActionExecutedEvent() {
@@ -210,11 +209,7 @@ export default defineComponent({
         workspaceId: this.rootWorkspaceId,
       };
 
-      if (parent_id === TEXT_ELEMENT_ID) {
-        set.blocks = {
-          ['@' + uuidv4()]: { type: 'text' },
-        };
-      } else {
+      if (parent_id !== EMPTY_ELEMENT_ID) {
         set.parentIds = [parent_id];
       }
 

@@ -690,6 +690,7 @@ export default {
   blockTypes: {
     header: 'Type of block',
     selectType: 'Select type',
+    deprecated: 'Deprecated',
     titles: {
       text: 'Text',
       checklist: 'Checklist',
@@ -705,6 +706,7 @@ export default {
       leveleditor: 'Level editor',
       collection: 'Collection',
       graph: 'Graph',
+      markdown: 'Text (Markdown)',
     },
     saveBlock: 'Save block',
   },

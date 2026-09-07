@@ -701,6 +701,7 @@ export default {
   blockTypes: {
     header: 'Тип блока',
     selectType: 'Выберите тип блока',
+    deprecated: 'Устаревший',
     titles: {
       text: 'Текст',
       checklist: 'Чек-лист',
@@ -718,6 +719,7 @@ export default {
       leveleditor: 'Редактор уровней',
       collection: 'Коллекция',
       graph: 'Граф',
+      markdown: 'Текст (Markdown)',
     },
     saveBlock: 'Сохранить блок',
   },

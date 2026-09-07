@@ -30,14 +30,21 @@ export default defineComponent({
       return this.$getAppManager()
         .get(EditorManager)
         .getBlockTypesList()
-        .filter((x) => !x.hideInAdding);
+        .filter((x) => !x.hideInAdding)
+        .sort((a, b) => {
+          return (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0);
+        });
     },
     menuList() {
       return this.blockTypes.map((block) => {
+        let title = block.title
+          ? block.title
+          : this.$t('blockTypes.titles.' + block.name);
+        if (block.deprecated) {
+          title += ` (${this.$t('blockTypes.deprecated')})`;
+        }
         return {
-          title: block.title
-            ? block.title
-            : this.$t('blockTypes.titles.' + block.name),
+          title,
           icon: block.icon.startsWith('ri-') ? block.icon : 'ri-' + block.icon,
           action: () => this.$emit('create-block', block.name),
         };

@@ -1,6 +1,6 @@
 import type { Component } from 'vue';
 import type { AssetProps, AssetPropValueType } from './Props';
-import type { BlockAiSpec } from './BlockTypeDefinition';
+import type { BlockAiSpec } from './AiSpec';
 
 export type FieldTypeControllerParameter = {
   name: string;

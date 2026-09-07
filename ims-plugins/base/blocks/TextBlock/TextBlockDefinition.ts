@@ -16,6 +16,7 @@ export class TextBlockDefinition extends BlockTypeDefinition {
   component = async () => (await import('./TextBlock.vue')).default;
   icon = 'font-family';
   override aiSpec = textBlockAiSpec.aiSpec;
+  override deprecated = true;
 
   /*
   override getBlockContentItems(

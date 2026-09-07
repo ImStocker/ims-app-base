@@ -18,8 +18,7 @@ import {
   DefaultBlockEditorController,
   type BlockEditorController,
 } from './BlockEditorController';
-
-export type { BlockAiSpec } from './AiSpec';
+import type { BlockAiSpec } from './AiSpec';
 
 export type BlockContentItem<U> = {
   blockId: string;
@@ -59,6 +58,7 @@ export abstract class BlockTypeDefinition {
     return null;
   }
 
+  deprecated = false;
   hideInAdding = false;
   hideBlockHeader = false;
   focusOnAdded = true;

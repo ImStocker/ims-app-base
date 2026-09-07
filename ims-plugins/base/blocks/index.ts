@@ -7,9 +7,10 @@ import { ValueTableDefinition } from './ValueTableBlock/ValueTableBlockDefinitio
 import { BlockMirrorBlockDefinition } from './BlockMirrorBlock/BlockMirrorBlockDefinition';
 import { CollectionBlockDefinition } from './CollectionBlock/CollectionBlockDefinition';
 import { ChecklistBlockDefinition } from './ChecklistBlock/ChecklistBlockDefinition';
+import { MarkdownBlockDefinition } from './MarkdownBlock/MarkdownBlockDefinition';
 
 const list = [
-  new TextBlockDefinition(),
+  new MarkdownBlockDefinition(),
   new ValueTableDefinition(),
   new PropsBlockDefinition(),
   new GalleryDefinition(),
@@ -18,6 +19,7 @@ const list = [
   new ChecklistBlockDefinition(),
   new CollectionBlockDefinition(),
   new BlockMirrorBlockDefinition(),
+  new TextBlockDefinition(),
 ];
 
 export default function () {

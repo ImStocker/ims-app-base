@@ -63,6 +63,7 @@ export default {
     NeedConfirm: 'Need confirm',
     Text: 'Text',
     TextElement: 'Text',
+    TextMdElement: 'Text (.md)',
     CheckListElement: 'Checklist',
     TaskListElement: 'Task list',
     DiagramElement: 'Diagram',
