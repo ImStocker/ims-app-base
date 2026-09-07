@@ -289,6 +289,9 @@ export default {
     isTrackProgress: 'Отслеживает прогресс выполнения',
     isTrackProgressHelp:
       'Этот элемент будет влиять на оценку прогресса выполнения проекта',
+    noValue: 'Нет значения',
+    setValue: 'Установить значение',
+    resetValue: 'Сбросить значение',
   },
   auth: {
     signInButton: 'Войти',

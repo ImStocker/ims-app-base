@@ -281,6 +281,9 @@ export default {
     isTrackProgress: 'Fortschritt verfolgen',
     isTrackProgressHelp:
       'Dieses Element beeinflusst den Gesamtfortschritt des Projekts',
+    noValue: 'Kein Wert',
+    setValue: 'Wert setzen',
+    resetValue: 'Wert zurücksetzen',
   },
   auth: {
     noAccessToOpenPage: 'Du hast keinen Zugriff auf diese Seite',

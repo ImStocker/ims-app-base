@@ -279,6 +279,9 @@ export default {
       'Mark element as template. If you enable completion tracking template itself will not affect the overall progress',
     isTrackProgress: 'Tracks completion progress',
     isTrackProgressHelp: 'This element will affect on overall project progress',
+    noValue: 'No value',
+    setValue: 'Set value',
+    resetValue: 'Reset value',
   },
   auth: {
     noAccessToOpenPage: 'You have no access to open this page',
