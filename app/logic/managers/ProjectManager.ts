@@ -40,6 +40,13 @@ export type ProjectChangeEventArg = {
   newProjectId: string | null;
 };
 
+export type ProjectTemplate = {
+  title: string;
+  id: string;
+  description: string;
+  lang: string;
+  image: string | null;
+};
 export default class ProjectManager extends AppSubManagerBase {
   private _projectInfo: ProjectFullInfo | null = null;
   private _userRole: IProjectUserOwnRole | null = null;
@@ -274,7 +281,7 @@ export default class ProjectManager extends AppSubManagerBase {
     };
   }
 
-  async loadProjectTemplates() {
+  async loadProjectTemplates(): Promise<ProjectTemplate[]> {
     if (this.appManager.$env.PROJECT_TEMPLATES_LINK) {
       const res = await fetch(this.appManager.$env.PROJECT_TEMPLATES_LINK);
       return await res.json();

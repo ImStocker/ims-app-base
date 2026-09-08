@@ -56,7 +56,12 @@
           <i class="ri-external-link-line"></i>
         </a>
         <div v-if="showThumbs" class="TemplateSlider-thumb">
-          <img v-if="thumbByTitle[tpl.title]" :src="thumbByTitle[tpl.title]" alt="Template preview" class="TemplateSlider-thumbImg" />
+          <img
+            v-if="tpl.image"
+            :src="tpl.image"
+            alt="Template preview"
+            class="TemplateSlider-thumbImg"
+          />
           <i v-else class="ri-file-list-3-line"></i>
         </div>
         <div class="TemplateSlider-title">
@@ -87,17 +92,10 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import ProjectManager from '~ims-app-base/logic/managers/ProjectManager';
-import UiManager from '~ims-app-base/logic/managers/UiManager';
-import starterTemplateImg from '~ims-app-base/assets/temp/starter-template.png';
-import wingsTemplateImg from '~ims-app-base/assets/temp/wings-template.png';
-
-type TemplateItem = {
-  id: string;
-  title: string;
-  description: string;
-  lang: string;
-};
+import ProjectManager, {
+  type ProjectTemplate,
+} from '#logic/managers/ProjectManager';
+import UiManager from '#logic/managers/UiManager';
 
 export default defineComponent({
   name: 'TemplateSlider',
@@ -118,20 +116,11 @@ export default defineComponent({
       type: String as PropType<string | null>,
       default: null,
     },
-    thumbByTitle: {
-      type: Object as PropType<Record<string, string>>,
-      default: () => ({
-        'Starter template': starterTemplateImg,
-        'Wings of Freedom': wingsTemplateImg,
-        'Стартовый шаблон': starterTemplateImg,
-        'Крылья свободы': wingsTemplateImg,
-      }),
-    },
   },
   emits: ['update:modelValue'],
   data() {
     return {
-      templates: [] as TemplateItem[],
+      templates: [] as ProjectTemplate[],
       loading: false,
       sliderIndex: 0,
       selectedId: null as string | null,
@@ -167,19 +156,17 @@ export default defineComponent({
         const all = await this.$getAppManager()
           .get(ProjectManager)
           .loadProjectTemplates();
-        this.templates = all.filter(
-          (p: TemplateItem) => p.lang === lang && p.id,
-        );
-        // this.templates.push({
-        //   id: 'dkg2gFzq',
-        //   title: 'тест',
-        //   description: 'тест',
-        //   lang,
-        // });
-
-        if (this.modelValue !== null && this.templates.some((t) => t.id === this.modelValue)) {
+        const use_lang = lang === 'ru' ? 'ru' : 'en';
+        this.templates = all.filter((p) => p.lang === use_lang && p.id);
+        if (
+          this.modelValue !== null &&
+          this.templates.some((t) => t.id === this.modelValue)
+        ) {
           this.selectedId = this.modelValue;
-        } else if (this.initialTemplateId && this.templates.some((t) => t.id === this.initialTemplateId)) {
+        } else if (
+          this.initialTemplateId &&
+          this.templates.some((t) => t.id === this.initialTemplateId)
+        ) {
           this.selectedId = this.initialTemplateId;
         } else if (this.templates.length > 0) {
           this.selectedId = this.templates[0].id;
