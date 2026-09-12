@@ -4,11 +4,7 @@
     class="AssetBlockEditor"
     :class="{ 'has-comments': hasComments }"
   >
-    <div
-      ref="blocksWrapRef"
-      class="AssetBlockEditor-list"
-      @mouseleave="onSelDragCancel"
-    >
+    <div ref="blocksWrapRef" class="AssetBlockEditor-list">
       <sortable-list
         handle-selector=".EditorBlock-drag"
         id-key="id"
@@ -262,12 +258,16 @@ export default defineComponent({
       selAnchorId: null as null | string,
       selCursorId: null as null | string,
       selCursorYLocal: 0,
+      selCursorClientY: 0,
       selDownY: 0,
       selLineVisible: false,
       selLineStyle: { top: '0px', height: '0px' } as {
         top: string;
         height: string;
       },
+      selAutoScrollRaf: null as number | null,
+      selAutoScrollDir: 0,
+      selAutoScrollSpeed: 0,
     };
   },
   computed: {
@@ -404,6 +404,7 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
+    this.cancelSelAutoScroll();
     document.removeEventListener('mousemove', this.onSelDocMouseMove);
     document.removeEventListener('mouseup', this.onSelMouseUp);
   },
@@ -628,11 +629,9 @@ export default defineComponent({
       const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
       if (!wrap) return;
       const wrap_rect = wrap.getBoundingClientRect();
-      const y_local = Math.min(
-        Math.max(ev.clientY - wrap_rect.top, 0),
-        wrap_rect.height,
-      );
-      this.selCursorYLocal = y_local;
+      const y_local = ev.clientY - wrap_rect.top;
+      this.selCursorClientY = ev.clientY;
+      this.selCursorYLocal = Math.min(Math.max(y_local, 0), wrap_rect.height);
       const index = this.selRowIndexAt(y_local);
       if (index >= 0) {
         const block_id = this.resolvedBlocksFilteredList[index].id;
@@ -641,6 +640,7 @@ export default defineComponent({
           this.applySelRange();
         }
       }
+      this.updateSelAutoScroll(ev.clientY);
       this.updateSelLine();
     },
     onSelMouseUp(ev: MouseEvent) {
@@ -650,17 +650,100 @@ export default defineComponent({
       this.selDragActive = false;
       this.selAnchorId = null;
       this.selCursorId = null;
+      this.cancelSelAutoScroll();
       this.updateSelLine();
       if (!moved && anchor_id) {
         this.assetBlockEditor.toggleBlockSelected(anchor_id);
       }
     },
-    onSelDragCancel() {
-      if (!this.selDragActive) return;
-      this.selDragActive = false;
-      this.selAnchorId = null;
-      this.selCursorId = null;
+    getSelScrollContainer(): HTMLElement | null {
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!wrap) return null;
+      let el: HTMLElement | null = wrap.parentElement;
+      while (el) {
+        const overflow_y = getComputedStyle(el).overflowY;
+        if (
+          overflow_y === 'auto' ||
+          overflow_y === 'scroll' ||
+          overflow_y === 'overlay'
+        ) {
+          if (el.scrollHeight > el.clientHeight) return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    },
+    updateSelAutoScroll(clientY: number) {
+      const scroll_container = this.getSelScrollContainer();
+      const rect = scroll_container
+        ? scroll_container.getBoundingClientRect()
+        : null;
+      const top = rect ? rect.top : 0;
+      const bottom = rect ? rect.bottom : window.innerHeight;
+      const edge_zone = 60;
+      let dir = 0;
+      let speed = 0;
+      if (clientY < top + edge_zone) {
+        dir = -1;
+        speed = Math.min(100, 15 + (top + edge_zone - clientY) * 0.7);
+      } else if (clientY > bottom - edge_zone) {
+        dir = 1;
+        speed = Math.min(100, 15 + (clientY - (bottom - edge_zone)) * 0.7);
+      }
+      this.selAutoScrollDir = dir;
+      this.selAutoScrollSpeed = speed;
+      if (dir !== 0) {
+        if (!this.selAutoScrollRaf) {
+          this.selAutoScrollRaf = requestAnimationFrame(() =>
+            this.selAutoScrollTick(),
+          );
+        }
+      } else {
+        this.cancelSelAutoScroll();
+      }
+    },
+    cancelSelAutoScroll() {
+      if (this.selAutoScrollRaf !== null) {
+        cancelAnimationFrame(this.selAutoScrollRaf);
+        this.selAutoScrollRaf = null;
+      }
+    },
+    selAutoScrollTick() {
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!this.selDragActive || !wrap || this.selAutoScrollDir === 0) {
+        this.cancelSelAutoScroll();
+        return;
+      }
+      const scroll_container = this.getSelScrollContainer();
+      if (scroll_container) {
+        const max_scroll =
+          scroll_container.scrollHeight - scroll_container.clientHeight;
+        scroll_container.scrollTop = Math.min(
+          Math.max(
+            scroll_container.scrollTop +
+              this.selAutoScrollDir * this.selAutoScrollSpeed,
+            0,
+          ),
+          max_scroll,
+        );
+      } else {
+        window.scrollBy(0, this.selAutoScrollDir * this.selAutoScrollSpeed);
+      }
+      const wrap_rect = wrap.getBoundingClientRect();
+      const y_local = this.selCursorClientY - wrap_rect.top;
+      this.selCursorYLocal = Math.min(Math.max(y_local, 0), wrap_rect.height);
+      const index = this.selRowIndexAt(y_local);
+      if (index >= 0) {
+        const block_id = this.resolvedBlocksFilteredList[index].id;
+        if (block_id !== this.selCursorId) {
+          this.selCursorId = block_id;
+          this.applySelRange();
+        }
+      }
       this.updateSelLine();
+      this.selAutoScrollRaf = requestAnimationFrame(() =>
+        this.selAutoScrollTick(),
+      );
     },
     updateSelLine() {
       const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
