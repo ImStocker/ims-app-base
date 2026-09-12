@@ -986,7 +986,7 @@ export default defineComponent({
   width: 2px;
   border-radius: 2px;
   background: var(--color-accent);
-  opacity: 0.85;
+  opacity: 0.25;
   pointer-events: none;
   z-index: 2;
 
