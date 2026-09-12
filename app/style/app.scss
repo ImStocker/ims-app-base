@@ -101,6 +101,9 @@ body {
     .CenteredPage-breadcrumbs {
       padding: 0 var(--editor-block-padding-right) 0 var(--editor-block-padding-left);
     }
+    .CenteredPage-breadcrumbs {
+      margin-bottom: 5px;
+    }
   }
 }
 

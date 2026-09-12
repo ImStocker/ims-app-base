@@ -174,7 +174,6 @@ export default defineComponent({
 <style lang="scss" scoped>
 .RenamableText-static {
   display: flex;
-  border-bottom: 1px solid transparent;
 }
 .RenamableText-static-value {
   white-space: pre;

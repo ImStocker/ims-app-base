@@ -3,44 +3,48 @@
     <div v-if="isRenamingInProcNewTitle" class="loaderBarFloat"></div>
     <div class="AssetPageHeader-header">
       <div class="AssetPageHeader-title">
-        <div class="App-header">
+        <div class="AssetPageHeader-title-icon-box">
           <i :class="headerIcon" class="AssetPageHeader-title-icon"></i>
-          <renamable-text
-            v-model:is-renaming-mode-state="isRenaming"
-            :value="selectionInfo.rawCaption"
-            :disabled="!canRename"
-            @change="renameAsset($event)"
-          >
-            <h1 :title="canRename ? $t('gddPage.dblClickToRename') : ''">
-              <caption-string :value="selectionInfo.caption" />
-            </h1>
-          </renamable-text>
         </div>
-        <div
-          v-if="
-            commonParent &&
-            !isAssetDiscussion &&
-            !projectIsHub &&
-            !layoutDescriptor.props.headerHideParent
-          "
-          class="AssetPageHeader-parent"
-        >
-          ←
-          <asset-link
-            class="AssetPageHeader-parent-link"
-            :class="{
-              'state-deleted': !!commonParent.deletedAt,
-            }"
-            :project="vm.assetFullEditorVM.projectInfo"
-            :asset="commonParent"
-            :show-icon="false"
-            :open-popup="true"
-          ></asset-link>
+        <div class="AssetPageHeader-titles">
+          <div class="App-header">
+            <renamable-text
+              v-model:is-renaming-mode-state="isRenaming"
+              :value="selectionInfo.rawCaption"
+              :disabled="!canRename"
+              @change="renameAsset($event)"
+            >
+              <h1 :title="canRename ? $t('gddPage.dblClickToRename') : ''">
+                <caption-string :value="selectionInfo.caption" />
+              </h1>
+            </renamable-text>
+          </div>
+          <div
+            v-if="
+              commonParent &&
+              !isAssetDiscussion &&
+              !projectIsHub &&
+              !layoutDescriptor.props.headerHideParent
+            "
+            class="AssetPageHeader-parent"
+          >
+            ←
+            <asset-link
+              class="AssetPageHeader-parent-link"
+              :class="{
+                'state-deleted': !!commonParent.deletedAt,
+              }"
+              :project="vm.assetFullEditorVM.projectInfo"
+              :asset="commonParent"
+              :show-icon="false"
+              :open-popup="true"
+            ></asset-link>
+          </div>
         </div>
       </div>
       <div v-if="vm.asset?.name" class="AssetPageHeader-assetName">
         <i class="ri-price-tag-3-fill"></i>
-        {{ vm.asset.name }}
+        <span>{{ vm.asset.name }}</span>
       </div>
       <div
         v-if="toolbarRequested"
@@ -76,10 +80,12 @@
         >
           <i class="ri-share-fill"></i>
         </button>
-        <asset-settings
-          :asset-editor="vm.assetFullEditorVM"
-          @delete="deleteAsset"
-        ></asset-settings>
+        <div class="AssetPageHeader-manage-gear">
+          <asset-settings
+            :asset-editor="vm.assetFullEditorVM"
+            @delete="deleteAsset"
+          ></asset-settings>
+        </div>
       </div>
     </div>
     <request-sign-in-block
@@ -376,8 +382,8 @@ export default defineComponent({
 .AssetPageHeader-title {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
   flex: 1;
 
   .App-header {
@@ -387,6 +393,36 @@ export default defineComponent({
     margin-bottom: 0px;
   }
 }
+.AssetPageHeader-title-icon-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
+  font-size: 18px;
+}
+.AssetPageHeader-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  h1,
+  :deep(.ImsTextInput) {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--local-text-color);
+    line-height: 1.2em;
+
+    @media (max-width: 700px) {
+      font-size: var(--local-font-size);
+    }
+  }
+}
 .AssetPageHeader-title-icon {
   @include asset-icons.asset-icons;
 }
@@ -394,17 +430,21 @@ export default defineComponent({
 .AssetPageHeader-parent {
   display: flex;
   align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--local-sub-text-color);
+  font-size: 12.5px;
+  line-height: 1em;
 }
 
 .AssetPageHeader-parent-link {
-  color: var(--text-intense);
+  color: var(--local-sub-text-color);
   text-decoration: none;
   cursor: pointer;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-left: 5px;
 
   &:hover {
     text-decoration: underline;
@@ -418,21 +458,70 @@ export default defineComponent({
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 10px;
 }
 .AssetPageHeader-manage-share,
 .AssetPageHeader-manage-locale,
 .AssetPageHeader-manage-properties {
   --button-font-size: 20px;
 }
+.AssetPageHeader-manage-gear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  :deep(.is-button-dropdown) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--local-border-color);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--local-sub-text-color);
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease,
+      background 0.15s ease;
+
+    i {
+      font-size: 17px;
+    }
+
+    &:hover {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+      background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    }
+  }
+}
 .AssetPageHeader-requestSignIn {
   margin-top: 15px;
 }
 .AssetPageHeader-assetName {
-  font-size: var(--local-font-size);
+  flex: none;
+  font-size: 12.5px;
   font-weight: normal;
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--local-sub-text-color);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent);
+  max-width: 220px;
+
+  i {
+    flex: none;
+    font-size: 14px;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

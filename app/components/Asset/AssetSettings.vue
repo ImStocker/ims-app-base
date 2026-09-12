@@ -1,5 +1,8 @@
 <template>
   <menu-button v-if="menuList.length > 0">
+    <template #button-icon>
+      <i class="ri-settings-3-line"></i>
+    </template>
     <menu-list :menu-list="menuList"></menu-list>
   </menu-button>
 </template>
