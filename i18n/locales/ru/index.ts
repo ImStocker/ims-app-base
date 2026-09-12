@@ -505,18 +505,10 @@ export default {
     valueTableColumnOrderRight: 'Вправо',
     toolbarCopyBlock: 'Копировать блок',
     toolbarPasteBlock: 'Вставить блок',
-    pasteBlockAfter: 'Вставить после',
     toolbarSaveChanges: 'Сохранить изменения',
     toolbarSaving: 'Сохранение...',
-    toolbarCopyBlockDone: 'Блок скопирован',
-    toolbarPasteBlockDone: 'Блок вставлен',
     toolbarUndo: 'Отменить изменение',
     toolbarRedo: 'Повторить изменение',
-    toolbarCopyBlockAsBlockMirror: 'Создать синхронизированную копию блока',
-    toolbarCopyBlockAsBlockMirrorHint:
-      'Синхронизированная копия отображает все изменения исходного блока',
-    toolbarCopyBlockAsBlockMirrorDone:
-      'Синхронизированная копия блока создана. Вы можете вставить ее в любой другой элемент',
     blockSelectionCount: 'Выбрано: {count}',
     blockSelectionClear: 'Очистить',
     blockSelectionHint:
@@ -524,6 +516,11 @@ export default {
     pasteBlocks: 'Вставить блоки',
     pasteBlocksEmpty: 'В буфере обмена нет блоков',
     pasteBlocksError: 'Не удалось прочитать буфер обмена',
+    pasteBlocksOverwriteHeader: 'Перезаписать существующие блоки?',
+    pasteBlocksOverwriteMessage:
+      'Блоки с такими же именами уже есть в этом ассете. Перезаписать их или вставить новые блоки с новыми именами?',
+    pasteBlocksOverwrite: 'Перезаписать блоки',
+    pasteBlocksInsertNew: 'Вставить новые блоки',
     copyBlocksError: 'Не удалось записать в буфер обмена',
     blocksCopied: 'Скопировано блоков: {count}',
     blocksPasted: 'Вставлено блоков: {count}',

@@ -13,6 +13,7 @@ import { defineComponent } from 'vue';
 import MenuList from '../../Common/MenuList.vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
+import type { MenuListItem } from '../../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
@@ -34,7 +35,7 @@ export default defineComponent({
       default: 0,
     },
   },
-  emits: ['click'],
+  emits: ['click', 'paste-blocks'],
   computed: {
     blockTypes() {
       return this.$getAppManager()
@@ -42,14 +43,25 @@ export default defineComponent({
         .getBlockTypesList()
         .filter((x) => !x.hideInAdding);
     },
-    menuList() {
-      return this.blockTypes.map((block) => {
+    menuList(): MenuListItem[] {
+      const list: MenuListItem[] = this.blockTypes.map((block) => {
         return {
           title: this.$t('blockTypes.titles.' + block.name),
           icon: 'ri-' + block.icon,
           action: () => this.$emit('click', block.name),
         };
       });
+      list.push(
+        {
+          type: 'separator',
+        },
+        {
+          title: this.$t('assetEditor.pasteBlocks'),
+          icon: 'ri-clipboard-line',
+          action: () => this.$emit('paste-blocks'),
+        },
+      );
+      return list;
     },
   },
 });

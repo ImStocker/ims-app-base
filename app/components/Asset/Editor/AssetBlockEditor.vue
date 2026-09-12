@@ -28,6 +28,7 @@
             :allow-add-blocks="canAddBlocks"
             @create-block="createBlock($event)"
             @create-title="createTitle($event)"
+            @paste-blocks="pasteBlocksFromClipboard"
           ></editor-block-separator>
           <div
             class="AssetBlockEditorCommon-block"
@@ -699,8 +700,11 @@ export default defineComponent({
       };
       this.selLineVisible = true;
     },
-    async pasteBlocksFromClipboard() {
-      await this.assetBlockEditor.pasteBlocksFromClipboard();
+    async pasteBlocksFromClipboard(from_index?: number, to_index?: number) {
+      await this.assetBlockEditor.pasteBlocksFromClipboard(
+        from_index,
+        to_index,
+      );
     },
   },
 });

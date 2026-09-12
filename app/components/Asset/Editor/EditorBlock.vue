@@ -387,20 +387,9 @@ export default defineComponent({
           title: this.$t('assetEditor.toolbarCopyBlock'),
           icon: 'ri-file-copy-fill',
           action: () => {
-            this.assetBlockEditor.copyBlock(this.resolvedBlock.id);
+            this.assetBlockEditor.copyBlockToClipboard(this.resolvedBlock.id);
           },
         },
-        ...(this.assetBlockEditor.copiedBlock
-          ? [
-              {
-                title: this.$t('assetEditor.pasteBlockAfter'),
-                icon: 'ri-clipboard-fill',
-                action: () => {
-                  this.assetBlockEditor.pasteBlock(this.resolvedBlock.id);
-                },
-              },
-            ]
-          : []),
         {
           type: 'separator',
         },

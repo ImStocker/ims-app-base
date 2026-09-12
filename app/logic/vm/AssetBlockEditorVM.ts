@@ -25,6 +25,7 @@ import { AssetRights } from '../types/Rights';
 import type { AssetChanger, BlockCursor } from '../types/AssetChanger';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
+import { generateNextUniqueNameNumber } from '../utils/stringUtils';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
 import type {
   ApiRequestList,
@@ -55,15 +56,10 @@ import {
 import type { AssetHistoryVM } from './AssetHistoryVM';
 import { AssetChangerDefault } from '../types/AssetChangerDefault';
 
-type CopiedBlock = {
-  title: string | null;
-  type: string;
-  props: AssetProps;
-};
-
 type ClipboardBlockEntry = {
   type: string;
-  title: string | null;
+  title?: string | null;
+  name?: string | null;
   props: AssetProps;
 };
 
@@ -73,7 +69,6 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   assetEditedComp!: ComputedRef<AssetForEdit | null>;
   saveOnBlockCommit: boolean;
   private _assetChanger: AssetChanger;
-  copiedBlock: CopiedBlock | null = null;
   selectedBlockIds: Set<string> = new Set();
   private _navigationGuardHandler: UiNavigationGuardHandler | null = null;
   private _projectInfo: ProjectFullInfo | null;
@@ -129,23 +124,6 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       projectInfo?.id ?? null,
     );
     this._projectInfo = projectInfo ?? null;
-
-    if (
-      typeof window !== 'undefined' &&
-      typeof window.localStorage !== 'undefined'
-    ) {
-      const saved_copied_json = window.localStorage.getItem(
-        'AssetEditorToolbar-copied',
-      );
-      if (saved_copied_json) {
-        try {
-          const saved_copied = JSON.parse(saved_copied_json);
-          this.copiedBlock = saved_copied;
-        } catch (err: any) {
-          console.error('AssetBlockEditor: bad block in copied', err);
-        }
-      }
-    }
   }
 
   async saveHistoryCopy(): Promise<void> {
@@ -482,6 +460,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     params?: {
       index?: number;
       title?: string | null;
+      name?: string | null;
       props?: AssetProps;
     },
   ): Promise<ResolvedAssetBlock | null> {
@@ -523,6 +502,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const created = this.assetChanger.createBlock(asset_full.id, {
       type,
       title: block_params.title ?? undefined,
+      name: params?.name ?? undefined,
       index: new_index,
       props: block_params.props ? block_params.props : undefined,
     });
@@ -704,101 +684,6 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       .checkHasChildrenViaCache(assetId);
   }
 
-  copyBlock(block_id?: string) {
-    let editing: ResolvedAssetBlock | null;
-    if (block_id) {
-      editing = this.getResolvedBlockById(block_id);
-    } else {
-      editing = this.editingBlock;
-    }
-    if (!editing) return;
-    const props = mergeInheritedProps(editing.inherited ?? {}, editing.props);
-    this.copiedBlock = {
-      title: editing.title,
-      type: editing.type,
-      props,
-    };
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(
-        'AssetEditorToolbar-copied',
-        JSON.stringify(this.copiedBlock),
-      );
-      this.appManager
-        .get(UiManager)
-        .showSuccess(this.appManager.$t('assetEditor.toolbarCopyBlockDone'));
-    } else {
-      this.appManager.get(UiManager).showError('Window is undefined');
-    }
-  }
-
-  copyBlockAsBlockMirror() {
-    const editing = this.editingBlock;
-    if (!editing) return;
-    const editing_asset = this.assetFull;
-    if (!editing_asset) return;
-    this.copiedBlock = {
-      title: editing.title,
-      type: 'block-mirror',
-      props: {
-        asset: editing_asset.convertToAssetPropValue(),
-        block_ref: stringifyAssetNewBlockRef(
-          editing.name,
-          editing.name ? null : editing.id,
-        ),
-      },
-    };
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(
-        'AssetEditorToolbar-copied',
-        JSON.stringify(this.copiedBlock),
-      );
-      this.appManager
-        .get(UiManager)
-        .showSuccess(
-          this.appManager.$t('assetEditor.toolbarCopyBlockAsBlockMirrorDone'),
-        );
-    } else {
-      this.appManager.get(UiManager).showError('Window is undefined');
-    }
-  }
-  pasteBlock(block_id?: string) {
-    const copied = JSON.parse(
-      window?.localStorage.getItem('AssetEditorToolbar-copied') ?? '',
-    );
-    if (!copied) return;
-    const blocks = this.resolveBlocks();
-    let editing: ResolvedAssetBlock | null;
-    if (block_id) {
-      editing = this.getResolvedBlockById(block_id);
-    } else {
-      editing = this.editingBlock;
-    }
-    let index1: number;
-    let index2: number | null = null;
-    if (editing) {
-      index1 = editing.index;
-      const block_ind = blocks.list.findIndex((b) => b.id === editing.id);
-      if (block_ind < blocks.list.length - 1) {
-        index2 = blocks.list[block_ind + 1].index;
-      }
-    } else {
-      index1 =
-        blocks.list.length > 0 ? blocks.list[blocks.list.length - 1].index : 0;
-    }
-    const new_index =
-      index2 !== null
-        ? getBetweenIndexWithTimestamp(index1, index2)
-        : getNextIndexWithTimestamp(index1);
-    this.createBlock(copied.type, {
-      index: new_index,
-      title: copied.title,
-      props: copied.props,
-    });
-    this.appManager
-      .get(UiManager)
-      .showSuccess(this.appManager.$t('assetEditor.toolbarPasteBlockDone'));
-  }
-
   isBlockSelected(block_id: string): boolean {
     return this.selectedBlockIds.has(block_id);
   }
@@ -857,8 +742,34 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     return {
       type: block.type,
       title: block.title,
+      name: block.name ?? null,
       props: mergeInheritedProps(block.inherited ?? {}, block.props),
     };
+  }
+
+  private _replaceBlockProps(block: ResolvedAssetBlock, props: AssetProps) {
+    const asset_full = this.assetFull;
+    assert(asset_full);
+    const op = this.assetChanger.makeOpId();
+    const old_keys = Object.keys(
+      mergeInheritedProps(block.inherited ?? {}, block.props),
+    );
+    if (old_keys.length > 0) {
+      this.assetChanger.deleteBlockPropKeys(
+        asset_full.id,
+        makeBlockRef(block),
+        null,
+        old_keys,
+        op,
+      );
+    }
+    this.assetChanger.setBlockPropKeys(
+      asset_full.id,
+      makeBlockRef(block),
+      null,
+      props,
+      op,
+    );
   }
 
   async copySelectedBlocks(): Promise<boolean> {
@@ -868,19 +779,46 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (blocks.length === 0) {
       return false;
     }
+    const result = await this._writeBlocksToClipboard(blocks);
+    if (result) {
+      this.clearBlockSelection();
+    }
+    return result;
+  }
+
+  async copyBlockToClipboard(block_id?: string): Promise<boolean> {
+    let editing: ResolvedAssetBlock | null;
+    if (block_id) {
+      editing = this.getResolvedBlockById(block_id);
+    } else {
+      editing = this.editingBlock;
+    }
+    if (!editing) return false;
+    return this._writeBlocksToClipboard([editing]);
+  }
+
+  private async _writeBlocksToClipboard(
+    blocks: ResolvedAssetBlock[],
+  ): Promise<boolean> {
+    if (blocks.length === 0) {
+      return false;
+    }
     const entries: ClipboardBlockEntry[] = blocks.map((block) =>
       this._blockToClipboardEntry(block),
     );
     try {
-      await navigator.clipboard.writeText(JSON.stringify(entries));
+      await navigator.clipboard.writeText(
+        JSON.stringify({
+          blocks: entries,
+        }),
+      );
     } catch (err) {
-      console.error('AssetBlockEditor: copy selected blocks to clipboard', err);
+      console.error('AssetBlockEditor: copy blocks to clipboard', err);
       this.appManager
         .get(UiManager)
         .showError(this.appManager.$t('assetEditor.copyBlocksError'));
       return false;
     }
-    this.clearBlockSelection();
     this.appManager.get(UiManager).showSuccess(
       this.appManager.$t('assetEditor.blocksCopied', {
         count: blocks.length,
@@ -897,21 +835,32 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     } catch {
       return result;
     }
-    if (!Array.isArray(raw)) return result;
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      return result;
+    }
+    const raw_blocks = (raw as Record<string, unknown>)['blocks'];
+    if (!Array.isArray(raw_blocks)) return result;
     const registered_types = this.appManager
       .get(EditorManager)
       .getBlockTypesMap();
-    for (const item of raw) {
+    for (const item of raw_blocks) {
       if (typeof item !== 'object' || item === null) continue;
       const entry = item as Record<string, unknown>;
       const type = entry['type'];
-      const title = entry['title'];
       if (typeof type !== 'string' || !registered_types[type]) continue;
-      if (typeof title !== 'string' || !title.trim()) continue;
+      const title = entry['title'];
+      const name = entry['name'];
       const props = entry['props'];
+      if (title !== undefined && title !== null && typeof title !== 'string') {
+        continue;
+      }
+      if (name !== undefined && name !== null && typeof name !== 'string') {
+        continue;
+      }
       result.push({
         type,
-        title,
+        title: typeof title === 'string' ? title : null,
+        name: typeof name === 'string' ? name : null,
         props:
           props && typeof props === 'object'
             ? (props as AssetProps)
@@ -921,7 +870,10 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     return result;
   }
 
-  async pasteBlocksFromClipboard(): Promise<void> {
+  async pasteBlocksFromClipboard(
+    from_index?: number,
+    to_index?: number,
+  ): Promise<void> {
     const app_manager = this.appManager;
     if (!this.assetFull) return;
     let text = '';
@@ -947,17 +899,61 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
         .showError(app_manager.$t('assetEditor.pasteBlocksEmpty'));
       return;
     }
+    const conflicts = entries.filter((entry) => {
+      if (!entry.name) return false;
+      const existing = this.getBlockByName(entry.name);
+      return !!existing && existing.type === entry.type;
+    });
+    let overwrite_blocks = false;
+    if (conflicts.length > 0) {
+      const answer = await app_manager.get(DialogManager).show(ConfirmDialog, {
+        header: app_manager.$t('assetEditor.pasteBlocksOverwriteHeader'),
+        message: app_manager.$t('assetEditor.pasteBlocksOverwriteMessage'),
+        yesCaption: app_manager.$t('assetEditor.pasteBlocksOverwrite'),
+        noCaption: app_manager.$t('assetEditor.pasteBlocksInsertNew'),
+        withCancel: true,
+      });
+      if (answer === null || answer === undefined) return;
+      overwrite_blocks = answer;
+    }
     await app_manager.get(UiManager).doTask(async () => {
       const blocks = this.resolveBlocks();
       let last_index =
-        blocks.list.length > 0 ? blocks.list[blocks.list.length - 1].index : 0;
+        from_index ??
+        to_index ??
+        (blocks.list.length > 0
+          ? blocks.list[blocks.list.length - 1].index
+          : 0);
       let pasted_count = 0;
+      let updated_count = 0;
       let last_created: ResolvedAssetBlock | null = null;
       for (const entry of entries) {
-        last_index = getNextIndexWithTimestamp(last_index);
+        const existing = entry.name ? this.getBlockByName(entry.name) : null;
+        if (existing && existing.type === entry.type && overwrite_blocks) {
+          this._replaceBlockProps(existing, entry.props);
+          updated_count++;
+          continue;
+        }
+        if (to_index !== undefined) {
+          last_index = getBetweenIndexWithTimestamp(to_index, last_index);
+        } else {
+          last_index = getNextIndexWithTimestamp(last_index);
+        }
+        let block_name: string | null = null;
+        if (entry.name) {
+          if (existing) {
+            block_name = generateNextUniqueNameNumber(
+              entry.name,
+              (name: string) => !this.getBlockByName(name),
+            );
+          } else {
+            block_name = entry.name;
+          }
+        }
         const created = await this.createBlock(entry.type, {
           index: last_index,
           title: entry.title,
+          name: block_name,
           props: entry.props,
         });
         if (created) {
@@ -965,11 +961,12 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
           last_created = created;
         }
       }
-      if (pasted_count > 0) {
+      const total_count = pasted_count + updated_count;
+      if (total_count > 0) {
         await this.commitBlock(last_created ? last_created.id : '');
         app_manager.get(UiManager).showSuccess(
           app_manager.$t('assetEditor.blocksPasted', {
-            count: pasted_count,
+            count: total_count,
           }),
         );
       }
@@ -993,34 +990,14 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
     return [
       {
-        name: 'blockCopy',
-        isMain: true,
-        title: this.appManager.$t('assetEditor.toolbarCopyBlock'),
-        disabled: !this.editingBlock,
-        icon: 'ri-file-copy-fill',
-        action: () => {
-          this.copyBlock();
-        },
-      },
-      {
         name: 'blockPaste',
         isMain: true,
         title: this.appManager.$t('assetEditor.toolbarPasteBlock'),
         disabled: false,
         icon: 'ri-clipboard-fill',
         action: () => {
-          this.pasteBlock();
+          this.pasteBlocksFromClipboard();
         },
-      },
-      {
-        name: 'blockCopyAsMirror',
-        icon: 'ims-icon-font-block-link',
-        title: this.appManager.$t('assetEditor.toolbarCopyBlockAsBlockMirror'),
-        tooltip: this.appManager.$t(
-          'assetEditor.toolbarCopyBlockAsBlockMirrorHint',
-        ),
-        action: () => this.copyBlockAsBlockMirror(),
-        disabled: !this.editingBlock,
       },
     ];
   }

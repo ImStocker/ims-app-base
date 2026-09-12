@@ -25,6 +25,7 @@
         <add-block-dropdown
           class="EditorBlockSeparator-createBlock-dropdown"
           @click="createBlock($event)"
+          @paste-blocks="pasteBlocks"
         >
           <div class="EditorBlockSeparator-inner-2">
             <div class="EditorBlockSeparator-icon">
@@ -70,7 +71,7 @@ export default defineComponent({
       default: true,
     },
   },
-  emits: ['create-block', 'create-title'],
+  emits: ['create-block', 'create-title', 'paste-blocks'],
   data() {
     return {
       freezeState: false,
@@ -102,22 +103,45 @@ export default defineComponent({
     createTitle() {
       this.$emit('create-title', this.item.id);
     },
-    createBlock(block_type: string) {
+    computeInsertIndex(): number | null {
       if (this.prevItemIndex !== null) {
         const current_item_index = this.item.index;
         const prev_item_index = this.prevItemIndex;
-        const new_index = getBetweenIndexWithTimestamp(
+        return getBetweenIndexWithTimestamp(
           prev_item_index,
           current_item_index,
         );
-        this.$emit('create-block', { blockType: block_type, index: new_index });
-      } else if (this.fromListEdge === 'bottom') {
-        this.$emit('create-block', { blockType: block_type });
+      }
+      if (this.fromListEdge === 'bottom') {
+        return null;
+      }
+      if (this.fromListEdge === 'top') {
+        const current_item_index = this.item.index;
+        const timestamp = parseFloat('0.' + Date.now());
+        return current_item_index - 1 - timestamp;
+      }
+      return null;
+    },
+    createBlock(block_type: string) {
+      const new_index = this.computeInsertIndex();
+      this.$emit('create-block', {
+        blockType: block_type,
+        index: new_index ?? undefined,
+      });
+    },
+    pasteBlocks() {
+      if (this.prevItemIndex !== null) {
+        this.$emit('paste-blocks', this.prevItemIndex, this.item.index);
       } else if (this.fromListEdge === 'top') {
         const current_item_index = this.item.index;
         const timestamp = parseFloat('0.' + Date.now());
-        const new_index = current_item_index - 1 - timestamp;
-        this.$emit('create-block', { blockType: block_type, index: new_index });
+        this.$emit(
+          'paste-blocks',
+          current_item_index - 1 - timestamp,
+          current_item_index,
+        );
+      } else {
+        this.$emit('paste-blocks');
       }
     },
     handleClick(_evt: MouseEvent) {

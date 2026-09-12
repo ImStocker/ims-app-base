@@ -57,13 +57,13 @@ export default defineComponent({
       type: Object as PropType<AssetFullInstanceR>,
       required: true,
     },
-    toolbarShowBlockCopyPaste: {
-      type: Boolean,
-      default: true,
-    },
     historyModeVM: {
       type: [Object, null] as PropType<AssetHistoryVM | null>,
       default: null,
+    },
+    toolbarShowBlockCopyPaste: {
+      type: Boolean,
+      default: true,
     },
   },
   emits: ['close-history-mode'],
@@ -97,9 +97,7 @@ export default defineComponent({
       );
     },
     toolbarHideActions() {
-      return this.toolbarShowBlockCopyPaste
-        ? []
-        : ['blockCopy', 'blockPaste', 'blockCopyAsMirror'];
+      return this.toolbarShowBlockCopyPaste ? [] : ['blockPaste'];
     },
     assetBlockEditorHistoryMode() {
       return this.assetBlockEditor.historyModeVM;
