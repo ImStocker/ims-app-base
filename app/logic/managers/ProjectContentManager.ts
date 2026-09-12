@@ -22,7 +22,7 @@ export default class ProjectContentManager extends AppSubManagerBase {
     if (!target_workspace_id) return;
     if (files.length === 0) return;
     for (const file of files) {
-      if (!/(\.ima[ \d()[\]_]*\.json|\.zip)$/.test(file.name)) {
+      if (!/(\.json|\.zip)$/.test(file.name)) {
         throw new Error(
           this.appManager.$t('importExport.importWrongFileTypes'),
         );
@@ -30,7 +30,7 @@ export default class ProjectContentManager extends AppSubManagerBase {
     }
 
     const is_single_file =
-      files.length === 1 && /\.ima[ \d()[\]_]*\.json$/.test(files[0].name);
+      files.length === 1 && /\.json$/.test(files[0].name);
     if (is_single_file) {
       await this.appManager.get(UiManager).showProgressToast(
         async (progress) => {
@@ -71,7 +71,7 @@ export default class ProjectContentManager extends AppSubManagerBase {
     const file_input_element = document.createElement('input');
     file_input_element.type = 'file';
     file_input_element.style.display = 'none';
-    file_input_element.accept = '.ima.json, .zip';
+    file_input_element.accept = '.json, .zip';
 
     file_input_element.onchange = async (e: any) => {
       let file: File | null = null;

@@ -918,7 +918,7 @@ export default {
       save_structure: 'Ordnerstruktur beibehalten',
     },
     importWrongFileTypes:
-      'Falscher Dateityp zum Importieren. Nur *.zip und *.ima.json sind erlaubt',
+      'Falscher Dateityp zum Importieren. Nur *.zip, *.ima.json und *.json sind erlaubt',
     contents: 'Inhaltsverzeichnis',
   },
   toasts: {

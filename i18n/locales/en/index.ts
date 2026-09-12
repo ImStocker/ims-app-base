@@ -909,7 +909,7 @@ export default {
       save_structure: 'Save the folder structure',
     },
     importWrongFileTypes:
-      'Wrong file type to import. Only *.zip and *.ima.json are allowed',
+      'Wrong file type to import. Only *.zip, *.ima.json and *.json are allowed',
     contents: 'Содержание',
   },
   toasts: {

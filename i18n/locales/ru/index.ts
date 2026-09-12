@@ -924,7 +924,7 @@ export default {
       save_structure: 'Сохранить структуру папок',
     },
     importWrongFileTypes:
-      'Неверный тип файла для импорта. Только *.zip и *.ima.json разрешены',
+      'Неверный тип файла для импорта. Только *.zip, *.ima.json и *.json разрешены',
     contents: 'Содержание',
   },
   toasts: {
