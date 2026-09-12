@@ -15,8 +15,11 @@
           :resolved-block="item"
           :asset-block-editor="assetBlockEditor"
           :readonly="isReadonly"
-          :draggable="canDragBlocks"
-        ></editor-block>
+        >
+          <template #left-actions>
+            <i v-if="canDragBlocks" class="EditorBlock-drag ri-draggable"></i>
+          </template>
+        </editor-block>
       </template>
     </sortable-list>
     <asset-add-block-dropdown
@@ -248,12 +251,15 @@ export default defineComponent({
   margin-left: 0;
 }
 
-.AssetBlockDetachedEditor:deep(.EditorBlock-stateEdit) {
-  opacity: 0 !important;
+.AssetBlockDetachedEditor:deep(.EditorBlock-menu) {
+  opacity: 1;
 }
 
-.AssetBlockDetachedEditor:deep(.EditorBlock-menu),
 .AssetBlockDetachedEditor:deep(.EditorBlock-drag) {
   opacity: 1;
+  color: #666666;
+  cursor: grab;
+  font-size: 16px;
+  pointer-events: all;
 }
 </style>

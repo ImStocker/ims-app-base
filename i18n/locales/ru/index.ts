@@ -517,6 +517,16 @@ export default {
       'Синхронизированная копия отображает все изменения исходного блока',
     toolbarCopyBlockAsBlockMirrorDone:
       'Синхронизированная копия блока создана. Вы можете вставить ее в любой другой элемент',
+    blockSelectionCount: 'Выбрано: {count}',
+    blockSelectionClear: 'Очистить',
+    blockSelectionHint:
+      'Нажмите, чтобы выбрать, перетащите, чтобы выбрать несколько',
+    pasteBlocks: 'Вставить блоки',
+    pasteBlocksEmpty: 'В буфере обмена нет блоков',
+    pasteBlocksError: 'Не удалось прочитать буфер обмена',
+    copyBlocksError: 'Не удалось записать в буфер обмена',
+    blocksCopied: 'Скопировано блоков: {count}',
+    blocksPasted: 'Вставлено блоков: {count}',
     valueNotSet: 'Не задано',
     typeNotSet: 'Не задан',
     blockMirrorFrom: 'Блок из',

@@ -9,7 +9,6 @@
             :asset-block-editor="assetBlockEditor"
             :data-panel-name="block.name ?? block.id"
             :readonly="true"
-            :draggable="false"
             :hide-block-menu="true"
             display-mode="print"
             @view-ready="viewReadyState.set(block.id, $event)"

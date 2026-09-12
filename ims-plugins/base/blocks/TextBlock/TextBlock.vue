@@ -181,18 +181,9 @@ export default defineComponent({
 .AssetEditorTextBlock {
   line-height: var(--local-line-height-text);
 }
-.AssetEditorTextBlock.state-edit {
-  .AssetEditorTextBlock-inner {
-    border-color: var(--color-main-yellow);
-  }
-}
 
 .AssetEditorTextBlock-inner {
-  background-color: var(--local-bg-color);
-  // padding: 15px 20px;
-  border-radius: 4px;
   box-sizing: border-box;
-  border: 1px solid var(--local-bg-color);
 }
 
 .AssetEditorTextBlock-presenter {

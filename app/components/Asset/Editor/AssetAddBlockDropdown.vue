@@ -1,10 +1,7 @@
 <template>
   <menu-button class="AddBlockDropdown">
     <template #button="{ toggle }">
-      <button
-        class="is-button is-button-dotted AddBlockDropdown-button"
-        @click="toggle"
-      >
+      <button class="AddBlockDropdown-button" @click="toggle">
         <i class="ri-add-box-fill"></i>
         {{ $t('gddPage.addBlock') }}
       </button>
@@ -17,6 +14,7 @@ import { defineComponent } from 'vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import MenuList from '../../Common/MenuList.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
+import type { MenuListItem } from '../../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
@@ -24,7 +22,7 @@ export default defineComponent({
     MenuButton,
     MenuList,
   },
-  emits: ['create-block'],
+  emits: ['create-block', 'paste-blocks'],
   computed: {
     blockTypes() {
       return this.$getAppManager()
@@ -35,8 +33,8 @@ export default defineComponent({
           return (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0);
         });
     },
-    menuList() {
-      return this.blockTypes.map((block) => {
+    menuList(): MenuListItem[] {
+      const list: MenuListItem[] = this.blockTypes.map((block) => {
         let title = block.title
           ? block.title
           : this.$t('blockTypes.titles.' + block.name);
@@ -49,6 +47,17 @@ export default defineComponent({
           action: () => this.$emit('create-block', block.name),
         };
       });
+      list.push(
+        {
+          type: 'separator',
+        },
+        {
+          title: this.$t('assetEditor.pasteBlocks'),
+          icon: 'ri-clipboard-line',
+          action: () => this.$emit('paste-blocks'),
+        },
+      );
+      return list;
     },
   },
 });
@@ -69,8 +78,33 @@ export default defineComponent({
 
   .AddBlockDropdown-button {
     width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 0.8em 0.66em;
+    gap: 8px;
+    padding: 10px;
+    border: 1.5px dashed var(--local-border-color);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--local-sub-text-color);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease,
+      background 0.15s ease;
+
+    i {
+      font-size: 17px;
+    }
+
+    &:hover,
+    &.is-open {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+      background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    }
   }
 }
 </style>

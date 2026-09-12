@@ -61,6 +61,12 @@ type CopiedBlock = {
   props: AssetProps;
 };
 
+type ClipboardBlockEntry = {
+  type: string;
+  title: string | null;
+  props: AssetProps;
+};
+
 export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   appManager: IAppManager;
   assetFull: AssetFullInstanceR | null;
@@ -68,6 +74,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   saveOnBlockCommit: boolean;
   private _assetChanger: AssetChanger;
   copiedBlock: CopiedBlock | null = null;
+  selectedBlockIds: Set<string> = new Set();
   private _navigationGuardHandler: UiNavigationGuardHandler | null = null;
   private _projectInfo: ProjectFullInfo | null;
   sharedState: AssetProps = {};
@@ -790,6 +797,183 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     this.appManager
       .get(UiManager)
       .showSuccess(this.appManager.$t('assetEditor.toolbarPasteBlockDone'));
+  }
+
+  isBlockSelected(block_id: string): boolean {
+    return this.selectedBlockIds.has(block_id);
+  }
+
+  toggleBlockSelected(block_id: string) {
+    if (this.selectedBlockIds.has(block_id)) {
+      this.selectedBlockIds.delete(block_id);
+    } else {
+      this.selectedBlockIds.add(block_id);
+    }
+  }
+
+  setBlockSelectionRange(from_block_id: string, to_block_id: string) {
+    const blocks = this.resolveBlocks().list;
+    let from_index = -1;
+    let to_index = -1;
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i].id === from_block_id) {
+        from_index = i;
+      }
+      if (blocks[i].id === to_block_id) {
+        to_index = i;
+      }
+    }
+    if (from_index < 0 || to_index < 0) {
+      return;
+    }
+    this.selectedBlockIds.clear();
+    const min_index = Math.min(from_index, to_index);
+    const max_index = Math.max(from_index, to_index);
+    for (let i = min_index; i <= max_index; i++) {
+      this.selectedBlockIds.add(blocks[i].id);
+    }
+  }
+
+  clearBlockSelection() {
+    this.selectedBlockIds.clear();
+  }
+
+  pruneBlockSelection() {
+    if (this.selectedBlockIds.size === 0) {
+      return;
+    }
+    const blocks = this.resolveBlocks().list;
+    const existing_ids = new Set(blocks.map((b) => b.id));
+    for (const block_id of Array.from(this.selectedBlockIds)) {
+      if (!existing_ids.has(block_id)) {
+        this.selectedBlockIds.delete(block_id);
+      }
+    }
+  }
+
+  private _blockToClipboardEntry(
+    block: ResolvedAssetBlock,
+  ): ClipboardBlockEntry {
+    return {
+      type: block.type,
+      title: block.title,
+      props: mergeInheritedProps(block.inherited ?? {}, block.props),
+    };
+  }
+
+  async copySelectedBlocks(): Promise<boolean> {
+    const blocks = this.resolveBlocks().list.filter((block) =>
+      this.selectedBlockIds.has(block.id),
+    );
+    if (blocks.length === 0) {
+      return false;
+    }
+    const entries: ClipboardBlockEntry[] = blocks.map((block) =>
+      this._blockToClipboardEntry(block),
+    );
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(entries));
+    } catch (err) {
+      console.error('AssetBlockEditor: copy selected blocks to clipboard', err);
+      this.appManager
+        .get(UiManager)
+        .showError(this.appManager.$t('assetEditor.copyBlocksError'));
+      return false;
+    }
+    this.clearBlockSelection();
+    this.appManager.get(UiManager).showSuccess(
+      this.appManager.$t('assetEditor.blocksCopied', {
+        count: blocks.length,
+      }),
+    );
+    return true;
+  }
+
+  private _parseClipboardEntries(text: string): ClipboardBlockEntry[] {
+    const result: ClipboardBlockEntry[] = [];
+    let raw: unknown;
+    try {
+      raw = JSON.parse(text);
+    } catch {
+      return result;
+    }
+    if (!Array.isArray(raw)) return result;
+    const registered_types = this.appManager
+      .get(EditorManager)
+      .getBlockTypesMap();
+    for (const item of raw) {
+      if (typeof item !== 'object' || item === null) continue;
+      const entry = item as Record<string, unknown>;
+      const type = entry['type'];
+      const title = entry['title'];
+      if (typeof type !== 'string' || !registered_types[type]) continue;
+      if (typeof title !== 'string' || !title.trim()) continue;
+      const props = entry['props'];
+      result.push({
+        type,
+        title,
+        props:
+          props && typeof props === 'object'
+            ? (props as AssetProps)
+            : ({} as AssetProps),
+      });
+    }
+    return result;
+  }
+
+  async pasteBlocksFromClipboard(): Promise<void> {
+    const app_manager = this.appManager;
+    if (!this.assetFull) return;
+    let text = '';
+    try {
+      text = await navigator.clipboard.readText();
+    } catch (err) {
+      console.error('AssetBlockEditor: paste blocks from clipboard', err);
+      app_manager
+        .get(UiManager)
+        .showError(app_manager.$t('assetEditor.pasteBlocksError'));
+      return;
+    }
+    if (!text.trim()) {
+      app_manager
+        .get(UiManager)
+        .showError(app_manager.$t('assetEditor.pasteBlocksEmpty'));
+      return;
+    }
+    const entries = this._parseClipboardEntries(text);
+    if (entries.length === 0) {
+      app_manager
+        .get(UiManager)
+        .showError(app_manager.$t('assetEditor.pasteBlocksEmpty'));
+      return;
+    }
+    await app_manager.get(UiManager).doTask(async () => {
+      const blocks = this.resolveBlocks();
+      let last_index =
+        blocks.list.length > 0 ? blocks.list[blocks.list.length - 1].index : 0;
+      let pasted_count = 0;
+      let last_created: ResolvedAssetBlock | null = null;
+      for (const entry of entries) {
+        last_index = getNextIndexWithTimestamp(last_index);
+        const created = await this.createBlock(entry.type, {
+          index: last_index,
+          title: entry.title,
+          props: entry.props,
+        });
+        if (created) {
+          pasted_count++;
+          last_created = created;
+        }
+      }
+      if (pasted_count > 0) {
+        await this.commitBlock(last_created ? last_created.id : '');
+        app_manager.get(UiManager).showSuccess(
+          app_manager.$t('assetEditor.blocksPasted', {
+            count: pasted_count,
+          }),
+        );
+      }
+    });
   }
 
   getToolbarActions(): ExtendedMenuListItem[] {

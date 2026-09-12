@@ -7,7 +7,6 @@
       :resolved-block="resolvedBlock"
       :asset-block-editor="assetBlockEditor"
       :readonly="isReadonly"
-      :draggable="false"
       :display-mode="'page'"
       :hide-block-header="true"
       :hide-block-menu="true"

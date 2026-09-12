@@ -4,7 +4,11 @@
     class="AssetBlockEditor"
     :class="{ 'has-comments': hasComments }"
   >
-    <div class="AssetBlockEditor-list">
+    <div
+      ref="blocksWrapRef"
+      class="AssetBlockEditor-list"
+      @mouseleave="onSelDragCancel"
+    >
       <sortable-list
         handle-selector=".EditorBlock-drag"
         id-key="id"
@@ -30,21 +34,17 @@
             :class="{
               'state-collapsed':
                 allowCollapseBlocks && getBlockIsCollapsed(item.id),
+              'has-select': selectionEnabled,
+              'state-selected':
+                selectionEnabled && assetBlockEditor.isBlockSelected(item.id),
             }"
           >
-            <asset-block-hide-button
-              v-if="item.title && allowCollapseBlocks"
-              class="AssetBlockEditor-hideButton"
-              :is-collapsed="getBlockIsCollapsed(item.id)"
-              @update:is-collapsed="setBlockIsCollapsed(item.id, $event)"
-            ></asset-block-hide-button>
             <editor-block
               :ref="(el) => setEditorRef(item, index, el)"
               class="AssetBlockEditor-block"
               :resolved-block="item"
               :asset-block-editor="assetBlockEditor"
               :readonly="isReadonly"
-              :draggable="canDragBlocks"
               :has-comments="hasComments"
               :is-renaming-state="renamingBlockId === item.id"
               :show-name="showNames"
@@ -59,7 +59,43 @@
               "
               @show-chat="openedComment = item.id"
               @update:is-collapsed="setBlockIsCollapsed(item.id, $event)"
-            ></editor-block>
+            >
+              <template #left-actions>
+                <div class="AssetBlockEditor-leftActions">
+                  <i
+                    v-if="canDragBlocks"
+                    class="EditorBlock-drag ri-draggable"
+                  ></i>
+                  <div
+                    v-if="selectionEnabled"
+                    class="AssetBlockEditor-select"
+                    :class="{
+                      checked: assetBlockEditor.isBlockSelected(item.id),
+                    }"
+                    :title="$t('assetEditor.blockSelectionHint')"
+                    @mousedown.prevent.stop="
+                      onSelBlockMouseDown(item.id, $event)
+                    "
+                  >
+                    <i
+                      :class="
+                        assetBlockEditor.isBlockSelected(item.id)
+                          ? 'ri-checkbox-circle-line'
+                          : 'ri-checkbox-blank-circle-line'
+                      "
+                    ></i>
+                  </div>
+                </div>
+              </template>
+              <template #header-actions>
+                <asset-block-hide-button
+                  v-if="item.title && allowCollapseBlocks"
+                  class="AssetBlockEditor-hideButton"
+                  :is-collapsed="getBlockIsCollapsed(item.id)"
+                  @update:is-collapsed="setBlockIsCollapsed(item.id, $event)"
+                ></asset-block-hide-button>
+              </template>
+            </editor-block>
             <asset-block-comment
               v-if="showComments && !isDesktop"
               :ref="(el) => setBlockCommentRef(item, index, el)"
@@ -81,6 +117,11 @@
           ></editor-block-separator>
         </template>
       </sortable-list>
+      <div
+        v-if="selLineVisible"
+        class="AssetBlockEditor-selLine"
+        :style="selLineStyle"
+      ></div>
 
       <div
         v-if="rootCombinedReferences.length > 0 && !hideRootLinks"
@@ -100,6 +141,7 @@
     <asset-add-block-dropdown
       v-if="canAddBlocks"
       @create-block="createBlock({ blockType: $event })"
+      @paste-blocks="pasteBlocksFromClipboard"
     ></asset-add-block-dropdown>
   </div>
   <div v-else class="AssetBlockEditor-load">
@@ -131,7 +173,6 @@ import EditorManager from '../../../logic/managers/EditorManager';
 import AssetBlockHideButton from './AssetBlockHideButton.vue';
 import UiPreferenceManager from '../../../logic/managers/UiPreferenceManager';
 import type EditorBlock from './EditorBlock.vue';
-import type ChatBlock from '../../../../ims-plugins/base/blocks/ChatBlock/ChatBlock.vue';
 
 export function getBlockIsHiddenPreferenceKey(
   projectId: string,
@@ -216,6 +257,16 @@ export default defineComponent({
       >(),
       renamingBlockId: null as string | null,
       openedComment: null as null | string,
+      selDragActive: false,
+      selAnchorId: null as null | string,
+      selCursorId: null as null | string,
+      selCursorYLocal: 0,
+      selDownY: 0,
+      selLineVisible: false,
+      selLineStyle: { top: '0px', height: '0px' } as {
+        top: string;
+        height: string;
+      },
     };
   },
   computed: {
@@ -250,6 +301,9 @@ export default defineComponent({
     },
     canDragBlocks() {
       return this.assetBlockEditor.canDragBlocks() && this.allowDragBlocks;
+    },
+    selectionEnabled() {
+      return this.canDragBlocks;
     },
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
@@ -326,9 +380,14 @@ export default defineComponent({
     isDirty() {
       this.$emit('update:is-dirty', this.isDirty);
     },
+    resolvedBlocksFilteredList() {
+      this.assetBlockEditor.pruneBlockSelection();
+    },
   },
   async mounted() {
     this.$emit('update:is-dirty', this.isDirty);
+    document.addEventListener('mousemove', this.onSelDocMouseMove);
+    document.addEventListener('mouseup', this.onSelMouseUp);
 
     // Focus first empty text block
     if (!this.isReadonly) {
@@ -342,6 +401,10 @@ export default defineComponent({
         }
       }
     }
+  },
+  beforeUnmount() {
+    document.removeEventListener('mousemove', this.onSelDocMouseMove);
+    document.removeEventListener('mouseup', this.onSelMouseUp);
   },
   methods: {
     getBlockIsCollapsed(blockId: string) {
@@ -507,6 +570,138 @@ export default defineComponent({
       }
       return block_reveal_res;
     },
+    getSelBlockIndexById(block_id: string) {
+      return this.resolvedBlocksFilteredList.findIndex(
+        (item) => item.id === block_id,
+      );
+    },
+    getSelCursorYLocal(ev: MouseEvent) {
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!wrap) return 0;
+      return ev.clientY - wrap.getBoundingClientRect().top;
+    },
+    selRowIndexAt(y_local: number) {
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!wrap) return -1;
+      const items = Array.from(
+        wrap.querySelectorAll('.AssetBlockEditorCommon-block'),
+      );
+      if (items.length === 0) return -1;
+      const wrap_top = wrap.getBoundingClientRect().top;
+      const tops = items.map((el) => el.getBoundingClientRect().top - wrap_top);
+      const bottoms = items.map(
+        (el) => el.getBoundingClientRect().bottom - wrap_top,
+      );
+      if (y_local <= tops[0]) return 0;
+      const last_index = items.length - 1;
+      if (y_local >= bottoms[last_index]) return last_index;
+      for (let i = 0; i < last_index; i++) {
+        if (y_local >= tops[i] && y_local < bottoms[i]) return i;
+        if (y_local >= bottoms[i] && y_local < tops[i + 1]) {
+          return y_local - bottoms[i] < tops[i + 1] - y_local ? i : i + 1;
+        }
+      }
+      return last_index;
+    },
+    applySelRange() {
+      const from = this.getSelBlockIndexById(this.selAnchorId ?? '');
+      const to = this.getSelBlockIndexById(this.selCursorId ?? '');
+      if (from < 0 || to < 0) return;
+      const selected = this.assetBlockEditor.selectedBlockIds;
+      selected.clear();
+      for (let i = Math.min(from, to); i <= Math.max(from, to); i++) {
+        selected.add(this.resolvedBlocksFilteredList[i].id);
+      }
+    },
+    onSelBlockMouseDown(block_id: string, ev: MouseEvent) {
+      if (ev.button !== 0) return;
+      this.selDragActive = true;
+      this.selAnchorId = block_id;
+      this.selCursorId = block_id;
+      this.selDownY = ev.clientY;
+      this.selCursorYLocal = this.getSelCursorYLocal(ev);
+      this.updateSelLine();
+    },
+    onSelDocMouseMove(ev: MouseEvent) {
+      if (!this.selDragActive) return;
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!wrap) return;
+      const wrap_rect = wrap.getBoundingClientRect();
+      const y_local = Math.min(
+        Math.max(ev.clientY - wrap_rect.top, 0),
+        wrap_rect.height,
+      );
+      this.selCursorYLocal = y_local;
+      const index = this.selRowIndexAt(y_local);
+      if (index >= 0) {
+        const block_id = this.resolvedBlocksFilteredList[index].id;
+        if (block_id !== this.selCursorId) {
+          this.selCursorId = block_id;
+          this.applySelRange();
+        }
+      }
+      this.updateSelLine();
+    },
+    onSelMouseUp(ev: MouseEvent) {
+      if (!this.selDragActive) return;
+      const moved = Math.abs(ev.clientY - this.selDownY) > 4;
+      const anchor_id = this.selAnchorId;
+      this.selDragActive = false;
+      this.selAnchorId = null;
+      this.selCursorId = null;
+      this.updateSelLine();
+      if (!moved && anchor_id) {
+        this.assetBlockEditor.toggleBlockSelected(anchor_id);
+      }
+    },
+    onSelDragCancel() {
+      if (!this.selDragActive) return;
+      this.selDragActive = false;
+      this.selAnchorId = null;
+      this.selCursorId = null;
+      this.updateSelLine();
+    },
+    updateSelLine() {
+      const wrap = this.$refs['blocksWrapRef'] as HTMLElement | null;
+      if (!this.selDragActive || !wrap) {
+        this.selLineVisible = false;
+        return;
+      }
+      const anchor_index = this.getSelBlockIndexById(this.selAnchorId ?? '');
+      if (anchor_index < 0) {
+        this.selLineVisible = false;
+        return;
+      }
+      const items = Array.from(
+        wrap.querySelectorAll('.AssetBlockEditorCommon-block'),
+      );
+      const anchor_el = items[anchor_index] as HTMLElement | undefined;
+      if (!anchor_el) {
+        this.selLineVisible = false;
+        return;
+      }
+      const wrap_top = wrap.getBoundingClientRect().top;
+      const select_el = anchor_el.querySelector(
+        '.AssetBlockEditor-select',
+      ) as HTMLElement | null;
+      if (!select_el) {
+        this.selLineVisible = false;
+        return;
+      }
+      const select_rect = select_el.getBoundingClientRect();
+      const anchor_center_y =
+        select_rect.top + select_rect.height / 2 - wrap_top;
+      const top = Math.min(anchor_center_y, this.selCursorYLocal);
+      const bottom = Math.max(anchor_center_y, this.selCursorYLocal);
+      this.selLineStyle = {
+        top: `${top}px`,
+        height: `${Math.max(bottom - top, 2)}px`,
+      };
+      this.selLineVisible = true;
+    },
+    async pasteBlocksFromClipboard() {
+      await this.assetBlockEditor.pasteBlocksFromClipboard();
+    },
   },
 });
 </script>
@@ -539,6 +734,23 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   margin-bottom: 10px;
+  position: relative;
+}
+
+.AssetBlockEditor :deep(.SortableList-item) {
+  margin-bottom: 6px;
+}
+
+.AssetBlockEditor
+  :deep(.SortableList-item.sortable-ghost)
+  .AssetBlockEditorCommon-block {
+  opacity: 0.35;
+}
+
+.AssetBlockEditor
+  :deep(.SortableList-item.sortable-chosen)
+  .AssetBlockEditorCommon-block {
+  border-color: var(--color-accent);
 }
 
 .AssetBlockEditor-load {
@@ -573,23 +785,144 @@ export default defineComponent({
 }
 
 .AssetBlockEditor-hideButton {
-  opacity: 0;
-  position: absolute;
-  top: 0;
-  left: -30px;
+  opacity: 1;
+  flex: none;
+  align-self: center;
+  transition: opacity 0.16s ease;
+  &:deep(> button) {
+    padding: 0.33em 0.1em;
+  }
 }
 .AssetBlockEditorCommon-block {
   position: relative;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
   &:hover {
-    .AssetBlockEditor-commentButton,
-    .AssetBlockEditor-hideButton {
+    background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+    border-color: var(--local-border-color);
+
+    .AssetBlockEditor-commentButton {
       opacity: 1;
     }
   }
-  &.state-collapsed {
-    .AssetBlockEditor-hideButton {
-      opacity: 1;
+
+  &.has-select {
+    margin-left: -25px;
+    display: flex;
+    align-items: stretch;
+    --editor-block-padding-left: 50px;
+
+    .AssetBlockEditor-block {
+      flex: 1;
+      min-width: 0;
     }
+  }
+
+  &.state-selected {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+}
+
+.AssetBlockEditor-leftActions {
+  padding-top: 2px;
+  position: relative;
+  display: flex;
+  z-index: 1;
+}
+
+.AssetBlockEditor-leftActions .EditorBlock-drag {
+  flex: none;
+  width: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  cursor: grab;
+  color: transparent;
+  transition: color 0.16s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.AssetBlockEditorCommon-block:hover
+  .AssetBlockEditor-leftActions
+  .EditorBlock-drag {
+  color: var(--local-sub-text-color);
+}
+
+.AssetBlockEditor-select {
+  width: 22px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--local-border-color);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+
+  &:not(.checked) {
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+
+  &.checked {
+    color: var(--color-accent);
+  }
+}
+
+.AssetBlockEditorCommon-block:hover .AssetBlockEditor-select,
+.AssetBlockEditor-select.checked {
+  opacity: 1;
+}
+
+.AssetBlockEditorCommon-block:has(.EditorBlock.state-edit) {
+  border-color: var(--local-border-color);
+  background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+}
+
+.AssetBlockEditor-selLine {
+  position: absolute;
+  left: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 2;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+
+  &::before {
+    top: -5.5px;
+  }
+
+  &::after {
+    bottom: -5.5px;
   }
 }
 </style>

@@ -6,6 +6,7 @@
       'state-readonly': isReadOnly,
       'state-edit': editMode,
       'state-hide-content': isCollapsed,
+      'state-has-header': hasHeader,
     }"
     :block-type="resolvedBlock.type"
     :block-name="resolvedBlock.name"
@@ -14,18 +15,10 @@
     <div v-if="blockNameAnchorTagId" :id="blockNameAnchorTagId"></div>
     <div
       v-if="!['page', 'print'].includes(displayMode)"
-      class="EditorBlock-stateEdit"
-      :class="{ 'state-edit': editMode }"
-    ></div>
-    <div
-      v-if="!['page', 'print'].includes(displayMode)"
       class="EditorBlock-leftControls"
     >
-      <i
-        v-if="draggable && !isReadOnly"
-        class="EditorBlock-drag ri-draggable"
-      ></i>
-      <div v-else-if="isReadOnly" class="EditorBlock-isReadOnly-icon">
+      <slot name="left-actions"></slot>
+      <div v-if="isReadOnly" class="EditorBlock-isReadOnly-icon">
         <i class="ri-lock-fill"></i>
       </div>
       <i
@@ -54,16 +47,8 @@
       ></notification-icon>
     </div>
     <div v-if="saving" class="EditorBlock-saving loaderBar"></div>
-    <div
-      v-if="
-        !hideBlockHeader &&
-        (resolvedBlock.title ||
-          (resolvedBlock.name && showName) ||
-          isRenaming ||
-          toolbarRequested)
-      "
-      class="EditorBlock-header"
-    >
+    <div v-if="hasHeader" class="EditorBlock-header">
+      <slot name="header-actions"></slot>
       <div class="EditorBlock-header-title">
         <div
           v-if="!resolvedBlock.title && !isRenaming && blockFullAccess"
@@ -206,10 +191,6 @@ export default defineComponent({
       required: true,
     },
     readonly: {
-      type: Boolean,
-      default: false,
-    },
-    draggable: {
       type: Boolean,
       default: false,
     },
@@ -471,6 +452,15 @@ export default defineComponent({
       return (
         !!this.assetBlockEditor.assetFull &&
         this.assetBlockEditor.assetFull.name === 'project_props'
+      );
+    },
+    hasHeader() {
+      return (
+        !this.hideBlockHeader &&
+        (this.resolvedBlock.title ||
+          (this.resolvedBlock.name && this.showName) ||
+          this.isRenaming ||
+          this.toolbarRequested)
       );
     },
   },
@@ -741,43 +731,14 @@ export default defineComponent({
 <style lang="scss" rel="stylesheet/scss" scoped>
 @use '$style/devices-mixins.scss';
 
-.EditorBlock-stateEdit {
-  width: 1px;
-  height: 100%;
-  position: absolute;
-  left: 0px;
-  opacity: 0;
-  transition:
-    opacity 0.2s,
-    background-color 0.2s;
-  z-index: 1;
-}
-
 .EditorBlock {
-  &:not(.state-readonly):hover .EditorBlock-stateEdit {
-    opacity: 1;
-    background-color: var(--EditorBlock-hoverLine);
-  }
-
-  &,
-  &:not(.state-readonly):hover {
-    .EditorBlock-stateEdit.state-edit {
-      opacity: 1;
-      background-color: var(--color-main-yellow);
-    }
-  }
-}
-
-.EditorBlock {
-  --EditorBlock-hoverLine: #666;
   color: var(--local-text-color);
   position: relative;
 
   &:hover,
   &.state-edit {
     .EditorBlock-menu,
-    .EditorBlock-isReadOnly-icon,
-    .EditorBlock-drag {
+    .EditorBlock-isReadOnly-icon {
       opacity: 1;
       pointer-events: all;
     }
@@ -796,12 +757,6 @@ export default defineComponent({
   pointer-events: all;
 }
 
-.EditorBlock[block-type='chat'] {
-  .EditorBlock-stateEdit {
-    opacity: 0 !important;
-  }
-}
-
 .EditorBlock-leftControls,
 .EditorBlock-rightControls {
   position: absolute;
@@ -817,13 +772,12 @@ export default defineComponent({
   }
 }
 
+.EditorBlock.state-has-header .EditorBlock-leftControls {
+  top: 3px;
+}
+
 .EditorBlock-leftControls {
   left: 4px;
-
-  .EditorBlock-drag {
-    color: #666666;
-    cursor: grab;
-  }
 
   .EditorBlock-isReadOnly-icon {
     color: #666666;
@@ -840,8 +794,7 @@ export default defineComponent({
 }
 
 .EditorBlock-menu,
-.EditorBlock-isReadOnly-icon,
-.EditorBlock-drag {
+.EditorBlock-isReadOnly-icon {
   transition: opacity 0.1s;
   opacity: 0;
   pointer-events: none;
@@ -853,8 +806,11 @@ export default defineComponent({
     var(--editor-block-padding-left);
 }
 
-.EditorBlock-header {
+.EditorBlock:not(.state-hide-content) .EditorBlock-header {
   margin-bottom: 10px;
+}
+
+.EditorBlock-header {
   display: flex;
   position: relative;
   align-items: center;
@@ -865,16 +821,21 @@ export default defineComponent({
     display: grid;
     grid-template-columns: 1fr auto;
 
-    .EditorBlock-header-title {
+    :deep(.AssetBlockEditor-hideButton) {
       grid-row: 1;
       grid-column: 1;
+    }
+
+    .EditorBlock-header-title {
+      grid-row: 1;
+      grid-column: 2;
     }
     .EditorBlock-header-toolbar {
       grid-row: 2;
       grid-column: 1;
     }
     .EditorBlock-header-menu {
-      grid-row: 1;
+      grid-row: 2;
       grid-column: 2;
     }
   }
@@ -882,7 +843,9 @@ export default defineComponent({
 
 .EditorBlock-header-title {
   flex: 1;
+  min-width: 0;
   display: flex;
+  align-items: center;
 
   .EditorBlock-create-header-suggestion {
     width: 100%;
@@ -899,10 +862,40 @@ export default defineComponent({
 }
 
 .EditorBlock-header-title-value {
-  font-weight: bold;
-  font-size: 20px;
-  width: 100%;
-  max-height: 50px !important;
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  font-size: var(--local-font-size);
+  overflow: hidden;
+  padding: 3px 7px;
+  margin-left: -7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: text;
+  transition: background 0.15s ease;
+
+  &:not(.RenamableText-editor):hover {
+    background: var(--local-hl-bg-color);
+  }
+
+  :deep(.RenamableText-static) {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  :deep(.CaptionString) {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :deep(.RenamableText-editor) {
+    padding: 2px 6px;
+    border: 1px solid var(--color-accent);
+    border-radius: 6px;
+    background: transparent;
+  }
 }
 
 .EditorBlock-header-name {
