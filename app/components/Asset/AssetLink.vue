@@ -5,6 +5,7 @@
       'state-loading': isLoadingShown,
       'state-error': assetNotFound,
     }"
+    :style="linkStyle"
     :project="project"
     :to="{
       name: 'project-asset-by-id',
@@ -61,6 +62,7 @@ import ProjectManager from '../../logic/managers/ProjectManager';
 import AssetIcon from './AssetIcon.vue';
 import EditorManager from '../../logic/managers/EditorManager';
 import UiManager from '../../logic/managers/UiManager';
+import { resolveAssetIconColor } from '../../logic/utils/assetIconColors';
 
 const TOOLTIP_OFFSET_X = 10;
 const TOOLTIP_OFFSET_Y = 10;
@@ -140,6 +142,21 @@ export default defineComponent({
     },
     assetNotFound(): boolean {
       return this.hasGddAccess && this.cachedAsset === null;
+    },
+    assetColor(): string | null {
+      const cached = this.$getAppManager()
+        .get(CreatorAssetManager)
+        .getAssetPreviewViaCacheSync(this.asset.id);
+      if (cached === undefined) {
+        this.$getAppManager()
+          .get(CreatorAssetManager)
+          .requestAssetPreviewInCache(this.asset.id);
+      }
+      const theme = this.$getAppManager().get(UiManager).getColorTheme();
+      return resolveAssetIconColor(cached ? cached.color : null, theme);
+    },
+    linkStyle() {
+      return this.assetColor ? { color: this.assetColor } : null;
     },
   },
   unmounted() {

@@ -104,6 +104,7 @@ export type AssetPreviewInfo = AssetCompletionMeta & {
   title: string | null;
   name: string | null;
   icon: string | null;
+  color: string | null;
   mainImage: {
     type: string;
     value: AssetPropValue;

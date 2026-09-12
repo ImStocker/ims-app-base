@@ -279,6 +279,7 @@ export default {
   fields: {
     type: 'Тип',
     title: 'Название',
+    color: 'Цвет',
     displayTitle: 'Отображаемое имя',
     serviceName: 'Служебное имя',
     isAbstract: 'Является шаблоном',
@@ -376,6 +377,9 @@ export default {
     blockReset: "Начальные значения блока '{block}' были восстановлены",
   },
   assetEditor: {
+    changeIcon: 'Сменить иконку',
+    changeColor: 'Сменить цвет',
+    noColor: 'Без цвета',
     enterBlockTitle: 'Введите имя блока',
     blockSaveError:
       'Ошибка сохранения: {error}\nКликните, чтобы попытаться сохранить снова',

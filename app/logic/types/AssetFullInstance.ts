@@ -397,6 +397,7 @@ export class AssetFullInstance implements AssetFull {
   convertToPreviewInfo(): AssetPreviewInfo {
     let description: AssetPropValue = null;
     let mainImage: AssetPreviewInfo['mainImage'] = null;
+    let color: string | null = null;
     let completion: AssetCompletionMeta = {
       completeTrack: false,
       completeProgress: null,
@@ -414,6 +415,10 @@ export class AssetFullInstance implements AssetFull {
           };
         }
       } else if (block.name === BLOCK_NAME_META) {
+        const meta_color = block.computed['color'];
+        if (typeof meta_color === 'string') {
+          color = meta_color;
+        }
         completion = readAssetMetaCompletionBlockProps(block.computed);
       }
     }
@@ -422,6 +427,7 @@ export class AssetFullInstance implements AssetFull {
       title: this.title,
       name: this.name,
       icon: this.icon,
+      color,
       isAbstract: this.isAbstract,
       description,
       mainImage,

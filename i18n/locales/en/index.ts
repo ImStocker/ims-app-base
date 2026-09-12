@@ -270,6 +270,7 @@ export default {
   fields: {
     type: 'Type',
     title: 'Title',
+    color: 'Color',
     displayTitle: 'Display title',
     serviceName: 'Service name',
     isAbstract: 'Is template',
@@ -366,6 +367,9 @@ export default {
     blockReset: "Initial values of block '{block}' were restored",
   },
   assetEditor: {
+    changeIcon: 'Change icon',
+    changeColor: 'Change color',
+    noColor: 'No color',
     enterBlockTitle: 'Enter block title',
     blockSaveError: 'Saving error: {error}\nClick to try save again',
     differentValues: 'Different values',

@@ -27,9 +27,11 @@
               :value="asset.title ?? ''"
               @input="asset.title = $event"
             />
-            <FormCheckIcon
-              :value="commonValues.icon ? (asset.icon ?? '') : 'more-line'"
-              @input="asset.icon = $event"
+            <AssetIconColorControl
+              v-model:asset-icon-class="assetIconClass"
+              v-model:asset-color-name="assetColorName"
+              :can-change="true"
+              :apply-save="false"
             />
           </div>
         </div>
@@ -122,12 +124,13 @@ import type {
   AssetShort,
   AssetSetDTO,
   AssetForSelection,
+  AssetForEdit,
 } from '../../logic/types/AssetsType';
 import DialogContent from '../Dialog/DialogContent.vue';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import FormInput from '../Form/FormInput.vue';
 import AdvancedPropsSpoiler from '../Form/AdvancedPropsSpoiler.vue';
-import FormCheckIcon from '../Form/FormCheckIcon.vue';
+import AssetIconColorControl from './AssetIconColorControl.vue';
 import UiManager from '../../logic/managers/UiManager';
 import FormCheckBox from '../Form/FormCheckBox.vue';
 import ProjectManager from '../../logic/managers/ProjectManager';
@@ -148,16 +151,26 @@ type DialogProps = {
 
 type DialogResult = AssetsFullResult | undefined;
 
+function readMetaColorName(asset: AssetForEdit): string | null {
+  for (const block of asset.blocks ?? []) {
+    if (block.name === BLOCK_NAME_META) {
+      const color = block.computed['color'];
+      if (typeof color === 'string' && color) return color;
+    }
+  }
+  return null;
+}
+
 export default defineComponent({
   name: 'AssetSettingsDialog',
   components: {
     DialogContent,
     FormInput,
     AdvancedPropsSpoiler,
+    AssetIconColorControl,
     FormBuilderFieldTooltip: defineAsyncComponent(
       () => import('../Form/FormBuilderFieldTooltip.vue') as any,
     ),
-    FormCheckIcon,
     FormCheckBox,
     SelectParentAsset,
   },
@@ -182,6 +195,8 @@ export default defineComponent({
       } as Partial<AssetShort>,
       originalTracksProgress: false,
       tracksProgress: false,
+      assetColorName: null as string | null,
+      originalColorName: null as string | null,
       assets: [] as AssetShort[],
       commonValues: {
         icon: true,
@@ -213,6 +228,21 @@ export default defineComponent({
         return this.$t('assetEditor.differentValues');
       }
       return '';
+    },
+    assetIconClass: {
+      get() {
+        return (
+          'asset-icon-' +
+          (this.commonValues.icon
+            ? (this.asset.icon ?? 'file-fill')
+            : 'more-line')
+        );
+      },
+      set(asset_icon_class: string) {
+        if (!asset_icon_class.startsWith('asset-icon-')) return;
+        const name = asset_icon_class.slice('asset-icon-'.length);
+        this.asset.icon = name === 'file-fill' ? null : name;
+      },
     },
     additionalParentOpts(): AssetForSelection[] {
       return [
@@ -288,6 +318,9 @@ export default defineComponent({
             }
           }
           if (editing_assets.length > 0) {
+            const first_color = readMetaColorName(editing_assets[0]);
+            this.assetColorName = first_color;
+            this.originalColorName = first_color;
             for (const block of editing_assets[0].blocks) {
               if (block.name === BLOCK_NAME_META) {
                 if (block.computed['complete_track']) {
@@ -324,14 +357,19 @@ export default defineComponent({
               isAbstract: this.asset.isAbstract,
             };
 
+            const meta_props: Record<string, boolean | string | null> = {};
             if (this.tracksProgress !== this.originalTracksProgress) {
+              meta_props['complete_track'] = this.tracksProgress;
+            }
+            if (this.assetColorName !== this.originalColorName) {
+              meta_props['color'] = this.assetColorName;
+            }
+            if (Object.keys(meta_props).length > 0) {
               changing_asset.blocks = {
                 [BLOCK_NAME_META]: {
                   name: BLOCK_NAME_META,
                   type: 'props',
-                  props: {
-                    complete_track: this.tracksProgress,
-                  },
+                  props: meta_props,
                 },
               };
             }

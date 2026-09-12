@@ -737,6 +737,7 @@ export default class CreatorAssetManager extends AppSubManagerBase {
           'icon',
           'isAbstract',
           'rights',
+          { prop: BLOCK_NAME_META + '|color', as: 'color' },
           { prop: 'gallery|main', as: 'mainImage' },
           { prop: 'description|value', as: 'description' },
           { prop: BLOCK_NAME_META + '|complete_track', as: 'completeTrack' },

@@ -3,9 +3,13 @@
     <div v-if="isRenamingInProcNewTitle" class="loaderBarFloat"></div>
     <div class="AssetPageHeader-header">
       <div class="AssetPageHeader-title">
-        <div class="AssetPageHeader-title-icon-box">
-          <i :class="headerIcon" class="AssetPageHeader-title-icon"></i>
-        </div>
+        <asset-icon-color-control
+          :asset-icon-class="headerIcon"
+          :asset-color-name="assetColorName"
+          :can-change="canChange"
+          :apply-save="true"
+          :asset-id="vm.assetId"
+        />
         <div class="AssetPageHeader-titles">
           <div class="App-header">
             <renamable-text
@@ -102,7 +106,11 @@ import type { AssetPageVM } from '../../../logic/vm/AssetPageVM';
 import AuthManager from '../../../logic/managers/AuthManager';
 import { MIN_ASSET_RIGHTS_TO_CHANGE } from '../../../logic/types/Rights';
 import ProjectManager from '../../../logic/managers/ProjectManager';
-import { DISCUSSION_ASSET_ID, HUB_PID } from '../../../logic/constants';
+import {
+  BLOCK_NAME_META,
+  DISCUSSION_ASSET_ID,
+  HUB_PID,
+} from '../../../logic/constants';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import DialogManager from '../../../logic/managers/DialogManager';
@@ -115,6 +123,7 @@ import AssetLink from '../AssetLink.vue';
 import RenamableText from '../../Common/RenamableText.vue';
 import AssetSettings from '../AssetSettings.vue';
 import CaptionString from '../../Common/CaptionString.vue';
+import AssetIconColorControl from '../AssetIconColorControl.vue';
 import { calcResolvedBlocks } from '../../../logic/types/AssetFullInstance';
 import AssetCompletionCheckWidget from '../Completion/AssetCompletionCheckWidget.vue';
 import AssetPropsDialog from '../AssetPropsDialog.vue';
@@ -129,6 +138,7 @@ export default defineComponent({
     AssetSettings,
     CaptionString,
     AssetCompletionCheckWidget,
+    AssetIconColorControl,
   },
   props: {
     vm: {
@@ -263,6 +273,12 @@ export default defineComponent({
         }
       }
     },
+    assetColorName() {
+      const asset_full = this.currentAssetFull;
+      if (!asset_full) return null;
+      const color = asset_full.getPropValue(BLOCK_NAME_META, 'color').value;
+      return typeof color === 'string' && color ? color : null;
+    },
   },
   methods: {
     async deleteAsset() {
@@ -366,8 +382,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@use '$style/asset-icons';
-
 .AssetPageHeader {
   width: 100%;
   margin-bottom: 10px;
@@ -393,18 +407,6 @@ export default defineComponent({
     margin-bottom: 0px;
   }
 }
-.AssetPageHeader-title-icon-box {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  color: var(--color-accent);
-  font-size: 18px;
-}
 .AssetPageHeader-titles {
   display: flex;
   flex-direction: column;
@@ -423,10 +425,6 @@ export default defineComponent({
     }
   }
 }
-.AssetPageHeader-title-icon {
-  @include asset-icons.asset-icons;
-}
-
 .AssetPageHeader-parent {
   display: flex;
   align-items: center;

@@ -44,6 +44,27 @@ export const GRAPH_ASSET_ID = '00000000-0000-0000-0000-000000000041';
 export const BLOCK_NAME_META = '__meta';
 export const BLOCK_TYPE_META = 'props';
 export const BLOCK_ID_META = '00000000-0000-0000-0000-000000000100';
+
+export const ASSET_ICON_COLORS: AssetIconColorInfo[] = [
+  { name: 'yellow', color: '#EED811' },
+  { name: 'blue', color: '#0979da' },
+  { name: 'sky', color: '#218bff' },
+  { name: 'green', color: '#40c463' },
+  { name: 'lime', color: '#CDF677' },
+  { name: 'red', color: '#cf222e' },
+  { name: 'coral', color: '#EB6060' },
+  { name: 'gold', color: '#d4a72c' },
+  { name: 'purple', color: '#8251df' },
+  { name: 'ice', color: '#b8d3ff' },
+  { name: 'orange', color: '#fd8c74' },
+  { name: 'gray', color: '#E0E0E0' },
+];
+
+export type AssetIconColorInfo = {
+  name: string;
+  color: string;
+  light?: string;
+};
 export const BLOCK_NAME_LOCALE = 'locale';
 export const BLOCK_TYPE_LOCALE = 'locale';
 export const BLOCK_NAME_PROPS = 'props';

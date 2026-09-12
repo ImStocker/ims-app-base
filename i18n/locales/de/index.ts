@@ -271,6 +271,7 @@ export default {
   fields: {
     type: 'Typ',
     title: 'Titel',
+    color: 'Farbe',
     displayTitle: 'Anzeigename',
     serviceName: 'Dienstname',
     isAbstract: 'Ist Vorlage',
@@ -368,6 +369,9 @@ export default {
     blockReset: "Anfangswerte von Block '{block}' wiederhergestellt",
   },
   assetEditor: {
+    changeIcon: 'Icon ändern',
+    changeColor: 'Farbe ändern',
+    noColor: 'Keine Farbe',
     enterBlockTitle: 'Blocktitel eingeben',
     blockSaveError: 'Speicherfehler: {error}\nKlicken um erneut zu speichern',
     differentValues: 'Unterschiedliche Werte',
