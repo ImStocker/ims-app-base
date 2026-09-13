@@ -507,7 +507,10 @@ export default defineComponent({
 </style>
 
 <style lang="scss">
-.EditorBlock[block-type='prop'] .EditorBlock-leftControls {
-  top: 3px;
+.EditorBlock[block-type='prop'] {
+  .EditorBlock-leftControls,
+  .EditorBlock-rightControls {
+    top: 3px;
+  }
 }
 </style>
