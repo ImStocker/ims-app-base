@@ -463,37 +463,6 @@ export default defineComponent({
 .AssetPageHeader-manage-properties {
   --button-font-size: 20px;
 }
-.AssetPageHeader-manage-gear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  :deep(.is-button-dropdown) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--local-border-color);
-    border-radius: 9px;
-    background: transparent;
-    color: var(--local-sub-text-color);
-    transition:
-      color 0.15s ease,
-      border-color 0.15s ease,
-      background 0.15s ease;
-
-    i {
-      font-size: 17px;
-    }
-
-    &:hover {
-      color: var(--color-accent);
-      border-color: var(--color-accent);
-      background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-    }
-  }
-}
 .AssetPageHeader-requestSignIn {
   margin-top: 15px;
 }

@@ -1,7 +1,12 @@
 <template>
-  <menu-button v-if="menuList.length > 0">
-    <template #button-icon>
-      <i class="ri-settings-3-line"></i>
+  <menu-button v-if="menuList.length > 0" class="AssetSettings">
+    <template #button="{ toggle }">
+      <button
+        class="is-button is-button-icon ref-button AssetSettings-button"
+        @click="toggle"
+      >
+        <i class="ri-settings-3-line AssetSettings-icon"></i>
+      </button>
     </template>
     <menu-list :menu-list="menuList"></menu-list>
   </menu-button>
@@ -453,11 +458,15 @@ export default defineComponent({
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
-.AssetSettings {
-  padding: 0;
+.AssetSettings-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--local-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-:deep(.is-button-dropdown) {
-  --button-font-size: 20px;
+.AssetSettings-icon {
+  font-size: 17px;
 }
 </style>
