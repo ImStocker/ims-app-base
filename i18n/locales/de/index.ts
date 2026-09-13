@@ -1037,7 +1037,7 @@ export default {
     downloadResult: 'Ergebnis herunterladen',
   },
   baseObjects: {
-    baseObject: 'Dies ist ein Basisobjekt',
+    baseObject: 'Dies ist ein Systembasisobjekt',
     clickToEdit: 'Klicken zum Bearbeiten',
   },
   assetUnreadFlags: {

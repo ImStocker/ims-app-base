@@ -1026,7 +1026,7 @@ export default {
     downloadResult: 'Download result',
   },
   baseObjects: {
-    baseObject: 'This is a basic object',
+    baseObject: 'This is a system base object',
     clickToEdit: 'Click to edit',
   },
   assetUnreadFlags: {

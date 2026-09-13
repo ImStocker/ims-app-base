@@ -1045,7 +1045,7 @@ export default {
     downloadResult: 'Скачать результат',
   },
   baseObjects: {
-    baseObject: 'Это базовый объект',
+    baseObject: 'Это системный базовый объект',
     clickToEdit: 'Нажмите, чтобы редактировать',
   },
   assetUnreadFlags: {
