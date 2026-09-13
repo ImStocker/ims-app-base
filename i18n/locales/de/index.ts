@@ -380,6 +380,8 @@ export default {
     differentPropsNum: 'Unterschiedliche Eigenschaften: {num}',
     propertyAlreadyExists: 'Eigenschaft existiert bereits',
     itemAlreadyExists: 'Element existiert bereits',
+    blockNameReserved:
+      'Dieser Name ist reserviert und kann nicht verwendet werden',
     inheritedValueLock:
       'Wert ist geerbt und kann nur im übergeordneten Element geändert werden',
     inheritedValue: 'Wert ist geerbt',
@@ -714,6 +716,7 @@ export default {
       text: 'Text',
       checklist: 'Checkliste',
       props: 'Eigenschaftsblatt',
+      prop: 'Eigenschaft',
       gallery: 'Galerie',
       table: 'Tabelle',
       task: 'Aufgabe',

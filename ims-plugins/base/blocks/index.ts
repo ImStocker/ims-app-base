@@ -2,6 +2,7 @@ import { ChatBlockDefinition } from './ChatBlock/ChatBlockDefinition';
 import { EmbedBlockDefinition } from './EmbedBlock/EmbedBlockDefinition';
 import { GalleryDefinition } from './GalleryBlock/GalleryDefinition';
 import { PropsBlockDefinition } from './PropsBlock/PropsBlockDefinition';
+import { PropBlockDefinition } from './PropBlock/PropBlockDefinition';
 import { TextBlockDefinition } from './TextBlock/TextBlockDefinition';
 import { ValueTableDefinition } from './ValueTableBlock/ValueTableBlockDefinition';
 import { BlockMirrorBlockDefinition } from './BlockMirrorBlock/BlockMirrorBlockDefinition';
@@ -14,6 +15,7 @@ const list = [
   new MarkdownBlockDefinition(),
   new ValueTableDefinition(),
   new PropsBlockDefinition(),
+  new PropBlockDefinition(),
   new GalleryDefinition(),
   new EmbedBlockDefinition(),
   new ChatBlockDefinition(),

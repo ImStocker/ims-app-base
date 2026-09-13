@@ -389,6 +389,7 @@ export default {
     differentPropsNum: 'Отличающихся свойств: {num}',
     propertyAlreadyExists: 'Свойство уже существует',
     itemAlreadyExists: 'Элемент уже существует',
+    blockNameReserved: 'Это имя зарезервировано и не может быть использовано',
     inheritedValueLock:
       'Значение унаследовано и может быть изменено только в родительском элементе',
     inheritedValue: 'Значение унаследовано',
@@ -720,6 +721,7 @@ export default {
       text: 'Текст',
       checklist: 'Чек-лист',
       props: 'Таблица свойств',
+      prop: 'Свойство',
       contest2024swipevote: 'Конкурс 2024',
       link: 'Ссылка на файл',
       gallery: 'Галерея',

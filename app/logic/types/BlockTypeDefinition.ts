@@ -113,8 +113,11 @@ export abstract class BlockTypeDefinition {
 
   async beforeBlockCreate(
     appManager: IAppManager,
-    params: { title: string | null },
-  ): Promise<{ title: string | null; props?: AssetProps } | undefined> {
+    params: { title: string | null; existingNames?: string[] },
+  ): Promise<
+    | { title: string | null; name?: string | null; props?: AssetProps }
+    | undefined
+  > {
     return {
       title: params.title,
       props: undefined,

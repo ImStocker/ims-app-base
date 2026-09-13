@@ -378,6 +378,7 @@ export default {
     differentPropsNum: 'Different properties: {num}',
     propertyAlreadyExists: 'Property already exists',
     itemAlreadyExists: 'Item already exists',
+    blockNameReserved: 'This name is reserved and cannot be used',
     inheritedValueLock:
       'Value is inherited and can be changed only in parent element',
     inheritedValue: 'Value is inherited',
@@ -708,6 +709,7 @@ export default {
       text: 'Text',
       checklist: 'Checklist',
       props: 'Property sheet',
+      prop: 'Property',
       gallery: 'Gallery',
       table: 'Table',
       task: 'Task',

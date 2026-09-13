@@ -164,6 +164,7 @@ import { isElementInteractive } from '../../utils/DomElementUtils';
 import { v4 as uuidv4 } from 'uuid';
 import AssetReferenceList from '../References/AssetReferenceList.vue';
 import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed';
+import { BLOCK_NAME_META } from '../../../logic/constants';
 
 export default defineComponent({
   name: 'EditorBlock',
@@ -446,6 +447,7 @@ export default defineComponent({
     hasHeader() {
       return (
         !this.hideBlockHeader &&
+        !this.blockTypeDefinition?.hideBlockHeader &&
         (this.resolvedBlock.title ||
           (this.resolvedBlock.name && this.showName) ||
           this.isRenaming ||
@@ -481,6 +483,9 @@ export default defineComponent({
     },
     isAssetUnreadAny,
     validateNewServiceName(name: string) {
+      if (name === BLOCK_NAME_META) {
+        return this.$t('assetEditor.blockNameReserved');
+      }
       if (this.resolvedBlock.name === name) {
         return null;
       }

@@ -479,6 +479,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       this.appManager,
       {
         title: default_title,
+        existingNames: Object.keys(blocks.mapNames),
       },
     );
     if (!block_params) return null; // Cancelled
@@ -502,7 +503,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const created = this.assetChanger.createBlock(asset_full.id, {
       type,
       title: block_params.title ?? undefined,
-      name: params?.name ?? undefined,
+      name: params?.name ?? block_params.name ?? undefined,
       index: new_index,
       props: block_params.props ? block_params.props : undefined,
     });
