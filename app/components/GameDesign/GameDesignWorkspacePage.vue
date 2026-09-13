@@ -5,48 +5,27 @@
     :bread-crumbs="breadCrumbs ?? undefined"
   >
     <template #header>
-      <div class="GameDesignWorkspacePage-common">
-        <div class="GameDesignWorkspacePage-flex">
-          <div class="GameDesignWorkspacePage-header">
-            <div class="GameDesignWorkspacePage-title-wrapper">
-              <div class="App-header">
-                <i
-                  class="asset-icon-folder-fill GameDesignWorkspacePage-title-icon"
-                ></i>
-                <h1>
-                  <caption-string
-                    :value="vm.workspace?.title ?? $t('translatedTitles.Items')"
-                  ></caption-string>
-                </h1>
-              </div>
-            </div>
-          </div>
-          <div
-            v-if="vm.workspaceMenu.length > 0"
-            class="GameDesignWorkspacePage-manage"
-          >
-            <button
-              v-if="userIsAdmin && !isDesktop"
-              class="is-button is-button-icon GameDesignWorkspacePage-manage-share"
-              @click="openSetUpAccessDialog()"
-            >
-              <i class="ri-share-fill"></i>
-            </button>
-            <menu-button>
-              <menu-list :menu-list="vm.workspaceMenu">
-                <template #item-createElement>
-                  <create-asset-box
-                    :root-workspace-id="workspaceId"
-                  ></create-asset-box>
-                </template>
-                <template #item-createFolder>
-                  <create-folder-box
-                    :root-workspace-id="workspaceId"
-                  ></create-folder-box> </template
-              ></menu-list>
-            </menu-button>
-          </div>
-        </div>
+      <div class="GameDesignWorkspacePage-header">
+        <workspace-header
+          icon-class="asset-icon-folder-fill"
+          :title="vm.workspace?.title ?? $t('translatedTitles.Items')"
+          :can-rename="canRename"
+          :show-share="!!(userIsAdmin && !isDesktop)"
+          :menu-list="vm.workspaceMenu"
+          :on-rename="renameWorkspace"
+          @share="openSetUpAccessDialog()"
+        >
+          <template #item-createElement>
+            <create-asset-box
+              :root-workspace-id="workspaceId"
+            ></create-asset-box>
+          </template>
+          <template #item-createFolder>
+            <create-folder-box
+              :root-workspace-id="workspaceId"
+            ></create-folder-box>
+          </template>
+        </workspace-header>
         <RequestSignInBlock
           v-if="needShowRequestSignInBlock"
           class="GameDesignWorkspacePage-requestSignIn"
@@ -105,12 +84,9 @@ import {
   ASSET_FULL_EDITOR_MIN_WIDTH,
 } from '../layoutConstants';
 import ProjectManager from '../../logic/managers/ProjectManager';
-import CaptionString from '../Common/CaptionString.vue';
 import WidthResizer from '../Common/WidthResizer.vue';
 import type { ProjectTreeSelectedItem } from '../../logic/vm/IProjectTreePresenterVM';
 import type { BreadCrumbsEntity } from '../../logic/types/BreadCrumbs';
-import MenuList from '../Common/MenuList.vue';
-import MenuButton from '../Common/MenuButton.vue';
 import type { WorkspacePageVM } from '../../logic/vm/WorkspacePageVM';
 import {
   MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT,
@@ -119,26 +95,26 @@ import {
 import RequestSignInBlock from '../Form/RequestSignInBlock.vue';
 import AuthManager from '../../logic/managers/AuthManager';
 import DialogManager from '../../logic/managers/DialogManager';
+import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import SetUpAccessDialog from '../Asset/Rights/SetUpAccessDialog.vue';
 import { useWorkspaceBreadcrumbs } from './workspaceUtils';
 import UiManager, { ScreenSize } from '../../logic/managers/UiManager';
 import CreateElementButtons from '../Asset/CreateElementButtons.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import WorkspaceHeader from './WorkspaceHeader.vue';
 
 export default defineComponent({
   name: 'GameDesignWorkspacePage',
   components: {
     CenteredPage,
     ProjectTreePresenter,
-    CaptionString,
     WidthResizer,
-    MenuButton,
-    MenuList,
     RequestSignInBlock,
     CreateElementButtons,
     CreateFolderBox,
     CreateAssetBox,
+    WorkspaceHeader,
   },
   props: {
     vm: {
@@ -184,6 +160,13 @@ export default defineComponent({
     },
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
+    },
+    canRename() {
+      return !!(
+        this.userInfo &&
+        this.vm.workspace?.rights &&
+        this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE
+      );
     },
     breadCrumbs(): BreadCrumbsEntity[] | null {
       if (this.workspaceId) {
@@ -256,13 +239,24 @@ export default defineComponent({
         workspaceId: this.workspaceId,
       });
     },
+    async renameWorkspace(new_title: string) {
+      await this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          if (this.vm.workspace?.id) {
+            await this.$getAppManager()
+              .get(CreatorAssetManager)
+              .changeWorkspace(this.vm.workspace?.id, {
+                title: new_title,
+              });
+          }
+        });
+    },
   },
 });
 </script>
 
 <style lang="scss" scoped>
-@use '$style/asset-icons';
-
 .GameDesignWorkspacePage.type-gdd {
   .GameDesignWorkspacePage-treePresenter {
     --TreePresenter-left-padding: 2px;
@@ -277,17 +271,9 @@ export default defineComponent({
   }
 }
 
-.GameDesignWorkspacePage-common {
+.GameDesignWorkspacePage-header {
   width: 100%;
   margin-bottom: 10px;
-}
-.GameDesignWorkspacePage-flex {
-  display: flex;
-}
-.App-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 .GameDesignWorkspacePage-workspaceContent {
   padding: 20px 25px;
@@ -313,40 +299,7 @@ export default defineComponent({
   padding-top: 10px;
   max-width: 240px;
 }
-.GameDesignWorkspacePage-title-icon {
-  @include asset-icons.asset-icons;
-}
-.GameDesignWorkspacePage-header {
-  display: flex;
-  justify-content: space-between;
-  flex: 1;
-}
-
 .GameDesignWorkspacePage-requestSignIn {
   margin-top: 15px;
-}
-
-.GameDesignWorkspacePage-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .App-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0px;
-  }
-}
-.GameDesignWorkspacePage-manage {
-  display: flex;
-  align-items: center;
-
-  :deep(.is-button-dropdown) {
-    --button-font-size: 20px;
-  }
-}
-.GameDesignWorkspacePage-manage-share {
-  --button-font-size: 20px;
 }
 </style>

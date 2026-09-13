@@ -4,35 +4,17 @@
     class="WorkspaceCollectionPage"
   >
     <template #header>
-      <div class="WorkspaceCollectionPage-common">
-        <div class="WorkspaceCollectionPage-flex">
-          <div class="WorkspaceCollectionPage-header">
-            <div class="WorkspaceCollectionPage-title-wrapper">
-              <div class="App-header">
-                <i
-                  class="WorkspaceCollectionPage-title-icon"
-                  :class="workspaceIcon"
-                ></i>
-                <renamable-text
-                  :value="vm.workspace?.title ?? $t('translatedTitles.Items')"
-                  :disabled="!canRename"
-                  @change="renameWorkspace($event)"
-                >
-                  <h1 :title="canRename ? $t('gddPage.dblClickToRename') : ''">
-                    <caption-string
-                      :value="
-                        isRenamingNewTitle
-                          ? isRenamingNewTitle
-                          : (vm.workspace?.title ??
-                            $t('translatedTitles.Items'))
-                      "
-                    />
-                  </h1>
-                </renamable-text>
-              </div>
-            </div>
-          </div>
-          <div class="WorkspaceCollectionPage-manage">
+      <div class="WorkspaceCollectionPage-header">
+        <workspace-header
+          :icon-class="workspaceIcon"
+          :title="vm.workspace?.title"
+          :can-rename="canRename"
+          :show-share="!!(userIsAdmin && !isDesktop)"
+          :menu-list="vm.workspaceMenu"
+          :on-rename="renameWorkspace"
+          @share="openSetUpAccessDialog()"
+        >
+          <template #manageStart>
             <project-link
               v-if="baseAsset && baseAssetLink && projectInfo"
               class="is-button WorkspaceCollectionPage-manage-baseAsset"
@@ -43,28 +25,18 @@
               <i class="ri-settings-3-fill"></i>
               <caption-string :value="baseAsset.title"></caption-string>
             </project-link>
-            <button
-              v-if="userIsAdmin && !isDesktop"
-              class="is-button is-button-icon WorkspaceCollectionPage-manage-button"
-              @click="openSetUpAccessDialog()"
-            >
-              <i class="ri-share-fill"></i>
-            </button>
-            <menu-button v-if="vm.workspaceMenu.length > 0">
-              <menu-list :menu-list="vm.workspaceMenu">
-                <template #item-createElement>
-                  <create-asset-box
-                    :root-workspace-id="workspaceId"
-                  ></create-asset-box>
-                </template>
-                <template #item-createFolder>
-                  <create-folder-box
-                    :root-workspace-id="workspaceId"
-                  ></create-folder-box> </template
-              ></menu-list>
-            </menu-button>
-          </div>
-        </div>
+          </template>
+          <template #item-createElement>
+            <create-asset-box
+              :root-workspace-id="workspaceId"
+            ></create-asset-box>
+          </template>
+          <template #item-createFolder>
+            <create-folder-box
+              :root-workspace-id="workspaceId"
+            ></create-folder-box>
+          </template>
+        </workspace-header>
         <RequestSignInBlock
           v-if="needShowRequestSignInBlock"
           class="WorkspaceCollectionPage-requestSignIn"
@@ -100,8 +72,6 @@ import {
 import ProjectManager from '../../logic/managers/ProjectManager';
 import CaptionString from '../Common/CaptionString.vue';
 import type { BreadCrumbsEntity } from '../../logic/types/BreadCrumbs';
-import MenuList from '../Common/MenuList.vue';
-import MenuButton from '../Common/MenuButton.vue';
 import {
   MIN_WORKSPACE_RIGHTS_TO_ADD_CONTENT,
   MIN_WORKSPACE_RIGHTS_TO_CHANGE,
@@ -116,23 +86,21 @@ import type { WorkspaceCollectionPageVM } from '../../logic/vm/Workspace/Workspa
 import ProjectLink from '../Common/ProjectLink.vue';
 import UiManager from '../../logic/managers/UiManager';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import RenamableText from '../Common/RenamableText.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import WorkspaceHeader from './WorkspaceHeader.vue';
 
 export default defineComponent({
   name: 'WorkspaceCollectionPage',
   components: {
     FullyFilledPage,
     CaptionString,
-    MenuButton,
-    MenuList,
     RequestSignInBlock,
     WorkspaceCollectionContent,
     ProjectLink,
-    RenamableText,
     CreateFolderBox,
     CreateAssetBox,
+    WorkspaceHeader,
   },
   provide() {
     return {
@@ -147,7 +115,6 @@ export default defineComponent({
   },
   data() {
     return {
-      isRenamingNewTitle: null as string | null,
       ASSET_FULL_EDITOR_INITIAL_WIDTH,
       ASSET_FULL_EDITOR_MIN_WIDTH,
     };
@@ -157,7 +124,7 @@ export default defineComponent({
       return this.$getAppManager().$appConfiguration.isDesktop;
     },
     canRename() {
-      return (
+      return !!(
         this.userInfo &&
         this.vm.workspace?.rights &&
         this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE
@@ -247,7 +214,6 @@ export default defineComponent({
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
-          this.isRenamingNewTitle = new_title;
           if (this.vm.workspace?.id) {
             await this.$getAppManager()
               .get(CreatorAssetManager)
@@ -255,7 +221,6 @@ export default defineComponent({
                 title: new_title,
               });
           }
-          this.isRenamingNewTitle = null;
         });
     },
     async openSetUpAccessDialog() {
@@ -288,22 +253,13 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@use '$style/asset-icons';
 .WorkspaceCollectionPage {
   --local-bg-color: var(--editor-bg-color);
   background-color: var(--local-bg-color);
 }
-.WorkspaceCollectionPage-common {
+.WorkspaceCollectionPage-header {
   width: 100%;
   margin-bottom: 10px;
-}
-.WorkspaceCollectionPage-flex {
-  display: flex;
-}
-.App-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 .WorkspaceCollectionPage-workspaceContent {
   padding: 20px 25px;
@@ -331,42 +287,10 @@ export default defineComponent({
   padding-top: 10px;
   max-width: 240px;
 }
-.WorkspaceCollectionPage-title-icon {
-  @include asset-icons.asset-icons;
-}
-.WorkspaceCollectionPage-header {
-  display: flex;
-  justify-content: space-between;
-  flex: 1;
-}
-
 .WorkspaceCollectionPage-requestSignIn {
   margin-top: 15px;
 }
-
-.WorkspaceCollectionPage-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .App-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0px;
-  }
-}
 .WorkspaceCollectionPage-manage-baseAsset {
   margin-right: 5px;
-}
-.WorkspaceCollectionPage-manage {
-  display: flex;
-  align-items: center;
-  :deep(.is-button-dropdown) {
-    --button-font-size: 20px;
-  }
-}
-.WorkspaceCollectionPage-manage-button {
-  --button-font-size: 20px;
 }
 </style>
