@@ -947,7 +947,7 @@ export default defineComponent({
 .AssetBlockEditor-select {
   width: 22px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 15px;

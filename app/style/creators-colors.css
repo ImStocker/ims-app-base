@@ -10,6 +10,22 @@
     --default-accent-secondary: var(--blue) !important;
     --default-info: var(--light-blue) !important;
     --text-intense: #E0E0E0;
+
+    /* DATA TYPE COLORS */
+    --ims-type-boolean-stroke: #ff5757;
+    --ims-type-boolean-fill: #d64848;
+    --ims-type-float-stroke: #82ff57;
+    --ims-type-float-fill: #75d255;
+    --ims-type-integer-stroke: #57f6ff;
+    --ims-type-integer-fill: #4ad6de;
+    --ims-type-string-stroke: #ff57d8;
+    --ims-type-string-fill: #ef53ca;
+    --ims-type-text-stroke: #f7aece;
+    --ims-type-text-fill: #eb83b0;
+    --ims-type-asset-stroke: #ffb957;
+    --ims-type-asset-fill: #f0af55;
+    --ims-type-any-stroke: #fff;
+    --ims-type-any-fill: #555555;
 }
 
 /* Creators theme setting */

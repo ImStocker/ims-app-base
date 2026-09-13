@@ -1,6 +1,12 @@
 <template>
   <div class="AssetEditorPropBlock" @click="enterEditMode($event)">
     <div class="AssetEditorPropBlock-row">
+      <span
+        class="AssetEditorPropBlock-typeCircle"
+        :class="[typeCircleClass, { 'is-clickable': canOpenSettings }]"
+        :title="canOpenSettings ? $t('assetEditor.changeSettings') : undefined"
+        @click.stop="openSettings"
+      ></span>
       <div class="AssetEditorPropBlock-title">
         <renamable-text
           class="AssetEditorPropBlock-title-value"
@@ -127,8 +133,28 @@ export default defineComponent({
     canRename() {
       return this.rights === AssetRights.FULL_ACCESS;
     },
+    canOpenSettings(): boolean {
+      return (
+        this.displayMode === 'normal' && this.rights === AssetRights.FULL_ACCESS
+      );
+    },
     title(): string {
       return this.resolvedBlock.title ?? this.resolvedBlock.name ?? '';
+    },
+    typeCircleClass(): string {
+      const type = this.resolvedBlock.props?.__type;
+      if (type == null) return '';
+      const type_value = castAssetPropValueToString(type);
+      return [
+        'boolean',
+        'float',
+        'integer',
+        'string',
+        'text',
+        'asset',
+      ].includes(type_value)
+        ? 'is-type-' + type_value
+        : '';
     },
     formState(): PropsFormState {
       return extractPropsFormState(this.resolvedBlock);
@@ -281,7 +307,8 @@ export default defineComponent({
       this.changeSettingsOpen = false;
     },
     openSettings() {
-      this.changeSettingsOpen = true;
+      if (!this.canOpenSettings) return;
+      this.changeSettingsOpen = !this.changeSettingsOpen;
     },
     cancelSettingsClickOutside() {
       if (this.settingsClickOutside) {
@@ -442,7 +469,45 @@ export default defineComponent({
   }
 }
 
+.AssetEditorPropBlock-typeCircle {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--ims-type-any-fill);
+
+  &.is-type-boolean {
+    background-color: var(--ims-type-boolean-fill);
+  }
+  &.is-type-float {
+    background-color: var(--ims-type-float-fill);
+  }
+  &.is-type-integer {
+    background-color: var(--ims-type-integer-fill);
+  }
+  &.is-type-string {
+    background-color: var(--ims-type-string-fill);
+  }
+  &.is-type-text {
+    background-color: var(--ims-type-text-fill);
+  }
+  &.is-type-asset {
+    background-color: var(--ims-type-asset-fill);
+  }
+
+  &.is-clickable {
+    cursor: pointer;
+  }
+}
+
 .AssetEditorPropBlock-changeSettings {
   height: 100%;
+}
+</style>
+
+<style lang="scss">
+.EditorBlock[block-type='prop'] .EditorBlock-leftControls {
+  top: 3px;
 }
 </style>
