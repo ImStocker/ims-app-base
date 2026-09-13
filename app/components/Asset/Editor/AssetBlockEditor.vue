@@ -824,10 +824,6 @@ export default defineComponent({
   position: relative;
 }
 
-.AssetBlockEditor :deep(.SortableList-item) {
-  margin-bottom: 6px;
-}
-
 .AssetBlockEditor
   :deep(.SortableList-item.sortable-ghost)
   .AssetBlockEditorCommon-block {

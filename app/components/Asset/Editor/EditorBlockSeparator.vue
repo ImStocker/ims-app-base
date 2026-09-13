@@ -195,7 +195,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   margin: 0px 7px;
-  height: 12px;
+  height: 6px;
   position: relative;
 }
 
@@ -246,6 +246,6 @@ export default defineComponent({
 
 .EditorBlockSeparator-createBlock-dropdown {
   width: 100%;
-  height: 12px !important;
+  height: 6px !important;
 }
 </style>
