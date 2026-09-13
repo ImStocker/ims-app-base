@@ -63,5 +63,18 @@ export default defineComponent({
   padding: 20px 20px 20px;
   --local-bg-color: var(--local-box-color);
   overflow: auto;
+  overflow-x: hidden;
+  animation: RightPanel-appear 0.125s ease-out;
+}
+
+@keyframes RightPanel-appear {
+  from {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

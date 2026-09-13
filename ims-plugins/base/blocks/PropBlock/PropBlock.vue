@@ -27,14 +27,6 @@
         @enter="save()"
         @change-props="changeBlockProps($event)"
       ></props-block-value>
-      <button
-        v-if="canEditStructure && !isReadOnly && displayMode === 'normal'"
-        class="AssetEditorPropBlock-settings is-button is-button-icon"
-        :title="$t('assetEditor.changeSettings')"
-        @click.stop="changeSettingsOpen = true"
-      >
-        <i class="ri-settings-3-line"></i>
-      </button>
     </div>
     <right-panel v-if="changeSettingsOpen">
       <prop-block-change-settings
@@ -124,13 +116,11 @@ export default defineComponent({
   data() {
     return {
       clickOutside: null as SetClickOutsideCancel | null,
+      settingsClickOutside: null as SetClickOutsideCancel | null,
       changeSettingsOpen: false,
     };
   },
   computed: {
-    canEditStructure() {
-      return this.rights === AssetRights.FULL_ACCESS;
-    },
     isReadOnly() {
       return this.readonly || this.rights < MIN_ASSET_RIGHTS_TO_CHANGE;
     },
@@ -200,11 +190,18 @@ export default defineComponent({
     changeSettingsOpen() {
       if (this.changeSettingsOpen) {
         this.resetGlobalClickOutside(false);
+        this.cancelSettingsClickOutside();
+        this.settingsClickOutside = setImsClickOutside(this.$el, () => {
+          this.changeSettingsOpen = false;
+        });
+      } else {
+        this.cancelSettingsClickOutside();
       }
     },
   },
   unmounted() {
     this.resetGlobalClickOutside(false);
+    this.cancelSettingsClickOutside();
   },
   methods: {
     changeTitle(title: string) {
@@ -281,6 +278,16 @@ export default defineComponent({
       this.$emit('save');
       this.assetBlockEditor.exitEditMode();
       this.resetGlobalClickOutside(false);
+      this.changeSettingsOpen = false;
+    },
+    openSettings() {
+      this.changeSettingsOpen = true;
+    },
+    cancelSettingsClickOutside() {
+      if (this.settingsClickOutside) {
+        this.settingsClickOutside();
+        this.settingsClickOutside = null;
+      }
     },
     async enterEditMode(ev?: MouseEvent) {
       if (this.isReadOnly) return;
@@ -433,11 +440,6 @@ export default defineComponent({
     display: flex;
     align-items: center;
   }
-}
-
-.AssetEditorPropBlock-settings {
-  --button-padding: 0.37em 0.33em;
-  flex: none;
 }
 
 .AssetEditorPropBlock-changeSettings {

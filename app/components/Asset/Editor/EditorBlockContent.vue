@@ -191,6 +191,13 @@ export default defineComponent({
       if (!comp.revealBlockAnchor) return false;
       return await comp.revealBlockAnchor(anchor);
     },
+    async invokeBlock(method: string, ...args: unknown[]): Promise<unknown> {
+      const comp = await this._awaitCompMount(1000);
+      if (!comp) return undefined;
+      const fn = comp[method];
+      if (typeof fn !== 'function') return undefined;
+      return fn.apply(comp, args);
+    },
     blockCompMounted() {
       this.assetBlockEditor.setBlockMounted(
         this.resolvedBlock.id,

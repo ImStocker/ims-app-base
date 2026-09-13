@@ -381,6 +381,7 @@ export default defineComponent({
               },
             ]
           : []),
+        ...this.blockMenuExtraItems,
         {
           type: 'separator',
         },
@@ -410,6 +411,22 @@ export default defineComponent({
     },
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
+    },
+    blockMenuExtraItems(): MenuListItem[] {
+      const block_type_definition = this.blockTypeDefinition;
+      if (!block_type_definition?.getBlockMenuExtraItems) {
+        return [];
+      }
+      return block_type_definition.getBlockMenuExtraItems(
+        this.$getAppManager(),
+        {
+          assetBlockEditor: this.assetBlockEditor,
+          resolvedBlock: this.resolvedBlock,
+          displayMode: this.displayMode,
+          invokeBlock: (method: string, ...args: unknown[]): Promise<unknown> =>
+            this.invokeBlockComponent(method, ...args),
+        },
+      );
     },
     editMode() {
       return this.assetBlockEditor.isBlockEditing(this.resolvedBlock.id);
@@ -703,6 +720,15 @@ export default defineComponent({
       return await (
         this.$refs['content'] as InstanceType<typeof EditorBlockContent>
       ).revealBlockAnchor(anchor);
+    },
+    async invokeBlockComponent(
+      method: string,
+      ...args: unknown[]
+    ): Promise<unknown> {
+      if (!this.$refs['content']) return undefined;
+      return await (
+        this.$refs['content'] as InstanceType<typeof EditorBlockContent>
+      ).invokeBlock(method, ...args);
     },
     startRenaming() {
       this.isRenaming = true;

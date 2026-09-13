@@ -7,12 +7,15 @@ import {
 } from './Props';
 import type { IAppManager } from '../managers/IAppManager';
 import type {
+  AssetDisplayMode,
   AssetLocalizableField,
   ResolvedAssetBlock,
 } from '../utils/assets';
 import type { PropsFormFieldDef } from './PropsForm';
 import type { AssetFullInstanceR } from './AssetFullInstance';
 import type { AssetChanger, BlockCursor } from './AssetChanger';
+import type { MenuListItem } from './MenuList';
+import type { AssetBlockEditorVM } from '../vm/AssetBlockEditorVM';
 import Delta from 'quill-delta';
 import {
   DefaultBlockEditorController,
@@ -45,6 +48,13 @@ export type BlockProvidedVariable = {
 export type BlockAiHandler = () => {
   makeAiPrompt(userPrompt: string): string;
   consumeAiText(str: string): string;
+};
+
+export type BlockMenuExtraItemsParams = {
+  assetBlockEditor: AssetBlockEditorVM;
+  resolvedBlock: ResolvedAssetBlock;
+  displayMode: AssetDisplayMode;
+  invokeBlock: (method: string, ...args: unknown[]) => Promise<unknown>;
 };
 
 export abstract class BlockTypeDefinition {
@@ -136,6 +146,13 @@ export abstract class BlockTypeDefinition {
     _asset: AssetFullInstanceR,
     _resolved_block: ResolvedAssetBlock,
   ): AssetLocalizableField[] {
+    return [];
+  }
+
+  getBlockMenuExtraItems(
+    _appManager: IAppManager,
+    _params: BlockMenuExtraItemsParams,
+  ): MenuListItem[] {
     return [];
   }
 

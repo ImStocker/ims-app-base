@@ -7,8 +7,11 @@ import type {
 import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
 import {
   BlockTypeDefinition,
+  type BlockMenuExtraItemsParams,
   type BlockProvidedVariable,
 } from '#logic/types/BlockTypeDefinition';
+import type { MenuListItem } from '#logic/types/MenuList';
+import { AssetRights } from '#logic/types/Rights';
 import type { PropsFormFieldDef } from '#logic/types/PropsForm';
 import {
   castAssetPropValueToString,
@@ -103,6 +106,25 @@ export class PropBlockDefinition extends BlockTypeDefinition {
         localeKey: 'value',
         title: resolved_block.title ?? resolved_block.name ?? 'Variable',
         type: field.type,
+      },
+    ];
+  }
+
+  override getBlockMenuExtraItems(
+    appManager: IAppManager,
+    params: BlockMenuExtraItemsParams,
+  ): MenuListItem[] {
+    if (params.displayMode !== 'normal') {
+      return [];
+    }
+    if (params.resolvedBlock.rights !== AssetRights.FULL_ACCESS) {
+      return [];
+    }
+    return [
+      {
+        title: appManager.$t('assetEditor.changeSettings'),
+        icon: 'ri-settings-3-line',
+        action: () => params.invokeBlock('openSettings'),
       },
     ];
   }
