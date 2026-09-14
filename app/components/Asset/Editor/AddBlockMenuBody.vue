@@ -9,7 +9,11 @@
         @keydown="onSearchKeydown"
       ></form-search>
     </div>
-    <menu-list class="AddBlockMenuBody-list" :menu-list="menuList"></menu-list>
+    <menu-list
+      ref="menu"
+      class="AddBlockMenuBody-list"
+      :menu-list="menuList"
+    ></menu-list>
   </div>
 </template>
 <script lang="ts">
@@ -117,6 +121,9 @@ export default defineComponent({
         this.$emit('cancel');
       } else if (e.key === 'Enter' && this.foundBlocks.length > 0) {
         this.$emit('select', this.foundBlocks[0].name);
+      } else if (e.key === 'ArrowDown') {
+        const menu = this.$refs['menu'] as InstanceType<typeof MenuList> | null;
+        if (menu) menu.focusFirstItem();
       }
     },
     onSearchChange(val: string) {
