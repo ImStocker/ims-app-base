@@ -809,6 +809,8 @@ export default {
         'Level\n\nLevel prototypisieren, Objekte auf der Karte platzieren, Zonen markieren',
       '00000000-0000-0000-0000-000000000037':
         'Spielmechanik\n\nZum Beschreiben von Spielmechaniken',
+      '00000000-506f-4400-b6d0-000000000037':
+        'Spielmechanik\n\nZum Beschreiben von Spielmechaniken',
       '00000000-0000-0000-0000-000000000039':
         'Markdown\n\nZum Arbeiten mit Markdown-Dateien',
       '00000000-0000-0000-0000-000000000041':

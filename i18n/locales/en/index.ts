@@ -802,6 +802,8 @@ export default {
         'Level\n\nPrototype levels, place objects on the map, highlight zones',
       '00000000-0000-0000-0000-000000000037':
         'Game mechanics\n\nUse to describe game mechanics',
+      '00000000-506f-4400-b6d0-000000000037':
+        'Game mechanics\n\nUse to describe game mechanics',
       '00000000-0000-0000-0000-000000000039':
         'Markdown\n\nUse to work with Markdown files',
       '00000000-0000-0000-0000-000000000041':
