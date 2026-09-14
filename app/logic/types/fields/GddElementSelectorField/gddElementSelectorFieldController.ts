@@ -22,6 +22,14 @@ export class GddElementSelectorFieldController extends FieldTypeController {
       params: {},
       hint: '[[t:GddElementSelectorField_TypeParameter_Hint]]',
     },
+    {
+      name: 'condition',
+      multiple: false,
+      title: '[[t:GddElementSelectorField_ConditionParameter]]',
+      type: 'selection',
+      params: {},
+      hint: '[[t:GddElementSelectorField_ConditionParameter_Hint]]',
+    },
   ];
 
   override aiSpec = gddElementSelectorFieldAiSpec.aiSpec;

@@ -160,6 +160,10 @@ export default {
     GddElementSelectorField: 'Elementauswahl',
     GddElementSelectorField_TypeParameter_Hint:
       'Schränkt den Typ der Elemente ein, die als Wert ausgewählt werden können. Nur Elemente, die von der ausgewählten Vorlage abgeleitet sind, stehen zur Auswahl – nicht die Vorlage selbst.',
+    GddElementSelectorField_ConditionParameter: 'Bedingung',
+    GddElementSelectorField_ConditionParameter_Hint:
+      'Schränkt die auswählbaren Elemente ein. Ausgewählt werden können nur Elemente, die diesem Filterausdruck entsprechen.',
+    SelectionField: 'Filter',
     AttachmentField: 'Datei auswählen',
     TextAttachmentField: 'Dateien oder Text',
     NameTitleField: 'Dienstname und Titel',

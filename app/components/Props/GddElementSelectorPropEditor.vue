@@ -17,10 +17,14 @@ import { defineComponent } from 'vue';
 import type {
   AssetPropValue,
   AssetPropValueAsset,
+  AssetPropValueSelection,
 } from '../../logic/types/Props';
 import AssetSelectorPropEditor from './AssetSelectorPropEditor.vue';
 import ProjectManager from '../../logic/managers/ProjectManager';
-import type { AssetPropWhere } from '../../logic/types/PropsWhere';
+import {
+  AssetPropWhereOpKind,
+  type AssetPropWhere,
+} from '../../logic/types/PropsWhere';
 
 export default defineComponent({
   name: 'GddElementSelectorPropEditor',
@@ -34,6 +38,10 @@ export default defineComponent({
     },
     nullable: { type: Boolean, default: true },
     type: {
+      type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
+      default: null,
+    },
+    condition: {
       type: [Object, String, Number, Boolean] as PropType<AssetPropValue>,
       default: null,
     },
@@ -55,6 +63,17 @@ export default defineComponent({
       };
       if (this.type && (this.type as AssetPropValueAsset).AssetId) {
         where.typeids = (this.type as AssetPropValueAsset).AssetId;
+      }
+      const condition_where = (this.condition as AssetPropValueSelection | null)
+        ?.Where;
+      if (condition_where) {
+        return {
+          ...where,
+          search: {
+            op: AssetPropWhereOpKind.AND,
+            v: [condition_where],
+          },
+        };
       }
       return where;
     },

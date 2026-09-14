@@ -367,11 +367,6 @@ export default defineComponent({
               },
             ]
           : []),
-        {
-          title: this.$t('assetEditor.blockMenu.edit'),
-          action: this.editBlock,
-          icon: 'edit',
-        },
         ...(this.isInherited && this.resolvedBlock.own === true
           ? [
               {

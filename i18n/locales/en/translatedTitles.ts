@@ -157,6 +157,10 @@ export default {
     GddElementSelectorField: 'Element selector',
     GddElementSelectorField_TypeParameter_Hint:
       'Limits the type of elements that can be selected as a value. Only elements inherited from the selected template will be available for selection, not the template itself.',
+    GddElementSelectorField_ConditionParameter: 'Condition',
+    GddElementSelectorField_ConditionParameter_Hint:
+      'Limits the elements available for selection. Only elements matching this filter expression can be picked.',
+    SelectionField: 'Filter',
     AttachmentField: 'Select file',
     TextAttachmentField: 'Files or text',
     NameTitleField: 'Service name and title',

@@ -1,4 +1,5 @@
 import { ChatBlockDefinition } from './ChatBlock/ChatBlockDefinition';
+import { CommentBlockDefinition } from './CommentBlock/CommentBlockDefinition';
 import { EmbedBlockDefinition } from './EmbedBlock/EmbedBlockDefinition';
 import { GalleryDefinition } from './GalleryBlock/GalleryDefinition';
 import { PropsBlockDefinition } from './PropsBlock/PropsBlockDefinition';
@@ -9,6 +10,7 @@ import { BlockMirrorBlockDefinition } from './BlockMirrorBlock/BlockMirrorBlockD
 import { CollectionBlockDefinition } from './CollectionBlock/CollectionBlockDefinition';
 import { ChecklistBlockDefinition } from './ChecklistBlock/ChecklistBlockDefinition';
 import { MarkdownBlockDefinition } from './MarkdownBlock/MarkdownBlockDefinition';
+import { AssetListBlockDefinition } from './AssetListBlock/AssetListBlockDefinition';
 
 const list = [
   new TextBlockDefinition(),
@@ -17,11 +19,13 @@ const list = [
   new PropsBlockDefinition(),
   new PropBlockDefinition(),
   new GalleryDefinition(),
+  new CommentBlockDefinition(),
   new EmbedBlockDefinition(),
   new ChatBlockDefinition(),
   new ChecklistBlockDefinition(),
   new CollectionBlockDefinition(),
   new BlockMirrorBlockDefinition(),
+  new AssetListBlockDefinition(),
 ];
 
 export default function () {

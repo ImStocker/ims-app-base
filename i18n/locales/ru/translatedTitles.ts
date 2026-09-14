@@ -161,6 +161,10 @@ export default {
     GddElementSelectorField: 'Выбор элемента',
     GddElementSelectorField_TypeParameter_Hint:
       'Ограничивает, элементы, какого типа можно выбрать как значение. Доступны для выбора будут только элементы, унаследованные от выбранного шаблона, но не сам шаблон',
+    GddElementSelectorField_ConditionParameter: 'Условие',
+    GddElementSelectorField_ConditionParameter_Hint:
+      'Ограничивает элементы, доступные для выбора. Выбрать можно будет только элементы, подходящие под этот фильтр.',
+    SelectionField: 'Фильтр',
     AttachmentField: 'Выбор файла',
     TextAttachmentField: 'Файлы или текст',
     NameTitleField: 'Служ. имя и отображаемое',

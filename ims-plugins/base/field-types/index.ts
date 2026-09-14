@@ -17,6 +17,7 @@ import { NameTitleFieldController } from '#logic/types/fields/NameTitleField/Nam
 import { NumberFieldController } from '#logic/types/fields/NumberField/NumberFieldController';
 import { PhoneFieldController } from '#logic/types/fields/PhoneField/PhoneFieldController';
 import { ProjectUserFieldController } from '#logic/types/fields/ProjectUserField/ProjectUserFieldController';
+import { SelectionFieldController } from '#logic/types/fields/SelectionField/SelectionFieldController';
 import { StringFieldController } from '#logic/types/fields/StringField/StringFieldController';
 import { StructFieldController } from '#logic/types/fields/StructField/StructFieldController';
 //import { TaskColumnFieldController } from '../../../../../ims-creators-app/app/logic/types/fields/TaskColumnFieldController';
@@ -38,6 +39,7 @@ export default function () {
     new DateTimeFieldController(),
     new DateFieldController(),
     new ProjectUserFieldController(),
+    new SelectionFieldController(),
     //new TaskColumnFieldController(),
     new AssetSelectorFieldController(),
     new GddElementSelectorFieldController(),
