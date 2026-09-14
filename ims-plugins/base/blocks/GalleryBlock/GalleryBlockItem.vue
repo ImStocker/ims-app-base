@@ -4,6 +4,9 @@
       v-if="item.type === 'file'"
       :inline="true"
       class="GalleryBlockItem-content"
+      :class="{
+        'state-pixilated': imagePixilatedMode,
+      }"
       :value="item.value"
       :tooltip="fileTooltip"
       @click="fileClick"
@@ -26,6 +29,9 @@
       class="GalleryBlockItem-content"
       @click="extimageClick()"
     />
+    <div v-if="item.title && allowCaption" class="GalleryBlockItem-caption">
+      {{ itemTitleAsString }}
+    </div>
     <div
       class="GalleryBlockItem-badges"
       :class="{ 'state-active': item.index === shownDropdownMenuIdx }"
@@ -57,7 +63,11 @@ import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import type { GalleryBlockItemObject } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import type { MenuListItem } from '#logic/types/MenuList';
 import EditorManager from '#logic/managers/EditorManager';
+import { useFilePresenterParams } from '#components/File/FilePresenter';
+
+const PIXILATED_MODE_SIZE_THRESHOLD = 96;
 
 export default defineComponent({
   name: 'GalleryBlockItem',
@@ -77,12 +87,17 @@ export default defineComponent({
       type: Array as PropType<GalleryBlockItemObject[]>,
       default: null,
     },
+    allowCaption: {
+      type: Boolean,
+      default: true,
+    },
   },
-  emits: ['save', 'delete'],
+  emits: ['save', 'delete', 'set-caption'],
   data() {
     return {
       loadDone: false,
       shownDropdownMenuIdx: null as number | null,
+      imagePixilatedMode: false,
     };
   },
   computed: {
@@ -103,17 +118,57 @@ export default defineComponent({
     itemValueAsString() {
       return castAssetPropValueToString(this.item.value);
     },
+    itemTitleAsString() {
+      return castAssetPropValueToString(this.item.title);
+    },
+    fileImageSrc() {
+      if (!this.item) return null;
+      if (!this.item.value) return null;
+      if (this.item.type !== 'file') return null;
+      return useFilePresenterParams(this.item.value as AssetPropValueFile).link;
+    },
+  },
+  watch: {
+    fileImageSrc() {
+      this._checkPixilatedMode();
+    },
+  },
+  mounted() {
+    this._checkPixilatedMode();
   },
   methods: {
-    getMenuList(_item: GalleryBlockItemObject) {
-      return [
-        {
-          title: this.$t('assetEditor.blockMenu.delete'),
-          action: () => this.$emit('delete'),
-          icon: 'delete',
-          danger: true,
-        },
-      ];
+    _checkPixilatedMode() {
+      const src = this.fileImageSrc;
+      if (!src) {
+        this.imagePixilatedMode = false;
+      } else {
+        const img = new Image();
+        img.onload = () => {
+          if (src === this.fileImageSrc) {
+            this.imagePixilatedMode =
+              img.width <= PIXILATED_MODE_SIZE_THRESHOLD &&
+              img.height <= PIXILATED_MODE_SIZE_THRESHOLD;
+          }
+        };
+        img.src = src;
+      }
+    },
+    getMenuList(_item: GalleryBlockItemObject): MenuListItem[] {
+      const items: MenuListItem[] = [];
+      if (this.allowCaption) {
+        items.push({
+          title: this.$t('assetEditor.galleryBlockSetCaption'),
+          action: () => this.$emit('set-caption'),
+          icon: 'ri-text',
+        });
+      }
+      items.push({
+        title: this.$t('assetEditor.blockMenu.delete'),
+        action: () => this.$emit('delete'),
+        icon: 'delete',
+        danger: true,
+      });
+      return items;
     },
     extimageClick() {
       this.$getAppManager()
@@ -160,6 +215,17 @@ export default defineComponent({
   object-fit: contain;
   display: block;
   max-width: 100%;
+  &.state-pixilated {
+    image-rendering: pixelated;
+  }
+}
+
+.GalleryBlockItem-caption {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--local-sub-text-color);
+  overflow-wrap: break-word;
 }
 
 .GalleryBlockItem-badges {

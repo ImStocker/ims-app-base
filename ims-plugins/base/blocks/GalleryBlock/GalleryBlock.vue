@@ -33,6 +33,7 @@
               :item="item"
               :files="filesForGallery"
               @delete="deleteImage(item)"
+              @set-caption="onSetGalleryItemCaption(item)"
             ></gallery-block-item>
           </screenshot-renderer>
         </template>
@@ -94,11 +95,13 @@ import UiManager from '#logic/managers/UiManager';
 import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import {
   extractGalleryBlockEntries,
+  setGalleryItemCaption,
   type GalleryBlockExtractedEntries,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
 import GalleryBlockItem from './GalleryBlockItem.vue';
 import {
+  castAssetPropValueToString,
   encodeAssetPropPartWithCapitals,
   makeBlockRef,
   normalizeAssetPropPart,
@@ -113,6 +116,7 @@ import MenuList from '#components/Common/MenuList.vue';
 import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import ScreenshotRenderer from '#components/Common/ScreenshotRenderer.vue';
+import PromptDialog from '#components/Common/PromptDialog.vue';
 import type { UploadingJob } from '#logic/managers/EditorManager';
 import EditorManager from '#logic/managers/EditorManager';
 import { getNextIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
@@ -413,6 +417,25 @@ export default defineComponent({
     save() {
       this.$emit('save');
     },
+    async onSetGalleryItemCaption(item: GalleryBlockItemObject) {
+      const caption = await this.$getAppManager()
+        .get(DialogManager)
+        .show(PromptDialog, {
+          header: this.$t('assetEditor.galleryBlockSetCaption'),
+          value: item.title ? castAssetPropValueToString(item.title) : '',
+          placeholder: this.$t('assetEditor.galleryBlockCaptionPlaceholder'),
+          yesCaption: this.$t('common.dialogs.save'),
+          type: 'text',
+        });
+      if (caption === undefined || caption === null) return;
+      setGalleryItemCaption(
+        this.assetChanger,
+        this.resolvedBlock,
+        item.key,
+        caption.trim() ? caption.trim() : null,
+      );
+      this.save();
+    },
     deleteImage(item: GalleryBlockItemObject) {
       this.$getAppManager()
         .get(UiManager)
@@ -458,18 +481,18 @@ export default defineComponent({
 
 <style lang="scss" rel="stylesheet/scss" scoped>
 .GalleryBlock {
-  border: 1px solid var(--local-bg-color);
-
   &.state-drag-ok {
-    border-color: var(--color-main-yellow);
+    outline: 1px solid var(--color-main-yellow);
   }
 
   &.state-drag-error {
-    border-color: var(--color-main-error);
+    outline: 1px solid var(--color-main-error);
   }
 }
 .GalleryBlock-item {
   break-inside: avoid;
+  display: flex;
+  flex-direction: column;
 }
 
 .GalleryBlock-items {
