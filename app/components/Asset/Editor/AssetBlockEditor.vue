@@ -135,11 +135,13 @@
       </div>
     </div>
 
-    <asset-add-block-dropdown
-      v-if="canAddBlocks"
-      @create-block="createBlock({ blockType: $event })"
-      @paste-blocks="pasteBlocksFromClipboard"
-    ></asset-add-block-dropdown>
+    <div v-if="canAddBlocks" class="AssetBlockEditor-addBlockArea">
+      <slot name="add-blocks-actions"></slot>
+      <asset-add-block-dropdown
+        @create-block="createBlock({ blockType: $event })"
+        @paste-blocks="pasteBlocksFromClipboard"
+      ></asset-add-block-dropdown>
+    </div>
   </div>
   <div v-else class="AssetBlockEditor-load">
     <div class="loaderSpinner PageLoaderSpinner"></div>
@@ -843,6 +845,10 @@ export default defineComponent({
 }
 
 .AssetBlockEditor-addBlock {
+  width: 100%;
+}
+
+.AssetBlockEditor-addBlockArea {
   width: 100%;
 }
 
