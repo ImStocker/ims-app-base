@@ -1,23 +1,31 @@
 <template>
   <div class="AssetEditorPropBlock" @click="enterEditMode($event)">
     <div class="AssetEditorPropBlock-row">
-      <span
-        class="AssetEditorPropBlock-typeCircle field-type-dot"
-        :class="[typeCircleClass, { 'is-clickable': canOpenSettings }]"
-        :title="canOpenSettings ? $t('assetEditor.changeSettings') : undefined"
-        @click.stop="openSettings"
-      ></span>
-      <div class="AssetEditorPropBlock-title">
-        <renamable-text
-          class="AssetEditorPropBlock-title-value"
-          :value="title"
-          :disabled="!canRename"
-          :validate-value="validateRenameValue"
-          @change="changeTitle"
-        >
-          <caption-string :value="title" />
-        </renamable-text>
-      </div>
+      <context-menu-zone
+        class="AssetEditorPropBlock-context"
+        :menu-list="propContextMenu"
+      >
+        <span
+          class="AssetEditorPropBlock-typeCircle field-type-dot"
+          :class="[typeCircleClass, { 'is-clickable': canOpenSettings }]"
+          :title="
+            canOpenSettings ? $t('assetEditor.changeSettings') : undefined
+          "
+          @click.stop="openSettings"
+        ></span>
+        <div class="AssetEditorPropBlock-title">
+          <renamable-text
+            ref="renamableText"
+            class="AssetEditorPropBlock-title-value"
+            :value="title"
+            :disabled="!canRename"
+            :validate-value="validateRenameValue"
+            @change="changeTitle"
+          >
+            <caption-string :value="title" />
+          </renamable-text>
+        </div>
+      </context-menu-zone>
       <prop-field-value
         v-if="!field.multiple"
         ref="value"
@@ -77,6 +85,8 @@ import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import PropFieldValue from '#components/Props/PropFieldValue.vue';
 import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import { getFieldTypeDotClass } from '#components/Props/fieldTypeDot';
+import ContextMenuZone from '#components/Common/ContextMenuZone.vue';
+import type { MenuListItem } from '#logic/types/MenuList';
 import PropBlockChangeSettings from './PropBlockChangeSettings.vue';
 import { extractPropsFormState } from '../PropsBlock/PropsBlock';
 import { AssetRights, MIN_ASSET_RIGHTS_TO_CHANGE } from '#logic/types/Rights';
@@ -107,6 +117,7 @@ export default defineComponent({
     RightPanel,
     RenamableText,
     CaptionString,
+    ContextMenuZone,
   },
   props: {
     assetBlockEditor: {
@@ -153,6 +164,24 @@ export default defineComponent({
       return (
         this.displayMode === 'normal' && this.rights === AssetRights.FULL_ACCESS
       );
+    },
+    propContextMenu(): MenuListItem[] {
+      const items: MenuListItem[] = [];
+      if (this.displayMode === 'normal' && this.canRename) {
+        items.push({
+          title: this.$t('common.dialogs.rename'),
+          icon: 'ri-pencil-line',
+          action: () => this.startRenameFromContextMenu(),
+        });
+      }
+      if (this.canOpenSettings) {
+        items.push({
+          title: this.$t('assetEditor.changeSettings'),
+          icon: 'ri-settings-3-line',
+          action: () => this.openSettings(),
+        });
+      }
+      return items;
     },
     title(): string {
       return this.resolvedBlock.title ?? this.resolvedBlock.name ?? '';
@@ -321,6 +350,12 @@ export default defineComponent({
       if (!this.canOpenSettings) return;
       this.changeSettingsOpen = !this.changeSettingsOpen;
     },
+    startRenameFromContextMenu() {
+      if (!this.canRename) return;
+      const renamable = this.$refs['renamableText'] as any;
+      if (!renamable || typeof renamable.startRenaming !== 'function') return;
+      renamable.startRenaming();
+    },
     cancelSettingsClickOutside() {
       if (this.settingsClickOutside) {
         this.settingsClickOutside();
@@ -427,8 +462,15 @@ export default defineComponent({
 }
 
 .AssetEditorPropBlock-title {
-  flex: 0 0 190px;
+  flex: 0 0 195px;
   min-width: 0;
+}
+
+.AssetEditorPropBlock-row > .AssetEditorPropBlock-context {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .AssetEditorPropBlock-title-value {
