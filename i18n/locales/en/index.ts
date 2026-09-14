@@ -796,6 +796,8 @@ export default {
       '00000000-0000-0000-0000-000000000032': 'Diagram',
       '00000000-0000-0000-0000-000000000035':
         'Game object\n\nUse to create characters, items, abilities, and other game entities',
+      '00000000-c197-40c8-9fc6-000000000035':
+        'Game object\n\nUse to create characters, items, abilities, and other game entities',
       '00000000-0000-0000-0000-000000000036':
         'Level\n\nPrototype levels, place objects on the map, highlight zones',
       '00000000-0000-0000-0000-000000000037':

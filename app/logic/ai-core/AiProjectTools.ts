@@ -143,7 +143,7 @@ const CREATE_ASSET_DESC =
   'TYPED ASSETS (set parentId to inherit blocks from type):\n' +
   '- DiagramElement: "00000000-0000-0000-0000-000000000032" — visual diagrams/flowcharts\n' +
   '- ScriptElement: "00000000-0000-0000-0000-000000000033" — visual scripts/dialogues\n' +
-  '- GameObject: "00000000-0000-0000-0000-000000000035" — game object definitions\n' +
+  '- GameObject: "00000000-c197-40c8-9fc6-000000000035" — game object definitions\n' +
   '- LevelEditor: "00000000-0000-0000-0000-000000000036" — level/map editor\n' +
   '- GameMechanics: "00000000-0000-0000-0000-000000000037" — game mechanics docs\n' +
   '- Markdown: "00000000-0000-0000-0000-000000000039" — markdown documents\n' +

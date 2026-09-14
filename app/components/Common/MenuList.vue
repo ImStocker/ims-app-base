@@ -1,5 +1,5 @@
 <template>
-  <ul class="MenuList is-dropdown">
+  <ul class="MenuList is-dropdown" @keydown="onKeydown">
     <template
       v-for="(item, idx) in menuList"
       :key="'dropdown-item-' + (item.name ?? idx)"
@@ -8,6 +8,7 @@
         <li
           v-if="!item.type || item.type !== 'separator'"
           class="MenuList-item use-buttons-dropdown-item"
+          :data-menu-index="idx"
         >
           <component
             :is="getItemComponent(item)"
@@ -46,7 +47,11 @@
             </div>
             <slot :name="'item-' + item.name + '-extra-content'"> </slot>
           </component>
-          <menu-button v-else :attach-position="childrenAttachPosition">
+          <menu-button
+            v-else
+            :ref="(el) => setSubmenuButtonRef(idx, el)"
+            :attach-position="childrenAttachPosition"
+          >
             <template #button="{ toggle }">
               <button
                 class="is-button MenuList-item-inner"
@@ -84,7 +89,9 @@
               </button>
             </template>
             <menu-list
+              :ref="(el) => setSubmenuListRef(idx, el)"
               :menu-list="item.children"
+              :close-submenu="() => onCloseSubmenu(idx)"
               @imc-menu-action-executed="
                 dispatchMenuActionExecutedEvent($event.detail.item)
               "
@@ -116,6 +123,15 @@ import MenuLoader from './MenuLoader.vue';
 import MenuLoadError from './MenuLoadError.vue';
 import UiManager, { ScreenSize } from '../../logic/managers/UiManager';
 
+export type MenuListSubmenuButton = {
+  show(): void;
+  hide(): void;
+};
+
+export type MenuListSubmenuRef = {
+  focusFirstItem(): void;
+};
+
 export default defineComponent({
   name: 'MenuList',
   components: {
@@ -131,6 +147,16 @@ export default defineComponent({
       type: String as PropType<DropdownElementPlacement>,
       default: 'right',
     },
+    closeSubmenu: {
+      type: Function as PropType<(() => void) | null>,
+      default: null,
+    },
+  },
+  data() {
+    return {
+      submenuButtons: {} as Record<number, MenuListSubmenuButton>,
+      submenuLists: {} as Record<number, MenuListSubmenuRef>,
+    };
   },
   computed: {
     childrenAttachPosition() {
@@ -203,6 +229,108 @@ export default defineComponent({
         },
       );
       this.$el.dispatchEvent(imcMenuActionExecuted);
+    },
+    setSubmenuButtonRef(idx: number, el: unknown) {
+      if (el) {
+        this.submenuButtons[idx] = el as MenuListSubmenuButton;
+      } else {
+        delete this.submenuButtons[idx];
+      }
+    },
+    setSubmenuListRef(idx: number, el: unknown) {
+      if (el) {
+        this.submenuLists[idx] = el as MenuListSubmenuRef;
+      } else {
+        delete this.submenuLists[idx];
+      }
+    },
+    getFocusedItemIndex(target: EventTarget | null): number | null {
+      const el = target as HTMLElement | null;
+      const li = el?.closest?.('[data-menu-index]') as HTMLElement | null;
+      if (!li) return null;
+      const idx = Number(li.dataset.menuIndex);
+      return Number.isNaN(idx) ? null : idx;
+    },
+    getMenuItems(): HTMLElement[] {
+      return Array.from(
+        this.$el.querySelectorAll<HTMLElement>('.MenuList-item-inner'),
+      ).filter((el) => {
+        return (
+          el.tabIndex >= 0 &&
+          !el.hasAttribute('disabled') &&
+          !(el as HTMLButtonElement).disabled
+        );
+      });
+    },
+    isEditableTarget(target: EventTarget | null): boolean {
+      const el = target as HTMLElement | null;
+      return !!el?.closest?.(
+        'input, textarea, select, [contenteditable="true"], [contenteditable=""]',
+      );
+    },
+    moveFocus(direction: 1 | -1) {
+      const items = this.getMenuItems();
+      if (items.length === 0) return;
+      const focusedIdx = items.indexOf(document.activeElement as HTMLElement);
+      let nextIdx =
+        focusedIdx < 0
+          ? direction > 0
+            ? 0
+            : items.length - 1
+          : focusedIdx + direction;
+      if (nextIdx < 0) nextIdx = items.length - 1;
+      else if (nextIdx >= items.length) nextIdx = 0;
+      items[nextIdx].focus();
+    },
+    focusFirstItem() {
+      const items = this.getMenuItems();
+      if (items.length > 0) items[0].focus();
+    },
+    openSubmenu(idx: number) {
+      const button = this.submenuButtons[idx];
+      if (!button) return;
+      button.show();
+      const tryFocusFirstItem = (attemptsLeft: number) => {
+        const list = this.submenuLists[idx];
+        if (list) {
+          list.focusFirstItem();
+        } else if (attemptsLeft > 0) {
+          setTimeout(() => tryFocusFirstItem(attemptsLeft - 1), 16);
+        }
+      };
+      this.$nextTick(() => tryFocusFirstItem(5));
+    },
+    onCloseSubmenu(idx: number) {
+      const button = this.submenuButtons[idx];
+      if (!button) return;
+      button.hide();
+      this.$nextTick(() => {
+        const li = this.$el.querySelector<HTMLElement>(
+          `[data-menu-index="${idx}"]`,
+        );
+        li?.querySelector<HTMLElement>('.MenuList-item-inner')?.focus();
+      });
+    },
+    onKeydown(ev: KeyboardEvent) {
+      if (this.isEditableTarget(ev.target)) return;
+      const key = ev.key;
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
+        this.moveFocus(key === 'ArrowUp' ? -1 : 1);
+        ev.preventDefault();
+      } else if (key === 'ArrowRight') {
+        const idx = this.getFocusedItemIndex(ev.target);
+        if (idx === null) return;
+        const item = this.menuList[idx];
+        if (item && item.children && item.children.length > 0) {
+          this.openSubmenu(idx);
+          ev.preventDefault();
+        }
+      } else if (key === 'ArrowLeft') {
+        if (this.closeSubmenu) {
+          this.closeSubmenu();
+          ev.preventDefault();
+        }
+      }
     },
   },
 });

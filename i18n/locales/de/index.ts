@@ -803,6 +803,8 @@ export default {
       '00000000-0000-0000-0000-000000000032': 'Diagramm',
       '00000000-0000-0000-0000-000000000035':
         'Game Object\n\nZum Erstellen von Charakteren, Gegenständen, Fähigkeiten und anderen Spieleinheiten',
+      '00000000-c197-40c8-9fc6-000000000035':
+        'Game Object\n\nZum Erstellen von Charakteren, Gegenständen, Fähigkeiten und anderen Spieleinheiten',
       '00000000-0000-0000-0000-000000000036':
         'Level\n\nLevel prototypisieren, Objekte auf der Karte platzieren, Zonen markieren',
       '00000000-0000-0000-0000-000000000037':
