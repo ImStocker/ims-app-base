@@ -459,11 +459,6 @@ export default defineComponent({
 <style lang="scss" rel="stylesheet/scss" scoped>
 .ChecklistBlock {
   padding: 5px 0px;
-  background-color: var(--local-bg-color);
-
-  &.state-edit {
-    border-color: var(--color-main-yellow);
-  }
 
   &:not(.state-edit) {
     cursor: text;
