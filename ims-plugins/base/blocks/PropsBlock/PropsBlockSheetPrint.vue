@@ -6,13 +6,13 @@
           {{ convertTranslatedTitle(ent.propTitle) }}
         </th>
         <td>
-          <props-block-value-stack
+          <prop-field-value-stack
             :form-state="formState"
             :edit-mode="false"
             class="AssetEditorPropsBlock_Sheet-cell type-value"
             :field="ent"
             display-mode="print"
-          ></props-block-value-stack>
+          ></prop-field-value-stack>
         </td>
       </tr>
     </tbody>
@@ -22,13 +22,13 @@
 <script lang="ts">
 import { type PropType, defineComponent } from 'vue';
 import { convertTranslatedTitle } from '#logic/utils/assets';
-import PropsBlockValueStack from './PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import type { PropsFormDef, PropsFormState } from '#logic/types/PropsForm';
 
 export default defineComponent({
   name: 'PropsBlockSheetPrint',
   components: {
-    PropsBlockValueStack,
+    PropFieldValueStack,
   },
   props: {
     formState: {

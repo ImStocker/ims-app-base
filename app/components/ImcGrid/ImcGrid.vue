@@ -52,7 +52,7 @@
               class="ImcGrid-cell-body-content"
               :class="getCellClass(rowIndex, column_index)"
             >
-              <props-block-value-stack
+              <prop-field-value-stack
                 :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
                 class="ImcGrid-cell-inner"
                 :class="{
@@ -76,7 +76,7 @@
                 @change-props="
                   onInputCell(rowIndex, column_index, $event, true)
                 "
-              ></props-block-value-stack>
+              ></prop-field-value-stack>
               <slot
                 :name="`cell-append-${column.name}`"
                 :row="row"
@@ -119,7 +119,7 @@ import {
   type ImcGridSelectedRange,
 } from './ImcGrid';
 import ScrollableTable from '../ScrollableTable/ScrollableTable.vue';
-import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import ContextMenuZone from '../Common/ContextMenuZone.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
 import {
@@ -181,7 +181,7 @@ export default defineComponent({
   name: 'ImcGrid',
   components: {
     ScrollableTable,
-    PropsBlockValueStack,
+    PropFieldValueStack,
     ImcEditor,
     ContextMenuZone,
   },
@@ -236,7 +236,7 @@ export default defineComponent({
       focusInside: false,
       editMode: false,
       cellRefs: shallowRef(
-        new Map<string, InstanceType<typeof PropsBlockValueStack>>(),
+        new Map<string, InstanceType<typeof PropFieldValueStack>>(),
       ),
       focusLock: shallowRef(null as UiFocusLockHandler | null),
       clickOutside: null as SetClickOutsideCancel | null,
@@ -715,13 +715,13 @@ export default defineComponent({
     getCellRef(
       row: number,
       col: number,
-    ): InstanceType<typeof PropsBlockValueStack> | null {
+    ): InstanceType<typeof PropFieldValueStack> | null {
       return this.cellRefs.get(`${row}:${col}`) ?? null;
     },
     setCellRef(
       row: number,
       col: number,
-      component: InstanceType<typeof PropsBlockValueStack> | null,
+      component: InstanceType<typeof PropFieldValueStack> | null,
     ) {
       if (component) {
         this.cellRefs.set(`${row}:${col}`, component);

@@ -39,6 +39,15 @@
         ></attribute-type-prop-editor>
       </div>
     </div>
+    <div class="PropBlockChangeSettings-section">
+      <div class="PropBlockChangeSettings-section-content">
+        <checkbox-prop-editor
+          :model-value="multiple"
+          :caption="$t('assetEditor.propsBlockFieldIsMultiple')"
+          @update:model-value="setFieldParam('multiple', $event)"
+        ></checkbox-prop-editor>
+      </div>
+    </div>
     <div
       v-if="paramsStructForm && paramsStructForm.fields.length > 0"
       class="PropBlockChangeSettings-section"
@@ -84,6 +93,7 @@ import type {
   PropsFormState,
 } from '#logic/types/PropsForm';
 import AttributeTypePropEditor from '#components/Props/AttributeTypePropEditor.vue';
+import CheckboxPropEditor from '#components/Props/CheckboxPropEditor.vue';
 import StringPropEditor from '#components/Props/StringPropEditor.vue';
 import type { FieldTypeController } from '#logic/types/FieldTypeController';
 import CaptionString from '#components/Common/CaptionString.vue';
@@ -96,6 +106,7 @@ export default defineComponent({
   name: 'AssetEditorPropBlockChangeSettings',
   components: {
     AttributeTypePropEditor,
+    CheckboxPropEditor,
     CaptionString,
     PropsBlockSheet: defineAsyncComponent(
       () => import('../PropsBlock/PropsBlockSheet.vue') as any,
@@ -143,6 +154,12 @@ export default defineComponent({
         ? this.formState.values['__hint'].value
         : null;
       return val ? castAssetPropValueToString(val) : '';
+    },
+    multiple() {
+      const val = this.formState.values['__multiple']
+        ? this.formState.values['__multiple'].value
+        : null;
+      return val ? val : false;
     },
     typeController(): FieldTypeController | null {
       if (!this.type) return null;

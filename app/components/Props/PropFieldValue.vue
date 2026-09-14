@@ -1,31 +1,22 @@
 <template>
-  <div class="AssetEditorPropsBlockValue" @imc-focus-at="onFocusAt">
-    <div class="AssetEditorPropsBlockValue-main">
-      <div
-        v-if="computedState === false"
-        class="AssetEditorPropsBlockValue-loader"
-      >
+  <div class="PropFieldValue" @imc-focus-at="onFocusAt">
+    <div class="PropFieldValue-main">
+      <div v-if="computedState === false" class="PropFieldValue-loader">
         <div class="loaderSpinner"></div>
         {{ $t('assetEditor.computing') }}
       </div>
-      <div
-        v-if="computedState !== true"
-        class="AssetEditorPropsBlockValue-error"
-      >
+      <div v-if="computedState !== true" class="PropFieldValue-error">
         <i class="ri-error-warning-fill"></i>
         {{ computedState }}
       </div>
-      <div
-        v-if="fieldTypeInfo.loading"
-        class="AssetEditorPropsBlockValue-loader"
-      >
+      <div v-if="fieldTypeInfo.loading" class="PropFieldValue-loader">
         <div class="loaderSpinner"></div>
         {{ $t('common.loading') }}
       </div>
       <template v-else-if="editMode && !field.differentDefinition">
         <div
           v-if="!sameValue && !changeDifferent"
-          class="AssetEditorPropsBlockValue-different"
+          class="PropFieldValue-different"
           @click="activateChangeDifferent"
         >
           {{ $t('assetEditor.differentValues') }}
@@ -56,7 +47,7 @@
             ></component>
           </template>
         </async-component>
-        <div v-else class="AssetEditorPropsBlockValue-undefinedFieldType">
+        <div v-else class="PropFieldValue-undefinedFieldType">
           {{
             $t('assetEditor.unregisteredFieldType', {
               type: fieldTypeInfo.type,
@@ -65,13 +56,10 @@
         </div>
       </template>
       <template v-else>
-        <div
-          v-if="field.differentDefinition"
-          class="AssetEditorPropsBlockValue-different"
-        >
+        <div v-if="field.differentDefinition" class="PropFieldValue-different">
           {{ $t('assetEditor.differentAttributes') }}
         </div>
-        <div v-if="!sameValue" class="AssetEditorPropsBlockValue-different">
+        <div v-if="!sameValue" class="PropFieldValue-different">
           {{ $t('assetEditor.differentValues') }}
         </div>
         <async-component
@@ -100,7 +88,7 @@
     </div>
     <form-builder-field-tooltip
       v-if="fieldTypeInfo.hint"
-      class="AssetEditorPropsBlockValue-hint"
+      class="PropFieldValue-hint"
       :message="fieldTypeInfo.hint"
     ></form-builder-field-tooltip>
   </div>
@@ -121,7 +109,7 @@ import EditorManager from '#logic/managers/EditorManager';
 import AsyncComponent from '#components/Common/AsyncComponent.vue';
 
 export default defineComponent({
-  name: 'AssetEditorPropsBlockValue',
+  name: 'PropFieldValue',
   components: { FormBuilderFieldTooltip, AsyncComponent },
   props: {
     editMode: {
@@ -282,17 +270,17 @@ export default defineComponent({
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
-.AssetEditorPropsBlockValue-different {
+.PropFieldValue-different {
   padding: 5px;
   font-style: italic;
   color: #999;
 }
 
-.AssetEditorPropsBlockValue-undefinedFieldType {
+.PropFieldValue-undefinedFieldType {
   color: var(--color-main-error);
 }
 
-.AssetEditorPropsBlockValue-loader {
+.PropFieldValue-loader {
   display: inline-block;
   color: #999;
   font-style: italic;
@@ -305,7 +293,7 @@ export default defineComponent({
   }
 }
 
-.AssetEditorPropsBlockValue-error {
+.PropFieldValue-error {
   color: var(--color-main-error);
 
   .ri-error-warning-fill {
@@ -313,17 +301,17 @@ export default defineComponent({
   }
 }
 
-.AssetEditorPropsBlockValue {
+.PropFieldValue {
   display: flex;
   min-width: 0;
 }
 
-.AssetEditorPropsBlockValue-main {
+.PropFieldValue-main {
   flex: 1;
   min-width: 0;
 }
 
-.AssetEditorPropsBlockValue-hint {
+.PropFieldValue-hint {
   margin-left: 5px;
   margin-right: 5px;
 }

@@ -2,7 +2,7 @@
   <div class="AssetEditorPropBlock" @click="enterEditMode($event)">
     <div class="AssetEditorPropBlock-row">
       <span
-        class="AssetEditorPropBlock-typeCircle"
+        class="AssetEditorPropBlock-typeCircle field-type-dot"
         :class="[typeCircleClass, { 'is-clickable': canOpenSettings }]"
         :title="canOpenSettings ? $t('assetEditor.changeSettings') : undefined"
         @click.stop="openSettings"
@@ -18,8 +18,8 @@
           <caption-string :value="title" />
         </renamable-text>
       </div>
-      <props-block-value
-        v-if="valueShown"
+      <prop-field-value
+        v-if="!field.multiple"
         ref="value"
         class="AssetEditorPropBlock-value"
         :edit-mode="valueEditMode"
@@ -32,7 +32,18 @@
         @update:model-value="changeValue($event)"
         @enter="save()"
         @change-props="changeBlockProps($event)"
-      ></props-block-value>
+      ></prop-field-value>
+      <prop-field-value-stack
+        v-else
+        ref="value"
+        class="AssetEditorPropBlock-value"
+        :edit-mode="valueEditMode"
+        :field="field"
+        :form-state="formState"
+        :display-mode="displayMode"
+        @enter="save()"
+        @change-props="changeBlockProps($event)"
+      ></prop-field-value-stack>
     </div>
     <right-panel v-if="changeSettingsOpen">
       <prop-block-change-settings
@@ -51,6 +62,7 @@
 <script lang="ts">
 import { type PropType, defineComponent } from 'vue';
 import {
+  castAssetPropValueToBoolean,
   castAssetPropValueToString,
   extractSubObjectAsPlainValue,
   makeBlockRef,
@@ -61,7 +73,9 @@ import {
   type AssetPropsPlainObjectValue,
 } from '#logic/types/Props';
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
-import PropsBlockValue from '../PropsBlock/PropsBlockValue.vue';
+import PropFieldValue from '#components/Props/PropFieldValue.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
+import { getFieldTypeDotClass } from '#components/Props/fieldTypeDot';
 import PropBlockChangeSettings from './PropBlockChangeSettings.vue';
 import { extractPropsFormState } from '../PropsBlock/PropsBlock';
 import { AssetRights, MIN_ASSET_RIGHTS_TO_CHANGE } from '#logic/types/Rights';
@@ -86,7 +100,8 @@ import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
 export default defineComponent({
   name: 'PropBlock',
   components: {
-    PropsBlockValue,
+    PropFieldValue,
+    PropFieldValueStack,
     PropBlockChangeSettings,
     RightPanel,
     RenamableText,
@@ -142,19 +157,11 @@ export default defineComponent({
       return this.resolvedBlock.title ?? this.resolvedBlock.name ?? '';
     },
     typeCircleClass(): string {
-      const type = this.resolvedBlock.props?.__type;
-      if (type == null) return '';
-      const type_value = castAssetPropValueToString(type);
-      return [
-        'boolean',
-        'float',
-        'integer',
-        'string',
-        'text',
-        'asset',
-      ].includes(type_value)
-        ? 'is-type-' + type_value
-        : '';
+      return getFieldTypeDotClass(
+        this.resolvedBlock.props?.__type
+          ? castAssetPropValueToString(this.resolvedBlock.props.__type)
+          : null,
+      );
     },
     formState(): PropsFormState {
       return extractPropsFormState(this.resolvedBlock);
@@ -184,7 +191,9 @@ export default defineComponent({
           this.resolvedBlock.title ?? this.resolvedBlock.name ?? 'Variable',
         propName: this.resolvedBlock.name ?? undefined,
         type: this.fieldType,
-        multiple: false,
+        multiple: castAssetPropValueToBoolean(
+          this.resolvedBlock.props?.__multiple ?? false,
+        ),
         params: this.fieldParams,
         differentDefinition: false,
         hint: this.fieldHint,
@@ -192,9 +201,6 @@ export default defineComponent({
     },
     valueEditMode() {
       return !this.isReadOnly && this.displayMode === 'normal';
-    },
-    valueShown() {
-      return true;
     },
     currentValue(): AssetPropValue {
       const ent = this.formState.values['value'];
@@ -397,6 +403,8 @@ export default defineComponent({
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
+@use '$style/field-type-dot' as *;
+
 .AssetEditorPropBlock {
   position: relative;
   min-height: 28px;
@@ -414,9 +422,8 @@ export default defineComponent({
 }
 
 .AssetEditorPropBlock-title {
-  flex: 0 1 auto;
+  flex: 0 0 190px;
   min-width: 0;
-  max-width: 40%;
 }
 
 .AssetEditorPropBlock-title-value {
@@ -459,43 +466,21 @@ export default defineComponent({
 .AssetEditorPropBlock-value {
   flex: 1 1 auto;
   min-width: 80px;
-  max-width: 380px;
   margin-left: auto;
   margin-right: 4px;
 
-  :deep(.AssetEditorPropsBlockValue-main) {
+  :deep(.PropFieldValue-main) {
+    display: flex;
+    align-items: center;
+  }
+
+  :deep(.PropFieldValueStack-item-value) {
     display: flex;
     align-items: center;
   }
 }
 
 .AssetEditorPropBlock-typeCircle {
-  display: inline-block;
-  flex: 0 0 auto;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--ims-type-any-fill);
-
-  &.is-type-boolean {
-    background-color: var(--ims-type-boolean-fill);
-  }
-  &.is-type-float {
-    background-color: var(--ims-type-float-fill);
-  }
-  &.is-type-integer {
-    background-color: var(--ims-type-integer-fill);
-  }
-  &.is-type-string {
-    background-color: var(--ims-type-string-fill);
-  }
-  &.is-type-text {
-    background-color: var(--ims-type-text-fill);
-  }
-  &.is-type-asset {
-    background-color: var(--ims-type-asset-fill);
-  }
-
   &.is-clickable {
     cursor: pointer;
   }

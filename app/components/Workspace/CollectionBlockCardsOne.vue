@@ -37,12 +37,12 @@
           <div class="CollectionBlockCardsOne-content-item-prop">
             <caption-string :value="column.propTitle"></caption-string>:
           </div>
-          <props-block-value-stack
+          <prop-field-value-stack
             class="CollectionBlockCardsOne-content-item-value"
             :form-state="row.values[columnIndex].formState"
             :field="row.values[columnIndex].field"
             :edit-mode="false"
-          ></props-block-value-stack>
+          ></prop-field-value-stack>
         </template>
       </div>
     </div>
@@ -58,7 +58,7 @@ import {
 } from '../../logic/types/Props';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
-import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import AssetLink from '../Asset/AssetLink.vue';
 import FilePresenter from '../File/FilePresenter.vue';
@@ -66,7 +66,7 @@ import FilePresenter from '../File/FilePresenter.vue';
 export default defineComponent({
   name: 'CollectionBlockCardsOne',
   components: {
-    PropsBlockValueStack,
+    PropFieldValueStack,
     CaptionString,
     AssetLink,
     FilePresenter,

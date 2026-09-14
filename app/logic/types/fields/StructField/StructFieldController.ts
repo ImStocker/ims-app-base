@@ -1,13 +1,13 @@
 import { FieldTypeController } from '../../FieldTypeController';
 import { structFieldAiSpec } from './StructFieldAiSpec';
-import StructPropEditor from '../../../../components/Props/StructPropEditor.vue';
+import StructFieldValueEditor from '../../../../components/Props/StructFieldValueEditor.vue';
 import { ASSET_VALUE_STRUCTURE } from '../../../constants';
 
 export class StructFieldController extends FieldTypeController {
   name = 'struct';
   title = '[[t:Structure]]';
-  editor = async () => StructPropEditor;
-  presenter = async () => StructPropEditor;
+  editor = async () => StructFieldValueEditor;
+  presenter = async () => StructFieldValueEditor;
 
   override aiSpec = structFieldAiSpec.aiSpec;
   override parameters = [

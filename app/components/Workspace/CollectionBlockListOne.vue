@@ -41,12 +41,12 @@
           <div class="CollectionBlockListOne-content-item-prop">
             <caption-string :value="column.propTitle"></caption-string>:
           </div>
-          <props-block-value-stack
+          <prop-field-value-stack
             class="CollectionBlockListOne-content-item-value"
             :form-state="row.values[columnIndex].formState"
             :field="row.values[columnIndex].field"
             :edit-mode="false"
-          ></props-block-value-stack>
+          ></prop-field-value-stack>
         </template>
       </div>
     </div>
@@ -55,7 +55,7 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import PropsBlockValueStack from '~ims-plugin-base/blocks/PropsBlock/PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import CaptionString from '../Common/CaptionString.vue';
 import AssetLink from '../Asset/AssetLink.vue';
 import FilePresenter from '../File/FilePresenter.vue';
@@ -68,7 +68,7 @@ import type { ImcGridColumn, ImcGridRow } from '../ImcGrid/ImcGrid';
 export default defineComponent({
   name: 'CollectionBlockListOne',
   components: {
-    PropsBlockValueStack,
+    PropFieldValueStack,
     CaptionString,
     FilePresenter,
     AssetLink,

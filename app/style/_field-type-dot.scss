@@ -1,0 +1,27 @@
+.field-type-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--ims-type-any-fill);
+
+  &.is-type-boolean {
+    background-color: var(--ims-type-boolean-fill);
+  }
+  &.is-type-float {
+    background-color: var(--ims-type-float-fill);
+  }
+  &.is-type-integer {
+    background-color: var(--ims-type-integer-fill);
+  }
+  &.is-type-string {
+    background-color: var(--ims-type-string-fill);
+  }
+  &.is-type-text {
+    background-color: var(--ims-type-text-fill);
+  }
+  &.is-type-asset {
+    background-color: var(--ims-type-asset-fill);
+  }
+}

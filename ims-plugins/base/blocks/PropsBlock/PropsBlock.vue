@@ -515,7 +515,7 @@ export default defineComponent({
       if (ev) {
         const closest = getClosestNodeBySelector(
           ev.target as Node,
-          '.AssetEditorPropsBlock_Sheet-cell, .AssetEditorPropsBlockValueStack-item-value',
+          '.AssetEditorPropsBlock_Sheet-cell, .PropFieldValueStack-item-value',
           this.$el,
         );
         if (closest) {

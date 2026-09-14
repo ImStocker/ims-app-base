@@ -1,10 +1,10 @@
 <template>
-  <div class="AssetEditorPropsBlockValueStack">
+  <div class="PropFieldValueStack">
     <template v-if="!field.multiple">
-      <div class="AssetEditorPropsBlockValueStack-item">
-        <props-block-value
+      <div class="PropFieldValueStack-item">
+        <prop-field-value
           ref="first"
-          class="AssetEditorPropsBlockValueStack-item-value"
+          class="PropFieldValueStack-item-value"
           :edit-mode="editMode"
           :model-value="
             formState.values[field.propKey]
@@ -44,18 +44,18 @@
               ? (event: AssetPropValue) => inputValue(field, event)
               : null,
           }"
-        ></props-block-value>
+        ></prop-field-value>
       </div>
     </template>
     <template v-else>
       <div
         v-for="ent of entries"
         :key="ent.index"
-        class="AssetEditorPropsBlockValueStack-item"
+        class="PropFieldValueStack-item"
       >
-        <props-block-value
-          ref="propsBlockValues"
-          class="AssetEditorPropsBlockValueStack-item-value"
+        <prop-field-value
+          ref="prop-field-values"
+          class="PropFieldValueStack-item-value"
           :edit-mode="editMode"
           :model-value="
             formState.values[ent.field.propKey]
@@ -95,19 +95,19 @@
               ? (event: AssetPropValue) => inputValue(ent.field, event)
               : null,
           }"
-        ></props-block-value>
+        ></prop-field-value>
         <button
           v-if="editMode"
-          class="is-button is-button-icon AssetEditorPropsBlockValueStack-delete"
+          class="is-button is-button-icon PropFieldValueStack-delete"
           :title="$t('assetEditor.propsBlockDeleteElement')"
           @click="deleteItem(ent)"
         >
           <i class="ri-delete-bin-fill"></i>
         </button>
       </div>
-      <div v-if="editMode" class="AssetEditorPropsBlockValueStack-add">
+      <div v-if="editMode" class="PropFieldValueStack-add">
         <button
-          class="is-button AssetEditorPropsBlockValueStack-add-button"
+          class="is-button PropFieldValueStack-add-button"
           @click="addItem"
         >
           {{ $t('assetEditor.propsBlockAddElement') }}
@@ -122,18 +122,18 @@ import { type PropType, defineComponent } from 'vue';
 import type { AssetProps, AssetPropValue } from '#logic/types/Props';
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import { escapeRegExp } from '#logic/utils/stringUtils';
-import PropsBlockValue from './PropsBlockValue.vue';
+import PropFieldValue from './PropFieldValue.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';
 import { makeDeletePropKey } from '#logic/types/makePropsChange';
 
-type PropsBlockValueStackEntry = {
+type PropFieldValueStackEntry = {
   index: number;
   field: PropsFormFieldDef;
 };
 
 export default defineComponent({
-  name: 'AssetEditorPropsBlockValueStack',
-  components: { PropsBlockValue },
+  name: 'PropFieldValueStack',
+  components: { PropFieldValue },
   props: {
     editMode: {
       type: Boolean,
@@ -171,7 +171,7 @@ export default defineComponent({
         !Array.isArray(this.formState.values[this.field.propKey].computedValue)
       );
     },
-    entries(): PropsBlockValueStackEntry[] {
+    entries(): PropFieldValueStackEntry[] {
       if (!this.field.multiple) return [];
       if (this.isSingularValue) {
         return [
@@ -185,7 +185,7 @@ export default defineComponent({
           },
         ];
       }
-      const res: PropsBlockValueStackEntry[] = [];
+      const res: PropFieldValueStackEntry[] = [];
       const indices_set = new Set<number>();
       const index_regexp = new RegExp(
         '^' + escapeRegExp(this.field.propKey + '\\') + '(-?\\d+(\\.\\d+)?)',
@@ -213,20 +213,23 @@ export default defineComponent({
   },
   watch: {},
   methods: {
-    _getFirstFieldComponent(): InstanceType<typeof PropsBlockValue> | null {
+    _getFirstFieldComponent(): InstanceType<typeof PropFieldValue> | null {
       if (this.$refs.first) {
-        return this.$refs.first as InstanceType<typeof PropsBlockValue>;
+        return this.$refs.first as InstanceType<typeof PropFieldValue>;
       } else if (
-        this.$refs.propsBlockValues &&
-        (this.$refs.propsBlockValues as InstanceType<typeof PropsBlockValue>[])
-          .length > 0
+        this.$refs['prop-field-values'] &&
+        (
+          this.$refs['prop-field-values'] as InstanceType<
+            typeof PropFieldValue
+          >[]
+        ).length > 0
       ) {
-        return this.$refs.propsBlockValues[0];
+        return this.$refs['prop-field-values'][0];
       }
       return null;
     },
     _callComponentCommand(
-      method: keyof InstanceType<typeof PropsBlockValue>,
+      method: keyof InstanceType<typeof PropFieldValue>,
       args: any[] = [],
     ): boolean {
       const first = this._getFirstFieldComponent();
@@ -279,12 +282,12 @@ export default defineComponent({
       this.$emit('changeProps', changes);
 
       await new Promise((res) => setTimeout(res, 10));
-      if (!this.$refs.propsBlockValues) return;
-      const propsBlockValues = this.$refs.propsBlockValues as InstanceType<
-        typeof PropsBlockValue
+      if (!this.$refs['prop-field-values']) return;
+      const propFieldValues = this.$refs['prop-field-values'] as InstanceType<
+        typeof PropFieldValue
       >[];
-      if (propsBlockValues.length > 0) {
-        propsBlockValues[propsBlockValues.length - 1].activate();
+      if (propFieldValues.length > 0) {
+        propFieldValues[propFieldValues.length - 1].activate();
       }
     },
     changeValue(entry: PropsFormFieldDef, val: AssetPropValue) {
@@ -301,7 +304,7 @@ export default defineComponent({
         },
       ]);
     },
-    deleteItem(entry: PropsBlockValueStackEntry) {
+    deleteItem(entry: PropFieldValueStackEntry) {
       if (this.isSingularValue) {
         this.$emit('changeProps', [
           {
@@ -317,7 +320,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
-.AssetEditorPropsBlockValueStack-item {
+.PropFieldValueStack-item {
   display: flex;
   align-items: flex-start;
 
@@ -326,7 +329,7 @@ export default defineComponent({
   }
 }
 
-.AssetEditorPropsBlockValueStack-item-value {
+.PropFieldValueStack-item-value {
   flex: 1;
 
   &.state-inherited {
@@ -334,16 +337,16 @@ export default defineComponent({
   }
 }
 
-.AssetEditorPropsBlockValueStack-delete {
+.PropFieldValueStack-delete {
   margin-top: 2px;
   margin-left: 5px;
 }
 
-.AssetEditorPropsBlockValueStack-add {
+.PropFieldValueStack-add {
   padding: 4px 5px;
 }
 
-.AssetEditorPropsBlockValueStack-add-button {
+.PropFieldValueStack-add-button {
   --button-padding: 0.37em 0.33em;
 }
 </style>

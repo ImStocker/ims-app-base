@@ -37,7 +37,7 @@
           </menu-button>
         </template>
       </props-block-prop>
-      <props-block-value-stack
+      <prop-field-value-stack
         :ref="(el) => setEntryRef(ent, 'value', el)"
         :form-state="formState"
         :edit-mode="editMode"
@@ -45,7 +45,7 @@
         :field="ent"
         @change-props="$emit('changeProps', $event)"
         @click="selectProp(ent)"
-      ></props-block-value-stack>
+      ></prop-field-value-stack>
     </template>
     <div
       v-if="formDef.differentFieldsNum > 0"
@@ -87,7 +87,7 @@ import {
   type AssetDisplayMode,
 } from '#logic/utils/assets';
 import PropsBlockProp from './PropsBlockProp.vue';
-import PropsBlockValueStack from './PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import type {
   PropsFormDef,
   PropsFormFieldDef,
@@ -105,7 +105,7 @@ export default defineComponent({
   name: 'AssetEditorPropsBlockSheet',
   components: {
     PropsBlockProp,
-    PropsBlockValueStack,
+    PropFieldValueStack,
     OverlayElement,
     MenuButton,
     MenuList,

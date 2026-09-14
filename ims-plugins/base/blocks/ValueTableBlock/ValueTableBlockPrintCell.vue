@@ -1,10 +1,10 @@
 <template>
   <div class="ValueTableBlockPrintCell">
-    <props-block-value-stack
+    <prop-field-value-stack
       :form-state="tableData.values"
       :field="column"
       :block-id="resolvedBlock.id"
-    ></props-block-value-stack>
+    ></prop-field-value-stack>
   </div>
 </template>
 
@@ -17,14 +17,14 @@ import type {
   ValueTableBlockData,
   ValueTableBlockRowData,
 } from './ValueTableBlock';
-import PropsBlockValueStack from '../PropsBlock/PropsBlockValueStack.vue';
+import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import { normalizeAssetPropPart } from '#logic/types/Props';
 import { v4 as uuidv4 } from 'uuid';
 
 export default defineComponent({
   name: 'ValueTableBlockPrintCell',
   components: {
-    PropsBlockValueStack,
+    PropFieldValueStack,
   },
   props: {
     rights: {
