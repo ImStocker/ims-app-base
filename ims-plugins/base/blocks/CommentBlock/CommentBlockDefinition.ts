@@ -4,6 +4,8 @@ export class CommentBlockDefinition extends BlockTypeDefinition {
   name = 'comment';
   component = async () => (await import('./CommentBlock.vue')).default;
   icon = 'ri-chat-3-line';
+  override group = 'other';
+  override index = 32;
   override hideBlockHeader = true;
 
   override aiSpec = {

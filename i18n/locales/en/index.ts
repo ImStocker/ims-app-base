@@ -367,6 +367,7 @@ export default {
     blockReset: "Initial values of block '{block}' were restored",
   },
   assetEditor: {
+    searchBlocks: 'Search blocks',
     changeIcon: 'Change icon',
     changeColor: 'Change color',
     noColor: 'No color',
@@ -710,6 +711,11 @@ export default {
     header: 'Type of block',
     selectType: 'Select type',
     deprecated: 'Deprecated',
+    groups: {
+      data: 'Data',
+      editors: 'Editors',
+      other: 'Other',
+    },
     titles: {
       text: 'Text',
       checklist: 'Checklist',
@@ -728,7 +734,7 @@ export default {
       graph: 'Graph',
       markdown: 'Text (Markdown)',
       comment: 'Comment',
-      assetList: 'Asset list',
+      assetList: 'Element List',
     },
     saveBlock: 'Save block',
   },

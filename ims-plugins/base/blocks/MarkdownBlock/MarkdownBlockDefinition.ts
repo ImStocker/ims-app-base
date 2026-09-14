@@ -9,6 +9,8 @@ export class MarkdownBlockDefinition extends BlockTypeDefinition {
   name = 'markdown';
   component = async () => (await import('./MarkdownBlock.vue')).default;
   icon = 'markdown-line';
+  override group = null;
+  override index = 1;
 
   override focusOnAdded = true;
   override aiSpec = markdownBlockAiSpec.aiSpec;

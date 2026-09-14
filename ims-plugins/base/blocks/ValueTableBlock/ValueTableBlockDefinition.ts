@@ -8,6 +8,8 @@ export class ValueTableDefinition extends BlockTypeDefinition {
   name = 'table';
   component = async () => (await import('./ValueTableBlock.vue')).default;
   icon = 'table-line';
+  override group = 'data';
+  override index = 13;
   override aiSpec = valueTableBlockAiSpec.aiSpec;
 
   override async beforeBlockCreate(

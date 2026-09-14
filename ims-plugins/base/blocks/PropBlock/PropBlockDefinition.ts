@@ -39,6 +39,8 @@ export class PropBlockDefinition extends BlockTypeDefinition {
   name = 'prop';
   component = async () => (await import('./PropBlock.vue')).default;
   icon = 'ri-price-tag-3-line';
+  override group = null;
+  override index = 2;
   override hideBlockHeader = true;
   override focusOnAdded = true;
 

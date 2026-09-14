@@ -377,6 +377,7 @@ export default {
     blockReset: "Начальные значения блока '{block}' были восстановлены",
   },
   assetEditor: {
+    searchBlocks: 'Поиск блоков',
     changeIcon: 'Сменить иконку',
     changeColor: 'Сменить цвет',
     noColor: 'Без цвета',
@@ -722,6 +723,11 @@ export default {
     header: 'Тип блока',
     selectType: 'Выберите тип блока',
     deprecated: 'Устаревший',
+    groups: {
+      data: 'Данные',
+      editors: 'Редакторы',
+      other: 'Другое',
+    },
     titles: {
       text: 'Текст',
       checklist: 'Чек-лист',

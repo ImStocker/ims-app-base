@@ -8,6 +8,8 @@ export class EmbedBlockDefinition extends BlockTypeDefinition {
   name = 'embed';
   component = async () => (await import('./EmbedBlock.vue')).default;
   icon = 'external-link-fill';
+  override group = 'other';
+  override index = 33;
 
   override focusOnAdded = false;
   override aiSpec = embedBlockAiSpec.aiSpec;

@@ -18,6 +18,8 @@ export class AssetListBlockDefinition extends BlockTypeDefinition {
   name = 'assetList';
   component = async () => (await import('./AssetListBlock.vue')).default;
   icon = 'ri-list-check-3';
+  override group = 'data';
+  override index = 11;
 
   override focusOnAdded = true;
 

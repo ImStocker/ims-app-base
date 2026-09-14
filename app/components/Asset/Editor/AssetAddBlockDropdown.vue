@@ -6,67 +6,26 @@
         {{ $t('gddPage.addBlock') }}
       </button>
     </template>
-    <menu-list class="AddBlockDropdown-list" :menu-list="menuList"></menu-list>
+    <add-block-menu-body
+      @select="$emit('create-block', $event)"
+      @paste-blocks="$emit('paste-blocks')"
+    ></add-block-menu-body>
   </menu-button>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
 import MenuButton from '../../Common/MenuButton.vue';
-import MenuList from '../../Common/MenuList.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
-import type { MenuListItem } from '../../../logic/types/MenuList';
+import AddBlockMenuBody from './AddBlockMenuBody.vue';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
   components: {
     MenuButton,
-    MenuList,
+    AddBlockMenuBody,
   },
   emits: ['create-block', 'paste-blocks'],
-  computed: {
-    blockTypes() {
-      return this.$getAppManager()
-        .get(EditorManager)
-        .getBlockTypesList()
-        .filter((x) => !x.hideInAdding)
-        .sort((a, b) => {
-          return (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0);
-        });
-    },
-    menuList(): MenuListItem[] {
-      const list: MenuListItem[] = this.blockTypes.map((block) => {
-        let title = block.title
-          ? block.title
-          : this.$t('blockTypes.titles.' + block.name);
-        if (block.deprecated) {
-          title += ` (${this.$t('blockTypes.deprecated')})`;
-        }
-        return {
-          title,
-          icon: block.icon.startsWith('ri-') ? block.icon : 'ri-' + block.icon,
-          action: () => this.$emit('create-block', block.name),
-        };
-      });
-      list.push(
-        {
-          type: 'separator',
-        },
-        {
-          title: this.$t('assetEditor.pasteBlocks'),
-          icon: 'ri-clipboard-line',
-          action: () => this.$emit('paste-blocks'),
-        },
-      );
-      return list;
-    },
-  },
 });
 </script>
-<style lang="scss">
-.AddBlockDropdown-list {
-  width: var(--DropdownContainer-attachToElement-width);
-}
-</style>
 <style lang="scss" scoped>
 .AddBlockDropdown {
   font-family: var(--local-font-family);

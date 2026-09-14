@@ -31,6 +31,8 @@ export class PropsBlockDefinition extends BlockTypeDefinition {
   name = 'props';
   component = async () => (await import('./PropsBlock.vue')).default;
   icon = 'table-2';
+  override group = 'data';
+  override index = 12;
   override aiSpec = propsBlockAiSpec.aiSpec;
 
   override getBlockProvidedVariables(

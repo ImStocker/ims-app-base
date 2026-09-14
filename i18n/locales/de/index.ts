@@ -369,6 +369,7 @@ export default {
     blockReset: "Anfangswerte von Block '{block}' wiederhergestellt",
   },
   assetEditor: {
+    searchBlocks: 'Blöcke suchen',
     changeIcon: 'Icon ändern',
     changeColor: 'Farbe ändern',
     noColor: 'Keine Farbe',
@@ -717,6 +718,11 @@ export default {
     header: 'Blocktyp',
     selectType: 'Typ auswählen',
     deprecated: 'Veraltet',
+    groups: {
+      data: 'Daten',
+      editors: 'Editoren',
+      other: 'Sonstiges',
+    },
     titles: {
       text: 'Text',
       checklist: 'Checkliste',

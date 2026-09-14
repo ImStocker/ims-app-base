@@ -5,21 +5,22 @@
         <slot></slot>
       </div>
     </template>
-    <menu-list class="AddBlockDropdown-list" :menu-list="menuList"></menu-list>
+    <add-block-menu-body
+      @select="$emit('click', $event)"
+      @paste-blocks="$emit('paste-blocks')"
+    ></add-block-menu-body>
   </menu-button>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
-import MenuList from '../../Common/MenuList.vue';
 import MenuButton from '../../Common/MenuButton.vue';
-import EditorManager from '../../../logic/managers/EditorManager';
-import type { MenuListItem } from '../../../logic/types/MenuList';
+import AddBlockMenuBody from './AddBlockMenuBody.vue';
 
 export default defineComponent({
   name: 'AddBlockDropdown',
   components: {
-    MenuList,
     MenuButton,
+    AddBlockMenuBody,
   },
   props: {
     unelevated: {
@@ -36,34 +37,6 @@ export default defineComponent({
     },
   },
   emits: ['click', 'paste-blocks'],
-  computed: {
-    blockTypes() {
-      return this.$getAppManager()
-        .get(EditorManager)
-        .getBlockTypesList()
-        .filter((x) => !x.hideInAdding);
-    },
-    menuList(): MenuListItem[] {
-      const list: MenuListItem[] = this.blockTypes.map((block) => {
-        return {
-          title: this.$t('blockTypes.titles.' + block.name),
-          icon: 'ri-' + block.icon,
-          action: () => this.$emit('click', block.name),
-        };
-      });
-      list.push(
-        {
-          type: 'separator',
-        },
-        {
-          title: this.$t('assetEditor.pasteBlocks'),
-          icon: 'ri-clipboard-line',
-          action: () => this.$emit('paste-blocks'),
-        },
-      );
-      return list;
-    },
-  },
 });
 </script>
 <style lang="scss" scoped></style>

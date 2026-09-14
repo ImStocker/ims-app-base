@@ -74,6 +74,9 @@ export abstract class BlockTypeDefinition {
   focusOnAdded = true;
   resizableBlockHeight = false;
 
+  group: 'data' | 'editors' | 'other' | null = null;
+  index: number = 100;
+
   aiSpec: BlockAiSpec = { brief: '' };
   acceptAi = false;
   makeAiPrompt(userPrompt: string) {

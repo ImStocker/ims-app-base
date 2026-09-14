@@ -5,5 +5,7 @@ export class ChecklistBlockDefinition extends BlockTypeDefinition {
   name = 'checklist';
   component = async () => (await import('./ChecklistBlock.vue')).default;
   icon = 'list-check';
+  override group = 'other';
+  override index = 31;
   override aiSpec = checklistBlockAiSpec.aiSpec;
 }
