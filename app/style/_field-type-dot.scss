@@ -4,8 +4,11 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: var(--ims-type-any-fill);
+  background-color: var(--ims-type-any-custom);
 
+  &.is-type-none {
+    background-color: var(--ims-type-any-fill);
+  }
   &.is-type-boolean {
     background-color: var(--ims-type-boolean-fill);
   }

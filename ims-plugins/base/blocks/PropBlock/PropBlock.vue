@@ -1,7 +1,7 @@
 <template>
   <div class="AssetEditorPropBlock" @click="enterEditMode($event)">
     <div class="AssetEditorPropBlock-row">
-      <context-menu-zone
+      <block-with-menu
         class="AssetEditorPropBlock-context"
         :menu-list="propContextMenu"
       >
@@ -25,7 +25,7 @@
             <caption-string :value="title" />
           </renamable-text>
         </div>
-      </context-menu-zone>
+      </block-with-menu>
       <prop-field-value
         v-if="!field.multiple"
         ref="value"
@@ -85,7 +85,7 @@ import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import PropFieldValue from '#components/Props/PropFieldValue.vue';
 import PropFieldValueStack from '#components/Props/PropFieldValueStack.vue';
 import { getFieldTypeDotClass } from '#components/Props/fieldTypeDot';
-import ContextMenuZone from '#components/Common/ContextMenuZone.vue';
+import BlockWithMenu from '#components/Common/BlockWithMenu.vue';
 import type { MenuListItem } from '#logic/types/MenuList';
 import PropBlockChangeSettings from './PropBlockChangeSettings.vue';
 import { extractPropsFormState } from '../PropsBlock/PropsBlock';
@@ -100,7 +100,10 @@ import {
   type SetClickOutsideCancel,
   setImsClickOutside,
 } from '#components/utils/ui';
-import { isElementInteractive } from '#components/utils/DomElementUtils';
+import {
+  getClosestNodeByClass,
+  isElementInteractive,
+} from '#components/utils/DomElementUtils';
 import DialogManager from '#logic/managers/DialogManager';
 import AssetServiceNameDialog from '#components/Asset/AssetServiceNameDialog.vue';
 import UiManager from '#logic/managers/UiManager';
@@ -117,7 +120,7 @@ export default defineComponent({
     RightPanel,
     RenamableText,
     CaptionString,
-    ContextMenuZone,
+    BlockWithMenu,
   },
   props: {
     assetBlockEditor: {
@@ -364,9 +367,18 @@ export default defineComponent({
     },
     async enterEditMode(ev?: MouseEvent) {
       if (this.isReadOnly) return;
-      if (ev && isElementInteractive(ev.target as HTMLElement)) return;
+      const target = ev ? (ev.target as HTMLElement) : null;
+      if (target && isElementInteractive(target)) return;
       this.assetBlockEditor.enterEditMode(this.resolvedBlock.id);
       this.resetGlobalClickOutside(true);
+      const is_title_click = target
+        ? !!getClosestNodeByClass(
+            target,
+            'AssetEditorPropBlock-title',
+            this.$el,
+          )
+        : false;
+      if (is_title_click) return;
       if (!this.$refs['value']) return;
       await this.$nextTick();
       if (this.$refs['value']) {
@@ -462,14 +474,17 @@ export default defineComponent({
 }
 
 .AssetEditorPropBlock-title {
-  flex: 0 0 195px;
   min-width: 0;
 }
 
 .AssetEditorPropBlock-row > .AssetEditorPropBlock-context {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
+  flex: 0 0 210px;
+  width: 210px;
+}
+
+.AssetEditorPropBlock-row
+  > .AssetEditorPropBlock-context
+  :deep(.BlockWithMenu-content) {
   gap: 8px;
 }
 
@@ -519,6 +534,11 @@ export default defineComponent({
   :deep(.PropFieldValue-main) {
     display: flex;
     align-items: center;
+
+    > * {
+      width: 100%;
+      min-width: 0;
+    }
   }
 
   :deep(.PropFieldValueStack-item-value) {
