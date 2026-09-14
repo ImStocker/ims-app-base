@@ -22,6 +22,7 @@
         v-if="!field.multiple"
         ref="value"
         class="AssetEditorPropBlock-value"
+        :class="{ 'state-inherited': valueInherited }"
         :edit-mode="valueEditMode"
         :model-value="currentValue"
         :same-value="sameValue"
@@ -216,6 +217,10 @@ export default defineComponent({
       const ent = this.formState.values['value'];
       if (this.valueEditMode) return true;
       return ent ? ent.computedState : true;
+    },
+    valueInherited() {
+      const ent = this.formState.values['value'];
+      return ent ? ent.inherited : false;
     },
   },
   watch: {
@@ -477,6 +482,10 @@ export default defineComponent({
   :deep(.PropFieldValueStack-item-value) {
     display: flex;
     align-items: center;
+  }
+
+  &.state-inherited {
+    color: var(--color-inherited-value);
   }
 }
 
