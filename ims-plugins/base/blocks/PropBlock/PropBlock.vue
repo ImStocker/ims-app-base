@@ -158,8 +158,8 @@ export default defineComponent({
     },
     typeCircleClass(): string {
       return getFieldTypeDotClass(
-        this.resolvedBlock.props?.__type
-          ? castAssetPropValueToString(this.resolvedBlock.props.__type)
+        this.resolvedBlock.computed?.__type
+          ? castAssetPropValueToString(this.resolvedBlock.computed.__type)
           : null,
       );
     },
@@ -167,12 +167,12 @@ export default defineComponent({
       return extractPropsFormState(this.resolvedBlock);
     },
     fieldType(): string {
-      const type = this.resolvedBlock.props?.__type;
+      const type = this.resolvedBlock.computed?.__type;
       return type ? castAssetPropValueToString(type) : 'text';
     },
     fieldParams(): AssetProps {
       const params = extractSubObjectAsPlainValue(
-        this.resolvedBlock.props ?? {},
+        this.resolvedBlock.computed ?? {},
         '__params',
       ) as AssetPropsPlainObjectValue | null;
       return params && typeof params === 'object' && !Array.isArray(params)
@@ -180,7 +180,7 @@ export default defineComponent({
         : {};
     },
     fieldHint(): string | null {
-      const hint = this.resolvedBlock.props?.__hint;
+      const hint = this.resolvedBlock.computed?.__hint;
       return hint ? castAssetPropValueToString(hint) : null;
     },
     field(): PropsFormFieldDef {
@@ -192,7 +192,7 @@ export default defineComponent({
         propName: this.resolvedBlock.name ?? undefined,
         type: this.fieldType,
         multiple: castAssetPropValueToBoolean(
-          this.resolvedBlock.props?.__multiple ?? false,
+          this.resolvedBlock.computed?.__multiple ?? false,
         ),
         params: this.fieldParams,
         differentDefinition: false,
