@@ -731,7 +731,7 @@ export default {
       other: 'Sonstiges',
     },
     titles: {
-      text: 'Text',
+      text: 'Formatierter Text',
       checklist: 'Checkliste',
       props: 'Eigenschaftsblatt',
       prop: 'Eigenschaft',
@@ -746,7 +746,7 @@ export default {
       leveleditor: 'Level-Editor',
       collection: 'Sammlung',
       graph: 'Graph',
-      markdown: 'Text (Markdown)',
+      markdown: 'Text',
       comment: 'Kommentar',
       assetList: 'Elementliste',
     },

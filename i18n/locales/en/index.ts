@@ -724,7 +724,7 @@ export default {
       other: 'Other',
     },
     titles: {
-      text: 'Text',
+      text: 'Formatted text',
       checklist: 'Checklist',
       props: 'Property sheet',
       prop: 'Property',
@@ -739,7 +739,7 @@ export default {
       leveleditor: 'Level editor',
       collection: 'Collection',
       graph: 'Graph',
-      markdown: 'Text (Markdown)',
+      markdown: 'Text',
       comment: 'Comment',
       assetList: 'Element List',
     },

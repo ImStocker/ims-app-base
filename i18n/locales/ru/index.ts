@@ -736,7 +736,7 @@ export default {
       other: 'Другое',
     },
     titles: {
-      text: 'Текст',
+      text: 'Форматированный текст',
       checklist: 'Чек-лист',
       props: 'Таблица свойств',
       prop: 'Свойство',
@@ -753,7 +753,7 @@ export default {
       leveleditor: 'Редактор уровней',
       collection: 'Коллекция',
       graph: 'Граф',
-      markdown: 'Текст (Markdown)',
+      markdown: 'Текст',
       comment: 'Комментарий',
       assetList: 'Список элементов',
     },
