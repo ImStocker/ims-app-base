@@ -17,6 +17,7 @@ export type MenuListItem = {
     | 'project_link'
     | 'router_link'
     | Component;
+  keepOpenOnClick?: boolean;
   disabled?: boolean;
   tooltip?: string;
   params?: Record<string, any>;

@@ -1,13 +1,14 @@
 <template>
-  <menu-button class="AddBlockDropdown">
+  <menu-button v-model:shown="shown" class="AddBlockDropdown">
     <template #button="{ toggle }">
       <div @click="toggle">
         <slot></slot>
       </div>
     </template>
     <add-block-menu-body
-      @select="$emit('click', $event)"
+      @select="createBlock($event)"
       @paste-blocks="$emit('paste-blocks')"
+      @cancel="shown = false"
     ></add-block-menu-body>
   </menu-button>
 </template>
@@ -37,6 +38,17 @@ export default defineComponent({
     },
   },
   emits: ['click', 'paste-blocks'],
+  data() {
+    return {
+      shown: false,
+    };
+  },
+  methods: {
+    createBlock(blockName: string) {
+      this.shown = false;
+      this.$emit('click', blockName);
+    },
+  },
 });
 </script>
 <style lang="scss" scoped></style>

@@ -189,7 +189,9 @@ export default defineComponent({
     handleClick(item: MenuListItem) {
       if (!item.action) return;
       item.action();
-      this.dispatchMenuActionExecutedEvent(item);
+      if (!item.keepOpenOnClick) {
+        this.dispatchMenuActionExecutedEvent(item);
+      }
     },
     dispatchMenuActionExecutedEvent(item: MenuListItem) {
       if (!this.$el) return;

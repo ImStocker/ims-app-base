@@ -1,5 +1,5 @@
 <template>
-  <menu-button class="AddBlockDropdown">
+  <menu-button v-model:shown="shown" class="AddBlockDropdown">
     <template #button="{ toggle }">
       <button class="AddBlockDropdown-button" @click="toggle">
         <i class="ri-add-box-fill"></i>
@@ -7,8 +7,9 @@
       </button>
     </template>
     <add-block-menu-body
-      @select="$emit('create-block', $event)"
+      @select="createBlock($event)"
       @paste-blocks="$emit('paste-blocks')"
+      @cancel="shown = false"
     ></add-block-menu-body>
   </menu-button>
 </template>
@@ -24,6 +25,17 @@ export default defineComponent({
     AddBlockMenuBody,
   },
   emits: ['create-block', 'paste-blocks'],
+  data() {
+    return {
+      shown: false,
+    };
+  },
+  methods: {
+    createBlock(blockName: string) {
+      this.shown = false;
+      this.$emit('create-block', blockName);
+    },
+  },
 });
 </script>
 <style lang="scss" scoped>
@@ -60,9 +72,9 @@ export default defineComponent({
 
     &:hover,
     &.is-open {
-      color: var(--color-accent);
-      border-color: var(--color-accent);
-      background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+      color: var(--local-text-color);
+      border-color: var(--local-border-color);
+      background: var(--button-bg-color-hover);
     }
   }
 }
