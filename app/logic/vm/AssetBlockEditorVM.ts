@@ -737,6 +737,61 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
   }
 
+  private _selectedResolvedBlocks(): ResolvedAssetBlock[] {
+    return this.resolveBlocks().list.filter((block) =>
+      this.selectedBlockIds.has(block.id),
+    );
+  }
+
+  private _isBlockDeletable(block: ResolvedAssetBlock) {
+    return block.rights > AssetRights.FILL_EMPTY;
+  }
+
+  canDeleteSelectedBlocks(): boolean {
+    return this._selectedResolvedBlocks().some((block) =>
+      this._isBlockDeletable(block),
+    );
+  }
+
+  async deleteSelectedBlocks(): Promise<number> {
+    const asset_full = this.assetFull;
+    if (!asset_full) {
+      return 0;
+    }
+    const blocks_to_delete = this._selectedResolvedBlocks().filter((block) =>
+      this._isBlockDeletable(block),
+    );
+    if (blocks_to_delete.length === 0) {
+      return 0;
+    }
+    const answer = await this.appManager
+      .get(DialogManager)
+      .show(ConfirmDialog, {
+        header: this.appManager.$t('assetEditor.blockSelectionDelete'),
+        message: this.appManager.$t('assetEditor.blockSelectionDeleteConfirm', {
+          count: blocks_to_delete.length,
+        }),
+        yesCaption: this.appManager.$t('common.dialogs.delete'),
+        danger: true,
+      });
+    if (!answer) {
+      return 0;
+    }
+    await this.appManager.get(UiManager).doTask(async () => {
+      const op = this.assetChanger.makeOpId();
+      for (const block of blocks_to_delete) {
+        this.assetChanger.deleteBlock(asset_full.id, makeBlockRef(block), op);
+      }
+      await this.commitBlock(blocks_to_delete[0].id);
+    });
+    this.appManager.get(UiManager).showSuccess(
+      this.appManager.$t('assetEditor.blocksDeleted', {
+        count: blocks_to_delete.length,
+      }),
+    );
+    return blocks_to_delete.length;
+  }
+
   private _blockToClipboardEntry(
     block: ResolvedAssetBlock,
   ): ClipboardBlockEntry {
@@ -787,6 +842,36 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     return result;
   }
 
+  async copySelectedBlocksAsMirrors(): Promise<boolean> {
+    const asset_full = this.assetFull;
+    if (!asset_full) {
+      return false;
+    }
+    const blocks = this.resolveBlocks().list.filter((block) =>
+      this.selectedBlockIds.has(block.id),
+    );
+    if (blocks.length === 0) {
+      return false;
+    }
+    const entries: ClipboardBlockEntry[] = blocks.map((block) => ({
+      type: 'block-mirror',
+      title: block.title,
+      name: null,
+      props: {
+        asset: asset_full.convertToAssetPropValue(),
+        block_ref: stringifyAssetNewBlockRef(
+          block.name,
+          block.name ? null : block.id,
+        ),
+      },
+    }));
+    const result = await this._writeClipboardEntries(entries);
+    if (result) {
+      this.clearBlockSelection();
+    }
+    return result;
+  }
+
   async copyBlockToClipboard(block_id?: string): Promise<boolean> {
     let editing: ResolvedAssetBlock | null;
     if (block_id) {
@@ -807,6 +892,15 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const entries: ClipboardBlockEntry[] = blocks.map((block) =>
       this._blockToClipboardEntry(block),
     );
+    return this._writeClipboardEntries(entries);
+  }
+
+  private async _writeClipboardEntries(
+    entries: ClipboardBlockEntry[],
+  ): Promise<boolean> {
+    if (entries.length === 0) {
+      return false;
+    }
     try {
       await navigator.clipboard.writeText(
         JSON.stringify({
@@ -822,7 +916,7 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     }
     this.appManager.get(UiManager).showSuccess(
       this.appManager.$t('assetEditor.blocksCopied', {
-        count: blocks.length,
+        count: entries.length,
       }),
     );
     return true;

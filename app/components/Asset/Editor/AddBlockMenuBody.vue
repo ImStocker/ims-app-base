@@ -1,5 +1,5 @@
 <template>
-  <div class="AddBlockMenuBody">
+  <div class="AddBlockMenuBody tiny-scrollbars">
     <div class="AddBlockMenuBody-search">
       <form-search
         ref="search"

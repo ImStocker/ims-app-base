@@ -18,19 +18,48 @@
         <span class="AssetBlockEditor-selectionCount">
           {{ $t('assetEditor.blockSelectionCount', { count: selectionCount }) }}
         </span>
-        <button
-          class="AssetBlockEditor-selectionAction is-accent"
-          @click="assetBlockEditor.copySelectedBlocks()"
+        <menu-button
+          v-model:shown="copyMenuShown"
+          attach-position="top"
+          class="AssetBlockEditor-selectionCopy"
         >
-          <i class="ri-file-copy-line"></i>
-          {{ $t('assetEditor.copy') }}
+          <template #button="{ toggle }">
+            <div class="AssetBlockEditor-selectionCopyInner">
+              <button
+                class="AssetBlockEditor-selectionAction is-accent"
+                @click="assetBlockEditor.copySelectedBlocks()"
+              >
+                <i class="ri-file-copy-line"></i>
+                {{ $t('assetEditor.copy') }}
+              </button>
+              <button
+                class="AssetBlockEditor-selectionAction is-accent AssetBlockEditor-selectionCaret"
+                :class="{ 'is-open': copyMenuShown }"
+                @click="toggle"
+              >
+                <i class="ri-arrow-down-s-line"></i>
+              </button>
+            </div>
+          </template>
+          <menu-list
+            :menu-list="copyMenuItems"
+            attach-position="top"
+          ></menu-list>
+        </menu-button>
+        <button
+          class="AssetBlockEditor-selectionAction is-icon is-danger"
+          :title="$t('assetEditor.blockSelectionDelete')"
+          :disabled="!assetBlockEditor.canDeleteSelectedBlocks()"
+          @click="deleteSelectedBlocks()"
+        >
+          <i class="ri-delete-bin-line"></i>
         </button>
         <button
-          class="AssetBlockEditor-selectionAction"
+          class="AssetBlockEditor-selectionAction is-icon"
+          :title="$t('assetEditor.blockSelectionClear')"
           @click="assetBlockEditor.clearBlockSelection()"
         >
           <i class="ri-close-line"></i>
-          {{ $t('assetEditor.blockSelectionClear') }}
         </button>
       </div>
     </transition>
@@ -46,11 +75,16 @@ import AssetEditorToolbarWidget from '../Editor/AssetEditorToolbarWidget.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
 import { useAppManager } from '../../../composables/useAppManager';
 import type { AssetHistoryVM } from '#logic/vm/AssetHistoryVM';
+import MenuButton from '../../Common/MenuButton.vue';
+import MenuList from '../../Common/MenuList.vue';
+import type { MenuListItem } from '../../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'AssetBlockEditorRoot',
   components: {
     AssetEditorToolbarWidget,
+    MenuButton,
+    MenuList,
   },
   props: {
     assetFull: {
@@ -80,6 +114,11 @@ export default defineComponent({
       globalKeydownHandler: null as ((e: KeyboardEvent) => void) | null,
     };
   },
+  data() {
+    return {
+      copyMenuShown: false,
+    };
+  },
   computed: {
     isReadonly() {
       return this.assetFull.rights <= AssetRights.READ_ONLY;
@@ -98,6 +137,18 @@ export default defineComponent({
     },
     toolbarHideActions() {
       return this.toolbarShowBlockCopyPaste ? [] : ['blockPaste'];
+    },
+    copyMenuItems(): MenuListItem[] {
+      return [
+        {
+          name: 'makeSyncedCopy',
+          title: this.$t('assetEditor.makeSyncedCopy'),
+          icon: 'ri-link',
+          action: () => {
+            this.assetBlockEditor.copySelectedBlocksAsMirrors();
+          },
+        },
+      ];
     },
     assetBlockEditorHistoryMode() {
       return this.assetBlockEditor.historyModeVM;
@@ -173,6 +224,9 @@ export default defineComponent({
     async saveChanges() {
       await this.assetBlockEditor.saveChanges();
     },
+    async deleteSelectedBlocks() {
+      await this.assetBlockEditor.deleteSelectedBlocks();
+    },
   },
 });
 </script>
@@ -228,10 +282,35 @@ export default defineComponent({
     font-size: 14px;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--color-accent);
     color: var(--local-text-color);
     background: var(--local-hl-bg-color);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &.is-icon {
+    gap: 0;
+    padding: 6px 8px;
+
+    i {
+      font-size: 15px;
+    }
+  }
+
+  &.is-danger {
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+      background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    }
   }
 
   &.is-accent {
@@ -239,9 +318,38 @@ export default defineComponent({
     border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
     background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 
-    &:hover {
+    &:hover:not(:disabled) {
       border-color: var(--color-accent);
       background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    }
+  }
+}
+
+.AssetBlockEditor-selectionCopyInner {
+  display: flex;
+
+  .AssetBlockEditor-selectionAction {
+    border-radius: 8px;
+
+    &:first-child {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+
+  .AssetBlockEditor-selectionCaret {
+    margin-left: -1px;
+    padding: 5px 4px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+
+    i {
+      font-size: 15px;
+      transition: transform 0.15s ease;
+    }
+
+    &.is-open i {
+      transform: rotate(180deg);
     }
   }
 }
