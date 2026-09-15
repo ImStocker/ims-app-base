@@ -22,6 +22,11 @@ export default defineComponent({
     EnumEditor,
     IsPanel,
   },
+  provide() {
+    return {
+      projectContext: this.assetBlockEditor,
+    };
+  },
   props: {
     assetBlockEditor: {
       type: Object as PropType<AssetBlockEditorVM>,

@@ -20,11 +20,8 @@
         ></struct-editor-item>
       </template>
     </sortable-list>
-    <button
-      v-if="!readonly"
-      class="is-button is-button-action"
-      @click="addElement"
-    >
+    <button v-if="!readonly" class="StructEditor-addButton" @click="addElement">
+      <i class="ri-add-line"></i>
       {{ $t('assetEditor.struct.addElement') }}
     </button>
   </div>
@@ -158,9 +155,38 @@ export default defineComponent({
 </script>
 <style lang="scss" scoped>
 .StructEditor-item {
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 }
 .StructEditor-items {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+.StructEditor-addButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1.5px dashed var(--local-border-color);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--local-sub-text-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  i {
+    font-size: 17px;
+  }
+
+  &:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
 }
 </style>

@@ -1801,6 +1801,17 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return element ? element.hasChildren : null;
   }
 
+  async getChildrenAssets(parentId: string): Promise<AssetShort[]> {
+    assert(this._projectDatabase, 'Not inited');
+    const res = await this.getAssetsView<{ id: string; title: string | null }>({
+      select: ['id', 'title'],
+      where: {
+        typeids: parentId,
+      },
+    });
+    return res.list as unknown as AssetShort[];
+  }
+
   async getAssetLocalPath(asset_id: string): Promise<string | null> {
     assert(this._projectDatabase, 'Not inited');
     return await this._projectDatabase.getAssetLocalPath(asset_id);

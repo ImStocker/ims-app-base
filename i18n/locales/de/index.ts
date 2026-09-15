@@ -478,6 +478,12 @@ export default {
     propsBlockChildrenDeleteHeader: 'Vorlagenelement-Eigenschaft löschen',
     propsBlockChildrenDeleteBody:
       'Die Eigenschaft wird in allen Instanzen dieser Vorlage gelöscht. Möchtest du wirklich fortfahren?',
+    propsBlockPropagateRenameHeader:
+      'Die Änderung betrifft untergeordnete Elemente',
+    propsBlockPropagateRenameBody:
+      'Die Umbenennung des Eigenschaftsschlüssels wird auf {count} untergeordnete Elemente angewendet. Umbenennung auf alle anwenden?',
+    propsBlockPropagateRenameAll: 'Für alle',
+    propsBlockPropagateRenameCurrent: 'Nur für aktuelles',
     embedBlockAddDialogHeader: 'Eingebettetes Dokument einfügen',
     embedBlockLinkAnyPlaceholder:
       'Link zum Dokument eingeben (Google Docs, Miro, Figma usw.)',
