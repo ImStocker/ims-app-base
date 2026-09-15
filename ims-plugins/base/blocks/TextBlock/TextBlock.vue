@@ -192,3 +192,16 @@ export default defineComponent({
   }
 }
 </style>
+
+<style lang="scss">
+.AssetsPageContent
+  .AssetBlockEditor:not(.AssetBlockGameObjectEditor-description),
+.AssetPreviewDialog
+  .AssetBlockEditor:not(.AssetBlockGameObjectEditor-description) {
+  .EditorBlock.state-has-header[block-type='text'] {
+    .EditorBlockContent-component {
+      margin-left: 25px;
+    }
+  }
+}
+</style>

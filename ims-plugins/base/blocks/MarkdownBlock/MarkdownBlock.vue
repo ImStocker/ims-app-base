@@ -294,3 +294,16 @@ export default defineComponent({
   min-height: 100%;
 }
 </style>
+
+<style lang="scss">
+.AssetsPageContent
+  .AssetBlockEditor:not(.AssetBlockGameObjectEditor-description),
+.AssetPreviewDialog
+  .AssetBlockEditor:not(.AssetBlockGameObjectEditor-description) {
+  .EditorBlock.state-has-header[block-type='markdown'] {
+    .EditorBlockContent-component {
+      margin-left: 25px;
+    }
+  }
+}
+</style>
