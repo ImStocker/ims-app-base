@@ -98,5 +98,6 @@ export default defineComponent({
   width: var(--asset-icon-size, 16px);
   display: block;
   border-radius: 50%;
+  object-fit: contain;
 }
 </style>

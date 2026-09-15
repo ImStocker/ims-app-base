@@ -6,44 +6,53 @@
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
-    <div
-      v-for="entry of entries"
-      :key="entry.key"
-      class="AssetListBlock-slot"
-      :title="entryTitle(entry)"
-      @click="editable && openSelectAssetDialog(entry.index)"
+    <sortable-list
+      class="AssetListBlock-list"
+      :id-key="entryIdKey"
+      :list="entries"
+      :disabled="!editable"
+      @update:list="changeOrder"
     >
-      <i class="ri-drag-move-2-line AssetListBlock-slot-drag"></i>
-      <div class="AssetListBlock-slot-icon">
-        <asset-icon
-          class="AssetListBlock-slot-icon-image"
-          :asset="assetLinkFor(entry)"
-        ></asset-icon>
-      </div>
-      <div class="AssetListBlock-slot-title">
-        <caption-string
-          :value="entry.asset?.Title ?? entry.asset?.Name ?? ''"
-        />
-      </div>
-      <button
-        v-if="editable"
-        class="is-button is-button-icon AssetListBlock-slot-remove"
-        :title="$t('assetEditor.assetListBlockRemoveAsset')"
-        @click.stop="removeEntry(entry)"
-      >
-        <i class="ri-close-fill"></i>
-      </button>
-    </div>
-    <div
-      v-if="editable"
-      class="AssetListBlock-slot AssetListBlock-slot-add"
-      :title="$t('assetEditor.assetListBlockAddAsset')"
-      @click="openSelectAssetDialog()"
-    >
-      <div class="AssetListBlock-slot-icon">
-        <i class="ri-add-line AssetListBlock-slot-icon-image"></i>
-      </div>
-    </div>
+      <template #default="{ item }">
+        <div
+          class="AssetListBlock-slot"
+          :title="entryTitle(item)"
+          @click="openAssetInPopup(item)"
+        >
+          <div class="AssetListBlock-slot-icon">
+            <asset-icon
+              class="AssetListBlock-slot-icon-image"
+              :asset="assetLinkFor(item)"
+            ></asset-icon>
+          </div>
+          <div class="AssetListBlock-slot-title" :style="titleStyle(item)">
+            <caption-string
+              :value="item.asset?.Title ?? item.asset?.Name ?? ''"
+            />
+          </div>
+          <button
+            v-if="editable"
+            class="is-button is-button-icon AssetListBlock-slot-remove"
+            :title="$t('assetEditor.assetListBlockRemoveAsset')"
+            @click.stop="removeEntry(item)"
+          >
+            <i class="ri-close-fill"></i>
+          </button>
+        </div>
+      </template>
+      <template #append>
+        <div
+          v-if="editable"
+          class="AssetListBlock-slot AssetListBlock-slot-add"
+          :title="$t('assetEditor.assetListBlockAddAsset')"
+          @click="openSelectAssetDialog()"
+        >
+          <div class="AssetListBlock-slot-icon">
+            <i class="ri-add-line AssetListBlock-slot-icon-image"></i>
+          </div>
+        </div>
+      </template>
+    </sortable-list>
     <right-panel v-if="changeSettingsOpen">
       <asset-list-block-change-settings
         class="AssetListBlock-settings"
@@ -70,6 +79,7 @@ import {
 import DialogManager from '#logic/managers/DialogManager';
 import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import UiManager from '#logic/managers/UiManager';
+import EditorManager from '#logic/managers/EditorManager';
 import type {
   AssetForSelection,
   AssetLink,
@@ -85,6 +95,9 @@ import RightPanel from '#components/Common/RightPanel.vue';
 import CaptionString from '#components/Common/CaptionString.vue';
 import type { EditorBlockHandler } from '#components/Asset/Editor/EditorBlock';
 import AssetIcon from '#components/Asset/AssetIcon.vue';
+import { nodeContainsElement } from '#components/utils/DomElementUtils';
+import SortableList from '#components/Common/SortableList.vue';
+import { resolveAssetIconColor } from '#logic/utils/assetIconColors';
 import AssetListBlockChangeSettings from './AssetListBlockChangeSettings.vue';
 
 type AssetListEntry = {
@@ -100,6 +113,7 @@ export default defineComponent({
     RightPanel,
     CaptionString,
     AssetIcon,
+    SortableList,
     AssetListBlockChangeSettings,
   },
   props: {
@@ -145,6 +159,7 @@ export default defineComponent({
     return {
       changeSettingsOpen: false,
       allowDrop: false,
+      entriesColors: {} as Record<string, string | null>,
     };
   },
   computed: {
@@ -171,7 +186,9 @@ export default defineComponent({
       return val && typeof val === 'object' ? val : null;
     },
     where(): AssetPropWhere {
-      const where: AssetPropWhere = {};
+      const where: AssetPropWhere = {
+        inside: 'gdd',
+      };
       if (this.typeValue?.AssetId) {
         where.typeids = this.typeValue.AssetId;
       }
@@ -220,6 +237,52 @@ export default defineComponent({
     },
     entryTitle(entry: AssetListEntry): string {
       return entry.asset?.Name ?? entry.asset?.Title ?? entry.key;
+    },
+    entryIdKey(entry: AssetListEntry): string {
+      return entry.asset?.AssetId ?? entry.key;
+    },
+    openAssetInPopup(entry: AssetListEntry) {
+      const asset_id = entry.asset?.AssetId;
+      if (!asset_id) return;
+      this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          this.$getAppManager().get(EditorManager).openAsset(asset_id, 'popup');
+        });
+    },
+    entryTitleColor(entry: AssetListEntry): string | null {
+      const asset_id = entry.asset?.AssetId;
+      if (!asset_id) return null;
+      if (asset_id in this.entriesColors) {
+        return this.entriesColors[asset_id];
+      }
+      const cached = this.$getAppManager()
+        .get(CreatorAssetManager)
+        .getAssetPreviewViaCacheSync(asset_id);
+      const theme = this.$getAppManager().get(UiManager).getColorTheme();
+      if (cached) {
+        const color = resolveAssetIconColor(cached.color, theme);
+        this.entriesColors[asset_id] = color;
+        return color;
+      }
+      if (cached === undefined) {
+        this.$getAppManager()
+          .get(CreatorAssetManager)
+          .requestAssetPreviewInCache(asset_id)
+          .then(() => {
+            const preview = this.$getAppManager()
+              .get(CreatorAssetManager)
+              .getAssetPreviewViaCacheSync(asset_id);
+            this.entriesColors[asset_id] = preview
+              ? resolveAssetIconColor(preview.color, theme)
+              : null;
+          });
+      }
+      return null;
+    },
+    titleStyle(entry: AssetListEntry): { color: string } | null {
+      const color = this.entryTitleColor(entry);
+      return color ? { color } : null;
     },
     async save() {
       if (this.editorBlockHandler) {
@@ -304,6 +367,20 @@ export default defineComponent({
         title: asset_short.title,
       });
     },
+    changeOrder(reordered: AssetListEntry[]) {
+      const props_to_set: AssetProps = {};
+      for (let i = 0; i < reordered.length; i++) {
+        props_to_set[`value\\${i}`] = reordered[i].asset;
+      }
+      this.assetChanger.setBlockPropKeys(
+        this.resolvedBlock.assetId,
+        makeBlockRef(this.resolvedBlock),
+        null,
+        props_to_set,
+        this.assetChanger.makeOpId(),
+      );
+      this.save();
+    },
     onDragOver(event: DragEvent) {
       const event_dt = event.dataTransfer;
       if (!event_dt) return;
@@ -313,8 +390,10 @@ export default defineComponent({
       event_dt.dropEffect = 'link';
       event.preventDefault();
     },
-    onDragLeave() {
-      this.allowDrop = false;
+    onDragLeave(event: DragEvent) {
+      if (!nodeContainsElement(this.$el, event.relatedTarget as Node)) {
+        this.allowDrop = false;
+      }
     },
     async onDrop(event: DragEvent) {
       event.preventDefault();
@@ -361,11 +440,19 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .AssetListBlock {
+  min-height: 48px;
+  position: relative;
+}
+.AssetListBlock-list {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  min-height: 48px;
-  position: relative;
+}
+.AssetListBlock-drop {
+  .AssetListBlock-slot-add {
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
 }
 .AssetListBlock-slot {
   position: relative;
@@ -395,13 +482,12 @@ export default defineComponent({
 }
 .AssetListBlock-slot-remove {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: 0;
+  right: 0;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--color-danger-bg);
-  color: var(--color-danger-fg);
+  color: var(--local-sub-text-color);
   display: none;
   align-items: center;
   justify-content: center;
@@ -409,15 +495,10 @@ export default defineComponent({
     display: flex;
   }
 }
-.AssetListBlock-slot:hover .AssetListBlock-slot-remove {
-  display: flex;
-}
-.AssetListBlock-slot-drag {
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  font-size: 12px;
-  color: var(--local-sub-text-color);
+.AssetListBlock-slot:hover {
+  .AssetListBlock-slot-remove {
+    display: flex;
+  }
 }
 .AssetListBlock-slot-icon {
   width: 40px;
@@ -429,8 +510,9 @@ export default defineComponent({
   background: rgba(0, 0, 0, 0.06);
 }
 .AssetListBlock-slot-icon-image {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
+  --asset-icon-size: 40px;
   font-size: 24px;
   display: flex;
   align-items: center;
