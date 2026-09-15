@@ -81,7 +81,7 @@ import {
   wikiLinkCellExtensions,
   wikiLinkGrammar,
 } from './plugins/wiki-links';
-import { imcImages } from './plugins/imc-images';
+import { imagesExtension, imcImages } from './plugins/imc-images';
 import EditorManager from '../../logic/managers/EditorManager';
 import { blurHandler } from './plugins/blur-handler';
 import { getHeadingAnchors, headingId } from './plugins/heading-id';
@@ -304,6 +304,18 @@ export default defineComponent({
             ...(this.livePreview ? [livePreview()] : []),
             ...(this.livePreview
               ? linkWidgets({ appManager: this.$getAppManager() })
+              : []),
+            // Same for images: render them inline inside a cell's nested editor
+            // (source mode keeps the raw markdown). Table cells escape the
+            // width pipe as `\|` so it doesn't split the row.
+            ...(this.livePreview
+              ? [
+                  imagesExtension({
+                    appManager: this.$getAppManager(),
+                    getReadonly: () => this.readonly,
+                    escapePipe: true,
+                  }),
+                ]
               : []),
             // Inside table cells the nested editor is a raw CodeMirror view, so
             // it needs its own selection toolbar + shortcuts. These route back

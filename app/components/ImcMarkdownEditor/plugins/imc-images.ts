@@ -32,8 +32,9 @@ function parseImagePathToFile(path: string): {
 }
 
 // Obsidian-style image size: a trailing `|NNN` (pixels) inside the alt text,
-// e.g. `![My picture|300](url)`.
-const IMAGE_SIZE_RE = /\|(\d{1,4})$/;
+// e.g. `![My picture|300](url)`. In GFM table cells the pipe must be escaped
+// (`![](...\|NNN)`), so an optional backslash is allowed before the separator.
+const IMAGE_SIZE_RE = /\|{1,2}(\d{1,4})$/;
 
 function parseImageSize(alt: string): { width: number | null; alt: string } {
   const match = IMAGE_SIZE_RE.exec(alt);
@@ -51,13 +52,18 @@ const IMAGE_MARKDOWN_RE = /^!\[([\s\S]*?)\]\(([\s\S]*)\)$/;
 function buildImageMarkdown(
   markdown: string,
   width: number | null,
+  escapePipe = false,
 ): string | null {
   const match = IMAGE_MARKDOWN_RE.exec(markdown);
   if (!match) return null;
   const alt = parseImageSize(match[1]).alt;
   const url_part = match[2];
-  if (width === null) return `![${alt}](${url_part})`;
-  return `![${alt}|${width}](${url_part})`;
+  // Inside a GFM table a raw `|` would split the cell into two, so table-cell
+  // images escape the separator (and any `|` in the alt) as `\|`.
+  const escapedAlt = escapePipe ? alt.replace(/\|/g, '\\|') : alt;
+  const sep = escapePipe ? '\\|' : '|';
+  if (width === null) return `![${escapedAlt}](${url_part})`;
+  return `![${escapedAlt}${sep}${width}](${url_part})`;
 }
 
 interface ImageWidgetParams {
@@ -67,11 +73,13 @@ interface ImageWidgetParams {
   to: number;
   markdown: string;
   getReadonly: () => boolean;
+  escapePipe: boolean;
 }
 
 type PluginConfig = {
   appManager: IAppManager;
   getReadonly?: () => boolean;
+  escapePipe?: boolean;
 };
 
 function isCaretInside(from: number, to: number, state: EditorState): boolean {
@@ -89,6 +97,7 @@ class ImageWidget extends WidgetType {
   readonly to;
   readonly markdown;
   readonly getReadonly;
+  readonly escapePipe;
 
   private _resizing = false;
   private _mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
@@ -103,6 +112,7 @@ class ImageWidget extends WidgetType {
     to,
     markdown,
     getReadonly,
+    escapePipe,
   }: ImageWidgetParams) {
     super();
 
@@ -112,6 +122,7 @@ class ImageWidget extends WidgetType {
     this.to = to;
     this.markdown = markdown;
     this.getReadonly = getReadonly;
+    this.escapePipe = escapePipe;
   }
 
   override eq(imageWidget: ImageWidget) {
@@ -271,7 +282,7 @@ class ImageWidget extends WidgetType {
   private commitWidth(width: number | null) {
     const view = this._view;
     if (!view) return;
-    const insert = buildImageMarkdown(this.markdown, width);
+    const insert = buildImageMarkdown(this.markdown, width, this.escapePipe);
     if (!insert) return;
     view.dispatch({ changes: { from: this.from, to: this.to, insert } });
   }
@@ -328,6 +339,7 @@ export const imagesExtension = (config: PluginConfig): Extension => {
               to: ctx.to,
               markdown,
               getReadonly: config.getReadonly ?? (() => false),
+              escapePipe: config.escapePipe ?? false,
             }).range(ctx.from, ctx.to),
           );
         }

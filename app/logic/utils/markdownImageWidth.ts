@@ -1,6 +1,8 @@
 import type { TokenizerAndRendererExtension } from 'marked';
 
-const IMAGE_SIZE_RE = /\|(\d{1,4})$/;
+// `|NNN` suffix (the `\|NNN` table-cell form is accepted too, since the
+// rendered text may either keep the backslash or already have it resolved).
+const IMAGE_SIZE_RE = /\|{1,2}(\d{1,4})$/;
 
 function escapeHtml(value: string): string {
   return value
