@@ -1,12 +1,12 @@
 <template>
-  <is-panel class="AssetBlockEnumEditor">
+  <div class="AssetBlockEnumEditor">
     <enum-editor
       v-if="infoBlock"
       :block="infoBlock"
       :asset-changer="assetChanger"
       :readonly="isReadonly"
     ></enum-editor>
-  </is-panel>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
@@ -14,13 +14,21 @@ import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import EnumEditor from './EnumEditor.vue';
 import type { AssetChanger } from '../../../logic/types/AssetChanger';
-import IsPanel from '../../Common/IsPanel.vue';
 
 export default defineComponent({
   name: 'AssetBlockEnumEditor',
   components: {
     EnumEditor,
-    IsPanel,
+  },
+  provide() {
+    return {
+      projectContext: this.assetBlockEditor,
+    };
+  },
+  provide() {
+    return {
+      projectContext: this.assetBlockEditor,
+    };
   },
   props: {
     assetBlockEditor: {
@@ -70,4 +78,10 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.AssetBlockEnumEditor {
+  min-height: 100%;
+  padding: 0 var(--root-editor-block-padding-right) 0
+    var(--root-editor-block-padding-left);
+}
+</style>

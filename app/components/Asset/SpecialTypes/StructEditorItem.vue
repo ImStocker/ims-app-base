@@ -6,6 +6,11 @@
   >
     <template #item-main>
       <div class="StructureEditorItem-main">
+        <span
+          class="StructureEditorItem-main-typeDot field-type-dot"
+          :class="typeCircleClass"
+          :title="$t('assetEditor.struct.type')"
+        ></span>
         <renamable-text
           v-model:is-renaming-mode-state="isMainEditMode"
           class="StructureEditorItem-main-renamable"
@@ -170,6 +175,7 @@ import type { FieldTypeController } from '../../../logic/types/FieldTypeControll
 import { extractPropsFormState } from '~ims-plugin-base/blocks/PropsBlock/PropsBlock';
 import StringPropEditor from '../../Props/StringPropEditor.vue';
 import CheckboxPropEditor from '../../Props/CheckboxPropEditor.vue';
+import { getFieldTypeDotClass } from '../../Props/fieldTypeDot';
 
 export default defineComponent({
   name: 'StructureEditorItem',
@@ -380,6 +386,9 @@ export default defineComponent({
         this.block.props[key] === undefined
       );
     },
+    typeCircleClass(): string {
+      return getFieldTypeDotClass(this.item.type);
+    },
     setFieldParam(param: string, value: AssetPropValue) {
       const key = `fields\\${this.item.index}\\${param}`;
       this.assetChanger.setBlockPropKey(
@@ -402,10 +411,12 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
+@use '$style/field-type-dot' as *;
 .StructureEditorItem-main-editor {
   display: flex;
   gap: 5px;
-  flex-wrap: wrap;
+  align-items: center;
+  min-height: 1.8em;
 }
 .StructureEditorItem-main-editor-text {
   user-select: none;
@@ -415,30 +426,73 @@ export default defineComponent({
 .StructureEditorItem-main-serviceName {
   color: var(--local-sub-text-color);
 }
-.StructureEditorItem-main,
-.StructureEditorItem-main-editor {
+.StructureEditorItem-main-editor-name-icon {
   display: flex;
-  gap: 5px;
+  flex: none;
   align-items: center;
+  line-height: 1;
+}
+.StructureEditorItem-main-editor-type {
+  flex: 1 1 40%;
+  min-width: 0;
+  :deep(.is-select) {
+    --input-padding-vertical: 0.1em;
+    --input-padding-horizontal: 0.5em;
+  }
+}
+.StructureEditorItem-main-editor-name-undo {
+  flex: none;
+  padding: 1px 4px;
+  background-color: transparent;
+  color: var(--local-sub-text-color);
+
+  &:hover {
+<<<<<<< HEAD
+    color: var(--color-accent);
+=======
+    color: var(--local-text-color);
+>>>>>>> light-theme-overhaul
+  }
+}
+.StructureEditorItem-main {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: calc(55px - 16px);
+}
+.StructureEditorItem-main-typeDot {
+  flex: none;
+  align-self: center;
 }
 .StructureEditorItem-main-renamable {
-  flex: 1;
-  &:not(:last-child) {
-    max-width: 300px;
-  }
+  flex: 1 1 40%;
+  min-width: 0;
 }
 
 .StructureEditorItem-main-editor-title {
-  flex: 2;
-}
-.StructureEditorItem-main-editor-type {
-  flex: 2;
+  flex: 1 1 40%;
+  min-width: 0;
 }
 .StructureEditorItem-main-editor-name {
-  flex: 1;
+  flex: 1 1 20%;
+  min-width: 0;
+}
+.StructureEditorItem-main-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .StructureEditorItem-main-type {
-  flex: 1;
+  flex: 1 1 40%;
+  min-width: 0;
+}
+.StructureEditorItem-main-serviceName {
+  flex: 1 1 20%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .StructureEditorItem-main-editor-error {
   color: var(--color-danger);
@@ -451,14 +505,45 @@ export default defineComponent({
 }
 .StructureEditorItem-main-type-value {
   padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .PropsBlockChangeSettings-adv-section {
   margin-bottom: 10px;
 }
 .PropsBlockChangeSettings-adv-section-hint
   .PropsBlockChangeSettings-adv-section-content {
-  background: var(--local-bg-color);
-  border-radius: var(--panel-border-radius);
+  background: var(--input-bg-color);
+  border: var(--input-border-width) var(--input-border-style)
+    var(--input-border-color);
+  border-radius: var(--input-border-radius);
+  color: var(--input-text-color);
+  padding: 0;
+  transition: border-color 0.16s ease;
+
+  :deep(.StringPropEditor) {
+    padding: var(--input-padding);
+  }
+
+  :deep(.StringPropEditor-input) {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: var(--input-font-size);
+    font-weight: var(--input-font-weight);
+
+    &::placeholder {
+      color: var(--input-placeholder-color);
+      font-style: var(--input-placeholder-font-style);
+    }
+  }
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--input-border-hl-color);
+  }
 }
 .PropsBlockChangeSettings-adv-section-header {
   font-weight: bold;

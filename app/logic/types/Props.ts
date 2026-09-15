@@ -1479,6 +1479,65 @@ export function isPropInherited(
   return inherited.hasOwnProperty(prop);
 }
 
+export type ApplyPropsChangeParsed = {
+  deleting: string[];
+  restoringSet: Set<string>;
+  renaming: { oldname: string; newname: string }[];
+  parentRedirects: { prop: string; val?: string; delete?: true }[];
+  overlay: AssetProps;
+};
+
+export function parseChange(change: AssetProps): ApplyPropsChangeParsed {
+  const res: ApplyPropsChangeParsed = {
+    deleting: [],
+    restoringSet: new Set(),
+    renaming: [],
+    parentRedirects: [],
+    overlay: {},
+  };
+  for (const [prop, val] of Object.entries(change)) {
+    if (prop[0] === '~') {
+      const ch_prop = prop.substring(1);
+      if (val === null || val === true) {
+        if (val === true) {
+          res.restoringSet.add(ch_prop);
+        }
+        if (prop[1] === '~') {
+          res.parentRedirects.push({
+            prop: ch_prop.substring(1),
+            delete: true,
+          });
+        } else {
+          res.deleting.push(ch_prop);
+        }
+      } else if (typeof val === 'string') {
+        if (prop[1] === '~') {
+          // ~~ for changing
+          const parent_prop = ch_prop.substring(1);
+          if (parent_prop !== val) {
+            res.parentRedirects.push({
+              prop: parent_prop,
+              val,
+            });
+          }
+        } else {
+          if (val !== ch_prop) {
+            res.renaming.push({
+              newname: val,
+              oldname: ch_prop,
+            });
+          }
+        }
+      } else {
+        throw new Error('Unexpected value for changing/deleting prop ' + prop);
+      }
+    } else {
+      res.overlay[prop] = val;
+    }
+  }
+  return res;
+}
+
 export function applyPropsChange(
   currentProps: AssetProps,
   inheritedProps: AssetProps | null,
@@ -1487,72 +1546,11 @@ export function applyPropsChange(
   props: AssetProps;
   undo: AssetProps[];
 } {
-  type ApplyPropsChangeParsed = {
-    deleting: string[];
-    restoringSet: Set<string>;
-    ranaming: { oldname: string; newname: string }[];
-    parentRedirects: { prop: string; val?: string; delete?: true }[];
-    overlay: AssetProps;
-  };
-
   type ParentRedirectState = {
     prop: string;
     oldval: string | null;
     newval: string | null;
   };
-
-  function parseChange(change: AssetProps): ApplyPropsChangeParsed {
-    const res: ApplyPropsChangeParsed = {
-      deleting: [],
-      restoringSet: new Set(),
-      ranaming: [],
-      parentRedirects: [],
-      overlay: {},
-    };
-    for (const [prop, val] of Object.entries(change)) {
-      if (prop[0] === '~') {
-        const ch_prop = prop.substring(1);
-        if (val === null || val === true) {
-          if (val === true) {
-            res.restoringSet.add(ch_prop);
-          }
-          if (prop[1] === '~') {
-            res.parentRedirects.push({
-              prop: ch_prop.substring(1),
-              delete: true,
-            });
-          } else {
-            res.deleting.push(ch_prop);
-          }
-        } else if (typeof val === 'string') {
-          if (prop[1] === '~') {
-            // ~~ for changing
-            const parent_prop = ch_prop.substring(1);
-            if (parent_prop !== val) {
-              res.parentRedirects.push({
-                prop: parent_prop,
-                val,
-              });
-            }
-          } else {
-            if (val !== ch_prop) {
-              res.ranaming.push({
-                newname: val,
-                oldname: ch_prop,
-              });
-            }
-          }
-        } else {
-          throw new Error(
-            'Unexpected value for changing/deleting prop ' + prop,
-          );
-        }
-      } else {
-        res.overlay[prop] = val;
-      }
-    }
-    return res;
-  }
 
   const result = {
     props: { ...currentProps },
@@ -1761,7 +1759,7 @@ export function applyPropsChange(
       }
     }
     const renamed_keys = new Map<string, string>();
-    for (const { newname, oldname } of parsed_change.ranaming) {
+    for (const { newname, oldname } of parsed_change.renaming) {
       let has_any_renamed = false;
       const redirected_ranamed = false;
 

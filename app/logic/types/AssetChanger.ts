@@ -18,6 +18,7 @@ import {
   applyPropsChange,
   mergeInheritedProps,
   parseAssetNewBlockRef,
+  parseChange,
   recalculatePropsArrayIndexes,
   type AssetProps,
   type AssetPropValue,
@@ -65,6 +66,12 @@ export type BlockCursor = {
   blockRef: string;
   blockKey: string;
   offset: number;
+};
+
+export type PropKeyRenamePending = {
+  blockRef: string;
+  propKey: string;
+  newPropKey: string;
 };
 
 export abstract class AssetChanger {
@@ -553,6 +560,56 @@ export abstract class AssetChanger {
     const batch = batches.get(assetId);
     if (!batch) return [];
     return batch.getBatch();
+  }
+
+  getPendingPropKeyRenames(): PropKeyRenamePending[] {
+    const result: PropKeyRenamePending[] = [];
+    const batches = this._getBatchedChanges();
+    for (const [, batch] of batches) {
+      for (const change of batch.getBatch()) {
+        if (!change.blocks) continue;
+        for (const [blockRef, blockCh] of Object.entries(change.blocks)) {
+          const changeProps = blockCh?.props;
+          if (!changeProps) continue;
+          const propsList: AssetProps[] = Array.isArray(changeProps)
+            ? changeProps
+            : [changeProps];
+          for (const propsItem of propsList) {
+            const parsed = parseChange(propsItem);
+            for (const { oldname, newname } of parsed.renaming) {
+              result.push({ blockRef, propKey: oldname, newPropKey: newname });
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  getPendingPropKeyRenameOpIds(): number[] {
+    const op_ids: number[] = [];
+    for (let i = this._historyPointer - 1; i >= this._savePointer; i--) {
+      const rec = this._history[i];
+      if (typeof rec.redo === 'function' || !rec.redo?.blocks) continue;
+      if (this._changeHasPropKeyRename(rec.redo)) {
+        op_ids.push(rec.opId);
+      }
+    }
+    return [...new Set(op_ids)].reverse();
+  }
+
+  private _changeHasPropKeyRename(change: AssetChangeContent): boolean {
+    for (const blockCh of Object.values(change.blocks ?? {})) {
+      const props = blockCh?.props;
+      if (!props) continue;
+      const propsList = Array.isArray(props) ? props : [props];
+      for (const propsItem of propsList) {
+        if (parseChange(propsItem).renaming.length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private _updateComputedBlockProps(exists_block: AssetBlockEntity) {
