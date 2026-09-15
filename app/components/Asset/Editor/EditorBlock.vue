@@ -822,7 +822,7 @@ export default defineComponent({
 }
 
 .EditorBlock:not(.state-hide-content) .EditorBlock-header {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .EditorBlock-header {

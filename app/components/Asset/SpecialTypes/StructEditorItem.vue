@@ -543,5 +543,6 @@ export default defineComponent({
 }
 .PropsBlockChangeSettings-adv-section-header {
   font-weight: bold;
+  margin-bottom: 5px;
 }
 </style>

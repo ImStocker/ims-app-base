@@ -463,7 +463,7 @@ export default {
       'Keine Tabelleneigenschaft in der Zwischenablage',
     propsBlockCopied: 'Eigenschaft kopiert',
     propsBlockFieldUntitled: 'Ohne Titel',
-    propsBlockFieldType: 'Feldtyp',
+    propsBlockFieldPlaceholder: 'Feld eingeben',
     propsBlockFieldIsMultiple: 'Mehrfach',
     propsBlockFieldParameters: 'Parameter',
     propsBlockFieldHint: 'Hinweis',
