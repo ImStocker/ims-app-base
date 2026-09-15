@@ -30,6 +30,11 @@ export default defineComponent({
       projectContext: this.assetBlockEditor,
     };
   },
+  provide() {
+    return {
+      projectContext: this.assetBlockEditor,
+    };
+  },
   props: {
     assetBlockEditor: {
       type: Object as PropType<AssetBlockEditorVM>,

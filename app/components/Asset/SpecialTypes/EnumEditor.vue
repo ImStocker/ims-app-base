@@ -21,7 +21,11 @@
       </template>
     </sortable-list>
     <button v-if="!readonly" class="EnumEditor-addButton" @click="addElement">
+<<<<<<< HEAD
       <i class="ri-add-box-fill"></i>
+=======
+      <i class="ri-add-line"></i>
+>>>>>>> e482877a6bf3efeeb8394cb2c795d83631edbb24
       {{ $t('assetEditor.enum.addElement') }}
     </button>
   </div>
@@ -200,9 +204,15 @@ export default defineComponent({
   }
 
   &:hover {
+<<<<<<< HEAD
     color: var(--local-text-color);
     border-color: var(--local-border-color);
     background: var(--button-bg-color-hover);
+=======
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+>>>>>>> e482877a6bf3efeeb8394cb2c795d83631edbb24
   }
 }
 </style>

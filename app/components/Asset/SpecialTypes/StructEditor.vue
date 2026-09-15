@@ -156,6 +156,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .StructEditor-item {
   margin-bottom: 6px;
+  margin-bottom: 6px;
 }
 .StructEditor-items {
   margin-bottom: 12px;
