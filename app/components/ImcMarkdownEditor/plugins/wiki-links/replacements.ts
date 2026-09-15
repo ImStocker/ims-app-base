@@ -3,6 +3,8 @@ import { RangeSet, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view';
 import type { EditorState, Extension, Range } from '@codemirror/state';
 import type { DecorationSet, WidgetType, ViewUpdate } from '@codemirror/view';
+import { h, render } from 'vue';
+import type { AppContext } from 'vue';
 import type { PluginConfig } from './index';
 import CreatorAssetManager from '../../../../logic/managers/CreatorAssetManager';
 import type { IAppManager } from '../../../../logic/managers/IAppManager';
@@ -10,6 +12,8 @@ import EditorManager from '../../../../logic/managers/EditorManager';
 import UiManager from '../../../../logic/managers/UiManager';
 import { getProjectLinkHref } from '../../../../logic/router/routes-helpers';
 import ProjectManager from '../../../../logic/managers/ProjectManager';
+import AssetLink from '../../../../components/Asset/AssetLink.vue';
+import type { AssetLink as AssetLinkData } from '../../../../logic/types/AssetsType';
 import {
   parseLinkAddress,
   parseWikiLink,
@@ -178,6 +182,64 @@ function getCachedAssetForAddress(
   return undefined;
 }
 
+function createAssetLinkWidget(
+  data: {
+    assetId: string;
+    title: string;
+    blockId?: string;
+    anchor?: string;
+    key: string;
+  },
+  appManager: IAppManager,
+  appContext: AppContext | null,
+): WikiLinkWidget {
+  const project_info = appManager.get(ProjectManager).getProjectInfo();
+  if (!project_info || !appContext) {
+    return createWikiLinkWidget(
+      { title: data.title, id: data.assetId, key: data.key },
+      appManager,
+    );
+  }
+
+  return {
+    coordsAt: () => null,
+    compare: (other: WikiLinkWidget) => other.key === data.key,
+    destroy(dom: HTMLElement) {
+      render(null, dom);
+    },
+    eq: (other: WikiLinkWidget) => other.key === data.key,
+    key: data.key,
+    estimatedHeight: -1,
+    ignoreEvent: () => true,
+    lineBreaks: 0,
+    toDOM() {
+      const container = document.createElement('span');
+      container.className = 'cm-md-asset-link';
+
+      const asset: AssetLinkData = {
+        id: data.assetId,
+        anchor: data.anchor ?? null,
+      };
+      if (data.blockId) asset.blockId = data.blockId;
+
+      const vnode = h(
+        AssetLink,
+        {
+          project: project_info,
+          asset,
+          openPopup: true,
+        },
+        { default: () => data.title },
+      );
+      if (appContext) vnode.appContext = appContext;
+      render(vnode, container);
+
+      return container;
+    },
+    updateDOM: () => false,
+  };
+}
+
 function isCursorInRange(
   state: EditorState,
   from: number,
@@ -251,15 +313,16 @@ export const replacements = (config: PluginConfig): Extension[] => {
             `Asset ${cached_asset.id}`;
 
           if (address.kind === 'assetBlock') {
-            const widget = createWikiLinkWidget(
+            const widget = createAssetLinkWidget(
               {
+                assetId: cached_asset.id,
                 title,
-                id: cached_asset.id,
-                key: `asset:${cached_asset.id}`,
-                address,
-                onClick: () => openWikiLinkAddress(address, config.appManager),
+                blockId: address.blockId,
+                anchor: address.anchor || undefined,
+                key: `asset:${cached_asset.id}#block:${address.blockId}`,
               },
               config.appManager,
+              config.appContext ?? null,
             );
             widgets.push(Decoration.replace({ widget }).range(from, to));
             return;
@@ -281,15 +344,14 @@ export const replacements = (config: PluginConfig): Extension[] => {
           }
 
           // kind === 'asset'
-          const widget = createWikiLinkWidget(
+          const widget = createAssetLinkWidget(
             {
+              assetId: cached_asset.id,
               title,
-              id: cached_asset.id,
               key: `asset:${cached_asset.id}`,
-              address,
-              onClick: () => openWikiLinkAddress(address, config.appManager),
             },
             config.appManager,
+            config.appContext ?? null,
           );
           widgets.push(Decoration.replace({ widget }).range(from, to));
           return;
@@ -301,17 +363,14 @@ export const replacements = (config: PluginConfig): Extension[] => {
           config.appManager,
         );
         if (legacy_parsed && legacy_parsed.id) {
-          const widget = createWikiLinkWidget(
+          const widget = createAssetLinkWidget(
             {
+              assetId: legacy_parsed.id,
               title: legacy_parsed.title ?? `Asset ${legacy_parsed.id}`,
-              id: legacy_parsed.id,
               key: `asset:${legacy_parsed.id}`,
-              onClick: () =>
-                config.appManager
-                  .get(EditorManager)
-                  .openAsset(legacy_parsed.id, 'popup'),
             },
             config.appManager,
+            config.appContext ?? null,
           );
           widgets.push(Decoration.replace({ widget }).range(from, to));
           return;

@@ -259,7 +259,10 @@ export default defineComponent({
     plugins() {
       return [
         ...linkPickerTrigger((request) => this.onLinkPickerChange(request)),
-        ...wikiLinks({ appManager: this.$getAppManager() }),
+        ...wikiLinks({
+          appManager: this.$getAppManager(),
+          appContext: this.$.appContext,
+        }),
         ...imcImages({ appManager: this.$getAppManager() }),
         ...(this.livePreview
           ? [
@@ -285,6 +288,7 @@ export default defineComponent({
           extensions: [
             ...wikiLinkCellExtensions({
               appManager: this.$getAppManager(),
+              appContext: this.$.appContext,
             }),
             // Inline-markup decorations (highlight, code, math, bold, italic,
             // strikethrough, hr) so a table cell's nested editor renders text

@@ -3,6 +3,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { Tag, tags as highlightTags } from '@lezer/highlight';
 import type { MarkdownConfig } from '@lezer/markdown';
+import type { AppContext } from 'vue';
 import { completions } from './completions';
 import { replacements } from './replacements';
 import type { IAppManager } from '../../../../logic/managers/IAppManager';
@@ -12,6 +13,7 @@ const RIGHT_BRACKET_CODE = 93;
 
 export type PluginConfig = {
   appManager: IAppManager;
+  appContext?: AppContext;
 };
 
 const tags = {
