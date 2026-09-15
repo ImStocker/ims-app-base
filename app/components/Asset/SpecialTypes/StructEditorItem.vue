@@ -14,6 +14,7 @@
         <renamable-text
           v-model:is-renaming-mode-state="isMainEditMode"
           class="StructureEditorItem-main-renamable"
+          :class="{ 'is-editing': isMainEditMode }"
           :disabled="readonly"
         >
           <caption-string
@@ -40,40 +41,42 @@
                 :model-value="mainEditItem.type"
                 @update:model-value="mainEditItem.type = $event"
               ></attribute-type-prop-editor>
-              <div
-                v-if="mainEditServiceNameError"
-                class="StructureEditorItem-main-editor-error"
-                :title="mainEditServiceNameError"
-              >
-                <i class="ri-error-warning-fill"></i>
+              <div class="StructureEditorItem-main-editor-serviceName">
+                <div
+                  v-if="mainEditServiceNameError"
+                  class="StructureEditorItem-main-editor-serviceName-error"
+                  :title="mainEditServiceNameError"
+                >
+                  <i class="ri-error-warning-fill"></i>
+                </div>
+                <div
+                  v-else
+                  class="StructureEditorItem-main-editor-serviceName-icon"
+                  :title="$t('assetEditor.struct.serviceName')"
+                >
+                  <i class="ri-price-tag-3-fill"></i>
+                </div>
+                <ims-text-input
+                  ref="mainEditName"
+                  :model-value="mainEditItem.propName"
+                  :validation-error="mainEditServiceNameError"
+                  class="StructureEditorItem-main-editor-serviceName-input"
+                  @update:model-value="mainEditSetName($event)"
+                ></ims-text-input>
+                <button
+                  :style="{
+                    visibility:
+                      item.propName === mainEditItem.propName
+                        ? 'hidden'
+                        : undefined,
+                  }"
+                  class="StructureEditorItem-main-editor-serviceName-undo is-button is-button-icon"
+                  :title="$t('assetEditor.struct.revertServiceNameChange')"
+                  @click="mainEditSetName(item.propName ?? '')"
+                >
+                  <i class="ri-arrow-go-back-line"></i>
+                </button>
               </div>
-              <div
-                v-else
-                class="StructureEditorItem-main-editor-name-icon"
-                :title="$t('assetEditor.struct.serviceName')"
-              >
-                <i class="ri-price-tag-3-fill"></i>
-              </div>
-              <ims-text-input
-                ref="mainEditName"
-                :model-value="mainEditItem.propName"
-                :validation-error="mainEditServiceNameError"
-                class="StructureEditorItem-main-editor-name"
-                @update:model-value="mainEditSetName($event)"
-              ></ims-text-input>
-              <button
-                :style="{
-                  visibility:
-                    item.propName === mainEditItem.propName
-                      ? 'hidden'
-                      : undefined,
-                }"
-                class="StructureEditorItem-main-editor-name-undo is-button is-button-icon"
-                :title="$t('assetEditor.struct.revertServiceNameChange')"
-                @click="mainEditSetName(item.propName ?? '')"
-              >
-                <i class="ri-arrow-go-back-line"></i>
-              </button>
             </div>
           </template>
         </renamable-text>
@@ -94,7 +97,9 @@
           @dblclick="editServiceName"
         >
           <i class="ri-price-tag-3-fill"></i>
-          {{ item.propName }}
+          <span class="StructureEditorItem-main-serviceName-text">
+            {{ item.propName }}
+          </span>
         </div>
       </div>
     </template>
@@ -244,6 +249,9 @@ export default defineComponent({
         ] ?? null
       );
     },
+    typeCircleClass(): string {
+      return getFieldTypeDotClass(this.item.type);
+    },
     paramsStructForm(): PropsFormDef | null {
       if (!this.typeController) return null;
 
@@ -386,9 +394,6 @@ export default defineComponent({
         this.block.props[key] === undefined
       );
     },
-    typeCircleClass(): string {
-      return getFieldTypeDotClass(this.item.type);
-    },
     setFieldParam(param: string, value: AssetPropValue) {
       const key = `fields\\${this.item.index}\\${param}`;
       this.assetChanger.setBlockPropKey(
@@ -414,7 +419,7 @@ export default defineComponent({
 @use '$style/field-type-dot' as *;
 .StructureEditorItem-main-editor {
   display: flex;
-  gap: 5px;
+  gap: 8px;
   align-items: center;
   min-height: 1.8em;
 }
@@ -422,25 +427,33 @@ export default defineComponent({
   user-select: none;
   white-space: nowrap;
 }
-.StructureEditorItem-main-editor-name-icon,
+.StructureEditorItem-main-editor-serviceName {
+  display: flex;
+  flex: 1 1 20%;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+.StructureEditorItem-main-editor-serviceName-icon,
+.StructureEditorItem-main-editor-serviceName-error,
 .StructureEditorItem-main-serviceName {
   color: var(--local-sub-text-color);
 }
-.StructureEditorItem-main-editor-name-icon {
+.StructureEditorItem-main-editor-serviceName-icon,
+.StructureEditorItem-main-editor-serviceName-error {
   display: flex;
   flex: none;
   align-items: center;
   line-height: 1;
 }
-.StructureEditorItem-main-editor-type {
-  flex: 1 1 40%;
-  min-width: 0;
-  :deep(.is-select) {
-    --input-padding-vertical: 0.1em;
-    --input-padding-horizontal: 0.5em;
-  }
+.StructureEditorItem-main-editor-serviceName-error {
+  color: var(--color-danger);
 }
-.StructureEditorItem-main-editor-name-undo {
+.StructureEditorItem-main-editor-serviceName-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.StructureEditorItem-main-editor-serviceName-undo {
   flex: none;
   padding: 1px 4px;
   background-color: transparent;
@@ -448,6 +461,14 @@ export default defineComponent({
 
   &:hover {
     color: var(--local-text-color);
+  }
+}
+.StructureEditorItem-main-editor-type {
+  flex: 1 1 40%;
+  min-width: 0;
+  :deep(.is-select) {
+    --input-padding-vertical: 0.1em;
+    --input-padding-horizontal: 0.5em;
   }
 }
 .StructureEditorItem-main {
@@ -461,16 +482,19 @@ export default defineComponent({
   align-self: center;
 }
 .StructureEditorItem-main-renamable {
-  flex: 1 1 40%;
   min-width: 0;
+
+  &:not(.is-editing) {
+    flex: 1 1 40%;
+  }
+
+  &.is-editing {
+    flex: 1;
+  }
 }
 
 .StructureEditorItem-main-editor-title {
   flex: 1 1 40%;
-  min-width: 0;
-}
-.StructureEditorItem-main-editor-name {
-  flex: 1 1 20%;
   min-width: 0;
 }
 .StructureEditorItem-main-title {
@@ -484,14 +508,18 @@ export default defineComponent({
   min-width: 0;
 }
 .StructureEditorItem-main-serviceName {
+  display: flex;
   flex: 1 1 20%;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.StructureEditorItem-main-serviceName-text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.StructureEditorItem-main-editor-error {
-  color: var(--color-danger);
 }
 
 .StructureEditorItem-main-title.state-inherited,
