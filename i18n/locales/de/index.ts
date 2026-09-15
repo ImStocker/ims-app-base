@@ -574,6 +574,10 @@ export default {
       params: 'Parameter',
     },
   },
+  dragOverlay: {
+    drop: 'Dateien hierher ziehen',
+    imagesOnly: 'Nur Bilder',
+  },
   imcEditor: {
     autocompleteMore: 'Mehr...',
     autocompleteCreate: 'Erstellen',

@@ -1,10 +1,6 @@
 <template>
   <div
     class="GalleryBlock"
-    :class="{
-      'state-drag-ok': dragEffect === 1,
-      'state-drag-error': dragEffect === -1,
-    }"
     @drop.prevent="dropFile"
     @dragover.prevent="dragFileEnter"
     @dragleave.prevent="dragFileLeave"
@@ -86,6 +82,15 @@
         @change="handleFile"
       />
     </div>
+    <drag-overlay
+      :visible="dragEffect !== 0"
+      :error="dragEffect === -1"
+      :text="
+        dragEffect === -1
+          ? $t('dragOverlay.imagesOnly')
+          : $t('dragOverlay.drop')
+      "
+    ></drag-overlay>
   </div>
 </template>
 
@@ -110,6 +115,7 @@ import MenuButton from '#components/Common/MenuButton.vue';
 import DialogManager from '#logic/managers/DialogManager';
 import { nodeContainsElement } from '#components/utils/DomElementUtils';
 import SortableList from '#components/Common/SortableList.vue';
+import DragOverlay from '#components/Common/DragOverlay.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import ExternalLinkDialog from './ExternalLinkDialog.vue';
 import MenuList from '#components/Common/MenuList.vue';
@@ -131,6 +137,7 @@ export default defineComponent({
     SortableList,
     MenuList,
     ScreenshotRenderer,
+    DragOverlay,
   },
   props: {
     assetBlockEditor: {
@@ -481,13 +488,7 @@ export default defineComponent({
 
 <style lang="scss" rel="stylesheet/scss" scoped>
 .GalleryBlock {
-  &.state-drag-ok {
-    outline: 1px solid var(--color-main-yellow);
-  }
-
-  &.state-drag-error {
-    outline: 1px solid var(--color-main-error);
-  }
+  position: relative;
 }
 .GalleryBlock-item {
   break-inside: avoid;
