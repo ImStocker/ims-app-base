@@ -34,10 +34,12 @@ export const ARTICLE_ASSET_ID = '00000000-0000-0000-0000-100000000403';
 export const SCRIPT_ASSET_ID = '00000000-0000-0000-0000-000000000033';
 export const DIAGRAM_ASSET_ID = '00000000-0000-0000-0000-000000000032';
 export const GAME_OBJECT_ASSET_ID = '00000000-c197-40c8-9fc6-000000000035';
-export const LEGACY_GAME_OBJECT_ASSET_ID = '00000000-0000-0000-0000-000000000035';
+export const LEGACY_GAME_OBJECT_ASSET_ID =
+  '00000000-0000-0000-0000-000000000035';
 export const LEVEL_ASSET_ID = '00000000-0000-0000-0000-000000000036';
 export const GAME_MECHANICS_ASSET_ID = '00000000-506f-4400-b6d0-000000000037';
-export const LEGACY_GAME_MECHANICS_ASSET_ID = '00000000-0000-0000-0000-000000000037';
+export const LEGACY_GAME_MECHANICS_ASSET_ID =
+  '00000000-0000-0000-0000-000000000037';
 export const MARKDOWN_ASSET_ID = '00000000-0000-0000-0000-000000000039';
 export const ENUM_ASSET_ID = '00000000-0000-0000-0000-000000000023';
 export const STRUCT_ASSET_ID = '00000000-0000-0000-0000-000000000020';
@@ -49,17 +51,17 @@ export const BLOCK_ID_META = '00000000-0000-0000-0000-000000000100';
 
 export const ASSET_ICON_COLORS: AssetIconColorInfo[] = [
   { name: 'yellow', color: '#EED811' },
-  { name: 'blue', color: '#0979da' },
-  { name: 'sky', color: '#218bff' },
+  { name: 'blue', color: '#1291ff' },
+  { name: 'sky', color: '#66c9ff' },
   { name: 'green', color: '#40c463' },
-  { name: 'lime', color: '#CDF677' },
-  { name: 'red', color: '#cf222e' },
-  { name: 'coral', color: '#EB6060' },
+  { name: 'lime', color: '#CDF677', light: '#9fd52d' },
+  { name: 'red', color: '#d43b45' },
+  { name: 'coral', color: '#eb6b6b' },
   { name: 'gold', color: '#d4a72c' },
-  { name: 'purple', color: '#8251df' },
-  { name: 'ice', color: '#b8d3ff' },
-  { name: 'orange', color: '#fd8c74' },
-  { name: 'gray', color: '#E0E0E0' },
+  { name: 'purple', color: '#a075f2' },
+  { name: 'ice', color: '#b8d3ff', light: '#98b7eb' },
+  { name: 'orange', color: '#e97b12' },
+  { name: 'gray', color: '#E0E0E0', light: '#999' },
 ];
 
 export type AssetIconColorInfo = {

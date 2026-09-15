@@ -412,7 +412,6 @@ export default defineComponent({
 
     &:hover {
       background: var(--local-hl-bg-color);
-      color: var(--text-intense);
     }
   }
 
