@@ -474,6 +474,11 @@ export default {
     propsBlockChildrenDeleteHeader: 'Delete template element property',
     propsBlockChildrenDeleteBody:
       'Property will be deelted in all instances of this template. Are you sure want to continue?',
+    propsBlockPropagateRenameHeader: 'The change will affect child elements',
+    propsBlockPropagateRenameBody:
+      'The property key rename will be applied to {count} child elements. Apply the rename to all?',
+    propsBlockPropagateRenameAll: 'For all',
+    propsBlockPropagateRenameCurrent: 'Only for current',
     embedBlockAddDialogHeader: 'Insert embedded document',
     embedBlockLinkAnyPlaceholder:
       'Enter link to the document (Google Docs, Miro, Figma and etc.)',

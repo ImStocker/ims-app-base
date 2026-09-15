@@ -1,26 +1,29 @@
 <template>
-  <is-panel class="AssetBlockStructEditor">
+  <div class="AssetBlockStructEditor">
     <struct-editor
       v-if="infoBlock"
       :block="infoBlock"
       :asset-changer="assetChanger"
       :readonly="isReadonly"
     ></struct-editor>
-  </is-panel>
+  </div>
 </template>
 <script lang="ts">
-import { defineComponent, type PropType, type UnwrapRef } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import StructEditor from './StructEditor.vue';
-import IsPanel from '../../Common/IsPanel.vue';
 import type { AssetChanger } from '../../../logic/types/AssetChanger';
 
 export default defineComponent({
   name: 'AssetBlockStructEditor',
   components: {
     StructEditor,
-    IsPanel,
+  },
+  provide() {
+    return {
+      projectContext: this.assetBlockEditor,
+    };
   },
   props: {
     assetBlockEditor: {
@@ -70,4 +73,10 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.AssetBlockStructEditor {
+  min-height: 100%;
+  padding: 0 var(--root-editor-block-padding-right) 0
+    var(--root-editor-block-padding-left);
+}
+</style>

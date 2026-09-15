@@ -18,15 +18,21 @@ import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.v
 import {
   makeBlockRef,
   mergeInheritedProps,
+  parseAssetNewBlockRef,
   stringifyAssetNewBlockRef,
   type AssetProps,
 } from '../types/Props';
 import { AssetRights } from '../types/Rights';
-import type { AssetChanger, BlockCursor } from '../types/AssetChanger';
+import type {
+  AssetChanger,
+  BlockCursor,
+  PropKeyRenamePending,
+} from '../types/AssetChanger';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import { generateNextUniqueNameNumber } from '../utils/stringUtils';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
+import ConfirmPropagateRenameDialog from '../../components/Common/ConfirmPropagateRenameDialog.vue';
 import type {
   ApiRequestList,
   ApiResultListWithTotal,
@@ -377,9 +383,203 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!this.assetFull) {
       return false;
     }
+
+    let propagate_renames: PropKeyRenamePending[] | null = null;
+    let propagate_rename_op_id: number | undefined;
+
+    const pending_renames = this.assetChanger
+      .getPendingPropKeyRenames()
+      .filter((rename) => this._propKeyExistsInSavedBlock(rename));
+
+    if (pending_renames.length > 0) {
+      const children = await this.getChildrenAssets(this.assetFull.id);
+      if (children.length > 0) {
+        const answer = await this.appManager
+          .get(DialogManager)
+          .show(ConfirmPropagateRenameDialog, {
+            header: this.appManager.$t(
+              'assetEditor.propsBlockPropagateRenameHeader',
+            ),
+            message: this.appManager.$t(
+              'assetEditor.propsBlockPropagateRenameBody',
+              { count: children.length },
+            ),
+          });
+
+        if (answer === 'cancel') {
+          return false;
+        }
+        if (answer === 'all') {
+          propagate_renames = pending_renames;
+          const rename_op_ids =
+            this.assetChanger.getPendingPropKeyRenameOpIds();
+          propagate_rename_op_id =
+            rename_op_ids.length > 0
+              ? rename_op_ids[rename_op_ids.length - 1]
+              : undefined;
+        }
+      }
+    }
+
     const res = await this.assetChanger.saveChanges();
+
+    if (propagate_renames) {
+      await this._propagatePropKeyRenames(
+        propagate_renames,
+        propagate_rename_op_id,
+      );
+    }
+
     this.historyModeVM = null;
     return res;
+  }
+
+  private _propKeyExistsInSavedBlock(rename: PropKeyRenamePending): boolean {
+    const block = this._findSavedBlock(rename.blockRef);
+    if (!block) return true;
+    // Metadata rename twin targets the same key as its pair, e.g.
+    // `__props\health` mirrors `health`. Check the real key so pairs
+    // survive or drop together.
+    const prop_key = rename.propKey.startsWith('__props\\')
+      ? rename.propKey.substring('__props\\'.length)
+      : rename.propKey;
+
+    if (
+      block.props[prop_key] !== undefined ||
+      (block.inherited ? block.inherited[prop_key] !== undefined : false)
+    ) {
+      return true;
+    }
+
+    // TableBlock: __columns\<colName> prefix — check if any
+    // __columns\<colName>\* key exists in the block.
+    if (prop_key.startsWith('__columns\\')) {
+      const prefix = prop_key + '\\';
+      if (this._blockHasKeyWithPrefix(block, prefix)) return true;
+    }
+
+    // TableBlock: <rowId>\values\<colName> — check if the column
+    // definition itself exists rather than requiring the exact cell key.
+    const cell_match = prop_key.match(/^([^\\]+)\\values\\([^\\]+)$/);
+    if (cell_match) {
+      const col_prefix = `__columns\\${cell_match[2]}\\`;
+      if (this._blockHasKeyWithPrefix(block, col_prefix)) return true;
+    }
+
+    // TableBlock: bare <rowId> — table rows are stored as flat
+    // `rowId\values\...` / `rowId\index` keys with no exact rowId key,
+    // so check for children under the row prefix instead.
+    if (
+      !prop_key.includes('\\') &&
+      (this._blockHasKeyWithPrefix(block, '__columns\\') ||
+        block.props['__primary'] !== undefined ||
+        (block.inherited ? block.inherited['__primary'] !== undefined : false))
+    ) {
+      const row_prefix = prop_key + '\\';
+      if (this._blockHasKeyWithPrefix(block, row_prefix)) return true;
+    }
+
+    return false;
+  }
+
+  private _blockHasKeyWithPrefix(
+    block: {
+      props: Record<string, unknown>;
+      inherited: Record<string, unknown> | null;
+    },
+    prefix: string,
+  ): boolean {
+    for (const key of Object.keys(block.props)) {
+      if (key.startsWith(prefix)) return true;
+    }
+    if (block.inherited) {
+      for (const key of Object.keys(block.inherited)) {
+        if (key.startsWith(prefix)) return true;
+      }
+    }
+    return false;
+  }
+
+  private _findSavedBlock(blockRef: string) {
+    const parsed_ref = parseAssetNewBlockRef(blockRef);
+    if (parsed_ref.blockName) {
+      return (
+        this.assetFull?.blocks.find((b) => b.name === parsed_ref.blockName) ??
+        null
+      );
+    }
+    if (parsed_ref.blockId) {
+      return (
+        this.assetFull?.blocks.find((b) => b.id === parsed_ref.blockId) ?? null
+      );
+    }
+    return null;
+  }
+
+  private async _propagatePropKeyRenames(
+    renames: PropKeyRenamePending[],
+    op_id?: number,
+  ): Promise<void> {
+    const asset_full = this.assetFull;
+    if (!asset_full) return;
+    const asset_id = asset_full.id;
+
+    const by_block_ref = new Map<
+      string,
+      { propKey: string; newPropKey: string }[]
+    >();
+    for (const rename of renames) {
+      const parsed_ref = parseAssetNewBlockRef(rename.blockRef);
+      const block = parsed_ref.blockId
+        ? asset_full.blocks.find((b) => b.id === parsed_ref.blockId)
+        : null;
+      const block_ref = block
+        ? (block.name ?? stringifyAssetNewBlockRef(null, block.id))
+        : parsed_ref.blockName;
+      if (!block_ref) continue;
+      const list = by_block_ref.get(block_ref) ?? [];
+      list.push({ propKey: rename.propKey, newPropKey: rename.newPropKey });
+      by_block_ref.set(block_ref, list);
+    }
+    if (by_block_ref.size === 0) return;
+
+    await this.assetChanger.executeTask(async () => {
+      const undo_fns: (() => Promise<void>)[] = [];
+      const creatorAssetManager = this.appManager.get(CreatorAssetManager);
+      for (const [block_ref, renames_for_block] of by_block_ref) {
+        const rename_props: AssetProps = {};
+        for (const { propKey, newPropKey } of renames_for_block) {
+          if (propKey === newPropKey) continue;
+          rename_props[`~${propKey}`] = newPropKey;
+        }
+        if (Object.keys(rename_props).length === 0) continue;
+        const change_res = await creatorAssetManager.changeAssets({
+          set: {
+            blocks: {
+              [block_ref]: {
+                props: rename_props,
+              },
+            },
+          },
+          where: {
+            typeids: asset_id,
+          },
+        });
+        const change_id = change_res.changeId;
+        if (change_id) {
+          undo_fns.push(async () => {
+            await creatorAssetManager.changeAssetsUndo({
+              changeId: change_id,
+            });
+          });
+        }
+      }
+      return async () => {
+        for (const fn of undo_fns) {
+          await fn();
+        }
+      };
+    }, op_id);
   }
 
   async changeBlockServiceName(
@@ -695,6 +895,10 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     return this.appManager
       .get(CreatorAssetManager)
       .checkHasChildrenViaCache(assetId);
+  }
+
+  getChildrenAssets(assetId: string) {
+    return this.appManager.get(CreatorAssetManager).getChildrenAssets(assetId);
   }
 
   isBlockSelected(block_id: string): boolean {

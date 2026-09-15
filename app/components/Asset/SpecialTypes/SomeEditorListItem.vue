@@ -1,5 +1,6 @@
 <template>
-  <div class="SomeEditorListItem is-box" :class="{ 'state-opened': opened }">
+  <div class="SomeEditorListItem" :class="{ 'state-opened': opened }">
+  <div class="SomeEditorListItem" :class="{ 'state-opened': opened }">
     <div class="SomeEditorListItem-main">
       <i v-if="!readonly" class="SomeEditorListItem-drag ri-draggable"></i>
       <div class="SomeEditorListItem-main-content">
@@ -7,7 +8,8 @@
       </div>
       <button
         v-if="$slots['item-advanced']"
-        class="SomeEditorListItem-arrow is-button is-button-icon"
+        class="SomeEditorListItem-arrow"
+        class="SomeEditorListItem-arrow"
         @click="opened = !opened"
       >
         <i class="ri-arrow-down-s-line"></i>
@@ -46,28 +48,116 @@ export default defineComponent({
 });
 </script>
 <style lang="scss" scoped>
-.SomeEditorListItem-drag {
-  opacity: 0;
-  cursor: grab;
-  color: var(--local-sub-text-color);
-}
 .SomeEditorListItem {
-  border-radius: var(--panel-border-radius);
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
   &:hover {
+    background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+    border-color: var(--local-border-color);
+
+    background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+    border-color: var(--local-border-color);
+
     .SomeEditorListItem-drag {
       opacity: 1;
+      color: var(--local-sub-text-color);
     }
+  }
+
+  &.state-opened {
+    border-color: var(--local-border-color);
+  }
+}
+.SomeEditorListItem-drag {
+  flex: none;
+  opacity: 0;
+  cursor: grab;
+  color: transparent;
+  transition:
+    color 0.16s ease,
+    opacity 0.16s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &:active {
+    cursor: grabbing;
+      color: var(--local-sub-text-color);
+    }
+  }
+
+  &.state-opened {
+    border-color: var(--local-border-color);
+  }
+}
+.SomeEditorListItem-drag {
+  flex: none;
+  opacity: 0;
+  cursor: grab;
+  color: transparent;
+  transition:
+    color 0.16s ease,
+    opacity 0.16s ease;
+
+  i {
+    font-size: 16px;
+  }
+
+  &:active {
+    cursor: grabbing;
   }
 }
 .SomeEditorListItem-main {
   display: flex;
-  padding: 8px 8px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
 }
 .SomeEditorListItem-main-content {
   flex: 1;
+  min-width: 0;
+  min-width: 0;
 }
-.SomeEditorListItem-arrow > i {
-  transition: transform 0.2s;
+.SomeEditorListItem-arrow {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--local-sub-text-color);
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover {
+    color: var(--local-text-color);
+  }
+
+  > i {
+    display: block;
+    line-height: 1;
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
 }
 .SomeEditorListItem.state-opened {
   .SomeEditorListItem-arrow > i {
@@ -77,6 +167,7 @@ export default defineComponent({
 .SomeEditorListItem-advanced {
   border-top: 1px solid var(--local-border-color);
   margin-top: 4px;
-  padding: 8px 8px;
+  padding: 12px 10px 10px;
+  padding: 12px 10px 10px;
 }
 </style>

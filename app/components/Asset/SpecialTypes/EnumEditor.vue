@@ -20,11 +20,12 @@
         ></enum-editor-item>
       </template>
     </sortable-list>
-    <button
-      v-if="!readonly"
-      class="is-button is-button-action"
-      @click="addElement"
-    >
+    <button v-if="!readonly" class="EnumEditor-addButton" @click="addElement">
+<<<<<<< HEAD
+      <i class="ri-add-box-fill"></i>
+=======
+      <i class="ri-add-line"></i>
+>>>>>>> e482877a6bf3efeeb8394cb2c795d83631edbb24
       {{ $t('assetEditor.enum.addElement') }}
     </button>
   </div>
@@ -174,9 +175,44 @@ export default defineComponent({
 </script>
 <style lang="scss" scoped>
 .EnumEditor-item {
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 }
 .EnumEditor-items {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+.EnumEditor-addButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1.5px dashed var(--local-border-color);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--local-sub-text-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  i {
+    font-size: 17px;
+  }
+
+  &:hover {
+<<<<<<< HEAD
+    color: var(--local-text-color);
+    border-color: var(--local-border-color);
+    background: var(--button-bg-color-hover);
+=======
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+>>>>>>> e482877a6bf3efeeb8394cb2c795d83631edbb24
+  }
 }
 </style>

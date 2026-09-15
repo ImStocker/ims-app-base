@@ -485,6 +485,11 @@ export default {
     propsBlockChildrenDeleteHeader: 'Удаление свойства в шаблоне',
     propsBlockChildrenDeleteBody:
       'Свойство будет удалено из всех экземплярах данного шаблона. Вы уверены, что хотите продолжить?',
+    propsBlockPropagateRenameHeader: 'Изменение затронет дочерние элементы',
+    propsBlockPropagateRenameBody:
+      'Переименование ключа свойства будет применено к {count} дочерним элементам. Применить переименование ко всем?',
+    propsBlockPropagateRenameAll: 'Для всех',
+    propsBlockPropagateRenameCurrent: 'Только для текущего',
     embedBlockAddDialogHeader: 'Добавить встраиваемый документ',
     embedBlockLinkAnyPlaceholder:
       'Введите ссылку на документ (Google Docs, Miro, Figma и др.)',
