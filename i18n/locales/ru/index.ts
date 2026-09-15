@@ -581,7 +581,7 @@ export default {
   },
   dragOverlay: {
     drop: 'Перетащите файлы сюда',
-    error: 'Принимаются только изображения',
+    imagesOnly: 'Принимаются только изображения',
   },
   imcEditor: {
     autocompleteMore: 'Еще...',

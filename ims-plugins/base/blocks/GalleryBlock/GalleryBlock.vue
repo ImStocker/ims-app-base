@@ -86,7 +86,9 @@
       :visible="dragEffect !== 0"
       :error="dragEffect === -1"
       :text="
-        dragEffect === -1 ? $t('dragOverlay.error') : $t('dragOverlay.drop')
+        dragEffect === -1
+          ? $t('dragOverlay.imagesOnly')
+          : $t('dragOverlay.drop')
       "
     ></drag-overlay>
   </div>

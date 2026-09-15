@@ -20,7 +20,15 @@
         @contextmenu="onEditorContextMenu"
       ></ink-mde>
     </ContextMenuZone>
-    <drag-overlay :visible="dragActive"></drag-overlay>
+    <drag-overlay
+      :visible="dragEffect !== 0"
+      :error="dragEffect === -1"
+      :text="
+        dragEffect === -1
+          ? $t('dragOverlay.imagesOnly')
+          : $t('dragOverlay.drop')
+      "
+    ></drag-overlay>
     <div
       v-if="toolbarVisible && toolbarRect"
       class="MarkdownBlockEditor-toolbar-target"
@@ -186,7 +194,7 @@ export default defineComponent({
       linkPickerVisibleTimer: null as number | null,
       linkPickerDebounce: null as number | null,
       linkPickerKeyHandlerInstalled: false,
-      dragActive: false,
+      dragEffect: 0,
     };
   },
   computed: {
@@ -403,17 +411,24 @@ export default defineComponent({
       if (!dt) return;
       if (!dt.types.includes('Files')) return;
       if (this.readonly) return;
+      if (dt.items) {
+        const are_images = [...dt.items].some((i) =>
+          /^image\/.+$/i.test(i.type),
+        );
+        this.dragEffect = are_images ? 1 : -1;
+      } else {
+        this.dragEffect = 1;
+      }
       ev.preventDefault();
-      dt.dropEffect = 'copy';
-      this.dragActive = true;
+      dt.dropEffect = this.dragEffect === 1 ? 'copy' : 'none';
     },
     onDragLeave(ev: DragEvent) {
       if (!this.$el.contains(ev.relatedTarget as Node)) {
-        this.dragActive = false;
+        this.dragEffect = 0;
       }
     },
     onDrop(ev: DragEvent) {
-      this.dragActive = false;
+      this.dragEffect = 0;
       const dt = ev.dataTransfer;
       if (!dt) return;
       if (!dt.types.includes('Files')) return;

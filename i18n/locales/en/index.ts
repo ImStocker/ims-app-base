@@ -569,7 +569,7 @@ export default {
   },
   dragOverlay: {
     drop: 'Drop files here',
-    error: 'Images only',
+    imagesOnly: 'Images only',
   },
   imcEditor: {
     autocompleteMore: 'More...',
