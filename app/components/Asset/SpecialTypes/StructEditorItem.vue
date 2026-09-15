@@ -447,15 +447,7 @@ export default defineComponent({
   color: var(--local-sub-text-color);
 
   &:hover {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    color: var(--color-accent);
-=======
     color: var(--local-text-color);
->>>>>>> light-theme-overhaul
-=======
-    color: var(--color-accent);
->>>>>>> e482877a6bf3efeeb8394cb2c795d83631edbb24
   }
 }
 .StructureEditorItem-main {
