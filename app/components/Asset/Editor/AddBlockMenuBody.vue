@@ -138,9 +138,7 @@ export default defineComponent({
       );
     },
     plainTitle(block: BlockTypeDefinition): string {
-      return block.title
-        ? block.title
-        : this.$t('blockTypes.titles.' + block.name);
+      return this.$t('blockTypes.titles.' + block.name);
     },
     displayTitle(block: BlockTypeDefinition): string {
       let title = this.plainTitle(block);

@@ -64,10 +64,6 @@ export abstract class BlockTypeDefinition {
 
   overriddenBlockDefinition: null | BlockTypeDefinition = null;
 
-  get title(): string | null {
-    return null;
-  }
-
   deprecated = false;
   hideInAdding = false;
   hideBlockHeader = false;

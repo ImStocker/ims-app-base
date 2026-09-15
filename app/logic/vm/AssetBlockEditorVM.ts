@@ -467,7 +467,6 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     const asset_full = this.assetFull;
     assert(asset_full);
     const blocks = this.resolveBlocks();
-    const default_title = params?.title ?? null;
 
     const block_type_controller = this.appManager
       .get(EditorManager)
@@ -475,6 +474,13 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (!block_type_controller) {
       throw new Error('Unregistered block type');
     }
+
+    const default_title =
+      params?.title ??
+      (block_type_controller.hideBlockHeader
+        ? null
+        : this._getBlockCreationTitle(type));
+
     const block_params = await block_type_controller.beforeBlockCreate(
       this.appManager,
       {
@@ -510,6 +516,12 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
 
     const new_resolved_block = this.getResolvedBlockById(created.blockId);
     return new_resolved_block;
+  }
+
+  _getBlockCreationTitle(type: string): string | null {
+    const key = 'blockTypes.titles.' + type;
+    const title = this.appManager.$t(key);
+    return title === key ? null : title;
   }
 
   async openCreateRefDialog(reverse = false): Promise<string[]> {
