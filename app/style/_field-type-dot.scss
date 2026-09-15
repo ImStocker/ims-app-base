@@ -27,4 +27,19 @@
   &.is-type-asset {
     background-color: var(--ims-type-asset-fill);
   }
+  &.is-type-selection {
+    background-color: var(--ims-type-selection-fill);
+  }
+  &.is-type-enum {
+    background-color: var(--ims-type-enum-fill);
+  }
+  &.is-type-struct {
+    background-color: var(--ims-type-struct-fill);
+  }
+  &.is-type-date {
+    background-color: var(--ims-type-date-fill);
+  }
+  &.is-type-file {
+    background-color: var(--ims-type-file-fill);
+  }
 }

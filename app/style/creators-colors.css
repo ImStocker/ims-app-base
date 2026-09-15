@@ -27,6 +27,16 @@
     --ims-type-any-stroke: #fff;
     --ims-type-any-fill: #555555;
     --ims-type-any-custom: #CCC;
+    --ims-type-selection-stroke: #b26802;
+    --ims-type-selection-fill: #834c00;
+    --ims-type-enum-stroke: #1dce9f;
+    --ims-type-enum-fill: #149472;
+    --ims-type-struct-stroke: #76b1ff;
+    --ims-type-struct-fill: #358dff;
+    --ims-type-date-stroke: #c19beb;
+    --ims-type-date-fill: #b683eb;
+    --ims-type-file-stroke: #f2eb9f;
+    --ims-type-file-fill: #e3d530;
 }
 
 /* Creators theme setting */
