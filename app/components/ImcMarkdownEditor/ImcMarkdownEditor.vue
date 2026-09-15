@@ -263,7 +263,12 @@ export default defineComponent({
           appManager: this.$getAppManager(),
           appContext: this.$.appContext,
         }),
-        ...imcImages({ appManager: this.$getAppManager() }),
+        ...(this.livePreview
+          ? imcImages({
+              appManager: this.$getAppManager(),
+              getReadonly: () => this.readonly,
+            })
+          : []),
         ...(this.livePreview
           ? [
               {

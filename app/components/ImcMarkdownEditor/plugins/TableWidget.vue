@@ -66,6 +66,7 @@ import { marked, type TokenizerAndRendererExtension } from 'marked';
 import { useI18n } from 'vue-i18n';
 import ContextMenuZone from '../../Common/ContextMenuZone.vue';
 import type { MenuListItem } from '../../../logic/types/MenuList';
+import { markdownImageWidthExtension } from '../../../logic/utils/markdownImageWidth';
 
 // Teach `marked` to render Obsidian-style `==highlight==` as `<mark>`. This is
 // the same highlight syntax the editor decorates, so the read-only / cell
@@ -90,7 +91,9 @@ const highlightExtension: TokenizerAndRendererExtension = {
     return `<mark>${token.text}</mark>`;
   },
 };
-marked.use({ extensions: [highlightExtension] });
+marked.use({
+  extensions: [highlightExtension, markdownImageWidthExtension],
+});
 
 // Shared across widget instances. When a cell commit changes the row count the
 // whole widget is re-created by CodeMirror (its `eq` is false), so the "next
