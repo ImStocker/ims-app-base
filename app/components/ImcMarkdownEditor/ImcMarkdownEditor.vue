@@ -1,5 +1,11 @@
 <template>
-  <div class="MarkdownBlockEditor" :class="{ 'cm-live-preview': livePreview }">
+  <div
+    class="MarkdownBlockEditor"
+    :class="{ 'cm-live-preview': livePreview }"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+  >
     <ContextMenuZone
       class="MarkdownBlockEditor-container"
       :get-menu-list="getContextMenu"
@@ -14,6 +20,7 @@
         @contextmenu="onEditorContextMenu"
       ></ink-mde>
     </ContextMenuZone>
+    <drag-overlay :visible="dragActive"></drag-overlay>
     <div
       v-if="toolbarVisible && toolbarRect"
       class="MarkdownBlockEditor-toolbar-target"
@@ -98,6 +105,7 @@ import SelectionToolbar from './SelectionToolbar.vue';
 import DropdownContainer from '../Common/DropdownContainer.vue';
 import ContextMenuZone from '../Common/ContextMenuZone.vue';
 import type { MenuListItem } from '../../logic/types/MenuList';
+import DragOverlay from '../Common/DragOverlay.vue';
 import katexCss from 'katex/dist/katex.min.css?inline';
 
 // KaTeX scoping: beat ink-mde's `.ink-mde .cm-line span { display: inline }` (0,2,1)
@@ -136,6 +144,7 @@ export default defineComponent({
     MarkdownLinkAutocomplete,
     DropdownContainer,
     ContextMenuZone,
+    DragOverlay,
   },
   props: {
     readonly: {
@@ -177,6 +186,7 @@ export default defineComponent({
       linkPickerVisibleTimer: null as number | null,
       linkPickerDebounce: null as number | null,
       linkPickerKeyHandlerInstalled: false,
+      dragActive: false,
     };
   },
   computed: {
@@ -229,36 +239,9 @@ export default defineComponent({
         },
         files: {
           clipboard: true,
-          dragAndDrop: true,
+          dragAndDrop: false,
           handler: (files: FileList) => {
-            for (const file of files) {
-              const upload_job = this.$getAppManager()
-                .get(EditorManager)
-                .attachFile(file, file.name);
-              upload_job.awaitResult().then(
-                (img) => {
-                  if (img) {
-                    const need_brackets = (
-                      img.Store +
-                      img.Dir +
-                      img.Title
-                    ).includes(' ');
-                    let path = `@${img.Store}/${img.Dir ? img.Dir + '/' : ''}${img.Title}`;
-                    if (img.Store.startsWith('p-')) {
-                      path += '#' + img.FileId;
-                    }
-                    if (need_brackets) {
-                      path = `<${path}>`;
-                    }
-
-                    const markup = `![](${path})`;
-
-                    this.editor?.insert(markup);
-                  }
-                },
-                (err) => this.$getAppManager().get(UiManager).showError(err),
-              );
-            }
+            this.handleFiles(files);
           },
           types: ['image/*'],
         },
@@ -387,6 +370,60 @@ export default defineComponent({
     }
   },
   methods: {
+    handleFiles(files: FileList | File[]) {
+      for (const file of Array.from(files)) {
+        const upload_job = this.$getAppManager()
+          .get(EditorManager)
+          .attachFile(file, file.name);
+        upload_job.awaitResult().then(
+          (img) => {
+            if (img) {
+              const need_brackets = (img.Store + img.Dir + img.Title).includes(
+                ' ',
+              );
+              let path = `@${img.Store}/${img.Dir ? img.Dir + '/' : ''}${img.Title}`;
+              if (img.Store.startsWith('p-')) {
+                path += '#' + img.FileId;
+              }
+              if (need_brackets) {
+                path = `<${path}>`;
+              }
+
+              const markup = `![](${path})`;
+
+              this.editor?.insert(markup);
+            }
+          },
+          (err) => this.$getAppManager().get(UiManager).showError(err),
+        );
+      }
+    },
+    onDragOver(ev: DragEvent) {
+      const dt = ev.dataTransfer;
+      if (!dt) return;
+      if (!dt.types.includes('Files')) return;
+      if (this.readonly) return;
+      ev.preventDefault();
+      dt.dropEffect = 'copy';
+      this.dragActive = true;
+    },
+    onDragLeave(ev: DragEvent) {
+      if (!this.$el.contains(ev.relatedTarget as Node)) {
+        this.dragActive = false;
+      }
+    },
+    onDrop(ev: DragEvent) {
+      this.dragActive = false;
+      const dt = ev.dataTransfer;
+      if (!dt) return;
+      if (!dt.types.includes('Files')) return;
+      if (this.readonly) return;
+      ev.preventDefault();
+      const files = [...dt.files].filter((f) => /^image\/.+$/i.test(f.type));
+      if (files.length > 0) {
+        this.handleFiles(files);
+      }
+    },
     focus() {
       if (!this.editor) return;
       this.editor.focus();

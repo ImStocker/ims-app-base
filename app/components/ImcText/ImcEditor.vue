@@ -1,7 +1,6 @@
 <template>
   <div
     class="ImcEditor"
-    :class="{ 'state-drag': dragEffect === 1 }"
     @drop="onDrop"
     @dragover="_onDragOver"
     @dragleave="_onDragLeave"
@@ -52,7 +51,7 @@
         @paste="$emit('paste', $event)"
       ></imc-editor-activated>
     </div>
-    <div class="ImcEditor-drag-overlay"></div>
+    <drag-overlay :visible="dragEffect === 1"></drag-overlay>
     <div
       v-if="cursorIndicator"
       class="ImcEditor-cursor-indicator"
@@ -76,10 +75,12 @@ import {
   isSelectionInsideNode,
 } from '../utils/DomElementUtils';
 import type ImcEditorActivated from './ImcEditorActivated.vue';
+import DragOverlay from '../Common/DragOverlay.vue';
 
 export default defineComponent({
   name: 'ImcEditor',
   components: {
+    DragOverlay,
     ImcPresenter: defineAsyncComponent(() => import('./ImcPresenter.vue')),
     ImcEditorActivated: defineAsyncComponent(
       () => import('./ImcEditorActivated.vue'),
@@ -454,22 +455,6 @@ export default defineComponent({
   pointer-events: auto;
   color: var(--color-placeholder);
   font-style: italic;
-}
-.ImcEditor.state-drag .ImcEditor-drag-overlay {
-  display: block;
-}
-.ImcEditor-drag-overlay {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(238, 216, 17, 0.02);
-  pointer-events: none;
-  z-index: 100;
-  grid-column: 1;
-  grid-row: 1;
 }
 .ImcEditor-presenter-focusTrap {
   position: absolute;
