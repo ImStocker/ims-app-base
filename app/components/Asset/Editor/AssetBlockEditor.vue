@@ -892,7 +892,7 @@ export default defineComponent({
     background-color 0.16s ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+    background: color-mix(in srgb, var(--local-border-color) 20%, transparent);
     border-color: var(--local-border-color);
 
     .AssetBlockEditor-commentButton {
@@ -979,7 +979,7 @@ export default defineComponent({
 
 .AssetBlockEditorCommon-block:has(.EditorBlock.state-edit) {
   border-color: var(--local-border-color);
-  background: color-mix(in srgb, var(--local-border-color) 45%, transparent);
+  background: color-mix(in srgb, var(--local-border-color) 20%, transparent);
 }
 
 .AssetBlockEditor-selLine {

@@ -115,7 +115,6 @@ async function sendMessage() {
   padding: 10px;
   border: none;
   border-radius: 8px;
-  background-color: transparent;
   transition:
     color 0.2s,
     background-color 0.2s;
