@@ -1,11 +1,11 @@
 <template>
   <div class="TextAttachmentPropEditor">
-    <imc-editor
+    <imc-format-text-editor
       class="TextAttachmentPropEditor-input"
       :model-value="modelValue"
       :placeholder="placeholder"
       @update:model-value="emitValueFromEvent($event)"
-    ></imc-editor>
+    ></imc-format-text-editor>
     <file-attach-button
       :multiple="true"
       class="TextAttachmentPropEditor-file"
@@ -26,13 +26,13 @@ import {
   joinAssetPropValueTexts,
 } from '../../logic/types/Props';
 import FileAttachButton from '../File/FileAttachButton.vue';
-import ImcEditor from '../ImcText/ImcEditor.vue';
+import ImcFormatTextEditor from '../Common/ImcFormatTextEditor.vue';
 import type { UploadingJob } from '../../logic/managers/EditorManager';
 
 export default defineComponent({
   name: 'TextAttachmentPropEditor',
   components: {
-    ImcEditor,
+    ImcFormatTextEditor,
     FileAttachButton,
   },
   props: {

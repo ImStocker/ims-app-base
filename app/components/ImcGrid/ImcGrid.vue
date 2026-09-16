@@ -93,10 +93,10 @@
             </div>
           </template>
         </scrollable-table>
-        <imc-editor
+        <imc-format-text-editor
           ref="hiddenImcEditor"
           class="ImcGrid-hiddenImcEditor"
-        ></imc-editor>
+        ></imc-format-text-editor>
       </div>
     </context-menu-zone>
   </div>
@@ -140,7 +140,7 @@ import UiManager, {
 import { useImcHTMLRenderer } from '../ImcText/useImcHTMLRenderer';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import type { ImcEditorQuillController } from '../ImcText/ImcEditorQuillController';
-import ImcEditor from '../ImcText/ImcEditor.vue';
+import ImcFormatTextEditor from '../Common/ImcFormatTextEditor.vue';
 import { makeDeletePropKey } from '../../logic/types/makePropsChange';
 import type {
   PropsFormFieldDef,
@@ -182,7 +182,7 @@ export default defineComponent({
   components: {
     ScrollableTable,
     PropFieldValueStack,
-    ImcEditor,
+    ImcFormatTextEditor,
     ContextMenuZone,
   },
   props: {
@@ -1056,8 +1056,11 @@ export default defineComponent({
     },
     getQuillController(): ImcEditorQuillController | null {
       if (!this.$refs['hiddenImcEditor']) return null;
-      return (this.$refs['hiddenImcEditor'] as InstanceType<typeof ImcEditor>)
-        .quillController;
+      return (
+        this.$refs['hiddenImcEditor'] as InstanceType<
+          typeof ImcFormatTextEditor
+        >
+      ).quillController;
     },
     onCellContextMenu(event: MouseEvent) {
       const target = event.target as HTMLElement;
