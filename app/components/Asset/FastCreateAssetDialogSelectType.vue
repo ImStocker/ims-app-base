@@ -34,7 +34,7 @@
         // 'FastCreateAssetDialogSelectType-readonly': disableChangeType,
       }"
       class="FastCreateAssetDialogSelectType-parent"
-      :placeholder="$t('asset.text')"
+      :placeholder="$tTitle('[[t:EmptyElement]]')"
       :additional-options="additionalParentOpts"
       @select-parent="changeParent"
     ></select-parent-asset>
