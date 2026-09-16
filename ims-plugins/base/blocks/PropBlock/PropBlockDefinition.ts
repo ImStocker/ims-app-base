@@ -64,7 +64,6 @@ export class PropBlockDefinition extends BlockTypeDefinition {
       name,
       props: {
         value: null,
-        __type: null,
       },
     };
   }

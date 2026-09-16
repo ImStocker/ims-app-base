@@ -195,9 +195,29 @@ export default defineComponent({
   methods: {
     setFieldParam(param: string, value: AssetPropValue) {
       const key = `__${param}`;
+      const block_ref = makeBlockRef(this.resolvedBlock);
+      if (param === 'type' && !value) {
+        if (this.resolvedBlock.inherited?.hasOwnProperty('__type')) {
+          this.assetChanger.setBlockPropKey(
+            this.resolvedBlock.assetId,
+            block_ref,
+            null,
+            key,
+            null,
+          );
+        } else {
+          this.assetChanger.deleteBlockPropKey(
+            this.resolvedBlock.assetId,
+            block_ref,
+            null,
+            key,
+          );
+        }
+        return;
+      }
       this.assetChanger.setBlockPropKey(
         this.resolvedBlock.assetId,
-        makeBlockRef(this.resolvedBlock),
+        block_ref,
         null,
         key,
         value,
