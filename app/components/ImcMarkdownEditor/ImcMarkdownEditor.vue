@@ -306,14 +306,13 @@ export default defineComponent({
               ? linkWidgets({ appManager: this.$getAppManager() })
               : []),
             // Same for images: render them inline inside a cell's nested editor
-            // (source mode keeps the raw markdown). Table cells escape the
-            // width pipe as `\|` so it doesn't split the row.
+            // (source mode keeps the raw markdown). The cell editor holds plain
+            // `|`; `TableWidget` escapes them when writing the cell back.
             ...(this.livePreview
               ? [
                   imagesExtension({
                     appManager: this.$getAppManager(),
                     getReadonly: () => this.readonly,
-                    escapePipe: true,
                   }),
                 ]
               : []),
@@ -340,6 +339,9 @@ export default defineComponent({
               },
             }),
             shortcuts(() => this.readonly),
+            // `[[` inside a cell opens the same asset-link picker.
+            linkPickerTrigger((request) => this.onLinkPickerChange(request))[0]
+              .value,
           ],
         }),
         {

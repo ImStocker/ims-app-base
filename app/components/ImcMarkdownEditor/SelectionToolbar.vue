@@ -520,7 +520,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .SelectionToolbar-bubble {
   pointer-events: auto;
   position: relative;

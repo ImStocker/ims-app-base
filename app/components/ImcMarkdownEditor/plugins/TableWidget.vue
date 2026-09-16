@@ -19,7 +19,12 @@
             @mousedown.prevent="onCellMouseDown(ri, ci)"
             @contextmenu="onCellContextMenu(ri, ci)"
           >
-            <div v-if="_activeCell?.row !== ri || _activeCell?.col !== ci" class="TableWidget-cell-presenter" v-html="cellHtml(headerRows[ri][ci])"></div>
+            <div
+              v-if="_activeCell?.row !== ri || _activeCell?.col !== ci"
+              v-asset-links
+              class="TableWidget-cell-presenter"
+              v-html="cellHtml(headerRows[ri][ci])"
+            ></div>
             <div v-else class="TableWidget-cell-editor"></div>
           </th>
         </tr>
@@ -37,6 +42,7 @@
           >
             <div
               v-if="_activeCell?.row !== headerRowCount + ri || _activeCell?.col !== ci"
+              v-asset-links
               class="TableWidget-cell-presenter"
               v-html="cellHtml(rows[headerRowCount + ri][ci])"
             ></div>
@@ -61,12 +67,18 @@ import {
 } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
-import { defineComponent, markRaw, reactive } from 'vue';
+import { defineComponent, h, markRaw, reactive, render } from 'vue';
 import { marked, type TokenizerAndRendererExtension } from 'marked';
 import { useI18n } from 'vue-i18n';
 import ContextMenuZone from '../../Common/ContextMenuZone.vue';
 import type { MenuListItem } from '../../../logic/types/MenuList';
 import { markdownImageWidthExtension } from '../../../logic/utils/markdownImageWidth';
+import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
+import ProjectManager from '../../../logic/managers/ProjectManager';
+import type { IAppManager } from '../../../logic/managers/IAppManager';
+import { parseLinkAddress, parseWikiLink } from './wiki-links/format';
+import AssetLink from '../../../components/Asset/AssetLink.vue';
+import type { AssetLink as AssetLinkData } from '../../../logic/types/AssetsType';
 
 // Teach `marked` to render Obsidian-style `==highlight==` as `<mark>`. This is
 // the same highlight syntax the editor decorates, so the read-only / cell
@@ -91,8 +103,126 @@ const highlightExtension: TokenizerAndRendererExtension = {
     return `<mark>${token.text}</mark>`;
   },
 };
+// Set while a cell's preview text is being rendered so the wiki-link renderer
+// can resolve asset titles/hrefs. Safe to store module-level because `marked`
+// parsing is synchronous.
+let tableAppManager: IAppManager | null = null;
+
+function escapeHtmlText(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Render Obsidian-style `[[asset:id|label]]` / `[[title]]` wiki links in the
+// read-only cell preview, matching the live editor's widgets.
+const wikiLinkExtension: TokenizerAndRendererExtension = {
+  name: 'wikiLink',
+  level: 'inline',
+  start(src: string) {
+    return src.indexOf('[[');
+  },
+  tokenizer(src: string) {
+    const match = /^\[\[([^\]\n]+)\]\]/.exec(src);
+    if (match) {
+      return {
+        type: 'wikiLink',
+        raw: match[0],
+        text: match[1],
+      };
+    }
+  },
+  renderer(token) {
+    const parsed = parseWikiLink(token.text);
+    if (!parsed) {
+      const title = token.text.trim() || token.text;
+      return `<a class="cm-md-link">${escapeHtmlText(title)}</a>`;
+    }
+
+    const address = parseLinkAddress(parsed.address);
+
+    if (
+      address.kind === 'asset' ||
+      address.kind === 'assetBlock' ||
+      address.kind === 'assetHeader'
+    ) {
+      const cached = tableAppManager
+        ?.get(CreatorAssetManager)
+        .getAssetShortViaCacheSync(address.assetId);
+      const asset_id = cached?.id ?? address.assetId;
+      const label = parsed.label || cached?.title || parsed.address;
+      const block_id =
+        address.kind === 'assetBlock' ? (address.blockId || '') : '';
+      const anchor =
+        address.kind === 'assetBlock'
+          ? (address.anchor ?? '')
+          : address.kind === 'assetHeader'
+            ? address.anchor
+            : '';
+      // Asset links are replaced with the Vue `AssetLink` component (like the
+      // main editor's widgets) by the `asset-links` directive after the
+      // `v-html` renders. The placeholder carries the resolution data.
+      return (
+        `<span class="cm-md-asset-link" data-asset-id="${escapeHtmlText(asset_id)}"` +
+        `${block_id ? ` data-block-id="${escapeHtmlText(block_id)}"` : ''}` +
+        `${anchor ? ` data-anchor="${escapeHtmlText(anchor)}"` : ''}` +
+        `>${escapeHtmlText(label)}</span>`
+      );
+    }
+
+    if (address.kind === 'localHeader') {
+      const href = `#${address.anchor}`;
+      const label = parsed.label || `#${address.anchor}`;
+      return `<a class="cm-md-link" href="${href}">${escapeHtmlText(label)}</a>`;
+    }
+
+    const label = parsed.label || address.title;
+    return `<a class="cm-md-link">${escapeHtmlText(label)}</a>`;
+  },
+};
+
+// The `v-html` preview renders asset links as placeholder spans; turn those
+// into `AssetLink` components (the same one the main editor mounts).
+function mountCellAssetLinks(root: HTMLElement, instance: unknown) {
+  const manager = (instance as any)?.$getAppManager?.() as
+    | IAppManager
+    | null
+    | undefined;
+  if (!manager) return;
+  const project = manager.get(ProjectManager).getProjectInfo();
+  if (!project) return;
+
+  root.querySelectorAll<HTMLElement>('[data-asset-id]').forEach((el) => {
+    if (el.getAttribute('data-mounted') === '1') return;
+    const asset_id = el.getAttribute('data-asset-id')!;
+    const block_id = el.getAttribute('data-block-id') || undefined;
+    const anchor = el.getAttribute('data-anchor') || null;
+    const label = (el.textContent ?? '').trim() || asset_id;
+
+    const asset: AssetLinkData = { id: asset_id, anchor };
+    if (block_id) asset.blockId = block_id;
+
+    const vnode = h(
+      AssetLink,
+      { project, asset, openPopup: true },
+      { default: () => label },
+    );
+    vnode.appContext = (instance as any)?.$?.appContext ?? null;
+    render(null, el);
+    el.textContent = '';
+    render(vnode, el);
+    el.setAttribute('data-mounted', '1');
+  });
+}
+
 marked.use({
-  extensions: [highlightExtension, markdownImageWidthExtension],
+  extensions: [
+    highlightExtension,
+    markdownImageWidthExtension,
+    wikiLinkExtension,
+  ],
 });
 
 // Shared across widget instances. When a cell commit changes the row count the
@@ -130,6 +260,21 @@ export default defineComponent({
       // i18n is not available in this render context — use the fallback labels.
     }
     return { t };
+  },
+  directives: {
+    assetLinks: {
+      mounted(el: HTMLElement, _binding: any) {
+        mountCellAssetLinks(el, _binding.instance);
+      },
+      updated(el: HTMLElement, _binding: any) {
+        mountCellAssetLinks(el, _binding.instance);
+      },
+      beforeUnmount(el: HTMLElement) {
+        el.querySelectorAll<HTMLElement>('[data-asset-id]').forEach((p) =>
+          render(null, p),
+        );
+      },
+    },
   },
   props: {
     parentView: { type: Object as () => EditorView, required: true },
@@ -192,7 +337,14 @@ export default defineComponent({
   },
   methods: {
     cellHtml(text: string): string {
-      return marked.parseInline(text) as string;
+      tableAppManager = (this as any).$getAppManager() ?? null;
+      try {
+        // Stored cells escape every `|` as `\|` so the GFM row parses as one
+        // cell; the preview shows them as plain pipes again.
+        return marked.parseInline(text.replace(/\\(?=\|)/g, '')) as string;
+      } finally {
+        tableAppManager = null;
+      }
     },
 
     _onBlur() {
@@ -395,7 +547,9 @@ export default defineComponent({
       };
 
       this._nestedEditor = markRaw(new EditorView({
-        doc: this.rows[row][col].replace(/<br>/g, '\n'),
+        doc: this.rows[row][col]
+          .replace(/<br>/g, '\n')
+          .replace(/\\(?=\|)/g, ''),
         extensions: [
           markdown(this.cellGrammar),
           ...this.cellExtensions,
@@ -454,8 +608,9 @@ export default defineComponent({
 
       const newRows = this.rows.map((r) => [...r]);
       // Raw line breaks can't live inside a GFM table row, so store them as
-      // `<br>` (same as Obsidian does).
-      newRows[row][col] = newText.replace(/\n/g, '<br>');
+      // `<br>` (same as Obsidian does). Every `|` is escaped as `\|` — a raw
+      // pipe would split the cell into two columns.
+      newRows[row][col] = newText.replace(/\n/g, '<br>').replace(/\|/g, '\\|');
       const willRecreate = newRows.length !== this._baseRowCount;
       this.rows = newRows;
 
