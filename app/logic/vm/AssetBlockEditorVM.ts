@@ -384,51 +384,52 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
       return false;
     }
 
-    let propagate_renames: PropKeyRenamePending[] | null = null;
-    let propagate_rename_op_id: number | undefined;
+    // TODO: Refactor
+    // let propagate_renames: PropKeyRenamePending[] | null = null;
+    // let propagate_rename_op_id: number | undefined;
 
-    const pending_renames = this.assetChanger
-      .getPendingPropKeyRenames()
-      .filter((rename) => this._propKeyExistsInSavedBlock(rename));
+    // const pending_renames = this.assetChanger
+    //   .getPendingPropKeyRenames()
+    //   .filter((rename) => this._propKeyExistsInSavedBlock(rename));
 
-    if (pending_renames.length > 0) {
-      const children = await this.getChildrenAssets(this.assetFull.id);
-      if (children.length > 0) {
-        const answer = await this.appManager
-          .get(DialogManager)
-          .show(ConfirmPropagateRenameDialog, {
-            header: this.appManager.$t(
-              'assetEditor.propsBlockPropagateRenameHeader',
-            ),
-            message: this.appManager.$t(
-              'assetEditor.propsBlockPropagateRenameBody',
-              { count: children.length },
-            ),
-          });
+    // if (pending_renames.length > 0) {
+    //   const children = await this.getChildrenAssets(this.assetFull.id);
+    //   if (children.length > 0) {
+    //     const answer = await this.appManager
+    //       .get(DialogManager)
+    //       .show(ConfirmPropagateRenameDialog, {
+    //         header: this.appManager.$t(
+    //           'assetEditor.propsBlockPropagateRenameHeader',
+    //         ),
+    //         message: this.appManager.$t(
+    //           'assetEditor.propsBlockPropagateRenameBody',
+    //           { count: children.length },
+    //         ),
+    //       });
 
-        if (answer === 'cancel') {
-          return false;
-        }
-        if (answer === 'all') {
-          propagate_renames = pending_renames;
-          const rename_op_ids =
-            this.assetChanger.getPendingPropKeyRenameOpIds();
-          propagate_rename_op_id =
-            rename_op_ids.length > 0
-              ? rename_op_ids[rename_op_ids.length - 1]
-              : undefined;
-        }
-      }
-    }
+    //     if (answer === 'cancel') {
+    //       return false;
+    //     }
+    //     if (answer === 'all') {
+    //       propagate_renames = pending_renames;
+    //       const rename_op_ids =
+    //         this.assetChanger.getPendingPropKeyRenameOpIds();
+    //       propagate_rename_op_id =
+    //         rename_op_ids.length > 0
+    //           ? rename_op_ids[rename_op_ids.length - 1]
+    //           : undefined;
+    //     }
+    //   }
+    // }
 
     const res = await this.assetChanger.saveChanges();
 
-    if (propagate_renames) {
-      await this._propagatePropKeyRenames(
-        propagate_renames,
-        propagate_rename_op_id,
-      );
-    }
+    // if (propagate_renames) {
+    //   await this._propagatePropKeyRenames(
+    //     propagate_renames,
+    //     propagate_rename_op_id,
+    //   );
+    // }
 
     this.historyModeVM = null;
     return res;
