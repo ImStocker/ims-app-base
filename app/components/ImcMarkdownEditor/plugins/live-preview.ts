@@ -539,6 +539,16 @@ function build(view: EditorView): DecorationSet {
   }
   const overlaps = (a: number, b: number) =>
     sel.some((r) => r.from <= b && r.to >= a);
+  // Whether an inline construct should stay in preview (markers/widgets hidden)
+  // or be revealed for editing. A *collapsed* caret counts as inside only when
+  // it is strictly between the delimiters — a caret sitting exactly at the
+  // closing boundary (e.g. `Markdown **editor**|`) must keep the preview, like
+  // Obsidian. A multi-position selection (e.g. select-all) still reveals the
+  // construct so the user can see what they're operating on.
+  const reveals = (a: number, b: number) =>
+    sel.some((r) =>
+      r.from === r.to ? r.from > a && r.from < b : r.from <= b && r.to >= a,
+    );
 
   const addLineClass = (from: number, to: number, cls: string) => {
     const first = doc.lineAt(from).number;
@@ -672,7 +682,7 @@ function build(view: EditorView): DecorationSet {
         } else {
           // Inline construct: reveal its markers only when the cursor is inside
           // the span, not merely elsewhere on the same line.
-          active = overlaps(owner.from, owner.to);
+          active = reveals(owner.from, owner.to);
         }
         if (!active) {
           let to = node.to;
@@ -694,9 +704,9 @@ function build(view: EditorView): DecorationSet {
     });
   }
 
-  hideRegexDelimiters(highlightDelim, view, overlaps, markRanges);
-  hideRegexDelimiters(strikeDelim, view, overlaps, markRanges);
-  buildRenderWidgets(view, overlaps, widgetRanges);
+  hideRegexDelimiters(highlightDelim, view, reveals, markRanges);
+  hideRegexDelimiters(strikeDelim, view, reveals, markRanges);
+  buildRenderWidgets(view, reveals, widgetRanges);
 
   // Draw the connecting guide line on an empty line that sits between two list
   // items (so it appears only in the gap, aligned under the bullet markers).
@@ -721,7 +731,7 @@ function build(view: EditorView): DecorationSet {
 function hideRegexDelimiters(
   regex: RegExp,
   view: EditorView,
-  overlaps: (a: number, b: number) => boolean,
+  reveals: (a: number, b: number) => boolean,
   ranges: Range<Decoration>[],
 ) {
   const doc = view.state.doc;
@@ -735,7 +745,7 @@ function hideRegexDelimiters(
     const closeTo = m.index + m[0].length;
     const closeFrom = closeTo - m[1].length;
     // Reveal the delimiters only when the caret is inside the construct span.
-    if (overlaps(openFrom, closeTo)) continue;
+    if (reveals(openFrom, closeTo)) continue;
     ranges.push(hideMark.range(openFrom, openTo));
     ranges.push(hideMark.range(closeFrom, closeTo));
   }
@@ -746,7 +756,7 @@ function hideRegexDelimiters(
 // construct so the raw source can be edited (Obsidian-style reveal-on-edit).
 function buildRenderWidgets(
   view: EditorView,
-  overlaps: (a: number, b: number) => boolean,
+  reveals: (a: number, b: number) => boolean,
   widgetRanges: Range<Decoration>[],
 ): void {
   const text = view.state.doc.toString();
@@ -754,7 +764,7 @@ function buildRenderWidgets(
 
   const pushWidget = (from: number, to: number, widget: WidgetType) => {
     if (from >= to) return;
-    if (overlaps(from, to)) return;
+    if (reveals(from, to)) return;
     for (const [a, b] of occupied) {
       if (from < b && to > a) return;
     }
