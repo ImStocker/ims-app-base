@@ -1,5 +1,8 @@
 <template>
-  <imc-presenter class="TextPropEditor" :value="displayValue"></imc-presenter>
+  <imc-format-text-presenter
+    class="TextPropEditor"
+    :model-value="displayValue"
+  ></imc-format-text-presenter>
 </template>
 
 <script lang="ts">
@@ -11,12 +14,12 @@ import {
   truncateAssetPropValueText,
   type AssetPropValue,
 } from '../../logic/types/Props';
-import ImcPresenter from '../ImcText/ImcPresenter.vue';
+import ImcFormatTextPresenter from '../Common/ImcFormatTextPresenter.vue';
 
 export default defineComponent({
   name: 'TextPropPresenter',
   components: {
-    ImcPresenter,
+    ImcFormatTextPresenter,
   },
   props: {
     modelValue: {

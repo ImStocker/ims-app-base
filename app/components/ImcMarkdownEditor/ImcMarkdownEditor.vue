@@ -1488,5 +1488,9 @@ body[data-theme='ims-dark'] {
       padding-bottom: 0;
     }
   }
+
+  :deep(a.AssetLink) {
+    text-decoration: none;
+  }
 }
 </style>
