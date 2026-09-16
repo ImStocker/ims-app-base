@@ -4,6 +4,7 @@
 @mixin theme-ims-light{
     
     --color-accent: #ebbe44;
+    --color-accent-light: #FFD668;
     --color-success: #49E272;
     --color-danger: #e93c25;
     --color-warn: #ebbe44;
@@ -695,6 +696,7 @@
 
     .is-space{
         --color-accent: #ebbe44;
+        --color-accent-light: #FFD668;
 
         --root-bg-color: #EDEEF0;
         --root-box-color: #FFF;
