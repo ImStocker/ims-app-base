@@ -107,6 +107,7 @@ import { linkPickerTrigger } from './plugins/link-picker';
 import type { LinkPickerOpenRequest } from './plugins/link-picker';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
+import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
 import { buildWikiLink } from './plugins/wiki-links/format';
 import { viewToInkLike } from './editor-adapter';
 import SelectionToolbar from './SelectionToolbar.vue';
@@ -195,6 +196,7 @@ export default defineComponent({
       linkPickerDebounce: null as number | null,
       linkPickerKeyHandlerInstalled: false,
       dragEffect: 0,
+      clickOutside: null as SetClickOutsideCancel | null,
     };
   },
   computed: {
@@ -385,6 +387,7 @@ export default defineComponent({
   watch: {},
   beforeUnmount() {
     this.removeLinkPickerKeyHandler();
+    this.clickOutside?.();
   },
   mounted() {
     const editor = this.$refs['editor'] as InstanceType<typeof InkMde> | null;
@@ -399,6 +402,24 @@ export default defineComponent({
       style.textContent = katexCssScoped;
       document.head.appendChild(style);
     }
+
+    // Hide the selection toolbar when the user clicks outside the editor. The
+    // toolbar dropdowns are teleported by `dropdown-container`, so they are
+    // excluded from the "outside" check via `insideSelector`.
+    this.clickOutside = setImsClickOutside(
+      this.$el,
+      () => {
+        this.toolbarVisible = false;
+        this.toolbarSelection = null;
+        this.toolbarActive = null;
+        this.toolbarInCell = false;
+        this.toolbarTargetView = null;
+      },
+      {
+        insideSelector:
+          '.SelectionToolbar,.MarkdownBlockEditor-link-picker-container',
+      },
+    );
   },
   methods: {
     handleFiles(files: FileList | File[]) {
