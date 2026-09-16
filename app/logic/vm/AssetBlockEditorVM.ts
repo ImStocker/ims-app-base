@@ -91,10 +91,13 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   ): AssetBlockEditorVM {
     const raw = new AssetBlockEditorVM(appManager, asset, projectInfo);
     const res = reactive(raw);
+    let cachedAssetEdited: AssetForEdit | null = res.assetFull;
     raw.assetEditedComp = computed(() => {
-      return res.assetFull
+      if (res.assetChanger.isSaving) return cachedAssetEdited;
+      cachedAssetEdited = res.assetFull
         ? res.assetChanger.applyChanges(res.assetFull)
         : null;
+      return cachedAssetEdited;
     });
     return res as unknown as AssetBlockEditorVM;
   }
