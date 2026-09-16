@@ -1,5 +1,6 @@
 import type { AssetChangerChangeMainParams } from './AssetChanger';
 import type { AssetBlockParamsDTO, AssetChangeContent } from './AssetsType';
+import { parseAssetNewBlockRef } from './Props';
 import type { AssetProps, AssetPropValue } from './Props';
 
 type AssetChangeBatchPropsOp = {
@@ -216,6 +217,33 @@ class AssetChangeBatchAssetState {
   mainParams: AssetChangeContent = {};
   blockStates = new Map<string, AssetChangeBatchBlockState>();
 
+  resolveBlockRef(block_ref: string): string {
+    if (this.blockStates.has(block_ref)) {
+      return block_ref;
+    }
+    const parsed = parseAssetNewBlockRef(block_ref);
+    let name_match: string | null = null;
+    for (const [key, state] of this.blockStates) {
+      if (state.mainParams.delete) {
+        continue;
+      }
+      const key_parsed = parseAssetNewBlockRef(key);
+      if (parsed.blockId && key_parsed.blockId === parsed.blockId) {
+        return key;
+      }
+      if (!parsed.blockName) {
+        continue;
+      }
+      if (key_parsed.blockName === parsed.blockName) {
+        return key;
+      }
+      if (name_match === null && state.mainParams.name === parsed.blockName) {
+        name_match = key;
+      }
+    }
+    return name_match ?? block_ref;
+  }
+
   getGroupedChange(): AssetChangeContent {
     const res = { ...this.mainParams };
     if (this.blockStates.size > 0) {
@@ -266,15 +294,16 @@ export class AssetChangeBatch {
     }
     if (change.blocks) {
       for (const [block_ref, block_ch] of Object.entries(change.blocks)) {
-        let block_state = currentAssetState.blockStates.get(block_ref);
+        const resolved_ref = currentAssetState.resolveBlockRef(block_ref);
+        let block_state = currentAssetState.blockStates.get(resolved_ref);
         if (!block_state) {
           block_state = new AssetChangeBatchBlockState();
-          currentAssetState.blockStates.set(block_ref, block_state);
+          currentAssetState.blockStates.set(resolved_ref, block_state);
         }
         if (block_ch.delete) {
           if (block_state.mainParams.type) {
             // Was new
-            currentAssetState.blockStates.delete(block_ref);
+            currentAssetState.blockStates.delete(resolved_ref);
           } else {
             block_state.mainParams = {
               delete: true,
@@ -288,7 +317,7 @@ export class AssetChangeBatch {
             currentAssetState =
               this.assetChangeStates[this.assetChangeStates.length - 1];
             block_state = new AssetChangeBatchBlockState();
-            currentAssetState.blockStates.set(block_ref, block_state);
+            currentAssetState.blockStates.set(resolved_ref, block_state);
           }
           for (const key of [
             'index',
