@@ -566,7 +566,7 @@ export default defineComponent({
 .EditorBlock[block-type='prop'] {
   .EditorBlock-leftControls,
   .EditorBlock-rightControls {
-    top: 5px;
+    top: 3px;
   }
 }
 </style>

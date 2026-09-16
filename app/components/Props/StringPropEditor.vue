@@ -122,7 +122,7 @@ export default defineComponent({
   font-family: inherit;
   font-size: inherit;
   color: inherit;
-  padding: var(--input-padding);
+  padding: 5px;
   background: transparent;
   border: none;
   display: block;
