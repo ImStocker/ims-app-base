@@ -484,6 +484,7 @@ export default {
       'Die Umbenennung des Eigenschaftsschlüssels wird auf {count} untergeordnete Elemente angewendet. Umbenennung auf alle anwenden?',
     propsBlockPropagateRenameAll: 'Für alle',
     propsBlockPropagateRenameCurrent: 'Nur für aktuelles',
+    propsBlockFieldType: 'Typ',
     embedBlockAddDialogHeader: 'Eingebettetes Dokument einfügen',
     embedBlockLinkAnyPlaceholder:
       'Link zum Dokument eingeben (Google Docs, Miro, Figma usw.)',
