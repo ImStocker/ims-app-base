@@ -85,7 +85,7 @@ export function extractValueTableBlockData(
         index: castAssetPropValueToFloat(column.index) ?? 0,
         multiple: castAssetPropValueToBoolean(column.multiple),
         params,
-        type: castAssetPropValueToString(column.type),
+        type: column.type ? castAssetPropValueToString(column.type) : null,
         hint: column.hint,
         differentDefinition: false,
         inheritedProp: block.inherited

@@ -103,6 +103,7 @@ import {
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import FormBuilderFieldTooltip from '#components/Form/FormBuilderFieldTooltip.vue';
 import StringPropPresenter from '#components/Props/StringPropPresenter.vue';
+import AnyTypePropField from '#components/Props/AnyTypePropField/AnyTypePropField.vue';
 import type { AssetDisplayMode } from '#logic/utils/assets';
 import type { FieldTypeController } from '#logic/types/FieldTypeController';
 import EditorManager from '#logic/managers/EditorManager';
@@ -179,10 +180,20 @@ export default defineComponent({
       hint: AssetPropValue | null;
       controller: FieldTypeController | undefined;
     } {
-      const type = this.field.type ? this.field.type : 'text';
+      const type = this.field.type ? this.field.type : 'any';
       const hint = this.field.hint;
-      const map = this.$getAppManager().get(EditorManager).getFieldTypesMap();
-      const controller = map.hasOwnProperty(type) ? map[type] : undefined;
+      let controller: FieldTypeController | undefined;
+      if (!this.field.type) {
+        controller = {
+          name: 'any',
+          title: '',
+          editor: async () => AnyTypePropField,
+          presenter: async () => AnyTypePropField,
+        };
+      } else {
+        const map = this.$getAppManager().get(EditorManager).getFieldTypesMap();
+        controller = map.hasOwnProperty(type) ? map[type] : undefined;
+      }
       return {
         loading: false,
         error: null,

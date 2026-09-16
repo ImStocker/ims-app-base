@@ -199,9 +199,9 @@ export default defineComponent({
     formState(): PropsFormState {
       return extractPropsFormState(this.resolvedBlock);
     },
-    fieldType(): string {
+    fieldType(): string | null {
       const type = this.resolvedBlock.computed?.__type;
-      return type ? castAssetPropValueToString(type) : 'text';
+      return type ? castAssetPropValueToString(type) : null;
     },
     fieldParams(): AssetProps {
       const params = extractSubObjectAsPlainValue(
@@ -566,7 +566,7 @@ export default defineComponent({
 .EditorBlock[block-type='prop'] {
   .EditorBlock-leftControls,
   .EditorBlock-rightControls {
-    top: 3px;
+    top: 5px;
   }
 }
 </style>
