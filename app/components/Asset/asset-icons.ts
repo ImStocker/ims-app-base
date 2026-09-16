@@ -1099,4 +1099,9 @@ export const AssetIcons: AssetIconDescriptor[] = [
     title: '[[t:|en:Gear|ru:Шестеренка]]',
     keywords: ['settings', 'настройки'],
   },
+  {
+    name: 'file-code-line',
+    title: '[[t:|en:File with code|ru:Файл с кодом]]',
+    keywords: ['json', 'html', 'xml', 'tag'],
+  },
 ];
