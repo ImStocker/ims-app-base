@@ -34,6 +34,52 @@ export function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/**
+ * Asset "block-like" parts (PropBlock/AssetListBlock) keep their `title`
+ * synced with their `name` via a single derivation rule (a capitalized
+ * name). This is intentionally wrapped so the exact rule can be changed in
+ * the future without touching call sites — change it here and both the
+ * create-time sync and the paste-conflict re-sync below stay consistent.
+ */
+
+/**
+ * Returns the name that would be derived from a synced block title, or
+ * `null` when the title can't be derived structurally. Mirrors the inverse
+ * of `capitalizeFirstLetter`: a synced title is always `capitalizeFirstLetter(name)`,
+ * so the only structural inverse is the all-lowercase normalization of the
+ * title's first letter.
+ */
+export function getSyncedAssetBlockNameFromTitle(
+  title: string | null,
+): string | null {
+  if (!title) return null;
+  return title.charAt(0).toLowerCase() + title.slice(1);
+}
+
+/**
+ * True when the block's `title` is structurally the synced (default) title
+ * for its `name` — i.e. `name === normalize(title)` as used by PropBlock and
+ * AssetListBlock. When a pasted name gets a uniqueness index on conflict, the
+ * title needs the same index to stay in sync; see AssetBlockEditorVM
+ * (pasteBlocksFromClipboard).
+ */
+export function isAssetBlockTitleSyncedWithName(
+  title: string | null,
+  name: string | null,
+): boolean {
+  if (!title || !name) return false;
+  return name === getSyncedAssetBlockNameFromTitle(title);
+}
+
+/**
+ * Returns the title that keeps the name→title sync (the PropBlock contract:
+ * `title === capitalizeFirstLetter(name)`). Used to re-derive the title when
+ * the pasted name gets a uniqueness number on conflict.
+ */
+export function getSyncedAssetBlockTitleFromName(name: string): string {
+  return capitalizeFirstLetter(name);
+}
+
 export function generateNextUniqueNameNumber(
   current: string,
   checkIsAvail: (name: string) => boolean,

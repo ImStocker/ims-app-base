@@ -12,7 +12,7 @@ import {
 import type { MenuListItem } from '#logic/types/MenuList';
 import { AssetRights } from '#logic/types/Rights';
 import { AssetPropType, type AssetProps } from '#logic/types/Props';
-import { capitalizeFirstLetter } from '#logic/utils/stringUtils';
+import { getSyncedAssetBlockTitleFromName } from '#logic/utils/stringUtils';
 
 export class AssetListBlockDefinition extends BlockTypeDefinition {
   name = 'assetList';
@@ -42,7 +42,7 @@ export class AssetListBlockDefinition extends BlockTypeDefinition {
       name = `assetList${i}`;
       i++;
     }
-    const title = params.title ?? capitalizeFirstLetter(name);
+    const title = params.title ?? getSyncedAssetBlockTitleFromName(name);
     return {
       title,
       name,

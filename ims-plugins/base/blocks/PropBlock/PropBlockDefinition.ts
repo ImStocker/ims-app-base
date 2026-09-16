@@ -18,7 +18,7 @@ import {
   extractSubObjectAsPlainValue,
   type AssetProps,
 } from '#logic/types/Props';
-import { capitalizeFirstLetter } from '#logic/utils/stringUtils';
+import { getSyncedAssetBlockTitleFromName } from '#logic/utils/stringUtils';
 
 function extractPropField(block: ResolvedAssetBlock): PropsFormFieldDef {
   const props = block.props ?? {};
@@ -58,7 +58,7 @@ export class PropBlockDefinition extends BlockTypeDefinition {
       name = `property${i}`;
       i++;
     }
-    const title = params.title ?? capitalizeFirstLetter(name);
+    const title = params.title ?? getSyncedAssetBlockTitleFromName(name);
     return {
       title,
       name,

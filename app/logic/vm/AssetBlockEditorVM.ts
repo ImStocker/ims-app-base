@@ -30,7 +30,11 @@ import type {
 } from '../types/AssetChanger';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
-import { generateNextUniqueNameNumber } from '../utils/stringUtils';
+import {
+  generateNextUniqueNameNumber,
+  getSyncedAssetBlockTitleFromName,
+  isAssetBlockTitleSyncedWithName,
+} from '../utils/stringUtils';
 import ConfirmDialog from '../../components/Common/ConfirmDialog.vue';
 import ConfirmPropagateRenameDialog from '../../components/Common/ConfirmPropagateRenameDialog.vue';
 import type {
@@ -1255,19 +1259,23 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
           last_index = getNextIndexWithTimestamp(last_index);
         }
         let block_name: string | null = null;
+        let block_title: string | null = entry.title;
         if (entry.name) {
           if (existing) {
             block_name = generateNextUniqueNameNumber(
               entry.name,
               (name: string) => !this.getBlockByName(name),
             );
+            if (isAssetBlockTitleSyncedWithName(entry.title, entry.name)) {
+              block_title = getSyncedAssetBlockTitleFromName(block_name);
+            }
           } else {
             block_name = entry.name;
           }
         }
         const created = await this.createBlock(entry.type, {
           index: last_index,
-          title: entry.title,
+          title: block_title,
           name: block_name,
           props: entry.props,
         });
