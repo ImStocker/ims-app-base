@@ -37,7 +37,7 @@ export const completions = (config: PluginConfig): CompletionSource => {
       options: options.list.map((asset) => {
         return {
           apply: asset.title
-            ? `asset:${asset.id}|${asset.title}]]`
+            ? `asset:${asset.id}\\|${asset.title}]]`
             : `asset:${asset.id}]]`,
           label: asset.title ?? asset.id,
           type: 'text',

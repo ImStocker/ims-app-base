@@ -32,6 +32,7 @@
         ref="editor"
         class="AssetEditorPropsBlockProp-editor"
         :model-value="dirtyValue"
+        :placeholder="placeholder"
         @update:model-value="setValue($event)"
         @keydown="onKeydown"
         @pre-enter="$emit('preEnter')"
@@ -40,9 +41,16 @@
     </template>
     <template v-else>
       <caption-string
+        v-if="propTitle"
         class="AssetEditorPropsBlockProp-static"
         :value="propTitle"
       ></caption-string>
+      <span
+        v-else-if="placeholder"
+        class="AssetEditorPropsBlockProp-placeholder"
+      >
+        {{ placeholder }}
+      </span>
     </template>
     <slot
       name="append"
@@ -76,6 +84,10 @@ export default defineComponent({
     sameValue: {
       type: Boolean,
       default: true,
+    },
+    placeholder: {
+      type: String,
+      default: '',
     },
     computedState: {
       type: [Boolean, String],
@@ -161,6 +173,13 @@ export default defineComponent({
 .AssetEditorPropsBlockProp-static {
   display: block;
   padding: 5px;
+}
+
+.AssetEditorPropsBlockProp-placeholder {
+  display: block;
+  padding: 5px;
+  color: var(--local-sub-text-color);
+  font-style: italic;
 }
 
 .AssetEditorPropsBlockProp-input {

@@ -13,8 +13,15 @@ export type WikiLinkAddress =
   | { kind: 'localHeader'; anchor: string }
   | { kind: 'title'; title: string };
 
-export function buildWikiLink(address: string, label: string): string {
-  return `[[${address}|${label}]]`;
+export function buildWikiLink(
+  address: string,
+  label: string,
+  escapePipe = false,
+): string {
+  // Inside a GFM table a raw `|` splits the cell, so table-cell links escape
+  // the address/label separator as `\|`.
+  const sep = escapePipe ? '\\|' : '|';
+  return `[[${address}${sep}${label}]]`;
 }
 
 export function parseWikiLink(text: string): {
@@ -23,13 +30,15 @@ export function parseWikiLink(text: string): {
 } | null {
   // Accepts both the full wiki-link markup (`[[asset:id|Label]]`) and the bare
   // inner content (`asset:id|Label`) — callers slice the syntax-tree node,
-  // which may or may not include the surrounding brackets.
+  // which may or may not include the surrounding brackets. In GFM table cells
+  // the separator is stored escaped (`asset:id\|Label`), so `\|` is accepted
+  // as the separator too.
   const trimmed = text.trim();
   const inner =
     trimmed.startsWith('[[') && trimmed.endsWith(']]')
       ? trimmed.slice(2, -2)
       : trimmed;
-  const match = inner.match(/^([^|\]\n]+)\|([^\]|\n]*)$/);
+  const match = inner.match(/^([^|\]\n]+?)(?:\\)?\|([^\]|\n]*)$/);
   if (!match) return null;
   return { address: match[1].trim(), label: match[2].trim() };
 }

@@ -1,11 +1,5 @@
 <template>
   <div class="CommentBlock">
-    <div class="CommentBlock-header">
-      <i class="ri-chat-3-line CommentBlock-header-icon"></i>
-      <span class="CommentBlock-header-title">
-        <caption-string :value="title" />
-      </span>
-    </div>
     <div v-if="loading" class="CommentBlock-loading loaderSpinner"></div>
     <div v-else-if="loadError" class="CommentBlock-error error-message-block">
       {{ loadError }}
@@ -171,8 +165,7 @@ export default defineComponent({
   padding: 10px 14px 12px 18px;
   margin-left: 4px;
   border-radius: 12px;
-  background: var(--local-bg-color, rgba(0, 0, 0, 0.035));
-  border: 1px solid var(--local-border-color, rgba(0, 0, 0, 0.12));
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
 
   &::before {
     content: '';

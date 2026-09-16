@@ -120,6 +120,9 @@ import PromptDialog from '../Common/PromptDialog.vue';
 import type { MenuListItem } from '#logic/types/MenuList';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { markdownImageWidthExtension } from '#logic/utils/markdownImageWidth';
+
+marked.use({ extensions: [markdownImageWidthExtension] });
 
 const props = defineProps({
   ensureCanSend: {

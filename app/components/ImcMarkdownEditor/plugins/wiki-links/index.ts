@@ -1,9 +1,8 @@
-import { autocompletion } from '@codemirror/autocomplete';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
 import { Tag, tags as highlightTags } from '@lezer/highlight';
 import type { MarkdownConfig } from '@lezer/markdown';
-import { completions } from './completions';
+import type { AppContext } from 'vue';
 import { replacements } from './replacements';
 import type { IAppManager } from '../../../../logic/managers/IAppManager';
 
@@ -12,6 +11,7 @@ const RIGHT_BRACKET_CODE = 93;
 
 export type PluginConfig = {
   appManager: IAppManager;
+  appContext?: AppContext;
 };
 
 const tags = {
@@ -111,13 +111,9 @@ export const wikiLinks = (config: PluginConfig) => {
 export const wikiLinkGrammar: MarkdownConfig = grammar;
 
 export const wikiLinkCellExtensions = (config: PluginConfig): Extension[] => {
-  return [
-    autocompletion({
-      defaultKeymap: true,
-      icons: false,
-      override: [completions(config)],
-    }),
-    theme,
-    ...replacements(config),
-  ];
+  // Note: the `[[` asset dropdown in cells is the Vue `MarkdownLinkAutocomplete`
+  // picker (installed via `linkPickerTrigger` in the host component), so no CM
+  // autocompletion is wired here — it would render a second popup and insert
+  // unescaped `|` links that break the GFM row.
+  return [theme, ...replacements(config)];
 };

@@ -470,7 +470,7 @@ export default {
     propsBlockPasteFromBufferEmpty: 'В буфере нет свойства таблицы',
     propsBlockCopied: 'Свойство скопировано',
     propsBlockFieldUntitled: 'Без названия',
-    propsBlockFieldType: 'Тип поля',
+    propsBlockFieldPlaceholder: 'Введите поле',
     propsBlockFieldIsMultiple: 'Множественный',
     propsBlockFieldParameters: 'Параметры',
     propsBlockFieldHint: 'Подсказка',

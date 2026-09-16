@@ -81,7 +81,7 @@ import {
   wikiLinkCellExtensions,
   wikiLinkGrammar,
 } from './plugins/wiki-links';
-import { imcImages } from './plugins/imc-images';
+import { imagesExtension, imcImages } from './plugins/imc-images';
 import EditorManager from '../../logic/managers/EditorManager';
 import { blurHandler } from './plugins/blur-handler';
 import { getHeadingAnchors, headingId } from './plugins/heading-id';
@@ -107,6 +107,7 @@ import { linkPickerTrigger } from './plugins/link-picker';
 import type { LinkPickerOpenRequest } from './plugins/link-picker';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
+import { setImsClickOutside, type SetClickOutsideCancel } from '../utils/ui';
 import { buildWikiLink } from './plugins/wiki-links/format';
 import { viewToInkLike } from './editor-adapter';
 import SelectionToolbar from './SelectionToolbar.vue';
@@ -195,6 +196,7 @@ export default defineComponent({
       linkPickerDebounce: null as number | null,
       linkPickerKeyHandlerInstalled: false,
       dragEffect: 0,
+      clickOutside: null as SetClickOutsideCancel | null,
     };
   },
   computed: {
@@ -259,8 +261,16 @@ export default defineComponent({
     plugins() {
       return [
         ...linkPickerTrigger((request) => this.onLinkPickerChange(request)),
-        ...wikiLinks({ appManager: this.$getAppManager() }),
-        ...imcImages({ appManager: this.$getAppManager() }),
+        ...wikiLinks({
+          appManager: this.$getAppManager(),
+          appContext: this.$.appContext,
+        }),
+        ...(this.livePreview
+          ? imcImages({
+              appManager: this.$getAppManager(),
+              getReadonly: () => this.readonly,
+            })
+          : []),
         ...(this.livePreview
           ? [
               {
@@ -285,6 +295,7 @@ export default defineComponent({
           extensions: [
             ...wikiLinkCellExtensions({
               appManager: this.$getAppManager(),
+              appContext: this.$.appContext,
             }),
             // Inline-markup decorations (highlight, code, math, bold, italic,
             // strikethrough, hr) so a table cell's nested editor renders text
@@ -295,6 +306,17 @@ export default defineComponent({
             ...(this.livePreview ? [livePreview()] : []),
             ...(this.livePreview
               ? linkWidgets({ appManager: this.$getAppManager() })
+              : []),
+            // Same for images: render them inline inside a cell's nested editor
+            // (source mode keeps the raw markdown). The cell editor holds plain
+            // `|`; `TableWidget` escapes them when writing the cell back.
+            ...(this.livePreview
+              ? [
+                  imagesExtension({
+                    appManager: this.$getAppManager(),
+                    getReadonly: () => this.readonly,
+                  }),
+                ]
               : []),
             // Inside table cells the nested editor is a raw CodeMirror view, so
             // it needs its own selection toolbar + shortcuts. These route back
@@ -319,6 +341,9 @@ export default defineComponent({
               },
             }),
             shortcuts(() => this.readonly),
+            // `[[` inside a cell opens the same asset-link picker.
+            linkPickerTrigger((request) => this.onLinkPickerChange(request))[0]
+              .value,
           ],
         }),
         {
@@ -362,6 +387,7 @@ export default defineComponent({
   watch: {},
   beforeUnmount() {
     this.removeLinkPickerKeyHandler();
+    this.clickOutside?.();
   },
   mounted() {
     const editor = this.$refs['editor'] as InstanceType<typeof InkMde> | null;
@@ -376,6 +402,24 @@ export default defineComponent({
       style.textContent = katexCssScoped;
       document.head.appendChild(style);
     }
+
+    // Hide the selection toolbar when the user clicks outside the editor. The
+    // toolbar dropdowns are teleported by `dropdown-container`, so they are
+    // excluded from the "outside" check via `insideSelector`.
+    this.clickOutside = setImsClickOutside(
+      this.$el,
+      () => {
+        this.toolbarVisible = false;
+        this.toolbarSelection = null;
+        this.toolbarActive = null;
+        this.toolbarInCell = false;
+        this.toolbarTargetView = null;
+      },
+      {
+        insideSelector:
+          '.SelectionToolbar,.MarkdownBlockEditor-link-picker-container',
+      },
+    );
   },
   methods: {
     handleFiles(files: FileList | File[]) {

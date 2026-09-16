@@ -2,6 +2,9 @@ import { jsonrepair } from 'jsonrepair';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { generateText, type LanguageModel } from 'ai';
+import { markdownImageWidthExtension } from '../utils/markdownImageWidth';
+
+marked.use({ extensions: [markdownImageWidthExtension] });
 
 export function parseMarkdown(md: string) {
   return DOMPurify.sanitize(marked.parse(md, { async: false }) as string);

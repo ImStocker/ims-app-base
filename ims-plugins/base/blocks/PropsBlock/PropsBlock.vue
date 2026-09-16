@@ -10,6 +10,7 @@
       :form-state="formState"
       :validate-prop-name="validatePropName"
       :display-mode="displayMode"
+      :display-type-dot="true"
       @rename-prop="renameProp($event.key, $event.title)"
       @copy-prop="copyProp($event.key)"
       @duplicate-prop="duplicateProp($event.key)"
@@ -596,11 +597,6 @@ export default defineComponent({
 <style lang="scss" rel="stylesheet/scss" scoped>
 .AssetEditorPropsBlock {
   position: relative;
-  border: 1px solid transparent;
-
-  &.state-edit {
-    border-color: var(--color-main-yellow);
-  }
 }
 
 .AssetEditorPropsBlock-addHover-content {

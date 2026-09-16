@@ -46,7 +46,7 @@
         'state-inherited': displayMode === 'normal' && entry.inherited,
       }"
     >
-      <imc-editor
+      <imc-format-text-editor
         v-if="editMode"
         ref="editor"
         class="ChecklistBlockItem-content-editor ref-ChecklistBlockItem-content-editor"
@@ -80,7 +80,7 @@
 
 <script lang="ts">
 import { type PropType, defineComponent, type UnwrapRef } from 'vue';
-import ImcEditor from '#components/ImcText/ImcEditor.vue';
+import ImcFormatTextEditor from '#components/Common/ImcFormatTextEditor.vue';
 import ImcPresenter from '#components/ImcText/ImcPresenter.vue';
 import {
   type AssetPropValue,
@@ -101,7 +101,7 @@ export default defineComponent({
   name: 'ChecklistBlockItem',
   components: {
     ImcPresenter,
-    ImcEditor,
+    ImcFormatTextEditor,
     TaskCheckbox,
     ChecklistBlockItemMenu,
   },
@@ -258,7 +258,7 @@ export default defineComponent({
       if (!this.dirtyValueError) {
         if (this.$refs.editor) {
           (
-            this.$refs.editor as InstanceType<typeof ImcEditor>
+            this.$refs.editor as InstanceType<typeof ImcFormatTextEditor>
           ).resetDirtyValue();
         }
         this.$emit('rename', val);
@@ -274,7 +274,7 @@ export default defineComponent({
           return;
         }
       }
-      (this.$refs.editor as InstanceType<typeof ImcEditor>).focusAt(
+      (this.$refs.editor as InstanceType<typeof ImcFormatTextEditor>).focusAt(
         ev.detail.clientX,
         ev.detail.clientY,
       );
@@ -286,7 +286,7 @@ export default defineComponent({
           return;
         }
       }
-      (this.$refs.editor as InstanceType<typeof ImcEditor>).focus();
+      (this.$refs.editor as InstanceType<typeof ImcFormatTextEditor>).focus();
     },
     async focusEnd() {
       if (!this.$refs.editor) {
@@ -295,7 +295,9 @@ export default defineComponent({
           return;
         }
       }
-      (this.$refs.editor as InstanceType<typeof ImcEditor>).focusEnd();
+      (
+        this.$refs.editor as InstanceType<typeof ImcFormatTextEditor>
+      ).focusEnd();
     },
   },
 });

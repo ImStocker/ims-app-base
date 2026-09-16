@@ -13,6 +13,7 @@
         :model-value="ent.propTitle"
         :same-value="true"
         :computed-state="true"
+        :placeholder="$t('assetEditor.propsBlockFieldPlaceholder')"
         :class="{
           'state-inherited': displayMode === 'normal' && ent.inheritedProp,
         }"
@@ -26,6 +27,13 @@
         @mouseleave="onPropMouseLeave"
         @click="selectProp(ent)"
       >
+        <template v-if="displayTypeDot" #prepend>
+          <span
+            class="AssetEditorPropsBlock_Sheet-typeDot field-type-dot"
+            :class="getFieldTypeDotClass(ent.type)"
+            @click="onTypeDotClick(ent)"
+          ></span>
+        </template>
         <template v-if="editStructure" #menu>
           <menu-button
             class="AssetEditorPropsBlock_Sheet-propCell-menu"
@@ -100,6 +108,7 @@ import type { MenuListItem } from '#logic/types/MenuList';
 import PropsBlockSheetPrint from './PropsBlockSheetPrint.vue';
 import { clipboardReadPlainText } from '#logic/utils/clipboard';
 import { getBetweenIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
+import { getFieldTypeDotClass } from '#components/Props/fieldTypeDot';
 
 export default defineComponent({
   name: 'AssetEditorPropsBlockSheet',
@@ -138,6 +147,10 @@ export default defineComponent({
       type: String as PropType<AssetDisplayMode>,
       default: () => 'normal',
     },
+    displayTypeDot: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: [
     'changeProps',
@@ -167,6 +180,7 @@ export default defineComponent({
     };
   },
   methods: {
+    getFieldTypeDotClass,
     getMenuList(ent: PropsFormFieldDef) {
       return [
         {
@@ -264,6 +278,10 @@ export default defineComponent({
         key: entry.propKey,
       });
     },
+    onTypeDotClick(entry: PropsFormFieldDef) {
+      if (!this.editStructure) return;
+      this.changeSettingsProp(entry);
+    },
     getEntryPropTooltip(entry: PropsFormFieldDef): string {
       const val = convertTranslatedTitle(entry.propTitle, (key) =>
         this.$t(key),
@@ -357,13 +375,12 @@ export default defineComponent({
 
 <style lang="scss" rel="stylesheet/scss" scoped>
 @use '$style/devices-mixins.scss';
+@use '$style/field-type-dot' as *;
 
 .AssetEditorPropsBlock_Sheet {
   display: grid;
-  grid-template-columns: min(30%, 200px) 1fr;
-  gap: 1px;
-  background-color: var(--local-border-color);
-  padding: 1px;
+  grid-template-columns: min(30%, 219px) 1fr;
+  gap: 1px 0;
 
   @include devices-mixins.device-type(not-pc) {
     grid-template-columns: 125px 1fr;
@@ -371,17 +388,36 @@ export default defineComponent({
 }
 
 .AssetEditorPropsBlock_Sheet-different {
-  background: var(--local-bg-color);
-  padding: 5px 20px;
+  background: var(--local-hl-bg-color);
+  padding: 6px 16px;
   text-align: center;
   font-style: italic;
-  color: #999;
+  font-size: 12px;
+  color: var(--local-sub-text-color);
+  border-radius: 6px;
   grid-column: 1/3;
 }
-
+.AssetEditorPropsBlock_Sheet-typeDot {
+  margin-right: 3px;
+}
 .AssetEditorPropsBlock_Sheet-cell {
-  background: var(--local-bg-color);
   min-width: 0;
+
+  &.type-prop {
+    color: var(--local-sub-text-color);
+    border-radius: 4px 0 0 4px;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: var(--local-hl-bg-color);
+    }
+  }
+
+  &.type-value {
+    border-radius: 0 4px 4px 0;
+  }
 
   &.state-inherited {
     &.type-value {
@@ -403,6 +439,11 @@ export default defineComponent({
   display: none;
 }
 
+.AssetEditorPropsBlock_Sheet-cell.type-prop {
+  color: var(--local-text-color);
+  font-weight: 500;
+}
+
 .AssetEditorPropsBlock_Sheet-cell.type-prop:hover {
   .AssetEditorPropsBlock_Sheet-propCell-menu {
     display: block;
@@ -414,20 +455,14 @@ export default defineComponent({
 }
 
 :global(.AssetEditorPropsBlock_Sheet-addRow) {
-  color: #cccccc;
+  color: var(--local-sub-text-color);
   display: flex;
   align-items: flex-end;
   cursor: pointer;
+  transition: color 0.15s ease;
 
   &:hover {
-    color: var(--text-intense);
+    color: var(--color-accent);
   }
-}
-
-.AssetEditorPropsBlock_Sheet-cell.type-prop:deep(.StringPropEditor-input),
-.AssetEditorPropsBlock_Sheet-cell.type-prop:deep(
-    .AssetEditorPropsBlockProp-static
-  ) {
-  padding-left: 20px;
 }
 </style>
