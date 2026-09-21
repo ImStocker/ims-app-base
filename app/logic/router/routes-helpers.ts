@@ -66,16 +66,6 @@ export function getMainBaseLink() {
   );
 }
 
-export const RoutesWithLangParam = new Set([
-  'catalog',
-  'space-hubs',
-  'space-new',
-  'space-my-feed',
-  'space-diary',
-  'space-hubs',
-  'space-jams',
-]);
-
 export type ServiceLinkVariants =
   | 'main'
   | 'showcase'
@@ -86,9 +76,7 @@ export type ServiceLinkVariants =
   | 'sign-in'
   | 'restore'
   | 'collections-list'
-  | 'catalog'
-  | 'app-try'
-  | 'space-jams';
+  | 'app-try';
 
 export function getServiceLink(
   name: ServiceLinkVariants,
@@ -108,11 +96,6 @@ export function getServiceLink(
         name: route_name,
         ...(query ? { query: query } : {}),
       };
-      if (RoutesWithLangParam.has(route_name)) {
-        route.params = {
-          lang,
-        };
-      }
       return route;
     } else {
       if (is_space) {
@@ -153,8 +136,6 @@ export function getServiceLink(
         '/'
       );
     }
-    case 'catalog':
-      return get_result(true, 'catalog', `/${lang}/catalog`);
     case 'collections-list':
       return get_result(true, 'collections-list', `/c/list`);
     case 'main':
