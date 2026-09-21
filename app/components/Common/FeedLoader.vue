@@ -3,7 +3,9 @@
     <slot></slot>
     <visibility-trigger :threshold="0.1" @trigger="changeIntersecting" />
     <div v-if="isLoading" class="FeedLoader-loader">
-      <div class="loaderSpinner FeedLoader-spinner"></div>
+      <slot name="loading">
+        <div class="loaderSpinner FeedLoader-spinner"></div>
+      </slot>
     </div>
   </div>
 </template>
@@ -40,6 +42,21 @@ export default defineComponent({
       isLoading: false,
     };
   },
+  watch: {
+    isIntersecting() {
+      if (this.isIntersecting) {
+        this.loadDelayed();
+      }
+    },
+    disabled() {
+      if (!this.disabled && this.isIntersecting) {
+        this.loadDelayed();
+      }
+    },
+    isLoading() {
+      this.$emit('update:isLoading', this.isLoading);
+    },
+  },
   mounted() {
     this.loadDelayed();
   },
@@ -66,21 +83,6 @@ export default defineComponent({
           this.isLoading = false;
         }
       }
-    },
-  },
-  watch: {
-    isIntersecting() {
-      if (this.isIntersecting) {
-        this.loadDelayed();
-      }
-    },
-    disabled() {
-      if (!this.disabled && this.isIntersecting) {
-        this.loadDelayed();
-      }
-    },
-    isLoading() {
-      this.$emit('update:isLoading', this.isLoading);
     },
   },
 });
