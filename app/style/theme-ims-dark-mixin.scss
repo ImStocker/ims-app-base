@@ -132,6 +132,8 @@
     --button-bg-color-hover: rgba(255, 255, 255, 0.1);
     --button-text-color-danger: #FF6854;
 
+    --avatar-text-color: #222222;
+
     color: var(--root-text-color);
 
     --root-editor-block-padding-left: 25px;
@@ -678,22 +680,8 @@
       --button-padding: 0;
       --button-border-width: 0px;
       --button-border-radius: 9999px;
-      --button-bg-color: #EED811;
-      --button-text-color: #222222;
       justify-content: center;
 
-      &:hover {
-        --button-bg-color: #FFEC48;
-        --button-text-color: #222222;
-      }
-      &:focus {
-        --button-bg-color: #FFEC48;
-        --button-outline-color: #FFEC48;
-      }
-      &:disabled, &.disabled {
-        --button-bg-color: #EED811;
-        --button-text-color: #222222;
-      }
       &.nobody {
         --button-bg-color: transparent;
         --button-border-color: rgba(255, 255, 255, .1);
@@ -713,6 +701,38 @@
           --button-border-color: #60605E;
         }
       }
+    }
+
+    $ims-avatar-colors: (
+      0: #EED811,
+      1: #CDF677,
+      2: #7FD8F7,
+      3: #9BBDFF,
+      4: #6FE3BE,
+      5: #FFC08A,
+      6: #FF9FC0,
+      7: #D4AFFF,
+      8: #FFDF8E,
+      9: #93E3D2,
+      10: #FFAB93,
+      11: #B8D3FF,
+      12: #F2E879,
+      13: #B8D990,
+      14: #F6BCE2,
+      15: #7FE9E3,
+    );
+    @each $i, $c in $ims-avatar-colors {
+      .is-avatar-color-#{$i} {
+        --avatar-color: #{$c};
+      }
+    }
+
+    .is-avatar-gradient {
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--avatar-color) 85%, #ffffff 15%),
+        color-mix(in srgb, var(--avatar-color) 85%, #000000 15%)
+      );
     }
 
     .use-buttons-panel-selector .is-button,

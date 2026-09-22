@@ -1,5 +1,5 @@
 <template>
-  <div class="UserProfileIcon">
+  <div class="UserProfileIcon" :class="avatarColorClass">
     <div class="UserProfileIcon-content">
       <img
         v-if="avatarImage"
@@ -18,6 +18,7 @@ import type { AssetPropValueAccount } from '../../logic/types/Props';
 import AuthManager from '../../logic/managers/AuthManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import { getAccountShortAbbr } from '../../logic/utils/stringUtils';
+import { getAvatarColorClass } from '../../logic/utils/avatarColors';
 
 export default defineComponent({
   name: 'UserProfileIcon',
@@ -57,6 +58,9 @@ export default defineComponent({
     croppedUserName() {
       return getAccountShortAbbr(this.displayingUserName);
     },
+    avatarColorClass() {
+      return getAvatarColorClass(this.displayingUserName);
+    },
   },
   watch: {
     displayingUserId() {
@@ -91,6 +95,7 @@ export default defineComponent({
   height: 100%;
   border-radius: 100%;
   overflow: hidden;
+  background-color: var(--avatar-color);
 }
 .UserProfileIcon-content-img {
   width: 100%;
@@ -101,5 +106,6 @@ export default defineComponent({
 }
 .UserProfileIcon-content-name {
   font-weight: 700;
+  color: var(--avatar-text-color);
 }
 </style>

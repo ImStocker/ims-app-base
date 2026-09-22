@@ -113,6 +113,8 @@
     --button-bg-color-hover: rgba(143, 171, 229, .1);
     --button-text-color-danger: #FF513A;
 
+    --avatar-text-color: #1A2947;
+
     --editor-bg-color: var(--root-box-color);
     --editor-box-color: var(--root-bg-color);
 
@@ -613,22 +615,7 @@
     .use-buttons-user .is-button,
     .is-button.is-button-user {
       --button-border-color: transparent;
-      --button-bg-color: #FFD668;
-      --button-text-color: #1A2947;
 
-      &:hover {
-        --button-bg-color: #FFE08C;
-        --button-border-color: transparent;
-      }
-      &:focus {
-        --button-bg-color: #FFE08C;
-        --button-outline-color: #FFE08C;
-      }
-      &:disabled, &.disabled {
-        --button-bg-color: #FFE08C;
-        --button-text-color: #1A2947;
-        --button-border-color: transparent;
-      }
       &.nobody {
         --button-text-color: #1A2947;
         --button-border-color: #CCCCCC;
@@ -646,6 +633,38 @@
           --button-bg-color: transparent;
         }
       }
+    }
+
+    $ims-avatar-colors: (
+      0: #FFD668,
+      1: #DDF88F,
+      2: #A4E5FB,
+      3: #B4CCFF,
+      4: #8AEEB8,
+      5: #FFD4A1,
+      6: #FFB8CF,
+      7: #E4C1FF,
+      8: #FFE8A8,
+      9: #B3EEE0,
+      10: #FFC2B1,
+      11: #C9DFFF,
+      12: #F7F095,
+      13: #CCE9A7,
+      14: #FAD5EE,
+      15: #A6F4EF,
+    );
+    @each $i, $c in $ims-avatar-colors {
+      .is-avatar-color-#{$i} {
+        --avatar-color: #{$c};
+      }
+    }
+
+    .is-avatar-gradient {
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--avatar-color) 85%, #ffffff 15%),
+        color-mix(in srgb, var(--avatar-color) 85%, #000000 15%)
+      );
     }
 
     .use-buttons-panel-selector .is-button,
