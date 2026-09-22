@@ -1,13 +1,13 @@
 import { jsonrepair } from 'jsonrepair';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
 import { generateText, type LanguageModel } from 'ai';
 import { markdownImageWidthExtension } from '../utils/markdownImageWidth';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 
 marked.use({ extensions: [markdownImageWidthExtension] });
 
 export function parseMarkdown(md: string) {
-  return DOMPurify.sanitize(marked.parse(md, { async: false }) as string);
+  return sanitizeHtml(marked.parse(md, { async: false }) as string);
 }
 
 export function fixJsonWithRepair(text: string) {

@@ -119,8 +119,8 @@ import ConfirmDialog from '../Common/ConfirmDialog.vue';
 import PromptDialog from '../Common/PromptDialog.vue';
 import type { MenuListItem } from '#logic/types/MenuList';
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
 import { markdownImageWidthExtension } from '#logic/utils/markdownImageWidth';
+import { sanitizeHtml } from '#logic/utils/sanitizeHtml';
 
 marked.use({ extensions: [markdownImageWidthExtension] });
 
@@ -303,7 +303,7 @@ function getMarkedText(text: string) {
   if (toolCallStart >= 0) {
     text = text.substring(0, toolCallStart);
   }
-  return DOMPurify.sanitize(marked.parse(text).toString());
+  return sanitizeHtml(marked.parse(text).toString());
 }
 
 function scrollToBottom() {
