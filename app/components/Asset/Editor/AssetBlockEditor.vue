@@ -155,16 +155,10 @@ import UiManager from '../../../logic/managers/UiManager';
 import SortableList from '../../Common/SortableList.vue';
 import AssetReferenceList from './../References/AssetReferenceList.vue';
 import { AssetRights } from '../../../logic/types/Rights';
-import type { AssetPropValueEnum } from '../../../logic/types/Props';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import EditorBlockSeparator from './EditorBlockSeparator.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
-import {
-  COLLECTION_PID,
-  COLLECTION_GAME_ASSET_ID,
-  ARTICLE_ASSET_ID,
-  BLOCK_NAME_META,
-} from '../../../logic/constants';
+import { ARTICLE_ASSET_ID, BLOCK_NAME_META } from '../../../logic/constants';
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
 import AssetBlockComment from './AssetBlockComment.vue';
@@ -324,35 +318,8 @@ export default defineComponent({
     rootCombinedReferences() {
       return this.assetBlockEditor.getRootCombinedReferences();
     },
-    projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
-    },
     resolvedBlocksFilteredList(): ResolvedAssetBlock[] {
-      let additional_hidden: string[] = [];
-      const is_collection =
-        this.projectInfo &&
-        !!this.projectInfo.parentsTree.find((p) => p.id === COLLECTION_PID);
-      if (this.assetBlockEditor.assetFull && is_collection) {
-        const asset = this.assetBlockEditor.assetFull;
-        if (
-          asset &&
-          asset.name !== 'game_base' &&
-          asset.typeIds &&
-          asset.typeIds.includes(COLLECTION_GAME_ASSET_ID)
-        ) {
-          const game_type_enum = asset.getPropValue('props', 'type').value;
-          const game_type = game_type_enum
-            ? (game_type_enum as AssetPropValueEnum).Name
-            : null;
-          if (game_type !== 'Application') {
-            additional_hidden = [
-              'application-hint',
-              'application-chat',
-              '@2d20ab92-5f19-442f-b06d-77a6260e1d4d',
-            ];
-          }
-        }
-      }
+      const additional_hidden: string[] = [];
       if (
         this.assetBlockEditor.assetFull &&
         this.assetBlockEditor.assetFull.typeIds.includes(ARTICLE_ASSET_ID)

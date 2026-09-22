@@ -1,118 +1,13 @@
 import {
-  COLLECTION_GAME_ASSET_ID,
-  COLLECTION_PAGE_ASSET_ID,
-} from '#logic/constants';
-import {
   sameAssetPropValues,
   castAssetPropValueToString,
   castAssetPropValueToBoolean,
-  type AssetProps,
-  type AssetPropValueEnum,
-  isFilledAssetPropValue,
   convertAssetPropsToPlainObject,
   isPropInherited,
   type AssetPropValue,
 } from '#logic/types/Props';
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
-
-function checkFieldIsHidden(
-  block_name: string,
-  changed_props: AssetProps,
-  prop_name: string,
-  assetTypeIds: string[],
-) {
-  if (block_name === 'props') {
-    if (!assetTypeIds.includes(COLLECTION_GAME_ASSET_ID)) {
-      return false;
-    }
-
-    const type = (changed_props['type'] as AssetPropValueEnum)?.Name;
-
-    let hidden_fields: string[] = [];
-    switch (type) {
-      case 'Project':
-        hidden_fields = [
-          ...hidden_fields,
-          'application-author',
-          'ext-title',
-          'ext-link',
-          'ext-cover-image',
-          'ext-screenshots',
-          'ext-genre',
-          'ext-description',
-          'sent-to-revision-at',
-          'rejected-at',
-        ];
-        break;
-      case 'External':
-        hidden_fields = [
-          ...hidden_fields,
-          'application-author',
-          'project',
-          'sent-to-revision-at',
-          'rejected-at',
-        ];
-        break;
-      case 'Application':
-        hidden_fields = [
-          ...hidden_fields,
-          'application-author',
-          'ext-title',
-          'ext-link',
-          'ext-cover-image',
-          'ext-screenshots',
-          'ext-genre',
-          'ext-description',
-        ];
-        break;
-      default:
-        hidden_fields = [
-          ...hidden_fields,
-          'application-author',
-          'project',
-          'ext-title',
-          'ext-link',
-          'ext-cover-image',
-          'ext-screenshots',
-          'ext-description',
-          'ext-genre',
-          'sent-to-revision-at',
-          'rejected-at',
-        ];
-        break;
-    }
-
-    const published_at = isFilledAssetPropValue(changed_props['published-at']);
-    const rejected_at = isFilledAssetPropValue(changed_props['rejected-at']);
-    const revision_at = isFilledAssetPropValue(
-      changed_props['sent-to-revision-at'],
-    );
-
-    if (published_at) {
-      hidden_fields = [...hidden_fields, 'rejected-at', 'sent-to-revision-at'];
-    } else if (rejected_at) {
-      hidden_fields = [...hidden_fields, 'published-at', 'sent-to-revision-at'];
-    } else if (revision_at) {
-      hidden_fields = [...hidden_fields, 'published-at', 'rejected-at'];
-    }
-
-    return hidden_fields.includes(prop_name);
-  } else if (block_name === 'info') {
-    if (!assetTypeIds.includes(COLLECTION_PAGE_ASSET_ID)) {
-      return false;
-    }
-
-    const published_at = castAssetPropValueToBoolean(
-      changed_props['allow-applications'],
-    );
-    if (!published_at) {
-      return prop_name === 'auto-publish';
-    }
-  }
-
-  return false;
-}
 
 export type PropsBlockEntry2 = PropsFormFieldDef;
 
@@ -148,7 +43,7 @@ export type PropsBlockEntryAssetPropsPlain = {
 
 export function extractPropsBlockEntries2(
   block: ResolvedAssetBlock,
-  assetTypeIds: string[],
+  _assetTypeIds: string[],
 ): PropsBlockExtractedEntries2 {
   const map: { [key: string]: PropsBlockEntry2 } = {};
   const list: PropsBlockEntry2[] = [];
@@ -163,11 +58,6 @@ export function extractPropsBlockEntries2(
         [key: string]: Partial<PropsBlockEntryAssetPropsPlain>;
       },
     )) {
-      const hidden_val = block.name
-        ? checkFieldIsHidden(block.name, changed_props, prop_key, assetTypeIds)
-        : false;
-      if (hidden_val) continue;
-
       const prop_inherited = block.inherited
         ? isPropInherited(prop_key, block.props, block.inherited)
         : false;

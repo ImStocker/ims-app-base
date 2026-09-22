@@ -75,7 +75,6 @@ export type ServiceLinkVariants =
   | 'sign-up'
   | 'sign-in'
   | 'restore'
-  | 'collections-list'
   | 'app-try';
 
 export function getServiceLink(
@@ -136,8 +135,6 @@ export function getServiceLink(
         '/'
       );
     }
-    case 'collections-list':
-      return get_result(true, 'collections-list', `/c/list`);
     case 'main':
       return get_result(false, 'app-main', `/app`);
     case 'app-try':

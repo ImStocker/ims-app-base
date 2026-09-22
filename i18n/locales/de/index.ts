@@ -246,7 +246,6 @@ export default {
     tariffs: 'Tarife',
     add: 'Hinzufügen',
     voting: 'Abstimmung',
-    collection: 'Sammlung',
     switchTheme: 'Design wechseln',
     versionControl: 'Versionskontrolle',
     importExport: 'Im-/Export',
@@ -496,15 +495,6 @@ export default {
     blockTitleIsNotSet: 'Blocktitel ist nicht gesetzt',
     blockTitleAlreadyInUse: 'Blocktitel wird bereits verwendet',
     blockNameAlreadyInUse: 'Block-Dienstname wird bereits verwendet',
-    collectionGamesBlockAddGame: 'Spiel hinzufügen',
-    collectionGamesBlockChangeCardView: 'Darstellung einrichten',
-    collectionGamesBlockGameNotFilled: 'Spielkarte ist nicht ausgefüllt',
-    collectionGamesBlockGameDeleteDraft: 'Entwurf löschen',
-    collectionGamesBlockShallPublishGame:
-      'Möchtest du das Spiel veröffentlichen?',
-    collectionGamesBlockUnpublushedWillBeInNotIncludedSection:
-      'Das nicht veröffentlichte Spiel wird als Entwurf gespeichert.\n\nDu kannst es später im Bereich „Nicht enthaltene Spiele" veröffentlichen',
-    collectionGamesExportApplication: 'Bewerbungen exportieren',
     selectProject: 'Projekt auswählen',
     textGridAddCaption: 'Textblock hinzufügen',
     textGridEditCaption: 'Textblock bearbeiten',

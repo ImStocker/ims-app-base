@@ -20,11 +20,6 @@ import { AssetRights } from './Rights';
 import type { AssetCommentDTO } from './CommentTypes';
 import {
   BLOCK_NAME_META,
-  COLLECTION_ADDED_GAME_LIST_ASSET_ID,
-  COLLECTION_GAME_ASSET_ID,
-  COLLECTION_PAGE_ASSET_ID,
-  COLLECTION_PENDING_GAME_LIST_ASSET_ID,
-  COLLECTION_README_ASSET_ID,
   GAME_INFO_ASSET_ID,
   TASK_ASSET_ID,
 } from '../constants';
@@ -77,33 +72,6 @@ export function calcResolvedBlocks(asset: AssetForEdit) {
       block.type === 'props'
     ) {
       // TODO: get from server
-      resolved_block.rights = AssetRights.READ_ONLY;
-    } else if (
-      asset.typeIds &&
-      asset.typeIds.includes(COLLECTION_GAME_ASSET_ID)
-    ) {
-      resolved_block.rights = asset.rights;
-      if (resolved_block.name === 'application-hint') {
-        resolved_block.rights = AssetRights.READ_ONLY;
-      } else if (resolved_block.id === '2d20ab92-5f19-442f-b06d-77a6260e1d4d') {
-        resolved_block.rights = AssetRights.READ_ONLY;
-      } else if (resolved_block.name === 'application-chat') {
-        resolved_block.rights = AssetRights.COMMENT;
-      }
-    } else if (
-      asset.typeIds &&
-      asset.typeIds.includes(COLLECTION_PAGE_ASSET_ID)
-    ) {
-      resolved_block.rights = asset.rights;
-      if (resolved_block.name === 'hint') {
-        resolved_block.rights = AssetRights.READ_ONLY;
-      }
-    } else if (
-      asset.typeIds &&
-      (asset.typeIds.includes(COLLECTION_README_ASSET_ID) ||
-        asset.typeIds.includes(COLLECTION_ADDED_GAME_LIST_ASSET_ID) ||
-        asset.typeIds.includes(COLLECTION_PENDING_GAME_LIST_ASSET_ID))
-    ) {
       resolved_block.rights = AssetRights.READ_ONLY;
     } else if (
       asset.typeIds &&

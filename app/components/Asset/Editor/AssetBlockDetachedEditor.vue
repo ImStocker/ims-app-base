@@ -33,15 +33,10 @@ import { defineAsyncComponent, defineComponent, type PropType } from 'vue';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import type EditorBlock from './EditorBlock.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
-import type { AssetPropValueEnum } from '../../../logic/types/Props';
 import ProjectManager from '../../../logic/managers/ProjectManager';
 import { AssetRights } from '../../../logic/types/Rights';
 import UiManager from '../../../logic/managers/UiManager';
 import SortableList from '../../Common/SortableList.vue';
-import {
-  COLLECTION_PID,
-  COLLECTION_GAME_ASSET_ID,
-} from '../../../logic/constants';
 import AuthManager from '../../../logic/managers/AuthManager';
 import AssetAddBlockDropdown from './AssetAddBlockDropdown.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
@@ -110,44 +105,13 @@ export default defineComponent({
     hasAssets() {
       return this.assetBlockEditor.assetFullsCount() > 0;
     },
-    projectInfo() {
-      return this.$getAppManager().get(ProjectManager).getProjectInfo();
-    },
     resolvedBlock() {
       return this.resolvedBlocksFilteredList[0];
     },
     resolvedBlocksFilteredList(): ResolvedAssetBlock[] {
-      let additional_hidden: string[] = [];
-      const is_collection =
-        this.projectInfo &&
-        !!this.projectInfo.parentsTree.find((p) => p.id === COLLECTION_PID);
-      if (this.assetBlockEditor.assetFull && is_collection) {
-        const asset = this.assetBlockEditor.assetFull;
-        if (
-          asset &&
-          asset.name !== 'game_base' &&
-          asset.typeIds &&
-          asset.typeIds.includes(COLLECTION_GAME_ASSET_ID)
-        ) {
-          const game_type_enum = asset.getPropValue('props', '\\type').value;
-          const game_type = game_type_enum
-            ? (game_type_enum as AssetPropValueEnum).Name
-            : null;
-          if (game_type !== 'Application') {
-            additional_hidden = [
-              'application-hint',
-              'application-chat',
-              '@2d20ab92-5f19-442f-b06d-77a6260e1d4d',
-            ];
-          }
-        }
-      }
       return this.resolvedBlocks.list.filter((item) => {
         if (item.name) {
-          if (
-            this.hiddenBlockNames.includes(item.name) ||
-            additional_hidden.includes(item.name)
-          ) {
+          if (this.hiddenBlockNames.includes(item.name)) {
             return false;
           }
         }
