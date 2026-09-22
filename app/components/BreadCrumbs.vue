@@ -76,7 +76,6 @@ import ProjectLink from './Common/ProjectLink.vue';
 import ProjectManager from '../logic/managers/ProjectManager';
 import CaptionString from './Common/CaptionString.vue';
 import UiManager from '../logic/managers/UiManager';
-import { RoutesWithLangParam } from '../logic/router/routes-helpers';
 
 export default defineComponent({
   name: 'BreadCrumbs',
@@ -93,15 +92,7 @@ export default defineComponent({
   computed: {
     breadCrumbsComp(): BreadCrumbsEntity[] {
       return this.breadCrumbs.map((link) => {
-        if (RoutesWithLangParam.has(link.name)) {
-          return {
-            ...link,
-            params: {
-              lang: this.lang,
-              ...(link.params ? link.params : {}),
-            },
-          };
-        } else return link;
+        return link;
       });
     },
     lang() {
