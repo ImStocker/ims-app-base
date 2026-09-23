@@ -56,7 +56,10 @@ export type ProgressToastOptions = Partial<
 export type ToastActionOptions = Pick<Toast, 'action' | 'onAction'>;
 
 export type ToastStateChange = Partial<
-  Pick<Toast, 'message' | 'errors' | 'progress' | 'type' | 'icon'>
+  Pick<
+    Toast,
+    'message' | 'errors' | 'progress' | 'type' | 'icon' | 'action' | 'onAction'
+  >
 >;
 
 export type DoTaskResult<T> =
@@ -315,30 +318,6 @@ export default class UiManager extends AppSubManagerBase {
       icon: 'ri-checkbox-circle-fill',
       action: options?.action,
       onAction: options?.onAction,
-    });
-
-    new_toast.resume();
-  }
-
-  showToast({
-    message,
-    type,
-    icon,
-    action,
-    onAction,
-  }: {
-    message: string;
-    type?: ToastTypes;
-    icon?: string;
-    action?: string;
-    onAction?: () => void;
-  }) {
-    const new_toast = this._createToast({
-      message,
-      type: type ?? ToastTypes.INFO,
-      icon,
-      action,
-      onAction,
     });
 
     new_toast.resume();

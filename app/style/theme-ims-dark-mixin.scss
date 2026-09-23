@@ -81,8 +81,8 @@
     --app-toasts-text-color: var(--local-text-color);
     --app-toasts-border-color: rgb(238, 216, 17, 0.5);
     --app-toasts-progress-color: var(--color-accent);
-    --app-toasts-success-color: #37ba56;
-    --app-toasts-fail-color: #f7263d;
+    --app-toasts-success-color: var(--color-success);
+    --app-toasts-fail-color: var(--color-danger);
 
     --tag-bg-color: #313131;
     --tag-text-color: var(--root-sub-text-color);
