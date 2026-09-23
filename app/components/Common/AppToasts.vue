@@ -26,12 +26,22 @@
         </div>
         <div class="AppToasts-toast-content">
           <div class="AppToasts-toast-message">
-            {{ toast.message }}
+            <div class="AppToasts-toast-message-text">
+              {{ toast.message }}
+            </div>
             <div
               v-if="toast.errors && toast.errors.length"
               class="AppToasts-toast-errors"
               :title="toast.errors.slice(0, 3).join('\n')"
             ></div>
+            <button
+              v-if="toast.action"
+              type="button"
+              class="AppToasts-toast-action"
+              @click="runToastAction(toast)"
+            >
+              {{ toast.action }}
+            </button>
           </div>
           <div
             v-if="toast.progress"
@@ -52,7 +62,10 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
-import UiManager, { ToastTypes } from '../../logic/managers/UiManager';
+import UiManager, {
+  ToastTypes,
+  type Toast,
+} from '../../logic/managers/UiManager';
 
 export default defineComponent({
   name: 'AppToasts',
@@ -62,6 +75,12 @@ export default defineComponent({
     },
     ToastTypes() {
       return ToastTypes;
+    },
+  },
+  methods: {
+    runToastAction(toast: Toast) {
+      toast.onAction?.();
+      toast.close();
     },
   },
 });
@@ -135,6 +154,31 @@ export default defineComponent({
 
   .AppToasts-toast-message {
     color: var(--app-toasts-text-color);
+    display: flex;
+    align-items: center;
+  }
+
+  .AppToasts-toast-message-text {
+    flex: 1;
+  }
+
+  .AppToasts-toast-action {
+    align-self: flex-start;
+    border: none;
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding-left: 10px;
+    border-left: 1px solid var(--local-border-color);
+
+    &:hover {
+      opacity: 0.8;
+    }
   }
 
   .AppToasts-toast-progress-bar-wrapper {
