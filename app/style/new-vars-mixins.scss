@@ -1,5 +1,6 @@
 @use "./load-page-mixins";
 @use "./devices-mixins.scss";
+@use './scrollbars-mixins.scss';
 
 @mixin reset-local-vars{
     --local-bg-color: var(--root-bg-color);
@@ -168,6 +169,7 @@
       border-color: var(--input-border-color);
     }
   }
+  @include scrollbars-mixins.tiny-scrollbars;
 }
 
 @mixin is-button {
