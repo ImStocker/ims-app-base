@@ -26,7 +26,9 @@
         </div>
         <div class="AppToasts-toast-content">
           <div class="AppToasts-toast-message">
-            {{ toast.message }}
+            <div class="AppToasts-toast-message-text">
+              {{ toast.message }}
+            </div>
             <div
               v-if="toast.errors && toast.errors.length"
               class="AppToasts-toast-errors"
@@ -52,7 +54,7 @@
           v-if="toast.action"
           type="button"
           class="AppToasts-toast-action"
-          @click="runAction(toast)"
+          @click="runToastAction(toast)"
         >
           {{ toast.action }}
         </button>
@@ -78,7 +80,7 @@ export default defineComponent({
     },
   },
   methods: {
-    runAction(toast: Toast) {
+    runToastAction(toast: Toast) {
       toast.onAction?.();
       toast.close();
     },
@@ -167,19 +169,35 @@ export default defineComponent({
 }
 
 .AppToasts-toast-action {
-  border: none;
   background: none;
+  border: none;
   padding: 0;
-  margin-left: auto;
-  color: var(--color-accent);
+  margin-left: 12px;
+  color: var(--local-sub-text-color);
   font-family: var(--local-font-family);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--local-sub-text-color) 30%,
+    transparent
+  );
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--local-text-color);
+    text-decoration-color: color-mix(
+      in srgb,
+      var(--local-text-color) 40%,
+      transparent
+    );
   }
 }
 
@@ -191,7 +209,14 @@ export default defineComponent({
   min-width: 0;
 
   .AppToasts-toast-message {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--local-text-color);
+
+    .AppToasts-toast-message-text {
+      min-width: 0;
+    }
   }
 
   .AppToasts-toast-progress-bar-wrapper {
@@ -224,7 +249,6 @@ export default defineComponent({
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
-    margin-left: 6px;
     border-radius: 999px;
     background-color: var(--color-danger);
     color: #fff;
