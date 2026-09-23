@@ -53,8 +53,15 @@ export type ProgressToastOptions = Partial<
   Pick<Toast, 'message' | 'abortController' | 'icon'>
 > & { showDelay?: number };
 
+export type ToastAction = { action: string; onAction: () => void };
+
+export type ToastOptions = Partial<ToastAction>;
+
 export type ToastStateChange = Partial<
-  Pick<Toast, 'message' | 'errors' | 'progress' | 'type' | 'icon'>
+  Pick<
+    Toast,
+    'message' | 'errors' | 'progress' | 'type' | 'icon' | 'action' | 'onAction'
+  >
 >;
 
 export type DoTaskResult<T> =
@@ -81,6 +88,8 @@ export class Toast {
   progress: number | null | undefined = undefined;
   abortController?: AbortController;
   errors?: any[] = [];
+  action?: string;
+  onAction?: () => void;
 
   _unregister: () => void;
 
@@ -91,6 +100,8 @@ export class Toast {
     abortController,
     errors,
     icon,
+    action,
+    onAction,
     unregister,
   }: {
     message?: string | null;
@@ -100,6 +111,8 @@ export class Toast {
     icon?: string;
     abortController?: AbortController;
     errors?: any[];
+    action?: string;
+    onAction?: () => void;
     unregister: () => void;
   }) {
     this.id = uuidv4();
@@ -110,6 +123,8 @@ export class Toast {
     this.icon = icon;
     this.abortController = abortController;
     this.errors = errors;
+    this.action = action;
+    this.onAction = onAction;
     this._unregister = unregister;
   }
 
@@ -280,7 +295,7 @@ export default class UiManager extends AppSubManagerBase {
     } else return this.screenSize === sz;
   }
 
-  showError(error: any) {
+  showError(error: any, toastOptions?: ToastOptions) {
     let error_str: string;
     if (error instanceof Error) error_str = error.message;
     else if (error && error.message) error_str = error.message;
@@ -291,16 +306,18 @@ export default class UiManager extends AppSubManagerBase {
       message: error_str,
       type: ToastTypes.ERROR,
       icon: 'ri-close-circle-fill',
+      ...toastOptions,
     });
 
     new_toast.resume();
   }
 
-  showSuccess(message: any) {
+  showSuccess(message: any, toastOptions?: ToastOptions) {
     const new_toast = this._createToast({
       message,
       type: ToastTypes.SUCCESS,
       icon: 'ri-checkbox-circle-fill',
+      ...toastOptions,
     });
 
     new_toast.resume();
@@ -416,12 +433,16 @@ export default class UiManager extends AppSubManagerBase {
     successMessage,
     icon,
     abortController,
+    action,
+    onAction,
   }: {
     message?: string | null;
     type: ToastTypes;
     successMessage?: string;
     icon?: string;
     abortController?: AbortController;
+    action?: string;
+    onAction?: () => void;
   }): Toast {
     const new_toast = reactive(
       new Toast({
@@ -430,6 +451,8 @@ export default class UiManager extends AppSubManagerBase {
         type,
         icon,
         abortController,
+        action,
+        onAction,
         unregister: () => {
           const i = this._toasts.indexOf(new_toast);
           if (i >= 0) this._toasts.splice(i, 1);
