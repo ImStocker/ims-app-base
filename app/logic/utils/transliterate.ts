@@ -66,7 +66,8 @@ const transliterate_map: { [char: string]: string } = {
 };
 
 export function transliterate(text: string, invalid = '_'): string {
-  const res = [];
+  if (!text) return '';
+  const res: string[] = [];
   for (let i = 0; i < text.length; i++) {
     if (transliterate_map.hasOwnProperty(text[i])) {
       res.push(transliterate_map[text[i]]);
