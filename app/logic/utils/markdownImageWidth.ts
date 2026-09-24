@@ -12,6 +12,30 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// Shared with ImcMarkdownPresenter, which resolves `@store/...` file hrefs to
+// absolute URLs before rendering the `<img>`.  Keeps the `|NNN` width handling
+// in a single place instead of duplicating it across renderers.  `extraAttrs`
+// lets the presenter annotate the element with the source file (`data-store`,
+// `data-file-id`, ...) so a click can reopen it in `FilePresenterDialog`.
+export function renderImageHtml(
+  href: string,
+  title: string | null,
+  text: string,
+  extraAttrs: Record<string, string> = {},
+): string {
+  const size_match = IMAGE_SIZE_RE.exec(text);
+  const alt = size_match ? text.slice(0, size_match.index) : text;
+  const width = size_match ? size_match[1] : '';
+  const title_attr = title ? ` title="${escapeHtml(title)}"` : '';
+  const size_attr = width
+    ? ` width="${width}" style="max-width:100%; width:${width}px;"`
+    : '';
+  const extra_attrs = Object.entries(extraAttrs)
+    .map(([k, v]) => ` ${escapeHtml(k)}="${escapeHtml(v)}"`)
+    .join('');
+  return `<img src="${escapeHtml(href)}" alt="${escapeHtml(alt)}"${title_attr}${size_attr}${extra_attrs}>`;
+}
+
 // Teach `marked` to render Obsidian-style `![alt|300](url)` images with the
 // requested pixel width. Mirrors the `|NNN` size the ImcMarkdownEditor live
 // preview uses, so read-only / exported markdown matches the editor.
@@ -19,16 +43,6 @@ export const markdownImageWidthExtension: TokenizerAndRendererExtension = {
   name: 'image',
   level: 'inline',
   renderer(token: { href: string; title: string | null; text: string }) {
-    const size_match = IMAGE_SIZE_RE.exec(token.text);
-    const alt = size_match ? token.text.slice(0, size_match.index) : token.text;
-    const width = size_match ? size_match[1] : '';
-    const title_attr = token.title ? ` title="${escapeHtml(token.title)}"` : '';
-    const size_attr = width
-      ? ` width="${width}" style="max-width:100%; width:${width}px;"`
-      : '';
-    return (
-      `<img src="${escapeHtml(token.href)}" alt="${escapeHtml(alt)}"` +
-      `${title_attr}${size_attr}>`
-    );
+    return renderImageHtml(token.href, token.title, token.text);
   },
 };

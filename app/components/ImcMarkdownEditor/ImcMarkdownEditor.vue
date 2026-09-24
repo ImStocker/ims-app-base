@@ -434,7 +434,7 @@ export default defineComponent({
                 ' ',
               );
               let path = `@${img.Store}/${img.Dir ? img.Dir + '/' : ''}${img.Title}`;
-              if (img.Store.startsWith('p-')) {
+              if (img.Store.startsWith('p-') || img.Store.startsWith('u-')) {
                 path += '#' + img.FileId;
               }
               if (need_brackets) {

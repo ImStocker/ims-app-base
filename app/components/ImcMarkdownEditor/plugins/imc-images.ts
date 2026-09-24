@@ -7,7 +7,7 @@ import FileManager from '../../../logic/managers/FileManager';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
 import type { AssetPropValueFile } from '../../../logic/types/Props';
 
-function parseImagePathToFile(path: string): {
+export function parseImagePathToFile(path: string): {
   FileId?: string;
   Title: string;
   Dir: string | null;

@@ -13,12 +13,17 @@ import katex from 'katex';
 import katexCss from 'katex/dist/katex.min.css?inline';
 import AssetLink from '../Asset/AssetLink.vue';
 import type { AssetLink as AssetLinkData } from '../../logic/types/AssetsType';
+import type { AssetPropValueFile } from '../../logic/types/Props';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import FileManager from '../../logic/managers/FileManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import EditorManager from '../../logic/managers/EditorManager';
 import UiManager from '../../logic/managers/UiManager';
+import DialogManager from '../../logic/managers/DialogManager';
+import FilePresenterDialog from '../File/FilePresenterDialog.vue';
 import type { IAppManager } from '../../logic/managers/IAppManager';
-import { markdownImageWidthExtension } from '../../logic/utils/markdownImageWidth';
+import { renderImageHtml } from '../../logic/utils/markdownImageWidth';
+import { parseImagePathToFile } from './plugins/imc-images';
 import { parseLinkAddress, parseWikiLink } from './plugins/wiki-links/format';
 import {
   generateTextHeaderAnchor,
@@ -305,10 +310,50 @@ const blankLinesExtension: TokenizerAndRendererExtension = {
   },
 };
 
+// Images referencing uploaded files (`@store/path#fileId`) are rendered with a
+// resolved file URL, exactly like the editor's `ImageWidget` does.  The resolved
+// file is also recorded on the element (`data-store`, `data-file-id`, ...
+// mirrors ImcTextFile's dataset), so a click can reopen it in
+// `FilePresenterDialog`.  Anything else (http/data src, plain paths) is left to
+// the shared width-aware renderer.
+const presenterImageExtension: TokenizerAndRendererExtension = {
+  name: 'image',
+  level: 'inline',
+  renderer(token) {
+    const href = token.href ?? '';
+    let resolved = href;
+    if (href.startsWith('<') && href.endsWith('>')) {
+      resolved = href.slice(1, -1).trim();
+    }
+    let extraAttrs: Record<string, string> = {};
+    if (!resolved.startsWith('http') && !resolved.startsWith('data')) {
+      const file = parseImagePathToFile(resolved);
+      const appManager = presenterContext?.appManager;
+      if (file && appManager) {
+        resolved = appManager
+          .get(FileManager)
+          .getFileUrl(file as AssetPropValueFile);
+        extraAttrs = {
+          'data-store': file.Store ?? '',
+          'data-file-id': file.FileId ?? '',
+          'data-title': file.Title ?? '',
+          'data-dir': file.Dir ?? '',
+        };
+      }
+    }
+    return renderImageHtml(
+      resolved,
+      token.title ?? null,
+      token.text ?? '',
+      extraAttrs,
+    );
+  },
+};
+
 presenterMarked.use({
   extensions: [
     highlightExtension,
-    markdownImageWidthExtension,
+    presenterImageExtension,
     wikiLinkExtension,
     mathBlockExtension,
     mathInlineExtension,
@@ -555,11 +600,53 @@ export default defineComponent({
         });
     },
     _onClick(e: MouseEvent) {
+      const manager =
+        ((this as any).$getAppManager?.() as IAppManager | null) ?? null;
+
+      // Clicking an image that points to an uploaded file (a `@store/...`
+      // reference, recorded via `data-store`) opens it in `FilePresenterDialog`
+      // — the same behaviour ImcTextFile has for inline files.  Images from the
+      // same block are collected so the dialog can navigate between them.
+      const img = (e.target as HTMLElement)?.closest<HTMLImageElement>(
+        'img[data-store]',
+      );
+      if (img) {
+        e.preventDefault();
+        if (!manager) return;
+        const file: AssetPropValueFile = {
+          FileId: img.getAttribute('data-file-id') ?? '',
+          Title: img.getAttribute('data-title') ?? '',
+          Size: parseInt(img.getAttribute('data-size') ?? '0', 10),
+          Dir: img.getAttribute('data-dir'),
+          Store: img.getAttribute('data-store') ?? '',
+        };
+        if (!file.FileId) return;
+        const rootEl = this.$refs.rootRef as HTMLElement | null;
+        const files: AssetPropValueFile[] = rootEl
+          ? Array.from(
+              rootEl.querySelectorAll<HTMLImageElement>('img[data-store]'),
+            )
+              .map(
+                (el): AssetPropValueFile => ({
+                  FileId: el.getAttribute('data-file-id') ?? '',
+                  Title: el.getAttribute('data-title') ?? '',
+                  Size: parseInt(el.getAttribute('data-size') ?? '0', 10),
+                  Dir: el.getAttribute('data-dir'),
+                  Store: el.getAttribute('data-store') ?? '',
+                }),
+              )
+              .filter((f) => Boolean(f.FileId))
+          : [];
+        manager.get(DialogManager).show(FilePresenterDialog, {
+          value: file,
+          files,
+        });
+        return;
+      }
+
       const target = (e.target as HTMLElement)?.closest<HTMLAnchorElement>('a');
       if (!target) return;
       const href = target.getAttribute('href');
-      const manager =
-        ((this as any).$getAppManager?.() as IAppManager | null) ?? null;
 
       if (href) {
         e.preventDefault();
@@ -668,6 +755,12 @@ export default defineComponent({
     line-height: var(--local-line-height);
     counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8
       list-9;
+  }
+
+  // Uploaded-file images (annotated with `data-store`) open `FilePresenterDialog`
+  // on click — indicate they're interactive like the editor does.
+  :deep(img[data-store]) {
+    cursor: pointer;
   }
 
   :deep(h1) {
