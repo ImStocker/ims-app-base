@@ -244,7 +244,6 @@ export default {
     crm: 'CRM',
     tariffs: 'Tariffs',
     add: 'Add',
-    voting: 'Voting',
     switchTheme: 'Switch theme',
     versionControl: 'Version control',
     importExport: 'Import/Export',
