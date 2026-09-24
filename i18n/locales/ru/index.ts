@@ -253,7 +253,6 @@ export default {
     crm: 'CRM',
     tariffs: 'Тарифы',
     add: 'Добавить',
-    voting: 'Голосование',
     switchTheme: 'Изменить тему',
     versionControl: 'Управление версиями',
     importExport: 'Импорт/Экспорт',
