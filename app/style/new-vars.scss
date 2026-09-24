@@ -1,5 +1,6 @@
 @use 'new-vars-mixins.scss';
 @use 'theme-ims-dark-mixin.scss';
+@use 'theme-ims-dark.scss';
 
 :root,
 [data-theme='ims-dark']{
