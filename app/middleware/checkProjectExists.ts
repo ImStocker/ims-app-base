@@ -5,11 +5,15 @@ import {
   checkMainDomainRoutesAreUsing,
   getProjectSlug,
 } from '#logic/router/routes-helpers';
+import type { ProjectFullInfo } from '#logic/types/ProjectTypes';
+import type { RouteLocationNormalized } from 'vue-router';
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export function makeProjectRedirect(
+  to: RouteLocationNormalized,
+  project: ProjectFullInfo | null,
+) {
   const { $getAppManager } = useNuxtApp();
 
-  const project = $getAppManager().get(ProjectManager).getProjectInfo();
   if (!project) {
     const sign_in_link = getSignInLink({
       redirect: to.fullPath,
@@ -40,4 +44,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
   return true;
+}
+
+export default defineNuxtRouteMiddleware(async (to) => {
+  const { $getAppManager } = useNuxtApp();
+  const project = $getAppManager().get(ProjectManager).getProjectInfo();
+  return makeProjectRedirect(to as any, project);
 });
