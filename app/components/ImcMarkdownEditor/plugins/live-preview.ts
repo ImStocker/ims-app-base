@@ -9,6 +9,7 @@ import {
 import { StateField, type EditorState, type Range } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import katex from 'katex';
+import { getLinkTargetUrl } from './links';
 
 // Decorates a markdown marker (e.g. `**`, `#`, `>`, `-`, backticks, link
 // brackets) so it is visually hidden unless the cursor is inside the construct
@@ -413,7 +414,7 @@ function bindMermaidInteractions(
 // (e.g. `[]()` or `[text]()`). The markers of such a broken fragment must stay
 // visible — hiding them would leave the user with nothing to edit.
 function isIncompleteLinkTarget(owner: any, doc: any): boolean {
-  const urlNode = owner.getChild('URL');
+  const urlNode = getLinkTargetUrl(owner, doc);
   const urlText = urlNode ? doc.sliceString(urlNode.from, urlNode.to) : '';
   // Bare anchor fragments (`[text](#heading)`) are intentional; hide normally.
   if (urlText.startsWith('#')) return false;
@@ -667,6 +668,21 @@ function build(view: EditorView): DecorationSet {
           isIncompleteLinkTarget(owner, doc)
         ) {
           return;
+        }
+
+        // A URL-shaped *label* (`[https://a](https://b)`) is also parsed as a
+        // `URL` node. Only the target URL (the one after `](`) is a marker to
+        // hide; the label is the link's visible text and must stay visible.
+        // Compare by position: a sibling-derived node is a different object.
+        if (name === 'URL' && owner.name === 'Link') {
+          const targetUrl = getLinkTargetUrl(owner, doc);
+          if (
+            !targetUrl ||
+            targetUrl.from !== node.from ||
+            targetUrl.to !== node.to
+          ) {
+            return;
+          }
         }
 
         let active: boolean;

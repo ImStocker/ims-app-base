@@ -326,13 +326,24 @@ const presenterImageExtension: TokenizerAndRendererExtension = {
       resolved = href.slice(1, -1).trim();
     }
     let extraAttrs: Record<string, string> = {};
-    if (!resolved.startsWith('http') && !resolved.startsWith('data')) {
-      const file = parseImagePathToFile(resolved);
+    // The canonical `/file/{Store}/{FileId}` URL form (`http[s]://host/...` or
+    // root-relative) is a store reference too, so those images also become
+    // clickable and keep the resolved URL as-is.  Everything non-http passes
+    // through `parseImagePathToFile`.
+    if (resolved.startsWith('data')) {
+      // Data URLs are never store references.
+    } else {
       const appManager = presenterContext?.appManager;
-      if (file && appManager) {
-        resolved = appManager
-          .get(FileManager)
-          .getFileUrl(file as AssetPropValueFile);
+      const file = parseImagePathToFile(
+        resolved,
+        appManager?.$env.FILE_STORAGE_API_HOST,
+      );
+      if (file?.FileId && appManager) {
+        if (!resolved.startsWith('http')) {
+          resolved = appManager
+            .get(FileManager)
+            .getFileUrl(file as AssetPropValueFile);
+        }
         extraAttrs = {
           'data-store': file.Store ?? '',
           'data-file-id': file.FileId ?? '',

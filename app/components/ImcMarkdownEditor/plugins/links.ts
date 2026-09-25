@@ -1,7 +1,14 @@
 import { syntaxTree } from '@codemirror/language';
-import { RangeSet, StateField } from '@codemirror/state';
-import type { EditorState, Extension, Range } from '@codemirror/state';
+import {
+  RangeSet,
+  StateField,
+  type EditorState,
+  type Extension,
+  type Range,
+  type Text,
+} from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
+import type { SyntaxNode } from '@lezer/common';
 import EditorManager from '../../../logic/managers/EditorManager';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
 
@@ -37,6 +44,35 @@ function openLink(url: string, appManager: IAppManager) {
 // (`[`, `]`, `(`, `)` and the URL) stay hidden by the live-preview plugin.
 const linkMark = Decoration.mark({ class: 'cm-md-link' });
 
+// The grammar parses a URL-shaped *label* as a `URL` node too
+// (`[https://a](https://b)` has two URL children: the label and the target).
+// The target is the URL that directly follows the `(` `LinkMark` — the label
+// (which may itself be a URL or contain one) comes before the `]`.
+// NOTE: the returned node must be compared by position, not identity — the
+// sibling-derived node is a distinct object from the one an iterator yields.
+export function getLinkTargetUrl(
+  link: SyntaxNode,
+  doc: Text,
+): SyntaxNode | null {
+  // Autolinks (`<https://x>` or a bare URL) have a single URL child that is
+  // both text and target.
+  if (link.name === 'Autolink') return link.getChild('URL');
+  const linkMarks = link.getChildren('LinkMark');
+  if (linkMarks.length === 0) return link.getChild('URL');
+  let cur = link.firstChild;
+  while (cur) {
+    if (cur.name === 'LinkMark' && doc.sliceString(cur.from, cur.to) === '(') {
+      const next = cur.nextSibling;
+      if (!next) return null;
+      if (next.name === 'URL') return next;
+      if (next.name === 'Autolink') return next.getChild('URL');
+      return null;
+    }
+    cur = cur.nextSibling;
+  }
+  return null;
+}
+
 const decorate = (
   state: EditorState,
   _appManager: IAppManager,
@@ -44,12 +80,21 @@ const decorate = (
   const ranges: Range<Decoration>[] = [];
 
   const cursorInside = (from: number, to: number) =>
-    state.selection.ranges.some(
-      (r) => Math.max(from, r.from) <= Math.min(to, r.to),
+    state.selection.ranges.some((r) =>
+      // A collapsed caret counts as inside only when strictly between the
+      // delimiters — a caret sitting at the exact boundary (e.g. the document's
+      // first position, or right after the closing `)`) must keep the link
+      // rendered/clickable, like live-preview's reveal logic does.
+      r.from === r.to
+        ? r.from > from && r.from < to
+        : r.from <= to && r.to >= from,
     );
 
   // Walk the URL nodes (also matched/hidden by the live-preview plugin) and
-  // mark their enclosing Link/Autolink as clickable.
+  // mark their enclosing Link/Autolink as clickable. Only the *target* URL
+  // (last URL child of a Link) drives the mark — a URL-shaped label is a URL
+  // node too, but the Link must be marked only once.
+  const seenLinks = new Set<number>();
   syntaxTree(state).iterate({
     enter: (ref) => {
       if (ref.type.name !== 'URL') return;
@@ -57,6 +102,14 @@ const decorate = (
       if (!link) return;
       const linkName = link.name;
       if (linkName !== 'Link' && linkName !== 'Autolink') return;
+      const targetUrl = getLinkTargetUrl(link, state.doc);
+      if (
+        !targetUrl ||
+        targetUrl.from !== ref.node.from ||
+        targetUrl.to !== ref.node.to
+      ) {
+        return;
+      }
 
       // Skip incomplete links (`[]()` / `[text]()`): there is nothing to open,
       // and marking them clickable would be misleading.
@@ -69,6 +122,8 @@ const decorate = (
       // While the caret is inside the link, show the raw markdown so it can be
       // edited (consistent with wiki links / the live-preview marker reveal).
       if (cursorInside(from, to)) return;
+      if (seenLinks.has(from)) return;
+      seenLinks.add(from);
 
       ranges.push(linkMark.range(from, to));
     },
@@ -114,7 +169,7 @@ export const linkWidgets = (config: PluginConfig): Extension => {
       }
       if (!link) return false;
 
-      const urlNode = link.getChild('URL');
+      const urlNode = getLinkTargetUrl(link, view.state.doc);
       const url = urlNode
         ? view.state.doc.sliceString(urlNode.from, urlNode.to)
         : '';

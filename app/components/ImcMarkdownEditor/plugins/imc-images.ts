@@ -6,14 +6,45 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import FileManager from '../../../logic/managers/FileManager';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
 import type { AssetPropValueFile } from '../../../logic/types/Props';
+import { getLinkTargetUrl } from './links';
 
-export function parseImagePathToFile(path: string): {
+export function parseImagePathToFile(
+  path: string,
+  _fileStorageHost?: string,
+): {
   FileId?: string;
   Title: string;
   Dir: string | null;
   Store: string;
 } | null {
   const normalized = path.replace(/\\/g, '/').replace(/\/+$/, '');
+
+  /*
+  Disabled: we need to have way to get file title to display it correctly
+
+  const expectedHost = (fileStorageHost ?? '').replace(/\/+$/, '');
+  // Canonical uploaded-file URLs: `{FILE_STORAGE_API_HOST}/file/{Store}/{FileId}`.
+  // When the address carries a scheme+host it must match the configured
+  // file-storage host; the root-relative `/file/...` form (host `/`) is always
+  // accepted since it carries no host ambiguity.  Trailing `/thumb/…` and
+  // query/hash parts are tolerated, so any of these addresses can be resolved
+  // back to a file ref.
+  const url_match = normalized.match(
+    /^((?:https?:\/\/[^/?#]+\/)|\/)?file\/([^/?#]+)\/([a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12})(?:[/?#].*)?$/i,
+  );
+
+  if (url_match) {
+    const host = (url_match[1] ?? '').toLowerCase().replace(/\/+$/, '');
+    if (host && host !== '/' && expectedHost.toLowerCase() !== host) {
+      return null;
+    }
+    return {
+      Store: url_match[2],
+      Dir: null,
+      Title: url_match[3],
+      FileId: url_match[3],
+    };
+  }*/
 
   const match = normalized.match(
     /@(.*?)(\/(.*?))?\/([^/#]*)(#([a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}))?$/,
@@ -297,7 +328,10 @@ export const imagesExtension = (config: PluginConfig): Extension => {
       url = url.slice(1, -1).trim();
     }
     if (!url.startsWith('http') && !url.startsWith('data')) {
-      const file = parseImagePathToFile(url);
+      const file = parseImagePathToFile(
+        url,
+        config.appManager.$env.FILE_STORAGE_API_HOST,
+      );
       if (file) {
         url = config.appManager
           .get(FileManager)
@@ -317,7 +351,7 @@ export const imagesExtension = (config: PluginConfig): Extension => {
     syntaxTree(state).iterate({
       enter: (ctx) => {
         if (ctx.type.name === 'Image') {
-          const url_node = ctx.node.getChild('URL');
+          const url_node = getLinkTargetUrl(ctx.node, state.doc);
           if (!url_node) return;
           const url = state.doc.sliceString(url_node.from, url_node.to);
           if (!url) return;
