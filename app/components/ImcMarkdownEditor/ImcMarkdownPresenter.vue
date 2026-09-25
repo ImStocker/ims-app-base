@@ -399,7 +399,7 @@ presenterMarked.use({
       const id = presenterContext?.blockId
         ? makeAnchorTagId(presenterContext.blockId, 'h-' + anchor)
         : anchor;
-      const content = presenterMarked.parseInline(token.text);
+      const content = this.parser.parseInline(token.tokens);
       return `<h${token.depth} id="${escAttr(id)}" data-md-header-anchor="${escAttr(
         anchor,
       )}">${content}</h${token.depth}>`;
@@ -407,7 +407,10 @@ presenterMarked.use({
     link(token) {
       const href = token.href ?? '';
       const title = token.title ? ` title="${escAttr(token.title)}"` : '';
-      const text = presenterMarked.parseInline(token.text ?? '');
+      // Render the already-tokenized child tokens instead of re-parsing
+      // `token.text`: a URL in the label would otherwise be re-tokenized as
+      // a GFM autolink `link` token, and this renderer would recurse forever.
+      const text = this.parser.parseInline(token.tokens);
       return `<a class="cm-md-link" href="${escAttr(href)}"${title}>${text}</a>`;
     },
     blockquote(token) {
