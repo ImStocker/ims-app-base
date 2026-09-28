@@ -1,7 +1,39 @@
 <template>
   <div class="GalleryBlockItem">
+    <div
+      v-if="isEmpty"
+      class="GalleryBlockItem-slot"
+      @dragover.prevent
+      @drop.prevent.stop="onDrop"
+    >
+      <menu-button
+        v-if="!readonly"
+        class="GalleryBlockItem-slot-add"
+        :tooltip="$t('assetEditor.galleryBlockFillSlot')"
+        @show="shownDropdownMenuIdx = item.index"
+        @hide="shownDropdownMenuIdx = null"
+      >
+        <template #button="{ tooltip, show }">
+          <button
+            class="is-button is-button-icon GalleryBlockItem-slot-add-button"
+            :title="tooltip"
+            @click="show"
+          >
+            <i class="ri-image-add-line"></i>
+          </button>
+        </template>
+        <menu-list :menu-list="addMenuList"></menu-list>
+      </menu-button>
+      <div
+        class="GalleryBlockItem-slot-name"
+        :title="slotName || $t('assetEditor.galleryBlockEmptySlot')"
+      >
+        <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
+        <span class="GalleryBlockItem-slot-name-text">{{ slotName }}</span>
+      </div>
+    </div>
     <file-presenter
-      v-if="item.type === 'file'"
+      v-else-if="item.type === 'file'"
       :inline="true"
       class="GalleryBlockItem-content"
       :class="{
@@ -29,22 +61,29 @@
       class="GalleryBlockItem-content"
       @click="extimageClick()"
     />
-    <div v-if="item.title && allowCaption" class="GalleryBlockItem-caption">
+    <div
+      v-if="!isEmpty && item.title && allowCaption"
+      class="GalleryBlockItem-caption"
+    >
       {{ itemTitleAsString }}
     </div>
     <div
-      class="GalleryBlockItem-badges"
-      :class="{ 'state-active': item.index === shownDropdownMenuIdx }"
+      v-if="!isEmpty && slotName"
+      class="GalleryBlockItem-slotName"
+      :title="slotName"
     >
-      <menu-button
-        v-if="!readonly"
-        class="GalleryBlockItem-badges-one GalleryBlockItem-menu"
-        @show="shownDropdownMenuIdx = item.index"
-        @hide="shownDropdownMenuIdx = null"
-      >
-        <menu-list :menu-list="getMenuList(item)"></menu-list>
-      </menu-button>
+      <i class="ri-price-tag-3-line GalleryBlockItem-slotName-icon"></i>
+      <span class="GalleryBlockItem-slotName-text">{{ slotName }}</span>
     </div>
+    <menu-button
+      v-if="!readonly"
+      class="GalleryBlockItem-menu"
+      :class="{ 'state-active': item.index === shownDropdownMenuIdx }"
+      @show="shownDropdownMenuIdx = item.index"
+      @hide="shownDropdownMenuIdx = null"
+    >
+      <menu-list :menu-list="getMenuList(item)"></menu-list>
+    </menu-button>
   </div>
 </template>
 
@@ -60,7 +99,12 @@ import {
 import MenuButton from '#components/Common/MenuButton.vue';
 import FilePresenter from '#components/File/FilePresenter.vue';
 import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
-import type { GalleryBlockItemObject } from './GalleryBlock';
+import {
+  getGalleryItemSlotName,
+  isGalleryItemEmpty,
+  isGalleryItemSlot,
+  type GalleryBlockItemObject,
+} from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
 import type { MenuListItem } from '#logic/types/MenuList';
@@ -92,7 +136,7 @@ export default defineComponent({
       default: true,
     },
   },
-  emits: ['save', 'delete', 'set-caption'],
+  emits: ['save', 'delete', 'set-caption', 'set-name', 'fill', 'clear'],
   data() {
     return {
       loadDone: false,
@@ -103,6 +147,37 @@ export default defineComponent({
   computed: {
     projectId() {
       return this.$getAppManager().get(ProjectManager).getProjectInfo()?.id;
+    },
+    isEmpty() {
+      return isGalleryItemEmpty(this.item);
+    },
+    slotName() {
+      return getGalleryItemSlotName(this.item);
+    },
+    addMenuList(): MenuListItem[] {
+      const key = this.item?.key ?? null;
+      return [
+        {
+          title: this.$t('assetEditor.galleryBlockAddFileFromComputer'),
+          action: () => this.emitFill('file', key),
+          icon: 'file',
+        },
+        {
+          title: this.$t('assetEditor.galleryBlockAddVideoLink'),
+          action: () => this.emitFill('video', key),
+          icon: 'video',
+        },
+        {
+          title: this.$t('assetEditor.galleryBlockAddExternalImage'),
+          action: () => this.emitFill('image', key),
+          icon: 'image',
+        },
+        {
+          title: this.$t('assetEditor.galleryBlockPasteFromBuffer'),
+          action: () => this.emitFill('buffer', key),
+          icon: 'ri-clipboard-line',
+        },
+      ];
     },
     fileTooltip() {
       const file = this.item.value as AssetPropValueFile;
@@ -153,6 +228,12 @@ export default defineComponent({
         img.src = src;
       }
     },
+    emitFill(action: string, key: string | null, ev?: DragEvent) {
+      this.$emit('fill', { action, key, ev });
+    },
+    onDrop(ev: DragEvent) {
+      this.emitFill('drop', this.item?.key ?? null, ev);
+    },
     getMenuList(_item: GalleryBlockItemObject): MenuListItem[] {
       const items: MenuListItem[] = [];
       if (this.allowCaption) {
@@ -160,6 +241,18 @@ export default defineComponent({
           title: this.$t('assetEditor.galleryBlockSetCaption'),
           action: () => this.$emit('set-caption'),
           icon: 'ri-text',
+        });
+      }
+      items.push({
+        title: this.$t('assetEditor.blockMenu.setServiceName'),
+        action: () => this.$emit('set-name'),
+        icon: 'serviceName',
+      });
+      if (isGalleryItemSlot(_item) && !this.isEmpty) {
+        items.push({
+          title: this.$t('assetEditor.galleryBlockClearSlot'),
+          action: () => this.$emit('clear'),
+          icon: 'ri-eraser-line',
         });
       }
       items.push({
@@ -175,7 +268,7 @@ export default defineComponent({
         .get(DialogManager)
         .show(FilePresenterDialog, {
           value: this.itemValueAsString,
-          files: this.files.map((el) => el.value),
+          files: (this.files ?? []).map((el) => el.value),
           type: this.item.type,
         });
     },
@@ -197,7 +290,7 @@ export default defineComponent({
           .get(DialogManager)
           .show(FilePresenterDialog, {
             value: file,
-            files: this.files.map((el) => el.value),
+            files: (this.files ?? []).map((el) => el.value),
           });
       }
     },
@@ -220,6 +313,92 @@ export default defineComponent({
   }
 }
 
+.GalleryBlockItem-slot {
+  position: relative;
+  width: 200px;
+  max-width: 100%;
+  height: 200px;
+  box-sizing: border-box;
+  border: 1px dashed var(--local-border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px;
+  background: transparent;
+  color: var(--local-sub-text-color);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+}
+
+.GalleryBlockItem-slot-add {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.GalleryBlockItem-slot-add-button {
+  --button-width: 44px;
+  --button-height: 44px;
+  --button-padding: 0 !important;
+  --button-icon-gap: 0;
+  --button-border-width: 0;
+  --button-border-color: transparent !important;
+  --button-border-radius: 50%;
+  --button-bg-color: transparent !important;
+  --button-text-color: var(--color-accent) !important;
+  --button-outline-color: transparent !important;
+  font-size: 28px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.GalleryBlockItem-slot-name {
+  position: absolute;
+  top: calc(50% + 42px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 20px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  padding: 2px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--local-text-color);
+  background-color: color-mix(in srgb, var(--local-bg-color) 85%, transparent);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.GalleryBlockItem-slot-name-icon {
+  flex: none;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.GalleryBlockItem-slot-name-text {
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .GalleryBlockItem-caption {
   margin-top: 4px;
   text-align: center;
@@ -228,35 +407,66 @@ export default defineComponent({
   overflow-wrap: break-word;
 }
 
-.GalleryBlockItem-badges {
+.GalleryBlockItem-slotName {
   position: absolute;
-  top: 0px;
-  right: 0px;
-  background-color: var(--local-bg-color);
-  display: none;
-  border-bottom-left-radius: 2px;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  max-width: calc(100% - 44px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  padding: 2px 9px 2px 3px;
+  font-size: 12px;
+  line-height: 1.35;
   color: var(--local-text-color);
-
-  &.state-active {
-    display: flex;
-  }
+  background-color: color-mix(in srgb, var(--local-bg-color) 85%, transparent);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
-.GalleryBlockItem-badges-one {
-  padding: 2px 2px 0;
+.GalleryBlockItem-slotName-icon {
+  flex: none;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.7;
+}
 
-  &.GalleryBlockItem-menu {
-    padding: 0;
-  }
+.GalleryBlockItem-slotName-text {
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  &:first-child {
-    border-bottom-left-radius: 2px;
+.GalleryBlockItem-menu {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: none;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--local-bg-color) 85%, transparent);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+
+  &.state-active {
+    display: block;
   }
 }
 
 .GalleryBlockItem:hover {
-  .GalleryBlockItem-badges {
-    display: flex;
+  .GalleryBlockItem-menu {
+    display: block;
+  }
+
+  .GalleryBlockItem-slotName {
+    opacity: 0.35;
   }
 }
 </style>

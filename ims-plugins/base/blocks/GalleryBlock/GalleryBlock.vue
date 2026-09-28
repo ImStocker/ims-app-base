@@ -30,6 +30,9 @@
               :files="filesForGallery"
               @delete="deleteImage(item)"
               @set-caption="onSetGalleryItemCaption(item)"
+              @set-name="onSetGalleryItemName(item)"
+              @fill="onFillItem"
+              @clear="clearSlot(item)"
             ></gallery-block-item>
           </screenshot-renderer>
         </template>
@@ -68,7 +71,8 @@
             :title="tooltip"
             @click="show"
           >
-            {{ $t('mainMenu.add') }}
+            <i class="ri-image-add-line"></i>
+            <span>{{ $t('assetEditor.galleryBlockAddMedia') }}</span>
           </button>
         </template>
         <menu-list :menu-list="menuList"></menu-list>
@@ -99,8 +103,12 @@ import { type PropType, defineComponent } from 'vue';
 import UiManager from '#logic/managers/UiManager';
 import type { AssetDisplayMode, ResolvedAssetBlock } from '#logic/utils/assets';
 import {
+  clearGallerySlot,
+  createGallerySlot,
   extractGalleryBlockEntries,
+  isGalleryItemEmpty,
   setGalleryItemCaption,
+  setGalleryItemName,
   type GalleryBlockExtractedEntries,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
@@ -110,6 +118,7 @@ import {
   encodeAssetPropPartWithCapitals,
   makeBlockRef,
   normalizeAssetPropPart,
+  type AssetProps,
 } from '#logic/types/Props';
 import MenuButton from '#components/Common/MenuButton.vue';
 import DialogManager from '#logic/managers/DialogManager';
@@ -123,9 +132,11 @@ import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import ScreenshotRenderer from '#components/Common/ScreenshotRenderer.vue';
 import PromptDialog from '#components/Common/PromptDialog.vue';
+import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import type { UploadingJob } from '#logic/managers/EditorManager';
 import EditorManager from '#logic/managers/EditorManager';
 import { getNextIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 const AllowedExtensions = new Set(['jpg', 'jpeg', 'png', 'bmp', 'svg', 'gif']);
 
@@ -169,6 +180,7 @@ export default defineComponent({
       uploadTotal: 0,
       uploadDone: 0,
       readyStates: new Map<string, boolean>(),
+      fillTargetKey: null as string | null,
     };
   },
   computed: {
@@ -179,32 +191,39 @@ export default defineComponent({
       return [
         {
           title: this.$t('assetEditor.galleryBlockAddFileFromComputer'),
-          action: this.selectFiles,
+          action: () => this.selectFiles(null),
           icon: 'file',
         },
         {
           title: this.$t('assetEditor.galleryBlockAddVideoLink'),
-          action: this.addVideoLink,
+          action: () => this.addVideoLink(null),
           icon: 'video',
         },
         {
           title: this.$t('assetEditor.galleryBlockAddExternalImage'),
-          action: this.addImageLink,
+          action: () => this.addImageLink(null),
           icon: 'image',
         },
         {
           title: this.$t('assetEditor.galleryBlockPasteFromBuffer'),
-          action: this.getFileFromBuffer,
+          action: () => this.getFileFromBuffer(null),
           icon: 'ri-clipboard-line',
+        },
+        {
+          title: this.$t('assetEditor.galleryBlockCreateSlot'),
+          action: () => this.createSlot(),
+          icon: 'ri-folder-add-line',
         },
       ];
     },
     filesForGallery() {
-      const filtered_items = this.galleryItems;
-      if (!filtered_items || !filtered_items.length) {
+      const filled_items = this.galleryItems.filter(
+        (item) => !isGalleryItemEmpty(item),
+      );
+      if (!filled_items || !filled_items.length) {
         return undefined;
       }
-      return this.galleryItems;
+      return filled_items;
     },
     fileAccept() {
       return [...AllowedExtensions].map((x) => `.${x}`).join(',');
@@ -267,11 +286,14 @@ export default defineComponent({
     showError(error: any) {
       this.$getAppManager().get(UiManager).showError(error);
     },
-    async uploadFiles(files: { blob: Blob; name: string }[]) {
+    async uploadFiles(
+      files: { blob: Blob; name: string }[],
+      target_key: string | null = null,
+    ) {
       this.uploadTotal += files.length;
       for (const file of files) {
         try {
-          await this.uploadBlob(file.blob, file.name);
+          await this.uploadBlob(file.blob, file.name, target_key);
         } finally {
           this.uploadJob = null;
           this.uploadDone++;
@@ -282,7 +304,11 @@ export default defineComponent({
         this.uploadDone = 0;
       }
     },
-    async uploadBlob(blob: Blob, file_name: string) {
+    async uploadBlob(
+      blob: Blob,
+      file_name: string,
+      target_key: string | null = null,
+    ) {
       await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
@@ -292,23 +318,26 @@ export default defineComponent({
           const res = await this.uploadJob.awaitResult();
           if (!res) return;
 
-          const new_key = res.FileId;
+          const new_key = target_key ?? res.FileId;
+          const props: AssetProps = {
+            [`${new_key}\\value`]: res,
+            [`${new_key}\\type`]: 'file',
+          };
+          if (!target_key) {
+            props[`${new_key}\\index`] = getNextIndexWithTimestamp(
+              this.realEntries.maxIndex,
+            );
+          }
           this.assetChanger.setBlockPropKeys(
             this.resolvedBlock.assetId,
             makeBlockRef(this.resolvedBlock),
             null,
-            {
-              [`${new_key}\\value`]: res,
-              [`${new_key}\\type`]: 'file',
-              [`${new_key}\\index`]: getNextIndexWithTimestamp(
-                this.realEntries.maxIndex,
-              ),
-            },
+            props,
           );
           this.save();
         });
     },
-    async processFiles(files: File[]) {
+    async processFiles(files: File[], target_key: string | null = null) {
       const files_to_upload: { blob: Blob; name: string }[] = [];
       for (const file of files) {
         const ext = file.name.split('.').pop();
@@ -325,12 +354,16 @@ export default defineComponent({
           });
         }
       }
-      await this.uploadFiles(files_to_upload);
+      if (!files_to_upload.length) return;
+      if (target_key) files_to_upload.splice(1);
+      await this.uploadFiles(files_to_upload, target_key);
     },
     async handleFile(e: any) {
       if (this.readonly) {
         return;
       }
+      const target_key = this.fillTargetKey;
+      this.fillTargetKey = null;
       let files: File[];
       if (e.target && e.target.files) {
         files = [...e.target.files];
@@ -341,18 +374,22 @@ export default defineComponent({
         files = [...(this.$refs.fileInput as any).files];
       else files = [];
 
-      await this.processFiles(files);
+      await this.processFiles(files, target_key);
     },
-    selectFiles() {
+    selectFiles(target_key: string | null = null) {
+      this.fillTargetKey = target_key;
       const upload_input = this.$refs.fileInput as HTMLInputElement | undefined;
-      if (!upload_input) return;
+      if (!upload_input) {
+        this.fillTargetKey = null;
+        return;
+      }
       upload_input.onchange = (e) => {
         this.handleFile(e);
       };
       upload_input.click();
     },
-    async getFileFromBuffer() {
-      this.$getAppManager()
+    async getFileFromBuffer(target_key: string | null = null) {
+      await this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
           const files: { blob: Blob; name: string }[] =
@@ -362,10 +399,11 @@ export default defineComponent({
               this.$t('assetEditor.galleryBlockPasteFromBufferEmpty'),
             );
           }
-          await this.uploadFiles(files);
+          if (target_key) files.splice(1);
+          await this.uploadFiles(files, target_key);
         });
     },
-    async addVideoLink() {
+    async addVideoLink(target_key: string | null = null) {
       const video = await this.$getAppManager()
         .get(DialogManager)
         .show(ExternalLinkDialog, {
@@ -377,23 +415,27 @@ export default defineComponent({
           fileType: 'video',
         });
       if (video) {
-        const new_key = encodeAssetPropPartWithCapitals(video.value);
+        const new_key =
+          target_key ?? encodeAssetPropPartWithCapitals(video.value);
+        const props: AssetProps = {
+          [`${new_key}\\value`]: video.value,
+          [`${new_key}\\type`]: video.type,
+        };
+        if (!target_key) {
+          props[`${new_key}\\index`] = getNextIndexWithTimestamp(
+            this.realEntries.maxIndex,
+          );
+        }
         this.assetChanger.setBlockPropKeys(
           this.resolvedBlock.assetId,
           makeBlockRef(this.resolvedBlock),
           null,
-          {
-            [`${new_key}\\value`]: video.value,
-            [`${new_key}\\type`]: video.type,
-            [`${new_key}\\index`]: getNextIndexWithTimestamp(
-              this.realEntries.maxIndex,
-            ),
-          },
+          props,
         );
         this.save();
       }
     },
-    async addImageLink() {
+    async addImageLink(target_key: string | null = null) {
       const image = await this.$getAppManager()
         .get(DialogManager)
         .show(ExternalLinkDialog, {
@@ -405,21 +447,131 @@ export default defineComponent({
           ),
         });
       if (image) {
-        const new_key = normalizeAssetPropPart(image.value);
+        const new_key = target_key ?? normalizeAssetPropPart(image.value);
+        const props: AssetProps = {
+          [`${new_key}\\value`]: image.value,
+          [`${new_key}\\type`]: image.type,
+        };
+        if (!target_key) {
+          props[`${new_key}\\index`] = getNextIndexWithTimestamp(
+            this.realEntries.maxIndex,
+          );
+        }
         this.assetChanger.setBlockPropKeys(
           this.resolvedBlock.assetId,
           makeBlockRef(this.resolvedBlock),
           null,
-          {
-            [`${new_key}\\value`]: image.value,
-            [`${new_key}\\type`]: image.type,
-            [`${new_key}\\index`]: getNextIndexWithTimestamp(
-              this.realEntries.maxIndex,
-            ),
-          },
+          props,
         );
         this.save();
       }
+    },
+    async onFillItem(payload: {
+      action: string;
+      key: string | null;
+      ev?: DragEvent;
+    }) {
+      if (this.readonly) return;
+      const { action, key, ev } = payload;
+      if (action === 'file') {
+        this.selectFiles(key);
+      } else if (action === 'video') {
+        await this.addVideoLink(key);
+      } else if (action === 'image') {
+        await this.addImageLink(key);
+      } else if (action === 'buffer') {
+        await this.getFileFromBuffer(key);
+      } else if (action === 'drop') {
+        if (!ev) return;
+        this.fillTargetKey = key;
+        await this.handleFile(ev);
+      }
+    },
+    validateSlotName(current_key: string | null, val: string) {
+      const name = (val ?? '').trim();
+      if (!name) {
+        if (current_key === null) {
+          throw new Error(this.$t('assetEditor.galleryBlockSlotNameEmpty'));
+        }
+        return name;
+      }
+      const new_key = normalizeAssetPropPart(name);
+      if (
+        new_key !== current_key &&
+        this.realEntries.map.hasOwnProperty(new_key)
+      ) {
+        throw new Error(this.$t('assetEditor.galleryBlockSlotNameAlreadyUsed'));
+      }
+      return name;
+    },
+    async askSlotName(value: string | undefined, current_key: string | null) {
+      return await this.$getAppManager()
+        .get(DialogManager)
+        .show(PromptDialog, {
+          header: this.$t('assetEditor.galleryBlockSetSlotName'),
+          message: this.$t('assetEditor.galleryBlockSetSlotNameMessage'),
+          placeholder: this.$t('fields.serviceName'),
+          yesCaption: this.$t('common.dialogs.save'),
+          type: 'text',
+          value,
+          validate: (val: string) => this.validateSlotName(current_key, val),
+        });
+    },
+    async confirmSlotRemoval() {
+      const answer = await this.$getAppManager()
+        .get(DialogManager)
+        .show(ConfirmDialog, {
+          header: this.$t('assetEditor.galleryBlockRemoveSlot'),
+          message: this.$t('assetEditor.galleryBlockRemoveSlotConfirm'),
+          danger: true,
+        });
+      return answer === true;
+    },
+    async createSlot() {
+      if (this.readonly) return;
+      const name = await this.askSlotName(undefined, null);
+      if (!name) return;
+      createGallerySlot(
+        this.assetChanger,
+        this.resolvedBlock,
+        normalizeAssetPropPart(name),
+        name,
+        getNextIndexWithTimestamp(this.realEntries.maxIndex),
+      );
+      this.save();
+    },
+    async onSetGalleryItemName(item: GalleryBlockItemObject) {
+      if (this.readonly) return;
+      const is_empty = isGalleryItemEmpty(item);
+      const name = await this.askSlotName(
+        castAssetPropValueToString(item.name) || undefined,
+        item.key,
+      );
+      if (name === undefined || name === null) return;
+      const trimmed = name.trim();
+      if (!trimmed) {
+        if (is_empty) {
+          if (await this.confirmSlotRemoval()) this.deleteImage(item);
+        } else {
+          setGalleryItemName(
+            this.assetChanger,
+            this.resolvedBlock,
+            item.key,
+            null,
+            uuidv4(),
+          );
+          this.save();
+        }
+        return;
+      }
+      setGalleryItemName(
+        this.assetChanger,
+        this.resolvedBlock,
+        item.key,
+        trimmed,
+        normalizeAssetPropPart(trimmed),
+      );
+      this.save();
     },
     save() {
       this.$emit('save');
@@ -443,6 +595,14 @@ export default defineComponent({
       );
       this.save();
     },
+    clearSlot(item: GalleryBlockItemObject) {
+      this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          clearGallerySlot(this.assetChanger, this.resolvedBlock, item.key);
+          this.save();
+        });
+    },
     deleteImage(item: GalleryBlockItemObject) {
       this.$getAppManager()
         .get(UiManager)
@@ -461,6 +621,7 @@ export default defineComponent({
         return;
       }
       this.dragEffect = 0;
+      this.fillTargetKey = null;
       this.handleFile(ev);
     },
     dragFileEnter(ev: DragEvent) {

@@ -515,7 +515,9 @@ export function castAssetPropValueToArray(a: AssetPropValue): number[] {
   return Array.isArray(a) ? (a as number[]) : [];
 }
 
-export function castAssetPropValueToString(a: AssetPropValue): string {
+export function castAssetPropValueToString(
+  a: AssetPropValue | undefined,
+): string {
   const a_type = getAssetPropType(a);
   switch (a_type) {
     case undefined:
