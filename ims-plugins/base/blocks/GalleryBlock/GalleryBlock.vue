@@ -128,6 +128,7 @@ import DragOverlay from '#components/Common/DragOverlay.vue';
 import type { AssetBlockEditorVM } from '#logic/vm/AssetBlockEditorVM';
 import ExternalLinkDialog from './ExternalLinkDialog.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import type { MenuListItem } from '#logic/types/MenuList';
 import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { AssetChanger } from '#logic/types/AssetChanger';
 import ScreenshotRenderer from '#components/Common/ScreenshotRenderer.vue';
@@ -187,7 +188,7 @@ export default defineComponent({
     viewReady() {
       return [...this.readyStates.values()].every((x) => x);
     },
-    menuList() {
+    menuList(): MenuListItem[] {
       return [
         {
           title: this.$t('assetEditor.galleryBlockAddFileFromComputer'),
@@ -208,6 +209,9 @@ export default defineComponent({
           title: this.$t('assetEditor.galleryBlockPasteFromBuffer'),
           action: () => this.getFileFromBuffer(null),
           icon: 'ri-clipboard-line',
+        },
+        {
+          type: 'separator',
         },
         {
           title: this.$t('assetEditor.galleryBlockCreateSlot'),
