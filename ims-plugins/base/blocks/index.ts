@@ -1,7 +1,7 @@
 import { ChatBlockDefinition } from './ChatBlock/ChatBlockDefinition';
 import { CommentBlockDefinition } from './CommentBlock/CommentBlockDefinition';
 import { EmbedBlockDefinition } from './EmbedBlock/EmbedBlockDefinition';
-import { GalleryDefinition } from './GalleryBlock/GalleryDefinition';
+import { GalleryBlockDefinition } from './GalleryBlock/GalleryBlockDefinition';
 import { PropsBlockDefinition } from './PropsBlock/PropsBlockDefinition';
 import { PropBlockDefinition } from './PropBlock/PropBlockDefinition';
 import { TextBlockDefinition } from './TextBlock/TextBlockDefinition';
@@ -18,7 +18,7 @@ const list = [
   new ValueTableDefinition(),
   new PropsBlockDefinition(),
   new PropBlockDefinition(),
-  new GalleryDefinition(),
+  new GalleryBlockDefinition(),
   new CommentBlockDefinition(),
   new EmbedBlockDefinition(),
   new ChatBlockDefinition(),

@@ -1,0 +1,76 @@
+import EditorManager from '#logic/managers/EditorManager';
+import type { IAppManager } from '#logic/managers/IAppManager';
+import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
+import {
+  BlockTypeDefinition,
+  type BlockProvidedVariable,
+} from '#logic/types/BlockTypeDefinition';
+import { castAssetPropValueToString } from '#logic/types/Props';
+import type { PropsFormFieldDef } from '#logic/types/PropsForm';
+import type { ResolvedAssetBlock } from '#logic/utils/assets';
+import { galleryAiSpec } from './GalleryAiSpec';
+import {
+  extractGalleryBlockEntries,
+  getGalleryItemSlotName,
+  isGalleryItemSlot,
+  type GalleryBlockItemObject,
+} from './GalleryBlock';
+
+function extractGallerySlotField(
+  item: GalleryBlockItemObject,
+): PropsFormFieldDef {
+  const slot_name = getGalleryItemSlotName(item);
+  return {
+    index: item.index,
+    propKey: `${item.key}\\value`,
+    propTitle: castAssetPropValueToString(item.title) || slot_name,
+    propName: slot_name,
+    type:
+      item.type === null
+        ? 'attachment'
+        : item.type === 'file'
+          ? 'attachment'
+          : 'string',
+    multiple: false,
+    params: {},
+    differentDefinition: false,
+    hint: null,
+  };
+}
+
+export class GalleryBlockDefinition extends BlockTypeDefinition {
+  name = 'gallery';
+  component = async () => (await import('./GalleryBlock.vue')).default;
+  icon = 'gallery-fill';
+  override group = 'data';
+  override index = 14;
+  override aiSpec = galleryAiSpec.aiSpec;
+
+  override getBlockProvidedVariables(
+    _asset: AssetFullInstanceR,
+    resolved_block: ResolvedAssetBlock,
+    app_manager: IAppManager,
+  ): BlockProvidedVariable[] {
+    const field_types_map = app_manager.get(EditorManager).getFieldTypesMap();
+
+    const res: BlockProvidedVariable[] = [];
+    const entries = extractGalleryBlockEntries(resolved_block).list;
+    for (const item of entries) {
+      if (!isGalleryItemSlot(item)) continue;
+      const field = extractGallerySlotField(item);
+      res.push({
+        field,
+        blockId: resolved_block.id,
+        blockName: resolved_block.name,
+        dataType: field.type
+          ? (field_types_map[field.type]?.dataTypes ?? [])
+          : [],
+        name: field.propName ?? '',
+        title: field.propTitle,
+      });
+    }
+    return res;
+  }
+}
+
+export { GalleryBlockDefinition as GalleryDefinition };
