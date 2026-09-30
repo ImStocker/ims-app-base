@@ -3,7 +3,12 @@
     <div
       v-if="isEmpty"
       class="GalleryBlockItem-slot"
-      @dragover.prevent
+      :class="{
+        'state-drag-over': isDropTarget && slotDragEffect === 1,
+        'state-drag-over-error': isDropTarget && slotDragEffect === -1,
+      }"
+      @dragover.prevent.stop="onSlotDragOver"
+      @dragleave.prevent.stop="onSlotDragLeave"
       @drop.prevent.stop="onDrop"
     >
       <menu-button
@@ -26,11 +31,20 @@
       </menu-button>
       <div
         class="GalleryBlockItem-slot-name"
-        :title="slotName || $t('assetEditor.galleryBlockEmptySlot')"
+        :title="item.name || $t('assetEditor.galleryBlockEmptySlot')"
       >
         <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
-        <span class="GalleryBlockItem-slot-name-text">{{ slotName }}</span>
+        <span class="GalleryBlockItem-slot-name-text">{{ item.name }}</span>
       </div>
+      <drag-overlay
+        :visible="isDropTarget"
+        :error="slotDragEffect === -1"
+        :text="
+          slotDragEffect === -1
+            ? $t('dragOverlay.imagesOnly')
+            : $t('assetEditor.galleryBlockDropToSlot')
+        "
+      ></drag-overlay>
     </div>
     <file-presenter
       v-else-if="item.type === 'file'"
@@ -68,12 +82,12 @@
       {{ itemTitleAsString }}
     </div>
     <div
-      v-if="!isEmpty && slotName"
+      v-if="!isEmpty && item.name"
       class="GalleryBlockItem-slotName"
-      :title="slotName"
+      :title="item.name"
     >
       <i class="ri-price-tag-3-line GalleryBlockItem-slotName-icon"></i>
-      <span class="GalleryBlockItem-slotName-text">{{ slotName }}</span>
+      <span class="GalleryBlockItem-slotName-text">{{ item.name }}</span>
     </div>
     <menu-button
       v-if="!readonly"
@@ -82,7 +96,7 @@
       @show="shownDropdownMenuIdx = item.index"
       @hide="shownDropdownMenuIdx = null"
     >
-      <menu-list :menu-list="getMenuList(item)"></menu-list>
+      <menu-list :menu-list="getMenuList()"></menu-list>
     </menu-button>
   </div>
 </template>
@@ -97,16 +111,18 @@ import {
   castAssetPropValueToString,
 } from '#logic/types/Props';
 import MenuButton from '#components/Common/MenuButton.vue';
+import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import FilePresenter from '#components/File/FilePresenter.vue';
 import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import {
-  getGalleryItemSlotName,
   isGalleryItemEmpty,
   isGalleryItemSlot,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import DragOverlay from '#components/Common/DragOverlay.vue';
+import { nodeContainsElement } from '#components/utils/DomElementUtils';
 import type { MenuListItem } from '#logic/types/MenuList';
 import EditorManager from '#logic/managers/EditorManager';
 import { useFilePresenterParams } from '#components/File/FilePresenter';
@@ -120,6 +136,7 @@ export default defineComponent({
     MenuButton,
     GalleryBlockVideo,
     MenuList,
+    DragOverlay,
   },
   props: {
     readonly: {
@@ -135,13 +152,32 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    allowServiceName: {
+      type: Boolean,
+      default: true,
+    },
+    allowDrop: {
+      type: Boolean,
+      default: true,
+    },
   },
-  emits: ['save', 'delete', 'set-caption', 'set-name', 'fill', 'clear'],
+  emits: [
+    'save',
+    'delete',
+    'set-caption',
+    'set-name',
+    'fill',
+    'clear',
+    'slot-drag-enter',
+    'slot-drag-leave',
+  ],
   data() {
     return {
       loadDone: false,
       shownDropdownMenuIdx: null as number | null,
       imagePixilatedMode: false,
+      dragOverSlot: false,
+      slotDragEffect: 0,
     };
   },
   computed: {
@@ -151,8 +187,16 @@ export default defineComponent({
     isEmpty() {
       return isGalleryItemEmpty(this.item);
     },
-    slotName() {
-      return getGalleryItemSlotName(this.item);
+    isSlot() {
+      return isGalleryItemSlot(this.item);
+    },
+    isDropTarget() {
+      return (
+        !this.readonly &&
+        this.allowDrop &&
+        this.dragOverSlot &&
+        this.slotDragEffect !== 0
+      );
     },
     addMenuList(): MenuListItem[] {
       const key = this.item?.key ?? null;
@@ -231,24 +275,60 @@ export default defineComponent({
     emitFill(action: string, key: string | null, ev?: DragEvent) {
       this.$emit('fill', { action, key, ev });
     },
+    onSlotDragOver(ev: DragEvent) {
+      if (this.readonly || !this.allowDrop) {
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'none';
+        return;
+      }
+      const is_file_move =
+        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
+      let effect = is_file_move ? 1 : 0;
+      if (is_file_move && ev.dataTransfer && ev.dataTransfer.items) {
+        const are_images = [...ev.dataTransfer.items].some((i) => {
+          return /^image\/.+$/i.test(i.type);
+        });
+        effect = are_images ? 1 : -1;
+      }
+      if (!this.dragOverSlot) {
+        this.dragOverSlot = true;
+        this.$emit('slot-drag-enter');
+      }
+      this.slotDragEffect = effect;
+      if (ev.dataTransfer && effect !== 1) {
+        ev.dataTransfer.dropEffect = 'none';
+      }
+    },
+    onSlotDragLeave(ev: DragEvent) {
+      if (nodeContainsElement(this.$el, ev.relatedTarget as Node)) return;
+      this.resetSlotDragState();
+    },
+    resetSlotDragState() {
+      if (!this.dragOverSlot) return;
+      this.dragOverSlot = false;
+      this.slotDragEffect = 0;
+      this.$emit('slot-drag-leave');
+    },
     onDrop(ev: DragEvent) {
+      this.resetSlotDragState();
       this.emitFill('drop', this.item?.key ?? null, ev);
     },
-    getMenuList(_item: GalleryBlockItemObject): MenuListItem[] {
+    getMenuList(): MenuListItem[] {
       const items: MenuListItem[] = [];
-      if (this.allowCaption) {
+      if (this.allowCaption && !this.isEmpty) {
         items.push({
           title: this.$t('assetEditor.galleryBlockSetCaption'),
           action: () => this.$emit('set-caption'),
           icon: 'ri-text',
         });
       }
-      items.push({
-        title: this.$t('assetEditor.blockMenu.setServiceName'),
-        action: () => this.$emit('set-name'),
-        icon: 'serviceName',
-      });
-      if (isGalleryItemSlot(_item) && !this.isEmpty) {
+      if (this.allowServiceName) {
+        items.push({
+          title: this.$t('assetEditor.blockMenu.setServiceName'),
+          action: () => this.$emit('set-name'),
+          icon: 'serviceName',
+        });
+      }
+      if (this.isSlot && !this.isEmpty) {
         items.push({
           title: this.$t('assetEditor.galleryBlockClearSlot'),
           action: () => this.$emit('clear'),
@@ -256,12 +336,27 @@ export default defineComponent({
         });
       }
       items.push({
-        title: this.$t('assetEditor.blockMenu.delete'),
-        action: () => this.$emit('delete'),
+        title: this.isSlot
+          ? this.$t('assetEditor.galleryBlockDeleteSlot')
+          : this.$t('assetEditor.blockMenu.delete'),
+        action: () => this.deleteItem(),
         icon: 'delete',
         danger: true,
       });
       return items;
+    },
+    async deleteItem() {
+      if (this.isSlot) {
+        const answer = await this.$getAppManager()
+          .get(DialogManager)
+          .show(ConfirmDialog, {
+            header: this.$t('assetEditor.galleryBlockRemoveSlot'),
+            message: this.$t('assetEditor.galleryBlockRemoveSlotConfirm'),
+            danger: true,
+          });
+        if (answer !== true) return;
+      }
+      this.$emit('delete');
     },
     extimageClick() {
       this.$getAppManager()
@@ -335,7 +430,22 @@ export default defineComponent({
 
   &:hover {
     border-color: var(--color-accent);
-    background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  &.state-drag-over {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  }
+
+  &.state-drag-over-error {
+    border-color: var(--color-main-error);
+    background: color-mix(in srgb, var(--color-main-error) 8%, transparent);
+  }
+
+  &.state-drag-over .GalleryBlockItem-slot-add,
+  &.state-drag-over-error .GalleryBlockItem-slot-add {
+    opacity: 0;
   }
 }
 

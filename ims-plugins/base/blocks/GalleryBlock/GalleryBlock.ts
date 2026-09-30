@@ -1,9 +1,13 @@
-import type { AssetPropValue } from '#logic/types/Props';
-import { castAssetPropValueToString, makeBlockRef } from '#logic/types/Props';
-import type { AssetChanger } from '#logic/types/AssetChanger';
+import type { AssetPropValue, AssetPropValueFile } from '#logic/types/Props';
+import {
+  castAssetPropValueToFloat,
+  castAssetPropValueToString,
+  convertAssetPropsToPlainObject,
+  encodeAssetPropPartWithCapitals,
+  normalizeAssetPropPart,
+} from '#logic/types/Props';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
 import type { ExtractedEntriesForBlock } from '#components/Asset/Editor/extractEntriesForBlock';
-import { extractEntriesForBlock } from '#components/Asset/Editor/extractEntriesForBlock';
 
 export type GalleryBlockItemType =
   | 'file'
@@ -18,7 +22,7 @@ export type GalleryBlockItemObject = {
   type: GalleryBlockItemType | null;
   value: AssetPropValue | null;
   title?: AssetPropValue;
-  name?: AssetPropValue;
+  name?: string;
   inherited: boolean;
   index: number;
 };
@@ -29,15 +33,55 @@ export type GalleryBlockExtractedEntries =
 export function extractGalleryBlockEntries(
   block: ResolvedAssetBlock,
 ): GalleryBlockExtractedEntries {
-  return extractEntriesForBlock(block, (props, base_entry) => {
-    return {
-      ...base_entry,
-      type: (props.type ?? null) as GalleryBlockItemType | null,
-      value: props.value ?? null,
-      title: props.title,
-      name: props.name,
+  const plain = convertAssetPropsToPlainObject<Record<string, any>>(
+    block.computed,
+  );
+
+  const slots = plain.__slots ? plain.__slots : {};
+
+  const map: { [key: string]: GalleryBlockItemObject } = {};
+  const list: GalleryBlockItemObject[] = [];
+  let maxIndex = 0;
+
+  const inherited_plain = block.inherited
+    ? convertAssetPropsToPlainObject(block.inherited)
+    : null;
+
+  for (const [key, entry] of Object.entries(plain)) {
+    if (key === '__slots' || key[0] === '~') continue;
+
+    const meta = slots[key];
+
+    const prop_inherited =
+      !!inherited_plain && inherited_plain.hasOwnProperty(key);
+    const index =
+      castAssetPropValueToFloat(meta?.index) ??
+      castAssetPropValueToFloat(entry?.index) ??
+      0;
+
+    const res: GalleryBlockItemObject = {
+      key,
+      index,
+      inherited: prop_inherited,
+      name: meta?.name ?? entry?.name,
+      title: entry?.title,
+      value: entry?.value ?? null,
+      type: entry?.type ?? null,
     };
-  });
+
+    list.push(res);
+    map[key] = res;
+    if (maxIndex < index) {
+      maxIndex = index;
+    }
+  }
+
+  list.sort((a, b) => a.index - b.index);
+  return {
+    maxIndex,
+    list,
+    map,
+  };
 }
 
 export function isGalleryItemEmpty(
@@ -54,101 +98,16 @@ export function isGalleryItemSlot(
   return !!castAssetPropValueToString(item.name);
 }
 
-export function getGalleryItemSlotName(
-  item: Pick<GalleryBlockItemObject, 'name'> | null | undefined,
-): string {
-  if (!item) return '';
-  return castAssetPropValueToString(item.name) ?? '';
-}
-
-export function setGalleryItemCaption(
-  assetChanger: AssetChanger,
-  resolved_block: ResolvedAssetBlock,
-  key: string,
+export function getGalleryItemKey(
+  type: GalleryBlockItemType,
   value: AssetPropValue,
-) {
-  assetChanger.setBlockPropKeys(
-    resolved_block.assetId,
-    makeBlockRef(resolved_block),
-    null,
-    {
-      [`${key}\\title`]: value,
-    },
-  );
-}
-
-/**
- * Задаёт служебное имя слота.
- * Если имя задано, ключ записи должен совпадать с нормализованным именем,
- * поэтому ключ переименовывается. Пустое имя возвращает записи uuid-ключ.
- */
-export function setGalleryItemName(
-  assetChanger: AssetChanger,
-  resolved_block: ResolvedAssetBlock,
-  key: string,
-  name: string | null,
-  new_key: string,
-) {
-  const op = assetChanger.makeOpId();
-  const asset_id = resolved_block.assetId;
-  const block_ref = makeBlockRef(resolved_block);
-  if (new_key !== key) {
-    assetChanger.renameBlockPropKey(
-      asset_id,
-      block_ref,
-      null,
-      key,
-      new_key,
-      op,
-    );
+): string {
+  if (type === 'file') {
+    return (value as AssetPropValueFile).FileId;
   }
-  assetChanger.setBlockPropKey(
-    asset_id,
-    block_ref,
-    null,
-    `${new_key}\\name`,
-    name,
-    op,
-  );
-}
+  const val = castAssetPropValueToString(value);
 
-/**
- * Создаёт пустой именованный слот: у записи есть только имя и позиция,
- * ни типа, ни значения. Такой слот отображается плейсхолдером и может быть
- * заполнен позже файлом, ссылкой или из буфера обмена.
- */
-export function createGallerySlot(
-  assetChanger: AssetChanger,
-  resolved_block: ResolvedAssetBlock,
-  key: string,
-  name: string,
-  index: number,
-) {
-  assetChanger.setBlockPropKeys(
-    resolved_block.assetId,
-    makeBlockRef(resolved_block),
-    null,
-    {
-      [`${key}\\name`]: name,
-      [`${key}\\index`]: index,
-    },
-  );
-}
-
-/**
- * Очищает содержимое слота, не удаляя саму запись: имя и позиция остаются,
- * а тип, значение и подпись удаляются. После очистки слот снова становится
- * пустым и может быть заполнен позже.
- */
-export function clearGallerySlot(
-  assetChanger: AssetChanger,
-  resolved_block: ResolvedAssetBlock,
-  key: string,
-) {
-  assetChanger.deleteBlockPropKeys(
-    resolved_block.assetId,
-    makeBlockRef(resolved_block),
-    null,
-    [`${key}\\type`, `${key}\\value`, `${key}\\title`],
-  );
+  return type === 'extimage'
+    ? normalizeAssetPropPart(val)
+    : encodeAssetPropPartWithCapitals(val);
 }

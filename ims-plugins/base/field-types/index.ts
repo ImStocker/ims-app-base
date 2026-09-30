@@ -11,6 +11,7 @@ import { EmailFieldController } from '#logic/types/fields/EmailField/EmailFieldC
 import { EnumFieldController } from '#logic/types/fields/EnumField/EnumFieldController';
 import { EnumRadioFieldController } from '#logic/types/fields/EnumRadioField/EnumRadioFieldController';
 import { FieldParamsFieldController } from '#logic/types/fields/FieldParamsField/FieldParamsFieldController';
+import { GalleryItemFieldController } from '#logic/types/fields/GalleryItemField/GalleryItemFieldController';
 import { GddElementSelectorFieldController } from '#logic/types/fields/GddElementSelectorField/gddElementSelectorFieldController';
 import { IntegerFieldController } from '#logic/types/fields/IntegerField/IntegerFieldController';
 import { NameTitleFieldController } from '#logic/types/fields/NameTitleField/NameTitleFieldController';
@@ -44,6 +45,7 @@ export default function () {
     new AssetSelectorFieldController(),
     new GddElementSelectorFieldController(),
     new AttachmentFieldController(),
+    new GalleryItemFieldController(),
     new StructFieldController(),
     new EnumFieldController(),
     new EnumRadioFieldController(),

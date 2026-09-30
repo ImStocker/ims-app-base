@@ -167,6 +167,7 @@ export default {
     AttachmentField: 'Datei auswählen',
     TextAttachmentField: 'Dateien oder Text',
     NameTitleField: 'Dienstname und Titel',
+    GalleryItemField: 'Galerieelement',
     // Licenses
     LicensePlanIndie: 'Indie',
     LicensePlanIndie1m: 'Indie 1 Monat',

@@ -168,6 +168,7 @@ export default {
     AttachmentField: 'Выбор файла',
     TextAttachmentField: 'Файлы или текст',
     NameTitleField: 'Служ. имя и отображаемое',
+    GalleryItemField: 'Элемент галереи',
     // Licenses
     LicensePlanIndie: 'Инди',
     LicensePlanIndie1m: 'Инди 1 месяц',
