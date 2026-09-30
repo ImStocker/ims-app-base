@@ -15,6 +15,7 @@ const KNOWN_FIELD_TYPES_MAP = new Map([
   ['dateTime', 'date'],
   ['date', 'date'],
   ['attachment', 'file'],
+  ['galleryItem', 'file'],
 ]);
 
 export function getFieldTypeDotClass(

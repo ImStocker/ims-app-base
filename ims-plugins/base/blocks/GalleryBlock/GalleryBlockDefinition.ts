@@ -1,11 +1,11 @@
-import EditorManager from '#logic/managers/EditorManager';
 import type { IAppManager } from '#logic/managers/IAppManager';
 import type { AssetFullInstanceR } from '#logic/types/AssetFullInstance';
 import {
   BlockTypeDefinition,
   type BlockProvidedVariable,
 } from '#logic/types/BlockTypeDefinition';
-import { castAssetPropValueToString } from '#logic/types/Props';
+import { AssetPropType, castAssetPropValueToString } from '#logic/types/Props';
+import type { AssetPropValueType } from '#logic/types/Props';
 import type { PropsFormFieldDef } from '#logic/types/PropsForm';
 import type { ResolvedAssetBlock } from '#logic/utils/assets';
 import { galleryAiSpec } from './GalleryAiSpec';
@@ -20,21 +20,24 @@ function extractGallerySlotField(
 ): PropsFormFieldDef {
   const slot_name = item.name;
   return {
-    // index: item.index,
-    // propKey: `${item.key}\\value`,
-    // propTitle: castAssetPropValueToString(item.title) || slot_name,
-    // propName: slot_name,
-    // type:
-    //   item.type === null
-    //     ? 'attachment'
-    //     : item.type === 'file'
-    //       ? 'attachment'
-    //       : 'string',
-    // multiple: false,
-    // params: {},
-    // differentDefinition: false,
-    // hint: null,
+    index: item.index,
+    propKey: item.key,
+    propTitle: castAssetPropValueToString(item.title) || slot_name,
+    propName: slot_name,
+    type: 'galleryItem',
+    multiple: false,
+    params: {},
+    differentDefinition: false,
+    hint: null,
   };
+}
+
+function extractGallerySlotDataType(
+  item: GalleryBlockItemObject,
+): AssetPropValueType[] {
+  return item.type === null || item.type === 'file'
+    ? [{ Type: AssetPropType.FILE }]
+    : [{ Type: AssetPropType.STRING }];
 }
 
 export class GalleryBlockDefinition extends BlockTypeDefinition {
@@ -48,10 +51,8 @@ export class GalleryBlockDefinition extends BlockTypeDefinition {
   override getBlockProvidedVariables(
     _asset: AssetFullInstanceR,
     resolved_block: ResolvedAssetBlock,
-    app_manager: IAppManager,
+    _app_manager: IAppManager,
   ): BlockProvidedVariable[] {
-    const field_types_map = app_manager.get(EditorManager).getFieldTypesMap();
-
     const res: BlockProvidedVariable[] = [];
     const entries = extractGalleryBlockEntries(resolved_block).list;
     for (const item of entries) {
@@ -61,9 +62,7 @@ export class GalleryBlockDefinition extends BlockTypeDefinition {
         field,
         blockId: resolved_block.id,
         blockName: resolved_block.name,
-        dataType: field.type
-          ? (field_types_map[field.type]?.dataTypes ?? [])
-          : [],
+        dataType: extractGallerySlotDataType(item),
         name: field.propName ?? '',
         title: field.propTitle,
       });
