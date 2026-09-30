@@ -135,6 +135,10 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    allowServiceName: {
+      type: Boolean,
+      default: true,
+    },
   },
   emits: ['save', 'delete', 'set-caption', 'set-name', 'fill', 'clear'],
   data() {
@@ -243,11 +247,13 @@ export default defineComponent({
           icon: 'ri-text',
         });
       }
-      items.push({
-        title: this.$t('assetEditor.blockMenu.setServiceName'),
-        action: () => this.$emit('set-name'),
-        icon: 'serviceName',
-      });
+      if (this.allowServiceName) {
+        items.push({
+          title: this.$t('assetEditor.blockMenu.setServiceName'),
+          action: () => this.$emit('set-name'),
+          icon: 'serviceName',
+        });
+      }
       if (this.isSlot && !this.isEmpty) {
         items.push({
           title: this.$t('assetEditor.galleryBlockClearSlot'),
