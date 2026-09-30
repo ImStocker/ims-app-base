@@ -455,6 +455,7 @@ export default {
     galleryBlockCreateSlot: 'Создать слот',
     galleryBlockRemoveSlot: 'Удаление слота',
     galleryBlockRemoveSlotConfirm: 'Вы уверены, что хотите удалить слот?',
+    galleryBlockDeleteSlot: 'Удалить слот',
     galleryBlockSlotNameEmpty: 'Введите служебное имя',
     galleryBlockSlotNameAlreadyUsed: 'Такое служебное имя уже используется',
     galleryBlockEmptySlot: 'Слот пуст',

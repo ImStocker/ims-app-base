@@ -447,6 +447,7 @@ export default {
     galleryBlockCreateSlot: 'Slot erstellen',
     galleryBlockRemoveSlot: 'Slot entfernen',
     galleryBlockRemoveSlotConfirm: 'Möchten Sie den Slot wirklich entfernen?',
+    galleryBlockDeleteSlot: 'Slot löschen',
     galleryBlockSlotNameEmpty: 'Geben Sie einen Dienstnamen ein',
     galleryBlockSlotNameAlreadyUsed: 'Dieser Dienstname wird bereits verwendet',
     galleryBlockEmptySlot: 'Leerer Slot',

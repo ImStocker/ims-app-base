@@ -11,7 +11,6 @@ import type { ResolvedAssetBlock } from '#logic/utils/assets';
 import { galleryAiSpec } from './GalleryAiSpec';
 import {
   extractGalleryBlockEntries,
-  getGalleryItemSlotName,
   isGalleryItemSlot,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
@@ -19,22 +18,22 @@ import {
 function extractGallerySlotField(
   item: GalleryBlockItemObject,
 ): PropsFormFieldDef {
-  const slot_name = getGalleryItemSlotName(item);
+  const slot_name = item.name;
   return {
-    index: item.index,
-    propKey: `${item.key}\\value`,
-    propTitle: castAssetPropValueToString(item.title) || slot_name,
-    propName: slot_name,
-    type:
-      item.type === null
-        ? 'attachment'
-        : item.type === 'file'
-          ? 'attachment'
-          : 'string',
-    multiple: false,
-    params: {},
-    differentDefinition: false,
-    hint: null,
+    // index: item.index,
+    // propKey: `${item.key}\\value`,
+    // propTitle: castAssetPropValueToString(item.title) || slot_name,
+    // propName: slot_name,
+    // type:
+    //   item.type === null
+    //     ? 'attachment'
+    //     : item.type === 'file'
+    //       ? 'attachment'
+    //       : 'string',
+    // multiple: false,
+    // params: {},
+    // differentDefinition: false,
+    // hint: null,
   };
 }
 

@@ -26,10 +26,10 @@
       </menu-button>
       <div
         class="GalleryBlockItem-slot-name"
-        :title="slotName || $t('assetEditor.galleryBlockEmptySlot')"
+        :title="item.name || $t('assetEditor.galleryBlockEmptySlot')"
       >
         <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
-        <span class="GalleryBlockItem-slot-name-text">{{ slotName }}</span>
+        <span class="GalleryBlockItem-slot-name-text">{{ item.name }}</span>
       </div>
     </div>
     <file-presenter
@@ -68,12 +68,12 @@
       {{ itemTitleAsString }}
     </div>
     <div
-      v-if="!isEmpty && slotName"
+      v-if="!isEmpty && item.name"
       class="GalleryBlockItem-slotName"
-      :title="slotName"
+      :title="item.name"
     >
       <i class="ri-price-tag-3-line GalleryBlockItem-slotName-icon"></i>
-      <span class="GalleryBlockItem-slotName-text">{{ slotName }}</span>
+      <span class="GalleryBlockItem-slotName-text">{{ item.name }}</span>
     </div>
     <menu-button
       v-if="!readonly"
@@ -82,7 +82,7 @@
       @show="shownDropdownMenuIdx = item.index"
       @hide="shownDropdownMenuIdx = null"
     >
-      <menu-list :menu-list="getMenuList(item)"></menu-list>
+      <menu-list :menu-list="getMenuList()"></menu-list>
     </menu-button>
   </div>
 </template>
@@ -97,10 +97,10 @@ import {
   castAssetPropValueToString,
 } from '#logic/types/Props';
 import MenuButton from '#components/Common/MenuButton.vue';
+import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import FilePresenter from '#components/File/FilePresenter.vue';
 import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import {
-  getGalleryItemSlotName,
   isGalleryItemEmpty,
   isGalleryItemSlot,
   type GalleryBlockItemObject,
@@ -151,8 +151,8 @@ export default defineComponent({
     isEmpty() {
       return isGalleryItemEmpty(this.item);
     },
-    slotName() {
-      return getGalleryItemSlotName(this.item);
+    isSlot() {
+      return isGalleryItemSlot(this.item);
     },
     addMenuList(): MenuListItem[] {
       const key = this.item?.key ?? null;
@@ -234,9 +234,9 @@ export default defineComponent({
     onDrop(ev: DragEvent) {
       this.emitFill('drop', this.item?.key ?? null, ev);
     },
-    getMenuList(_item: GalleryBlockItemObject): MenuListItem[] {
+    getMenuList(): MenuListItem[] {
       const items: MenuListItem[] = [];
-      if (this.allowCaption) {
+      if (this.allowCaption && !this.isEmpty) {
         items.push({
           title: this.$t('assetEditor.galleryBlockSetCaption'),
           action: () => this.$emit('set-caption'),
@@ -248,7 +248,7 @@ export default defineComponent({
         action: () => this.$emit('set-name'),
         icon: 'serviceName',
       });
-      if (isGalleryItemSlot(_item) && !this.isEmpty) {
+      if (this.isSlot && !this.isEmpty) {
         items.push({
           title: this.$t('assetEditor.galleryBlockClearSlot'),
           action: () => this.$emit('clear'),
@@ -256,12 +256,27 @@ export default defineComponent({
         });
       }
       items.push({
-        title: this.$t('assetEditor.blockMenu.delete'),
-        action: () => this.$emit('delete'),
+        title: this.isSlot
+          ? this.$t('assetEditor.galleryBlockDeleteSlot')
+          : this.$t('assetEditor.blockMenu.delete'),
+        action: () => this.deleteItem(),
         icon: 'delete',
         danger: true,
       });
       return items;
+    },
+    async deleteItem() {
+      if (this.isSlot) {
+        const answer = await this.$getAppManager()
+          .get(DialogManager)
+          .show(ConfirmDialog, {
+            header: this.$t('assetEditor.galleryBlockRemoveSlot'),
+            message: this.$t('assetEditor.galleryBlockRemoveSlotConfirm'),
+            danger: true,
+          });
+        if (answer !== true) return;
+      }
+      this.$emit('delete');
     },
     extimageClick() {
       this.$getAppManager()

@@ -443,6 +443,7 @@ export default {
     galleryBlockCreateSlot: 'Create slot',
     galleryBlockRemoveSlot: 'Remove slot',
     galleryBlockRemoveSlotConfirm: 'Are you sure you want to remove the slot?',
+    galleryBlockDeleteSlot: 'Delete slot',
     galleryBlockSlotNameEmpty: 'Enter a service name',
     galleryBlockSlotNameAlreadyUsed: 'This service name is already used',
     galleryBlockEmptySlot: 'Empty slot',

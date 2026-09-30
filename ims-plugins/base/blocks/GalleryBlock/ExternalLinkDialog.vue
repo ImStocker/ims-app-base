@@ -6,17 +6,22 @@
   >
     <div class="Form">
       <div class="Dialog-header">
-        {{ header }}
-      </div>
-      <div v-if="message" class="Dialog-message">
-        {{ message }}
+        {{
+          isImage
+            ? $t('assetEditor.galleryBlockAddExternalImageMessage')
+            : $t('assetEditor.galleryBlockAddVideoLinkMessage')
+        }}
       </div>
       <div class="Dialog-message">
         <FormInput
           :autofocus="true"
-          :value="dialog.state.value ? dialog.state.value : undefined"
-          :placeholder="dialog.state.placeholder"
-          @input="value = $event"
+          :value="link ?? undefined"
+          :placeholder="
+            isImage
+              ? $t('assetEditor.galleryBlockAddExternalImagePlaceholder')
+              : $t('assetEditor.galleryBlockAddVideoLinkPlaceholder')
+          "
+          @input="link = $event"
         />
       </div>
       <div class="Dialog-message ExternalLinkDialog-preview">
@@ -28,11 +33,11 @@
           @error="onError()"
         />
         <iframe
-          v-else-if="type !== 'extvideo'"
+          v-else-if="itemType !== 'extvideo'"
           class="ExternalLinkDialog-video"
           :class="{ hidden: !fileLoaded }"
           :src="previewLink"
-          title="YouTube video player"
+          title="External video player"
           frameborder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowfullscreen
@@ -43,14 +48,8 @@
       </div>
       <div class="Form-row-buttons">
         <div class="Form-row-buttons-center use-buttons-action">
-          <button
-            type="button"
-            :value="cancelCaption"
-            class="is-button"
-            :disabled="busy"
-            @click="dialog.close()"
-          >
-            {{ cancelCaption }}
+          <button type="button" class="is-button" @click="dialog.close()">
+            {{ $t('common.dialogs.cancelCaption') }}
           </button>
           <button
             type="button"
@@ -58,7 +57,7 @@
             :disabled="isDisabled"
             @click="choose(true)"
           >
-            {{ yesCaption }}
+            {{ $t('common.dialogs.save') }}
           </button>
         </div>
       </div>
@@ -79,24 +78,66 @@ import {
   isExternalVideoValid,
 } from '#logic/utils/parseLinks';
 import type { DialogInterface } from '#logic/managers/DialogManager';
+import type { GalleryBlockItemType } from './GalleryBlock';
 
-type DialogProps = {
-  value?: string;
-  fileType: 'video' | 'image';
-  placeholder?: string;
-  header?: string;
-  message?: string;
-  yesCaption?: string;
-  cancelCaption?: string;
+export type ExternalLinkKind = 'image' | 'video';
+
+type LinkPreviewType = Exclude<GalleryBlockItemType, 'file'>;
+
+type LinkPreview = {
+  itemType: LinkPreviewType;
+  value: string;
+  previewLink: string;
 };
 
-type DialogResult =
-  | {
-      type: 'youtube' | 'rutube' | 'vkvideo' | 'extvideo';
-      value: string;
-    }
-  | undefined
-  | null;
+type DialogProps = {
+  initialLink?: string;
+  linkKind: ExternalLinkKind;
+};
+
+type DialogResult = {
+  itemType: LinkPreviewType;
+  value: string;
+} | null;
+
+function parsePreview(link: string, isImage: boolean): LinkPreview | null {
+  if (!link.trim()) return null;
+
+  if (isImage) {
+    return { itemType: 'extimage', value: link, previewLink: link };
+  }
+  const yt = parseYoutubeLink(link);
+  if (yt) {
+    return {
+      itemType: 'youtube',
+      value: yt,
+      previewLink: 'https://www.youtube.com/embed/' + yt,
+    };
+  }
+  const vk = parseVkVideoLink(link);
+  if (vk) {
+    const [oid, id, hash] = vk.split('_');
+    return {
+      itemType: 'vkvideo',
+      value: vk,
+      previewLink:
+        `https://vk.com/video_ext.php?oid=${oid}&id=${id}` +
+        (hash ? `&hash=${hash}` : ''),
+    };
+  }
+  const rt = parseRutubeVideoLink(link);
+  if (rt) {
+    return {
+      itemType: 'rutube',
+      value: rt,
+      previewLink: 'https://rutube.ru/play/embed/' + rt,
+    };
+  }
+  if (isExternalVideoValid(link)) {
+    return { itemType: 'extvideo', value: link, previewLink: link };
+  }
+  return null;
+}
 
 export default defineComponent({
   name: 'ExternalLinkDialog',
@@ -112,111 +153,55 @@ export default defineComponent({
   },
   data() {
     return {
-      value: null as string | null,
-      type: '' as 'youtube' | 'extvideo' | 'vkvideo' | 'rutube',
-      previewLink: undefined as string | undefined,
-      busy: false,
+      link: this.dialog.state.initialLink ?? '',
       fileLoaded: false as boolean,
-      code: '' as string,
     };
   },
   computed: {
-    fileType() {
-      return this.dialog.state.fileType;
-    },
-    isDisabled() {
-      return this.busy || !this.fileLoaded;
-    },
-    header() {
-      return this.dialog.state.header;
-    },
-    message() {
-      return this.dialog.state.message;
-    },
-    yesCaption() {
-      return this.dialog.state.yesCaption
-        ? this.dialog.state.yesCaption
-        : this.$t('common.dialogs.yes');
-    },
-    cancelCaption() {
-      return this.dialog.state.cancelCaption
-        ? this.dialog.state.cancelCaption
-        : this.$t('common.dialogs.cancelCaption');
+    linkKind() {
+      return this.dialog.state.linkKind;
     },
     isImage() {
-      return this.fileType === 'image';
+      return this.linkKind === 'image';
+    },
+    preview(): LinkPreview | null {
+      return parsePreview(this.link, this.isImage);
+    },
+    previewLink(): string | undefined {
+      return this.preview?.previewLink;
+    },
+    itemType(): LinkPreviewType | null {
+      return this.preview?.itemType ?? null;
+    },
+    isDisabled() {
+      return !this.fileLoaded;
     },
   },
-  mounted() {
-    if (this.dialog.state.value) {
-      this.value = this.dialog.state.value;
-    }
+  watch: {
+    link: {
+      immediate: true,
+      handler() {
+        this.fileLoaded = this.isImage ? false : this.preview !== null;
+        this.reportWrongVideoLink();
+      },
+    },
   },
   methods: {
-    getVideoPreviewLink() {
-      if (!this.previewLink) {
-        return;
+    reportWrongVideoLink: debounceForThis(function (this: any) {
+      if (this.link.trim() && !this.isImage && !this.preview) {
+        this.$getAppManager()
+          .get(UiManager)
+          .showError(this.$t('assetEditor.galleryBlockAddVideoLinkWrong'));
       }
-      let code = parseYoutubeLink(this.previewLink);
-      if (code) {
-        this.code = code;
-        this.type = 'youtube';
-        this.previewLink = 'https://www.youtube.com/embed/' + code;
-      } else {
-        code = parseVkVideoLink(this.previewLink);
-        if (code) {
-          const [oid, id, hash] = code.split('_');
-
-          this.previewLink =
-            `https://vk.com/video_ext.php?oid=${oid}&id=${id}` +
-            (hash ? `&hash=${hash}` : '');
-          this.code = code;
-          this.type = 'vkvideo';
-        } else {
-          code = parseRutubeVideoLink(this.previewLink);
-          if (code) {
-            this.code = code;
-            this.type = 'rutube';
-            this.previewLink = 'https://rutube.ru/play/embed/' + code;
-          } else {
-            const valid = isExternalVideoValid(this.value ?? '');
-            if (!valid) {
-              this.$getAppManager()
-                .get(UiManager)
-                .showError(
-                  this.$t('assetEditor.galleryBlockAddVideoLinkWrong'),
-                );
-              this.fileLoaded = false;
-              return;
-            }
-            this.type = 'extvideo';
-            this.previewLink = this.value ?? '';
-          }
-        }
-      }
-      this.fileLoaded = true;
-    },
-    setPreviewLink: debounceForThis(function (this: any, _link: string) {
-      this.updatePreviewLink();
     }),
-    updatePreviewLink() {
-      this.previewLink = this.value ? this.value : undefined;
-      if (!this.previewLink) {
-        this.fileLoaded = false;
-        return;
-      }
-      if (!this.isImage) {
-        this.getVideoPreviewLink();
-      }
-    },
     onLoad() {
       this.fileLoaded = true;
     },
     onError() {
       this.fileLoaded = false;
-      if (this.value) {
+      if (this.link) {
         try {
-          new URL(this.value);
+          new URL(this.link);
           this.$getAppManager()
             .get(UiManager)
             .showError(
@@ -241,27 +226,23 @@ export default defineComponent({
       }
     },
     async choose(ok: boolean) {
-      if (ok) {
-        const val = this.code ? this.code : (this.value ?? '');
-        if (!val) {
-          this.$getAppManager()
-            .get(UiManager)
-            .showError(
-              this.$t('assetEditor.galleryBlockAddExternalImageLinkEmpty'),
-            );
-        }
-        this.dialog.close({
-          type: this.isImage ? 'extimage' : (this.type as any),
-          value: val,
-        });
-      } else {
+      if (!ok) {
         this.dialog.close();
+        return;
       }
-    },
-  },
-  watch: {
-    value(newVal) {
-      this.setPreviewLink(newVal);
+      const preview = this.preview;
+      if (!preview) {
+        this.$getAppManager()
+          .get(UiManager)
+          .showError(
+            this.$t('assetEditor.galleryBlockAddExternalImageLinkEmpty'),
+          );
+        return;
+      }
+      this.dialog.close({
+        itemType: preview.itemType,
+        value: preview.value,
+      });
     },
   },
 });
