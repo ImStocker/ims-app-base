@@ -160,6 +160,13 @@ export default defineComponent({
               action: this.openLinksDialog,
             }
           : null,
+        this.currentSingleAsset?.id
+          ? {
+              title: this.$t('asset.copyId'),
+              icon: 'ri-file-copy-fill',
+              action: this.copyId,
+            }
+          : null,
         !this.isArticle && !this.isGuest && !this.isDiscussion
           ? {
               title: this.$t('asset.createInstance'),
@@ -415,6 +422,19 @@ export default defineComponent({
             .get(UiManager)
             .showSuccess(this.$t('asset.linkCopied'));
         }
+      } catch (e) {
+        console.error(e);
+        this.$getAppManager().get(UiManager).showError(e);
+      }
+    },
+    async copyId() {
+      const asset = this.currentSingleAsset;
+      if (!asset?.id) return;
+      try {
+        await clipboardCopyPlainText(asset.id);
+        this.$getAppManager()
+          .get(UiManager)
+          .showSuccess(this.$t('asset.idCopied'));
       } catch (e) {
         console.error(e);
         this.$getAppManager().get(UiManager).showError(e);

@@ -768,9 +768,11 @@ export default {
     task: 'Task',
     createInstance: 'Create instance',
     copyLink: 'Copy link',
+    copyId: 'Copy ID',
     linkCopied: 'Link copied',
     linkCopyError:
       'There was an error copying the link because there is no link',
+    idCopied: 'ID copied',
     other: 'Other...',
     text: 'Text',
     empty: 'Empty',

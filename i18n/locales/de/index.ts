@@ -775,9 +775,11 @@ export default {
     task: 'Aufgabe',
     createInstance: 'Instanz erstellen',
     copyLink: 'Link kopieren',
+    copyId: 'ID kopieren',
     linkCopied: 'Link kopiert',
     linkCopyError:
       'Beim Kopieren des Links ist ein Fehler aufgetreten, da kein Link vorhanden ist',
+    idCopied: 'ID kopiert',
     other: 'Sonstiges...',
     text: 'Text',
     empty: 'Leer',

@@ -782,9 +782,11 @@ export default {
     task: 'Задача',
     createInstance: 'Создать экземпляр',
     copyLink: 'Копировать ссылку',
+    copyId: 'Копировать ID',
     linkCopied: 'Ссылка скопирована',
     linkCopyError:
       'Произошла ошибка при копировании ссылки, так как ссылка отсутствует',
+    idCopied: 'ID скопирован',
     other: 'Другой...',
     text: 'Текст',
     empty: 'Пустой',
