@@ -1092,6 +1092,7 @@ export default {
   showComment: 'Показать комментарий',
   unreadMessage: 'Непрочитанные сообщения',
   viewSettings: {
+    view: 'Вид',
     viewType: 'Тип',
     viewTypes: {
       list: 'Список',

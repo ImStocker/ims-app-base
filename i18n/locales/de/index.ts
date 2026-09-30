@@ -1085,6 +1085,7 @@ export default {
   showComment: 'Kommentar anzeigen',
   unreadMessage: 'Ungelesene Nachricht',
   viewSettings: {
+    view: 'Ansicht',
     viewType: 'Typ',
     viewTypes: {
       list: 'Liste',

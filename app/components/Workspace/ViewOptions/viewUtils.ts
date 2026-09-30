@@ -32,6 +32,8 @@ export enum ViewType {
   CARDS = 'cards',
 }
 
+export const MAX_VIEWS_TABS_COUNT = 5;
+
 export type UserViewParams = {
   type: ViewType;
   title: string;
