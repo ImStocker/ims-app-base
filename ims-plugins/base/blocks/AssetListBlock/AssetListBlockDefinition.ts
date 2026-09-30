@@ -13,6 +13,7 @@ import type { MenuListItem } from '#logic/types/MenuList';
 import { AssetRights } from '#logic/types/Rights';
 import { AssetPropType, type AssetProps } from '#logic/types/Props';
 import { getSyncedAssetBlockTitleFromName } from '#logic/utils/stringUtils';
+import { assetListBlockAiSpec } from './AssetListBlockAiSpec';
 
 export class AssetListBlockDefinition extends BlockTypeDefinition {
   name = 'assetList';
@@ -23,10 +24,7 @@ export class AssetListBlockDefinition extends BlockTypeDefinition {
 
   override focusOnAdded = true;
 
-  override aiSpec = {
-    brief:
-      'Renders a list of linked assets (elements) as visual box slots. Each slot holds one asset; click or drop to set; configured via Type and Condition settings.',
-  };
+  override aiSpec = assetListBlockAiSpec.aiSpec;
 
   override async beforeBlockCreate(
     _appManager: IAppManager,
