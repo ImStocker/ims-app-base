@@ -449,6 +449,7 @@ export default {
     galleryBlockEmptySlot: 'Empty slot',
     galleryBlockFillSlot: 'Fill slot',
     galleryBlockClearSlot: 'Clear slot',
+    galleryBlockDropToSlot: 'Drop file into slot',
     assetListBlockType: 'Type',
     assetListBlockCondition: 'Condition',
     assetListBlockAddAsset: 'Add asset',

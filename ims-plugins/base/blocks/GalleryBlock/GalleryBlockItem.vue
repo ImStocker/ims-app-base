@@ -3,7 +3,12 @@
     <div
       v-if="isEmpty"
       class="GalleryBlockItem-slot"
-      @dragover.prevent
+      :class="{
+        'state-drag-over': isDropTarget && slotDragEffect === 1,
+        'state-drag-over-error': isDropTarget && slotDragEffect === -1,
+      }"
+      @dragover.prevent.stop="onSlotDragOver"
+      @dragleave.prevent.stop="onSlotDragLeave"
       @drop.prevent.stop="onDrop"
     >
       <menu-button
@@ -31,6 +36,15 @@
         <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
         <span class="GalleryBlockItem-slot-name-text">{{ item.name }}</span>
       </div>
+      <drag-overlay
+        :visible="isDropTarget"
+        :error="slotDragEffect === -1"
+        :text="
+          slotDragEffect === -1
+            ? $t('dragOverlay.imagesOnly')
+            : $t('assetEditor.galleryBlockDropToSlot')
+        "
+      ></drag-overlay>
     </div>
     <file-presenter
       v-else-if="item.type === 'file'"
@@ -107,6 +121,8 @@ import {
 } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
 import MenuList from '#components/Common/MenuList.vue';
+import DragOverlay from '#components/Common/DragOverlay.vue';
+import { nodeContainsElement } from '#components/utils/DomElementUtils';
 import type { MenuListItem } from '#logic/types/MenuList';
 import EditorManager from '#logic/managers/EditorManager';
 import { useFilePresenterParams } from '#components/File/FilePresenter';
@@ -120,6 +136,7 @@ export default defineComponent({
     MenuButton,
     GalleryBlockVideo,
     MenuList,
+    DragOverlay,
   },
   props: {
     readonly: {
@@ -139,13 +156,28 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    allowDrop: {
+      type: Boolean,
+      default: true,
+    },
   },
-  emits: ['save', 'delete', 'set-caption', 'set-name', 'fill', 'clear'],
+  emits: [
+    'save',
+    'delete',
+    'set-caption',
+    'set-name',
+    'fill',
+    'clear',
+    'slot-drag-enter',
+    'slot-drag-leave',
+  ],
   data() {
     return {
       loadDone: false,
       shownDropdownMenuIdx: null as number | null,
       imagePixilatedMode: false,
+      dragOverSlot: false,
+      slotDragEffect: 0,
     };
   },
   computed: {
@@ -157,6 +189,14 @@ export default defineComponent({
     },
     isSlot() {
       return isGalleryItemSlot(this.item);
+    },
+    isDropTarget() {
+      return (
+        !this.readonly &&
+        this.allowDrop &&
+        this.dragOverSlot &&
+        this.slotDragEffect !== 0
+      );
     },
     addMenuList(): MenuListItem[] {
       const key = this.item?.key ?? null;
@@ -235,7 +275,41 @@ export default defineComponent({
     emitFill(action: string, key: string | null, ev?: DragEvent) {
       this.$emit('fill', { action, key, ev });
     },
+    onSlotDragOver(ev: DragEvent) {
+      if (this.readonly || !this.allowDrop) {
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'none';
+        return;
+      }
+      const is_file_move =
+        ev.dataTransfer && ev.dataTransfer.types.includes('Files');
+      let effect = is_file_move ? 1 : 0;
+      if (is_file_move && ev.dataTransfer && ev.dataTransfer.items) {
+        const are_images = [...ev.dataTransfer.items].some((i) => {
+          return /^image\/.+$/i.test(i.type);
+        });
+        effect = are_images ? 1 : -1;
+      }
+      if (!this.dragOverSlot) {
+        this.dragOverSlot = true;
+        this.$emit('slot-drag-enter');
+      }
+      this.slotDragEffect = effect;
+      if (ev.dataTransfer && effect !== 1) {
+        ev.dataTransfer.dropEffect = 'none';
+      }
+    },
+    onSlotDragLeave(ev: DragEvent) {
+      if (nodeContainsElement(this.$el, ev.relatedTarget as Node)) return;
+      this.resetSlotDragState();
+    },
+    resetSlotDragState() {
+      if (!this.dragOverSlot) return;
+      this.dragOverSlot = false;
+      this.slotDragEffect = 0;
+      this.$emit('slot-drag-leave');
+    },
     onDrop(ev: DragEvent) {
+      this.resetSlotDragState();
       this.emitFill('drop', this.item?.key ?? null, ev);
     },
     getMenuList(): MenuListItem[] {
@@ -356,7 +430,22 @@ export default defineComponent({
 
   &:hover {
     border-color: var(--color-accent);
-    background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  &.state-drag-over {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  }
+
+  &.state-drag-over-error {
+    border-color: var(--color-main-error);
+    background: color-mix(in srgb, var(--color-main-error) 8%, transparent);
+  }
+
+  &.state-drag-over .GalleryBlockItem-slot-add,
+  &.state-drag-over-error .GalleryBlockItem-slot-add {
+    opacity: 0;
   }
 }
 

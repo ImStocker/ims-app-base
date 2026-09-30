@@ -33,6 +33,8 @@
               @set-name="setName(item)"
               @fill="onFillItem"
               @clear="clearSlot(item)"
+              @slot-drag-enter="onSlotDragStateChange"
+              @slot-drag-leave="onSlotDragStateChange"
             ></gallery-block-item>
           </screenshot-renderer>
         </template>
@@ -690,6 +692,9 @@ export default defineComponent({
       if (!nodeContainsElement(this.$el, ev.relatedTarget as Node)) {
         this.dragEffect = 0;
       }
+    },
+    onSlotDragStateChange() {
+      this.dragEffect = 0;
     },
   },
 });

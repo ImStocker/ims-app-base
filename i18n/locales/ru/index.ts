@@ -461,6 +461,7 @@ export default {
     galleryBlockEmptySlot: 'Слот пуст',
     galleryBlockFillSlot: 'Заполнить слот',
     galleryBlockClearSlot: 'Очистить слот',
+    galleryBlockDropToSlot: 'Положите файл в слот',
     assetListBlockType: 'Тип',
     assetListBlockCondition: 'Условие',
     assetListBlockAddAsset: 'Добавить элемент',
