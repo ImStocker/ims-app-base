@@ -19,6 +19,7 @@ import {
   type AssetProps,
 } from '#logic/types/Props';
 import { getSyncedAssetBlockTitleFromName } from '#logic/utils/stringUtils';
+import { propBlockAiSpec } from './PropBlockAiSpec';
 
 function extractPropField(block: ResolvedAssetBlock): PropsFormFieldDef {
   const props = block.props ?? {};
@@ -43,6 +44,8 @@ export class PropBlockDefinition extends BlockTypeDefinition {
   override index = 2;
   override hideBlockHeader = true;
   override focusOnAdded = true;
+
+  override aiSpec = propBlockAiSpec.aiSpec;
 
   override async beforeBlockCreate(
     _appManager: IAppManager,

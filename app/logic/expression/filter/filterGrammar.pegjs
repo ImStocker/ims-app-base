@@ -125,6 +125,7 @@ FilterExpression
     }
     return options.rootFilters.includes(field[0]) || field.length > 1
   } operator:Operator value:Value { return makeFilter(field, operator, value); }
+  / block:FieldIdenifier &{ return !options.rootFilters || !options.rootFilters.includes(block) } operator:Operator value:Value { return makeFilter([block, 'value'], operator, value); }
 
 FilterPath
   = field:FieldIdenifier sub:("[" (StringLiteral / NumberLiteral) "]")* rest:("." FilterPath)? {

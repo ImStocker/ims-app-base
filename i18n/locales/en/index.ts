@@ -1075,6 +1075,7 @@ export default {
   showComment: 'Show comment',
   unreadMessage: 'Unread message',
   viewSettings: {
+    view: 'View',
     viewType: 'Type',
     viewTypes: {
       list: 'List',

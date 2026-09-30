@@ -19,7 +19,7 @@
           ></i>
           <caption-string
             class="SelectViewButton-parentTitle"
-            :value="currentView?.title ?? '[[t:Table]]'"
+            :value="currentViewTitle"
           >
           </caption-string>
           <i class="ri-expand-up-down-line"></i>
@@ -59,7 +59,7 @@ import UiManager from '../../../logic/managers/UiManager';
 import { normalizeAssetPropPart } from '../../../logic/types/Props';
 import { getNextIndexWithTimestamp } from '../../Asset/Editor/blockUtils';
 import type { UserView } from './viewUtils';
-import { VIEW_TYPES, VIEW_TYPES_MAP } from './viewUtils';
+import { VIEW_TYPES, VIEW_TYPES_MAP, MAX_VIEWS_TABS_COUNT } from './viewUtils';
 import CaptionString from '../../Common/CaptionString.vue';
 import MenuButton from '../../Common/MenuButton.vue';
 import SelectViewBox from './SelectViewBox.vue';
@@ -88,6 +88,18 @@ export default defineComponent({
   computed: {
     currentView() {
       return this.vm.currentView;
+    },
+    isCurrentViewShownAsTab(): boolean {
+      if (!this.currentView || this.vm.workspaceViews.length <= 1) return false;
+      const index = this.vm.workspaceViews.findIndex(
+        (view) => view.key === this.currentView.key,
+      );
+      return index >= 0 && index < MAX_VIEWS_TABS_COUNT;
+    },
+    currentViewTitle() {
+      return this.isCurrentViewShownAsTab
+        ? this.$t('viewSettings.view')
+        : (this.currentView?.title ?? '[[t:Table]]');
     },
     selectedViewIcon() {
       return (

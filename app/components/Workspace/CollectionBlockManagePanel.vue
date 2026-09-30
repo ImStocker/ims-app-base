@@ -5,6 +5,12 @@
         :vm="vm"
         @select-view="$emit('selectView', $event)"
       ></select-view-button>
+      <view-tabs
+        class="CollectionBlockManagePanel-tabs"
+        :views="vm.workspaceViews"
+        :current-view="vm.currentView"
+        @select-view="$emit('selectView', $event)"
+      ></view-tabs>
     </div>
     <div v-if="vm.currentView" class="CollectionBlockManagePanel-right">
       <component
@@ -28,6 +34,7 @@ import { defineComponent, type Component, type PropType } from 'vue';
 import SelectViewButton from './ViewOptions/SelectViewButton.vue';
 import ViewOptionButton from './ViewOptions/ViewOptionButton.vue';
 import ViewPropertiesButton from './ViewOptions/ViewPropertiesButton.vue';
+import ViewTabs from './ViewOptions/ViewTabs.vue';
 import type { UserView } from './ViewOptions/viewUtils';
 import UiManager from '../../logic/managers/UiManager';
 import type { ICollectionBlockController } from '~ims-plugin-base/blocks/CollectionBlock/CollectionBlockController';
@@ -46,6 +53,7 @@ export default defineComponent({
     ViewOptionButton,
     ViewFilterButton,
     ViewPropertiesButton,
+    ViewTabs,
   },
   props: {
     vm: {
@@ -95,6 +103,21 @@ export default defineComponent({
   padding-bottom: 10px;
   flex-wrap: wrap;
   gap: 5px;
+}
+.CollectionBlockManagePanel-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.CollectionBlockManagePanel-left > .SelectViewButton {
+  flex: 0 0 auto;
+  width: auto;
+}
+.CollectionBlockManagePanel-tabs {
+  flex: 1;
+  min-width: 0;
 }
 .CollectionBlockManagePanel-right {
   display: flex;
