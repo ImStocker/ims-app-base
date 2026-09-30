@@ -43,6 +43,7 @@ export type BlockProvidedVariable = {
   blockId: string | null;
   blockName: string | null;
   field: PropsFormFieldDef;
+  auxiliary?: boolean;
 };
 
 export type BlockAiHandler = () => {

@@ -312,7 +312,10 @@ export default class CreatorAssetManager extends AppSubManagerBase {
             )
           : null;
         if (base_asset) {
-          columns = [...columns, ...gatherColumns(base_asset, this.appManager)];
+          columns = [
+            ...columns,
+            ...gatherColumns(base_asset, this.appManager, false),
+          ];
         }
         const new_view = {
           title: convertTranslatedTitle('[[t:Table]]', (key) =>

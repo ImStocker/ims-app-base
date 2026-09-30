@@ -65,6 +65,7 @@ export class GalleryBlockDefinition extends BlockTypeDefinition {
         dataType: extractGallerySlotDataType(item),
         name: field.propName ?? '',
         title: field.propTitle,
+        auxiliary: true,
       });
     }
     return res;

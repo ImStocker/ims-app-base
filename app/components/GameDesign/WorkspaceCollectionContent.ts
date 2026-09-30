@@ -29,6 +29,7 @@ export type WorkspaceCollectionColumn = ImcGridColumn & {
 export function gatherColumns(
   asset: AssetFullInstanceR,
   app_manager: IAppManager,
+  withAuxiliary: boolean,
 ): WorkspaceCollectionColumn[] {
   let columns: WorkspaceCollectionColumn[] = [];
   for (const block of asset.blocks) {
@@ -54,6 +55,9 @@ export function gatherColumns(
         app_manager,
       );
     for (const variable of current_block_variables) {
+      if (!withAuxiliary && variable.auxiliary) {
+        continue;
+      }
       fields.push(variable.field);
     }
     if (fields.length > 0) {

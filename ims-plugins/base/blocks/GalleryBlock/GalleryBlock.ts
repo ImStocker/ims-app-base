@@ -38,6 +38,7 @@ export function extractGalleryBlockEntries(
   );
 
   const slots = plain.__slots ? plain.__slots : {};
+  const left_slots = new Set(Object.keys(slots));
 
   const map: { [key: string]: GalleryBlockItemObject } = {};
   const list: GalleryBlockItemObject[] = [];
@@ -51,6 +52,7 @@ export function extractGalleryBlockEntries(
     if (key === '__slots' || key[0] === '~') continue;
 
     const meta = slots[key];
+    left_slots.delete(key);
 
     const prop_inherited =
       !!inherited_plain && inherited_plain.hasOwnProperty(key);
@@ -67,6 +69,27 @@ export function extractGalleryBlockEntries(
       title: entry?.title,
       value: entry?.value ?? null,
       type: entry?.type ?? null,
+    };
+
+    list.push(res);
+    map[key] = res;
+    if (maxIndex < index) {
+      maxIndex = index;
+    }
+  }
+
+  for (const key of left_slots) {
+    const meta = slots[key];
+    const prop_inherited =
+      !!inherited_plain && inherited_plain.hasOwnProperty(key);
+    const index = castAssetPropValueToFloat(meta?.index) ?? 0;
+    const res: GalleryBlockItemObject = {
+      key,
+      index: castAssetPropValueToFloat(meta?.index) ?? 0,
+      inherited: prop_inherited,
+      name: meta?.name,
+      value: null,
+      type: null,
     };
 
     list.push(res);

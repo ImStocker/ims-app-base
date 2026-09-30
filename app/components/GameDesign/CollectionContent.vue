@@ -133,7 +133,7 @@ export default defineComponent({
       if (base_asset) {
         columns = [
           ...columns,
-          ...gatherColumns(base_asset, this.$getAppManager()),
+          ...gatherColumns(base_asset, this.$getAppManager(), true),
         ];
       }
 
