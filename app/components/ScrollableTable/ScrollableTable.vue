@@ -534,6 +534,7 @@ export default defineComponent({
   --table-bg: var(--local-bg-color);
   --table-real-header-reserved-space: 0px;
   --table-border-radius: 4px;
+  --table-resizer-hit-size: 10px;
   display: flex;
   flex-direction: column;
   // `overflow: clip` crops the cell backgrounds to the radius without creating a scroll container; `hidden` would break the sticky header/footer.
@@ -618,6 +619,20 @@ export default defineComponent({
   transition: opacity 0.3s;
   opacity: 0;
   pointer-events: none;
+
+  // Widens the grab zone without touching the visible bar: pseudo-elements are
+  // never event.target, so the pointer still resolves to this element and
+  // `closest('.ScrollableTable-columnResizer')` keeps working.
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: var(--table-resizer-hit-size);
+    transform: translateX(-50%);
+  }
+
   &.state-interact {
     opacity: 1;
     transform: translateX(var(--ScrollableTable-resizerShift));
