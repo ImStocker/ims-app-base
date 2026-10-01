@@ -27,10 +27,9 @@
             :value="column.propTitle"
           ></caption-string>
           <i
-            v-if="getColumnSort(column) === false"
-            class="ri-arrow-up-s-fill"
+            class="WorkspaceCollectionContent-header-sortIcon"
+            :class="getColumnSortIconClass(column)"
           ></i>
-          <i v-if="getColumnSort(column)" class="ri-arrow-down-s-fill"></i>
         </div>
       </template>
     </imc-grid>
@@ -148,6 +147,11 @@ export default defineComponent({
         return sort_option.desc;
       }
       return null;
+    },
+    getColumnSortIconClass(column: ImcGridColumn) {
+      const sort = this.getColumnSort(column);
+      if (sort === null) return 'ri-arrow-up-down-line state-idle';
+      return sort ? 'ri-sort-desc state-active' : 'ri-sort-asc state-active';
     },
     async handleGridKey(event: HandleKeyEvent) {
       if (event.key === 'Delete') {
@@ -323,10 +327,41 @@ export default defineComponent({
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  height: 100%;
+  // Right padding keeps the sort icon clear of the column resizer, so hovering
+  // the icon does not compete with the resize hit area.
+  padding-right: 10px;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background: var(--button-bg-color-hover);
+  }
 }
 .WorkspaceCollectionContent-header-cell {
   padding: 5px;
   font-weight: 500;
+}
+.WorkspaceCollectionContent-header-sortIcon {
+  flex-shrink: 0;
+  color: currentColor;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+
+  // Hint that sorting is available, shown only on hover.
+  &.state-idle {
+    opacity: 0;
+  }
+
+  // Sort is applied: keep it subtle, just tint the icon.
+  &.state-active {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+}
+.WorkspaceCollectionContent-header-common-cell:hover
+  .WorkspaceCollectionContent-header-sortIcon.state-idle {
+  opacity: 0.6;
 }
 </style>
 
