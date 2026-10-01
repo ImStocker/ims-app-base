@@ -1095,6 +1095,7 @@ export default defineComponent({
         : null;
       const res: { [cl: string]: boolean } = {
         'ImcGrid-cell': true,
+        ...this.getCellClass(row_index, col_index),
       };
       if (cell_cl) {
         if (Array.isArray(cell_cl)) {
@@ -1115,6 +1116,7 @@ export default defineComponent({
 .ImcGrid {
   --imc-grid-selection-border-color: var(--color-main-yellow);
   --imc-grid-selection-overlay-color: var(--color-main-yellow);
+  --imc-grid-selection-border-width: 2px;
   --imc-grid-cell-lines: 3;
 }
 .ImcGrid-table:deep(.ImcGrid-cell) {
@@ -1139,8 +1141,6 @@ export default defineComponent({
   width: 100%;
   overflow: hidden;
 
-  // Limit cell text to `--imc-grid-cell-lines` lines (default 3).
-  // Override the variable on .ImcGrid to change the limit.
   :deep(.ImcPresenter-content),
   :deep(.ImcMarkdownPresenter) {
     display: -webkit-box;
@@ -1150,28 +1150,32 @@ export default defineComponent({
     overflow: hidden;
   }
 }
-.ImcGrid.state-focus-inside {
-  .ImcGrid-cell-body-content {
-    &.state-sel-left {
-      border-left: 2px solid var(--imc-grid-selection-border-color);
-      margin-left: -1px;
-      padding-left: 0;
-    }
-    &.state-sel-top {
-      border-top: 2px solid var(--imc-grid-selection-border-color);
-      margin-top: -1px;
-      padding-top: 0;
-    }
-    &.state-sel-right {
-      border-right: 2px solid var(--imc-grid-selection-border-color);
-      margin-right: -1px;
-      padding-right: 0;
-    }
-    &.state-sel-bottom {
-      border-bottom: 2px solid var(--imc-grid-selection-border-color);
-      margin-bottom: -1px;
-      padding-bottom: 0;
-    }
+// Selection frame: an overlay rather than a border, because a border plus a negative-margin compensation shifts the content on every selection change. It stays inside the cell box so that neighbouring backgrounds and overflow clipping cannot cut it.
+.ImcGrid-table:deep(.ImcGrid-cell) {
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-style: solid;
+    // Zero width on the sides that do not bound the selection: CSS paints borders in order top, right, bottom, left, so a transparent later side erases the mitred corner of an earlier coloured one.
+    border-width: 0;
+    border-color: var(--imc-grid-selection-border-color);
+    z-index: 6;
+    pointer-events: none;
+  }
+}
+.ImcGrid.state-focus-inside .ImcGrid-table:deep(.ImcGrid-cell) {
+  &.state-sel-left:before {
+    border-left-width: var(--imc-grid-selection-border-width);
+  }
+  &.state-sel-right:before {
+    border-right-width: var(--imc-grid-selection-border-width);
+  }
+  &.state-sel-top:before {
+    border-top-width: var(--imc-grid-selection-border-width);
+  }
+  &.state-sel-bottom:before {
+    border-bottom-width: var(--imc-grid-selection-border-width);
   }
 }
 
@@ -1204,10 +1208,5 @@ export default defineComponent({
 }
 .ImcGrid-hiddenImcEditor {
   display: none;
-}
-.ImcGrid-table:deep(.ScrollableTable-body.ref-body),
-.ImcGrid-table:deep(.ScrollableTable-header.ref-header),
-.ImcGrid-table:deep(.ScrollableTable-footer.ref-footer) {
-  margin-right: 1px;
 }
 </style>

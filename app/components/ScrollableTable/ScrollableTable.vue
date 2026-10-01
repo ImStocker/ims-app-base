@@ -35,6 +35,7 @@
         data-part="header"
         :data-name="col.column.name"
         :data-col="col_index"
+        :data-last-col="col_index === columns.length - 1"
         :data-pin="col.column.pin"
         :style="getHeaderCellStyle(col_index)"
       >
@@ -73,6 +74,8 @@
           :class="getResBodyCellClass(row, row_index, col_index)"
           :data-col="col_index"
           :data-row="row_index"
+          :data-last-col="col_index === columns.length - 1"
+          :data-last-row="row_index === rows.length - 1"
           data-part="body"
           :data-name="col.column.name"
           :data-pin="col.column.pin"
@@ -112,6 +115,7 @@
         :data-col="col_index"
         data-part="footer"
         :data-name="col.column.name"
+        :data-last-col="col_index === columns.length - 1"
         :style="getFooterCellStyle(col_index)"
         :data-pin="col.column.pin"
       >
@@ -529,8 +533,13 @@ export default defineComponent({
   --table-border-width: 1px;
   --table-bg: var(--local-bg-color);
   --table-real-header-reserved-space: 0px;
+  --table-border-radius: 4px;
   display: flex;
   flex-direction: column;
+  // `overflow: clip` crops the cell backgrounds to the radius without creating a scroll container; `hidden` would break the sticky header/footer.
+  overflow: clip;
+  border: var(--table-border-width) solid var(--table-border);
+  border-radius: var(--table-border-radius);
 }
 
 .ScrollableTable-header,
@@ -557,26 +566,39 @@ export default defineComponent({
 .ScrollableTable-cell {
   position: relative;
   background: var(--table-bg);
-  border-right: var(--table-border-width) solid var(--table-border);
-  border-bottom: var(--table-border-width) solid var(--table-border);
   word-break: break-word;
   flex-shrink: 0;
   &:last-child {
     flex-grow: 1;
   }
-  &[data-col='0'] {
-    border-left: var(--table-border-width) solid var(--table-border);
+
+  // Match on value, not presence: Vue renders `:data-last-col="false"` as "false", so every cell carries the attribute.
+  &:not([data-last-col='true']) {
+    border-right: var(--table-border-width) solid var(--table-border);
   }
-  &:not([data-pin]) + &[data-pin='right'] {
-    border-left: var(--table-border-width) solid var(--table-border);
+
+  &[data-part='body']:not([data-last-row='true']) {
+    border-bottom: var(--table-border-width) solid var(--table-border);
   }
+
+  &[data-part='header'] {
+    border-bottom: var(--table-border-width) solid var(--table-border);
+  }
+
+  &[data-pin='right'] {
+    box-shadow: inset 1px 0 0 var(--table-border);
+  }
+}
+
+// The footer element renders even with no footer slots, collapsing to zero height, so its border is gated on a real footer existing.
+.ScrollableTable.type-has-footer .ScrollableTable-cell[data-part='footer'] {
+  border-top: var(--table-border-width) solid var(--table-border);
 }
 
 .ScrollableTable-header {
   z-index: 60;
   position: sticky;
   top: var(--header-reserved-space, 0px);
-  border-top: var(--table-border-width) solid var(--table-border);
 }
 
 .ScrollableTable-footer {
