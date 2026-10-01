@@ -1115,6 +1115,7 @@ export default defineComponent({
 .ImcGrid {
   --imc-grid-selection-border-color: var(--color-main-yellow);
   --imc-grid-selection-overlay-color: var(--color-main-yellow);
+  --imc-grid-cell-lines: 3;
 }
 .ImcGrid-table:deep(.ImcGrid-cell) {
   user-select: none;
@@ -1137,6 +1138,17 @@ export default defineComponent({
   min-height: 100%;
   width: 100%;
   overflow: hidden;
+
+  // Limit cell text to `--imc-grid-cell-lines` lines (default 3).
+  // Override the variable on .ImcGrid to change the limit.
+  :deep(.ImcPresenter-content),
+  :deep(.ImcMarkdownPresenter) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--imc-grid-cell-lines);
+    line-clamp: var(--imc-grid-cell-lines);
+    overflow: hidden;
+  }
 }
 .ImcGrid.state-focus-inside {
   .ImcGrid-cell-body-content {
