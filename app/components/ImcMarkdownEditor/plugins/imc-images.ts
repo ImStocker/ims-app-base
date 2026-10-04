@@ -121,6 +121,56 @@ function isCaretInside(from: number, to: number, state: EditorState): boolean {
 
 const RESIZE_MIN_WIDTH = 40;
 
+// The markdown only stores the width (`![alt|300](url)`), so the rendered height
+// is always derived from the picture's own aspect ratio. Giving the `<img>`
+// explicit pixel dimensions is what keeps that ratio while it is dragged: with
+// only a percentage width the browser re-derives the height from the ratio and
+// clamps it again, so growing the width stretched the picture sideways.
+//
+// There is no height cap — a picture may be enlarged up to the width its line
+// (or table cell) offers, and its height follows from the ratio.
+
+interface ImageBoxSize {
+  width: number;
+  height: number;
+}
+
+function naturalRatio(image: HTMLImageElement): number | null {
+  if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+    return image.naturalWidth / image.naturalHeight;
+  }
+  return null;
+}
+
+// Fits the requested width into the space the image may use, keeping the aspect
+// ratio: the height always follows the width.
+function fitImageSize(
+  requestedWidth: number,
+  ratio: number,
+  maxWidth: number,
+): ImageBoxSize {
+  const max_w = Number.isFinite(maxWidth)
+    ? Math.max(RESIZE_MIN_WIDTH, maxWidth)
+    : Number.POSITIVE_INFINITY;
+  const width = Math.min(Math.max(requestedWidth, RESIZE_MIN_WIDTH), max_w);
+  return { width: Math.round(width), height: Math.round(width / ratio) };
+}
+
+function applyImageSize(
+  figure: HTMLElement,
+  image: HTMLImageElement,
+  size: ImageBoxSize,
+) {
+  // Let the figure shrink-wrap the sized image instead of pinning its own width,
+  // so the border and the resize handle stay glued to the picture.
+  figure.style.width = '';
+  image.style.width = `${size.width}px`;
+  image.style.height = `${size.height}px`;
+  // Safety net: should the browser still have to shrink the box (a bound we did
+  // not know about), letterbox the picture rather than distort it.
+  image.style.objectFit = 'contain';
+}
+
 class ImageWidget extends WidgetType {
   readonly url;
   readonly width;
@@ -135,6 +185,7 @@ class ImageWidget extends WidgetType {
   private _mouseUpHandler: (() => void) | null = null;
   private _prevUserSelect = '';
   private _view: EditorView | null = null;
+  private _container: HTMLElement | null = null;
 
   constructor({
     url,
@@ -171,6 +222,8 @@ class ImageWidget extends WidgetType {
     const figure = container.appendChild(document.createElement('span'));
     const image = figure.appendChild(document.createElement('img'));
 
+    this._container = container;
+
     container.setAttribute('aria-hidden', 'true');
     container.className = 'cm-image-container';
     figure.className = 'cm-image-figure';
@@ -191,7 +244,6 @@ class ImageWidget extends WidgetType {
     figure.style.maxWidth = '100%';
 
     image.style.display = 'block';
-    image.style.maxHeight = 'var(--ink-internal-block-max-height)';
     image.style.maxWidth = '100%';
 
     if (this.width) {
@@ -199,14 +251,62 @@ class ImageWidget extends WidgetType {
       image.style.width = '100%';
     }
 
+    // Once the intrinsic size is known, size the picture from its aspect ratio.
+    // Before that the width above is only a placeholder (the image has no
+    // intrinsic size yet), so the real dimensions are applied on `load`.
+    const applyNaturalSize = () => {
+      const ratio = naturalRatio(image);
+      if (!ratio) return;
+      applyImageSize(
+        figure,
+        image,
+        fitImageSize(
+          this.width ?? image.naturalWidth,
+          ratio,
+          this.availableWidth(),
+        ),
+      );
+    };
+    image.addEventListener('load', applyNaturalSize);
+    if (image.complete && image.naturalWidth > 0) applyNaturalSize();
+
     if (!this.getReadonly()) {
-      this.attachResizeUI(figure);
+      this.attachResizeUI(figure, image);
     }
 
     return container;
   }
 
-  private attachResizeUI(figure: HTMLElement) {
+  // The width an image may occupy: the table cell it sits in, otherwise the
+  // editor's content box. The widget's own ancestors are deliberately not used —
+  // CodeMirror wraps widget content in content-sized boxes whose `clientWidth`
+  // shrinks as the picture grows, which would clamp every drag to the current
+  // size and make enlarging impossible.
+  private availableWidth(): number {
+    const innerWidth = (element: HTMLElement) => {
+      const style = getComputedStyle(element);
+      const padding =
+        (Number.parseFloat(style.paddingLeft) || 0) +
+        (Number.parseFloat(style.paddingRight) || 0);
+      const width = element.clientWidth - padding;
+      return width > 0 ? width : 0;
+    };
+
+    const cell = this._container?.closest('td, th') as HTMLElement | null;
+    if (cell) {
+      const width = innerWidth(cell);
+      if (width > 0) return width;
+    }
+
+    const content = this._view?.contentDOM;
+    if (content) {
+      const width = innerWidth(content);
+      if (width > 0) return width;
+    }
+    return Number.POSITIVE_INFINITY;
+  }
+
+  private attachResizeUI(figure: HTMLElement, image: HTMLImageElement) {
     figure.style.position = 'relative';
 
     const border = document.createElement('div');
@@ -257,15 +357,26 @@ class ImageWidget extends WidgetType {
     handle.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.startResize(figure, e);
+      this.startResize(figure, image, e);
     });
   }
 
-  private startResize(figure: HTMLElement, evt: MouseEvent) {
+  private startResize(
+    figure: HTMLElement,
+    image: HTMLImageElement,
+    evt: MouseEvent,
+  ) {
     if (this._resizing) return;
 
     const start_page_x = evt.pageX;
-    const start_width = figure.getBoundingClientRect().width;
+    const start_page_y = evt.pageY;
+    const start_rect = figure.getBoundingClientRect();
+    const start_width = Math.max(1, start_rect.width);
+    const start_height = Math.max(1, start_rect.height);
+    // Keep the picture's proportions; fall back to the rendered box while the
+    // intrinsic size is still unknown.
+    const ratio = naturalRatio(image) ?? start_width / start_height;
+    const maxWidth = this.availableWidth();
     let current_width = start_width;
     let dragging = false;
 
@@ -275,17 +386,28 @@ class ImageWidget extends WidgetType {
       if (!dragging) {
         // Only a real drag resizes; a plain click on the corner (e.g. the first
         // click of a double-click that resets the size) stays inert.
-        if (Math.abs(e.pageX - start_page_x) < 3) return;
+        if (
+          Math.abs(e.pageX - start_page_x) < 3 &&
+          Math.abs(e.pageY - start_page_y) < 3
+        ) {
+          return;
+        }
         dragging = true;
         this._resizing = true;
         document.body.style.userSelect = 'none';
       }
-      current_width = Math.max(
-        RESIZE_MIN_WIDTH,
-        Math.round(start_width + (e.pageX - start_page_x)),
-      );
-      figure.style.width = `${current_width}px`;
-      figure.style.maxWidth = '100%';
+      // The handle sits in the corner, so both axes are tracked: whichever one
+      // moved further (relative to its own size) drives the scale and the other
+      // follows the aspect ratio. Growing used to only change the width, and
+      // the height stayed pinned to its cap, so the picture stretched sideways.
+      const dx = e.pageX - start_page_x;
+      const dy = e.pageY - start_page_y;
+      const scale_x = dx / start_width;
+      const scale_y = dy / start_height;
+      const scale = Math.abs(scale_x) >= Math.abs(scale_y) ? scale_x : scale_y;
+      const size = fitImageSize(start_width * (1 + scale), ratio, maxWidth);
+      current_width = size.width;
+      applyImageSize(figure, image, size);
     };
 
     this._mouseUpHandler = () => {
