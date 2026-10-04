@@ -231,7 +231,7 @@ export default defineComponent({
     _callComponentCommand(
       method: keyof InstanceType<typeof PropFieldValue>,
       args: any[] = [],
-    ): boolean {
+    ): any {
       const first = this._getFirstFieldComponent();
       if (!first) return false;
       if (first[method]) {

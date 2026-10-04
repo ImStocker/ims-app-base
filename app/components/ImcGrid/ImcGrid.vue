@@ -231,6 +231,8 @@ export default defineComponent({
       lastSelectionCorner: null as null | ImcGridCoord,
       previewValue: null as null | AssetProps,
       previewChanges: [] as AssetProps[],
+      hiddenInputBuffer: '',
+      editorHandoff: null as null | Promise<void>,
       innerSelectedRanges: [...this.selectedRanges] as ImcGridSelectedRange[],
       mouseClickContext: null as MouseClickContext | null,
       focusInside: false,
@@ -320,6 +322,7 @@ export default defineComponent({
       }
       this.previewValue = null;
       this.previewChanges = [];
+      this.hiddenInputBuffer = '';
     },
     changeSelection(innerSelectedRanges: ImcGridSelectedRange[]) {
       this.flushPreviewValue();
@@ -463,6 +466,7 @@ export default defineComponent({
         } else {
           this.changeSelection([this.mouseClickContext.range]);
           this.editMode = false;
+          this.hiddenInputBuffer = '';
           this.focusedCell = mousedown_coord;
           this.lastSelectionCorner = mousedown_coord;
         }
@@ -571,6 +575,7 @@ export default defineComponent({
         ]);
       }
       this.editMode = false;
+      this.hiddenInputBuffer = '';
       if (!this.$el) return;
       const cell_el = this.$el.querySelector(
         `.ImcGrid-cell[data-col="${this.focusedCell.col}"][data-row="${this.focusedCell.row}"]`,
@@ -704,6 +709,7 @@ export default defineComponent({
             if (this.previewValue) {
               this.flushPreviewValue();
               this.editMode = false;
+              this.hiddenInputBuffer = '';
               await new Promise((res) => setTimeout(res, 1));
             }
           });
@@ -736,7 +742,6 @@ export default defineComponent({
       }
       const coord = this.focusedCell;
       if (!coord) return;
-      this.editMode = true;
 
       const row = this.rows[coord.row];
       if (!row) return;
@@ -745,7 +750,22 @@ export default defineComponent({
       if (!column) return;
       if (column.field.readonly) return;
 
-      const changes = this._prepareValueToChanges(column.field, ev.data);
+      // The hidden textarea keeps the keyboard until the real editor takes focus.
+      // That hand-off is asynchronous (async editor chunk + Quill init), so every
+      // keystroke arriving in between lands here again. Accumulate the text
+      // instead of deriving the cell value from a single InputEvent.data, which
+      // would replace the pending value with one character on every keypress.
+      if (!this.editMode) {
+        this.hiddenInputBuffer = '';
+      }
+      this.hiddenInputBuffer += ev.data ?? '';
+
+      this.editMode = true;
+
+      const changes = this._prepareValueToChanges(
+        column.field,
+        this.hiddenInputBuffer,
+      );
       await this.$nextTick();
       const comp = this.getCellRef(coord.row, coord.col);
       if (!comp) return;
@@ -753,7 +773,15 @@ export default defineComponent({
       if (!active) return;
       this.onInputCell(coord.row, coord.col, changes);
       await this.$nextTick();
-      comp.focusEnd();
+
+      // Single-flight: while the editor boots, more beforeinput events may arrive.
+      // They only need to update the preview value; focusing once is enough.
+      if (!this.editorHandoff) {
+        this.editorHandoff = Promise.resolve(comp.focusEnd()).finally(() => {
+          this.editorHandoff = null;
+        });
+      }
+      await this.editorHandoff;
     },
     getPreviewCellFormState(column: ImcGridRowColumn): PropsFormState {
       if (!this.previewValue) {

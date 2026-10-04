@@ -232,11 +232,10 @@ export default defineComponent({
     _componentLoadError(_type: 'editor' | 'presenter', err: Error) {
       this.lastComponentLoadError = err.message;
     },
-    _callComponentCommand(method: string, args: any[] = []): boolean {
+    _callComponentCommand(method: string, args: any[] = []) {
       if (!this.$refs.editor) return false;
       if ((this.$refs.editor as any)[method]) {
-        (this.$refs.editor as any)[method](...args);
-        return true;
+        return (this.$refs.editor as any)[method](...args);
       }
       return false;
     },
@@ -258,10 +257,9 @@ export default defineComponent({
       }
       return this._callComponentCommand('focus');
     },
-    focusEnd() {
-      if (this._callComponentCommand('focusEnd')) {
-        return true;
-      }
+    async focusEnd() {
+      const res = await this._callComponentCommand('focusEnd');
+      if (res !== false) return true;
       return this._callComponentCommand('focus');
     },
     activateChangeDifferent() {
