@@ -750,11 +750,7 @@ export default defineComponent({
       if (!column) return;
       if (column.field.readonly) return;
 
-      // The hidden textarea keeps the keyboard until the real editor takes focus.
-      // That hand-off is asynchronous (async editor chunk + Quill init), so every
-      // keystroke arriving in between lands here again. Accumulate the text
-      // instead of deriving the cell value from a single InputEvent.data, which
-      // would replace the pending value with one character on every keypress.
+      // Hidden textarea holds the keyboard until the editor takes focus.
       if (!this.editMode) {
         this.hiddenInputBuffer = '';
       }
@@ -774,8 +770,7 @@ export default defineComponent({
       this.onInputCell(coord.row, coord.col, changes);
       await this.$nextTick();
 
-      // Single-flight: while the editor boots, more beforeinput events may arrive.
-      // They only need to update the preview value; focusing once is enough.
+      // Focus once; later keystrokes only refresh the preview.
       if (!this.editorHandoff) {
         this.editorHandoff = Promise.resolve(comp.focusEnd()).finally(() => {
           this.editorHandoff = null;
