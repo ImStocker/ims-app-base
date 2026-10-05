@@ -8,7 +8,7 @@
       <button
         ref="button"
         class="is-button ViewOptionButton-button"
-        :class="{ focus: dropdownShown }"
+        :class="{ 'state-open': dropdownShown, 'state-unsaved': !saved }"
         @click="toggle()"
       >
         <div v-if="!saved" class="ViewOptionButton-unsaved"></div>
@@ -106,18 +106,13 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './viewToolbarButton';
+
+.ViewOptionButton {
+  @include viewToolbarButton.view-toolbar-buttons('ViewOptionButton');
+}
 .ViewOptionButton-dropdown {
   max-width: 400px;
-}
-.ViewOptionButton-unsaved {
-  width: 9px;
-  height: 9px;
-  background-color: var(--color-main-yellow);
-  border-radius: 999px;
-  border: 1px solid var(--color-main-yellow);
-  position: absolute;
-  top: 3px;
-  right: 3px;
 }
 .ViewOptionButton-create-new-button {
   display: flex;

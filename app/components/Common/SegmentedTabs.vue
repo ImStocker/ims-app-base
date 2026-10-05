@@ -153,6 +153,32 @@ export default defineComponent({
   --SegmentedTabs-item-radius: 9px;
   --SegmentedTabs-item-padding: 6px 20px;
   --SegmentedTabs-item-max-width: none;
+  // Цвет неактивного пункта. В `accent` это приглушённый основной текст — тот
+  // же, что у кнопок тулбара в _viewToolbarButton.scss: `--local-sub-text-color`
+  // в dark — это rgba(255,255,255,.3), и без заливки он читается как
+  // «выключено». Вариант `raised` переопределяет значение ниже.
+  --SegmentedTabs-item-idle-text-color: color-mix(
+    in srgb,
+    var(--local-text-color) 72%,
+    transparent
+  );
+  // Заливка активного пункта в варианте `raised`. Вынесена в переменную, а не
+  // задана прямо в `.state-active`, потому что это ровно тот рычаг, которым
+  // пользуется потребитель: `raised` без фона — это тот же вариант с
+  // `--SegmentedTabs-item-active-bg: transparent`. Так не заводится новый
+  // вариант на каждое сочетание (raised-plain, raised-outline, ...), и не
+  // требуется `:deep` в потребителе, знающий внутренние классы компонента.
+  --SegmentedTabs-item-active-bg: var(--panel-bg-color);
+  --SegmentedTabs-item-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px color-mix(in srgb, var(--local-text-color) 8%, transparent);
+  // Дорожка. Тоже настраивается снаружи: на прозрачной подложке вкладки лежат
+  // прямо на панели, поэтому ни заливки, ни волосяной рамки быть не должно.
+  --SegmentedTabs-bg: var(--local-hl-bg-color);
+  --SegmentedTabs-border-color: color-mix(
+    in srgb,
+    var(--local-border-color) 60%,
+    transparent
+  );
 
   display: inline-flex;
   align-items: center;
@@ -161,9 +187,8 @@ export default defineComponent({
   max-width: 100%;
   padding: 4px;
   border-radius: var(--SegmentedTabs-radius);
-  background: var(--local-hl-bg-color);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--local-border-color) 60%, transparent);
+  background: var(--SegmentedTabs-bg);
+  box-shadow: inset 0 0 0 1px var(--SegmentedTabs-border-color);
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -183,7 +208,12 @@ export default defineComponent({
   --button-border-color: transparent;
   --button-border-radius: var(--SegmentedTabs-item-radius);
   --button-bg-color: transparent;
-  --button-text-color: var(--local-sub-text-color);
+  // Цвет НЕактивного пункта. Тема-специфичное значение живёт в переменной на
+  // корне, а не здесь: так вариант `raised` переопределяет его одним правилом
+  // `.SegmentedTabs-variant-raised`, не вступая в спор со специфичностью с
+  // `:hover`/`:focus` ниже. Плюс ровно та же переменная уже используется
+  // кнопками тулбара (_viewToolbarButton.scss), чтобы набор контролов совпадал.
+  --button-text-color: var(--SegmentedTabs-item-idle-text-color);
   --button-font-size: 13px;
   --button-font-weight: 600;
   // прозрачные «копии» теней активного пункта: `none` не интерполируется, и без
@@ -226,14 +256,20 @@ export default defineComponent({
     outline-offset: 1px;
   }
 }
+// Правило идёт после `.SegmentedTabs` и на равной с ним специфичности —
+// выигрывает порядок, поэтому переопределение Variable не нужно.
+.SegmentedTabs-variant-raised {
+  // В `raised` неактивные пункты отступают активному сильнее: дорожки-заливки
+  // тут нет (у ViewTabs она прозрачная), и различие держится на тексте.
+  // Контраст к фону панели: 2.64:1 в dark и 3.54:1 в light — для 13px это ниже
+  // AA (4.5:1). Если нужен AA, поставь ~58% основного текста: 4.98 / 3.82.
+  --SegmentedTabs-item-idle-text-color: var(--local-sub-text-color);
+}
 .SegmentedTabs-variant-raised .SegmentedTabs-item {
   &.state-active {
-    --button-bg-color: var(--panel-bg-color);
+    --button-bg-color: var(--SegmentedTabs-item-active-bg);
     --button-text-color: var(--local-text-color);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.18),
-      inset 0 0 0 1px
-        color-mix(in srgb, var(--local-text-color) 8%, transparent);
+    box-shadow: var(--SegmentedTabs-item-active-shadow);
 
     .SegmentedTabs-item-icon {
       color: var(--color-accent);
@@ -243,7 +279,7 @@ export default defineComponent({
   &.state-active:hover,
   &.state-active:focus,
   &.state-active:active {
-    --button-bg-color: var(--panel-bg-color);
+    --button-bg-color: var(--SegmentedTabs-item-active-bg);
     --button-text-color: var(--local-text-color);
   }
 }

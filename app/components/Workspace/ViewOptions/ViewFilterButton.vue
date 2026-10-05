@@ -8,7 +8,7 @@
       <button
         ref="button"
         class="is-button ViewFilterButton-button"
-        :class="{ focus: dropdownShown }"
+        :class="{ 'state-open': dropdownShown, 'state-unsaved': !saved }"
         @click="toggle()"
       >
         <div v-if="!saved" class="ViewFilterButton-unsaved"></div>
@@ -105,6 +105,11 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './viewToolbarButton';
+
+.ViewFilterButton {
+  @include viewToolbarButton.view-toolbar-buttons('ViewFilterButton');
+}
 .ViewFilterButton-dropdown {
   max-width: 400px;
 }
@@ -119,16 +124,6 @@ export default defineComponent({
   display: flex;
   gap: 10px;
 }
-.ViewFilterButton-unsaved {
-  width: 9px;
-  height: 9px;
-  background-color: var(--color-main-yellow);
-  border-radius: 999px;
-  border: 1px solid var(--color-main-yellow);
-  position: absolute;
-  top: 3px;
-  right: 3px;
-}
 .ViewFilterButton-create-new-button {
   display: flex;
   gap: 5px;
@@ -137,7 +132,7 @@ export default defineComponent({
 }
 .ViewFilterButton-additionalOptions {
   border: none;
-  border-top: 1px solid var(--local-text-color);
+  border-top: 1px solid var(--local-border-color);
   padding-top: 5px;
   margin-top: 5px;
 }

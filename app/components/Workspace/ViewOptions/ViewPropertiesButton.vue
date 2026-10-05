@@ -4,7 +4,7 @@
       <button
         ref="button"
         class="is-button ViewPropertiesButton-button"
-        :class="{ focus: dropdownShown }"
+        :class="{ 'state-open': dropdownShown, 'state-unsaved': !saved }"
         @click="toggle()"
       >
         <div v-if="!saved" class="ViewPropertiesButton-unsaved"></div>
@@ -121,15 +121,10 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.ViewPropertiesButton-unsaved {
-  width: 9px;
-  height: 9px;
-  background-color: var(--color-main-yellow);
-  border-radius: 999px;
-  border: 1px solid var(--color-main-yellow);
-  position: absolute;
-  top: 3px;
-  right: 3px;
+@use './viewToolbarButton';
+
+.ViewPropertiesButton {
+  @include viewToolbarButton.view-toolbar-buttons('ViewPropertiesButton');
 }
 .ViewPropertiesButton-create-new-button {
   display: flex;

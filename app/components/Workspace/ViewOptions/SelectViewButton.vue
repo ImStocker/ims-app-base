@@ -8,7 +8,7 @@
       <button
         ref="button"
         class="is-button SelectViewButton-button"
-        :class="{ focus: dropdownShown }"
+        :class="{ 'state-open': dropdownShown }"
         @click="toggle()"
       >
         <div class="SelectViewButton-label">
@@ -22,7 +22,7 @@
             :value="currentViewTitle"
           >
           </caption-string>
-          <i class="ri-expand-up-down-line"></i>
+          <i class="ri-expand-up-down-line SelectViewButton-chevron"></i>
         </div>
       </button>
     </template>
@@ -212,47 +212,32 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './viewToolbarButton';
+
 .SelectViewButton {
   width: 100%;
   min-width: 100px;
-}
 
-.SelectViewButton-menu-button {
-  display: flex;
-  width: 100%;
+  @include viewToolbarButton.view-toolbar-buttons('SelectViewButton');
 }
-
-.SelectViewButton-menu-label {
+.SelectViewButton-label {
   display: flex;
   align-items: center;
-  width: 100%;
-  min-height: 23px;
-  gap: 5px;
   min-width: 0;
+  gap: 6px;
 }
-
-.SelectViewButton-menu-label-disabled {
-  width: fit-content;
-  max-width: 100%;
-  margin-left: auto;
-  display: flex;
-  gap: 5px;
-}
-
-.SelectViewButton-menu-parentTitle {
-  text-transform: none;
+.SelectViewButton-parentTitle {
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: none;
 }
-
-.SelectViewButton-menu-icon {
-  transition: transform 0.2s;
-
-  &.state-open {
-    transform: rotate(180deg);
-  }
+.SelectViewButton-chevron {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition:
+    transform 0.18s,
+    opacity 0.18s;
 }
-
 .SelectViewButton-dropdown {
   padding: var(--dropdown-padding);
   min-width: var(--DropdownContainer-attachToElement-width);
@@ -266,6 +251,10 @@ export default defineComponent({
   --button-border-radius: 4px !important;
 }
 .SelectViewButton-label-icon {
-  margin-right: 5px;
+  flex-shrink: 0;
+}
+.SelectViewButton.state-open .SelectViewButton-chevron {
+  transform: rotate(180deg);
+  opacity: 1;
 }
 </style>

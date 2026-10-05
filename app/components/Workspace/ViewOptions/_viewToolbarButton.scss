@@ -1,0 +1,195 @@
+// Общий вид кнопок тулбаров CollectionBlockManagePanel: sort / filter / props,
+// выбор вида и сохранение вида, а также кнопка настройки базового ассета в
+// шапке WorkspaceCollectionPage.
+//
+// Разложено на «геометрию» и «цвет» намеренно. Геометрия (отступы, рамка,
+// радиус, шрифт, зазор иконки, снятие анимации) — одно решение на весь
+// тулбар, поэтому она живёт в `view-toolbar-button-base` и не повторяется ни в
+// одном компоненте. Цветовых вариантов ровно два, и каждый добавляет только
+// цвет: `view-toolbar-button` — тихая кнопка, `view-toolbar-accent-button` —
+// акцентная. Если появится третий, он тоже строится на базе, и «uti-кит»
+// не рассыпается на копипаст значений.
+//
+// Рецепты (обводка дорожки, «приподнятая» активная плитка) намеренно совпадают
+// с SegmentedTabs, чтобы панель читалась как один набор контролов.
+
+/// Геометрия кнопки тулбара. Единственное место, где она задаётся.
+@mixin view-toolbar-button-base {
+  // 9px, а не 6px как у пунктов вкладок: у кнопки свой бордер в 1px и вокруг
+  // неё нет 4px внутреннего отступа дорожки. В итоге высота 9+13+9+2 = 33px
+  // совпадает с дорожкой SegmentedTabs, и тулбар не разъезжается по высоте.
+  --button-padding: 9px 12px;
+  --button-border-width: 1px;
+  --button-border-radius: 9px;
+  --button-icon-gap: 6px;
+  --button-font-size: 13px;
+  --button-font-weight: 600;
+  // Ховер без анимации. Гасим именно переменную: системный `is-button` тянет
+  // `transition: var(--button-transition)`, а тема задаёт её как `all 0.05s`,
+  // поэтому одного удаления локального `transition` не хватило бы. Побочный
+  // плюс — `all` больше не анимирует и те свойства, что мы не перечисляли.
+  --button-transition: none;
+
+  // Системное кольцо is-button рисуется на :focus и мигает при каждом клике
+  // мышью — в тулбаре это лишнее, оставляем его только для клавиатуры.
+  &:focus:not(:focus-visible) {
+    --button-outline-width: 0px;
+  }
+
+  // Серой обводки на :focus не должно быть ни у одного варианта: тема красит
+  // её в `use-buttons-options` (`:focus` → #CCCCCC) для контурных кнопок, а у
+  // нас она ложится поверх кольца фокуса и читается как артефакт, а рядом с
+  // полупрозрачной заливкой акцента — ещё и грязно. Фокус при этом не теряется:
+  // его несёт системное кольцо выше, то есть для клавиатуры подсказка остаётся.
+  //
+  // Формально это цвет, а не геометрия, но правило одинаково для обоих
+  // вариантов, поэтому живёт здесь, а не дублируется в каждом.
+  //
+  // `!important` обязателен: наш селектор в scoped-стиле выходит как
+  // `.X .X-button[data-v]:focus` → (0,4,0), и у темы
+  // `:root .use-buttons-options .is-button:focus` → ровно (0,4,0). Ничью
+  // решает только порядок подключения стилей, а на него опираться нельзя.
+  &:focus {
+    --button-border-color: var(--local-border-color);
+  }
+}
+
+/// Тихая кнопка: волосяная рамка, приглушённый текст, заливка только на
+/// hover. $class — полное имя класса триггера, без суффикса.
+@mixin view-toolbar-button($class) {
+  .#{$class} {
+    @include view-toolbar-button-base;
+
+    --button-border-color: color-mix(
+      in srgb,
+      var(--local-border-color) 60%,
+      transparent
+    );
+    --button-bg-color: transparent;
+    // --local-sub-text-color в dark — это rgba(255,255,255,.3), на кнопке без
+    // заливки он читается как «выключено». Берём приглушённый основной текст,
+    // а полный оставляем под hover и активную вкладку.
+    --button-text-color: color-mix(
+      in srgb,
+      var(--local-text-color) 72%,
+      transparent
+    );
+
+    // Ховер-рамка тоже шла в ничью с темой: тема красит на `:hover` тот же
+    // #CCCCCC, а нам нужен нейтральный `--local-border-color`. Пока оба были
+    // без `!important`, исход выбирался порядком подключения — то есть наша
+    // рамка могла молча превратиться в серую. Теперь сравнение честное.
+    &:hover {
+      --button-border-color: var(--local-border-color) !important;
+      --button-bg-color: var(--button-bg-color-hover);
+      --button-text-color: var(--local-text-color);
+    }
+
+    // Настройка изменена, но не сохранена: лёгкая заливка акцентом, чтобы стейт
+    // читался даже если точка не попала в поле зрения. Точка остаётся главным
+    // сигналом, акцентный текст сюда не тащим — он занят приподнятой вкладкой.
+    //
+    // Рамку убираем: на полупрозрачном жёлтом она читается как грязное пятно, а
+    // не как контур. Держим её прозрачной и на ховере — иначе рамка возвращалась
+    // вместе с серой от `:hover` темы. Правило ниже `:hover`, поэтому при равной
+    // специфичности и равном `!important` побеждает оно.
+    &.state-unsaved {
+      --button-border-color: transparent !important;
+      --button-bg-color: color-mix(
+        in srgb,
+        var(--color-accent) 9%,
+        transparent
+      );
+      --button-text-color: var(--local-text-color);
+    }
+
+    // Дропдаун раскрыт: та же приподнятая плитка, что у активной вкладки.
+    // Идёт после :hover и .state-unsaved — все три теперь с `!important`, так
+    // что порядок в этом файле и есть правило приоритета между состояниями.
+    &.state-open {
+      --button-border-color: color-mix(
+        in srgb,
+        var(--local-border-color) 60%,
+        transparent
+      ) !important;
+      --button-bg-color: var(--panel-bg-color);
+      --button-text-color: var(--local-text-color);
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.18),
+        inset 0 0 0 1px
+          color-mix(in srgb, var(--local-text-color) 8%, transparent);
+    }
+  }
+}
+
+/// Акцентная кнопка: та же геометрия, но сплошная заливка акцентом.
+/// $class — полное имя класса триггера, без суффикса.
+@mixin view-toolbar-accent-button($class) {
+  .#{$class} {
+    @include view-toolbar-button-base;
+
+    // Заливку, текст и hover берём из системного
+    // `.is-button.is-button-action.accent`: он тематический (жёлтый #EED811 с
+    // тёмным текстом в dark, #FFD668 в light), и дублировать эти значения здесь
+    // означало бы держать второй источник правды по цвету акцента.
+    //
+    // Рамку в покое обнулять незачем: у акцентного рецепта она и так совпадает
+    // с заливкой (#EED811 на #EED811), поэтому ворд-кит не обводит кнопку
+    // видимым контуром сама по себе. Декларация ниже — страховка на случай
+    // контейнера без акцентного правила; в текущей теме она, к слову, проигрывает
+    // по специфичности (0,3,0) против (0,4,0) у `:root .is-button.is-button-action`.
+    // Ширину в 1px из базы оставляем — рамка не видна, но держит ту же высоту
+    // 33px, что у соседей по тулбару.
+    --button-border-color: transparent;
+
+    // На ховере рамку тоже надо снять: системный акцент задаёт на этом
+    // состоянии только заливку и текст, и рамку оставляет `use-buttons-options`
+    // (`:hover` → #CCCCCC) — серая обводка поверх сплошного акцента.
+    // `:focus` уже гасит базовый рецепт, поэтому здесь только ховер.
+    //
+    // Специфичность снова ничья (0,4,0) против (0,4,0) у темы, и по порядку
+    // подключения полагаться нельзя, поэтому `!important`.
+    &:hover {
+      --button-border-color: transparent !important;
+    }
+  }
+}
+
+/// Точка «есть несохранённые изменения». Акцент вместо --color-main-yellow:
+/// значения совпадают, но это переменная из блока «TODO remove these
+/// variables». Без внешнего ореола намеренно — он вылезал бы за кнопку.
+@mixin view-toolbar-unsaved($class) {
+  .#{$class} {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    animation: view-toolbar-unsaved-appear 0.2s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes view-toolbar-unsaved-appear {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .#{$class} {
+      animation: none;
+    }
+  }
+}
+
+/// Тихая кнопка + точка по имени компонента: `Foo-button` и `Foo-unsaved`.
+@mixin view-toolbar-buttons($name) {
+  @include view-toolbar-button('#{$name}-button');
+  @include view-toolbar-unsaved('#{$name}-unsaved');
+}

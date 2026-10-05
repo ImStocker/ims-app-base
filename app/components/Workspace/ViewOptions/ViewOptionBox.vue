@@ -185,7 +185,7 @@ export default defineComponent({
 
 .ViewOptionBox-additionalOptions {
   border: none;
-  border-top: 1px solid var(--local-text-color);
+  border-top: 1px solid var(--local-border-color);
   padding-top: 5px;
   display: flex;
   flex-direction: column;
