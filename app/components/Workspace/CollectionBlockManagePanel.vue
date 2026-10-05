@@ -116,8 +116,9 @@ export default defineComponent({
   width: auto;
 }
 .CollectionBlockManagePanel-tabs {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
 }
 .CollectionBlockManagePanel-right {
   display: flex;

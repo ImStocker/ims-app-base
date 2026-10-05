@@ -181,6 +181,7 @@ export default defineComponent({
       uploadDone: 0,
       readyStates: new Map<string, boolean>(),
       fillTargetKey: null as string | null,
+      currentUploadTargetKey: null as string | null,
     };
   },
   computed: {
@@ -291,6 +292,7 @@ export default defineComponent({
       files: { blob: Blob; name: string }[],
       target_key: string | null = null,
     ) {
+      this.currentUploadTargetKey = target_key;
       this.uploadTotal += files.length;
       for (const file of files) {
         try {

@@ -102,6 +102,7 @@
 </template>
 
 <script lang="ts">
+import type { UploadingJob } from "#logic/managers/EditorManager";
 import { type PropType, defineComponent } from 'vue';
 import DialogManager from '#logic/managers/DialogManager';
 import ProjectManager from '#logic/managers/ProjectManager';
@@ -160,6 +161,18 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    currentUploadTargetKey: {
+      type: String,
+      default: null,
+    },
+    uploadProgressPercent: {
+      type: Number,
+      default: null,
+    },
+    uploadJob: {
+      type: Object as PropType<UploadingJob | null>,
+      default: null,
+    },
   },
   emits: [
     'save',
@@ -189,6 +202,13 @@ export default defineComponent({
     },
     isSlot() {
       return isGalleryItemSlot(this.item);
+    },
+    isUploadingToThisSlot() {
+      if (!this.item) return false;
+      if (!this.isEmpty) return false;
+      if (this.currentUploadTargetKey !== this.item.key) return false;
+      if (this.uploadProgressPercent === null) return false;
+      return true;
     },
     isDropTarget() {
       return (
