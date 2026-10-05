@@ -12,7 +12,14 @@
         :title="itemTooltip"
         @click="onPillClick"
       >
-        <i class="GalleryItemPropEditor-pillIcon" :class="typeIcon"></i>
+        <img
+          v-if="itemThumbSrc"
+          class="GalleryItemPropEditor-pillThumb"
+          :src="itemThumbSrc"
+          :alt="itemTitleParts.base"
+          @error="onThumbError"
+        />
+        <i v-else class="GalleryItemPropEditor-pillIcon" :class="typeIcon"></i>
         <span class="GalleryItemPropEditor-pillTitle">{{
           itemTitleParts.base
         }}</span>
@@ -60,6 +67,7 @@ import type {
   AssetPropValueFile,
 } from '#logic/types/Props';
 import { castAssetPropValueToString } from '#logic/types/Props';
+import { ThumbParamsFit, type ThumbParams } from '#logic/utils/files';
 import { getClipboardImagesContent } from '#logic/utils/clipboard';
 import type { MenuListItem } from '#logic/types/MenuList';
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
@@ -92,6 +100,14 @@ const TYPE_ICONS: Record<string, string> = {
   file: 'ri-file-image-line',
 };
 
+const THUMB_SIZE = 24;
+
+const THUMB_PARAMS: ThumbParams = {
+  width: THUMB_SIZE * 2,
+  height: THUMB_SIZE * 2,
+  fit: ThumbParamsFit.COVER,
+};
+
 export default defineComponent({
   name: 'GalleryItemPropEditor',
   components: {
@@ -119,6 +135,11 @@ export default defineComponent({
     },
   },
   emits: ['update:modelValue', 'blur', 'enter', 'changeProps'],
+  data() {
+    return {
+      thumbFailedUrl: null as string | null,
+    };
+  },
   computed: {
     showMenu(): boolean {
       return this.displayMode === 'normal';
@@ -210,6 +231,21 @@ export default defineComponent({
       }
       return this.itemType ? (TYPE_ICONS[this.itemType] ?? 'ri-file-line') : '';
     },
+    itemThumbUrl(): string | null {
+      if (this.isFile) {
+        const file = this.itemFile;
+        if (!file) return null;
+        const params = useFilePresenterParams(file, THUMB_PARAMS);
+        return params.inlineType === 'img' ? params.link : null;
+      }
+      if (this.itemType === 'extimage') return this.itemValueAsString || null;
+      return null;
+    },
+    itemThumbSrc(): string | null {
+      const url = this.itemThumbUrl;
+      if (!url || url === this.thumbFailedUrl) return null;
+      return url;
+    },
     fileAccept(): string {
       return [...ALLOWED_EXTENSIONS].map((ext) => `.${ext}`).join(',');
     },
@@ -255,6 +291,9 @@ export default defineComponent({
     },
   },
   methods: {
+    onThumbError() {
+      this.thumbFailedUrl = this.itemThumbUrl;
+    },
     onPillClick(ev: MouseEvent) {
       if (!this.showMenu) return;
       const inside_menu = (ev.target as HTMLElement).closest(
@@ -460,6 +499,7 @@ export default defineComponent({
   &:deep(.BlockWithMenu-menu.ref-menu) {
     top: 50%;
     transform: translateY(-50%);
+    right: 10px;
   }
 }
 
@@ -474,6 +514,12 @@ export default defineComponent({
 
   &:not(.state-isStatic) {
     cursor: pointer;
+    // Место под «три точки», которые висят поверх бляшки. Резерв постоянный,
+    // а не на hover: иначе бляшка прыгала бы в ширину при наведении и дёргала
+    // соседние ячейки грида. `state-isStatic` — это ровно «меню нет»
+    // (`itemMenu` пуст, `.BlockWithMenu-menu` не рендерится), так что в
+    // статичном режиме гаттер не резервируется и бляшка остаётся компактной.
+    padding-right: 30px;
 
     &:hover {
       border-color: var(--color-accent);
@@ -484,6 +530,16 @@ export default defineComponent({
 .GalleryItemPropEditor-pillIcon {
   flex: none;
   margin-right: 5px;
+}
+
+.GalleryItemPropEditor-pillThumb {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--local-bg-color);
 }
 
 .GalleryItemPropEditor-pillTitle {

@@ -18,9 +18,6 @@
       class="EditorBlock-leftControls"
     >
       <slot name="left-actions"></slot>
-      <div v-if="isReadOnly" class="EditorBlock-isReadOnly-icon">
-        <i class="ri-lock-fill"></i>
-      </div>
       <i
         v-if="savingError"
         class="ri-error-warning-fill EditorBlock-saveErrorMarker"
@@ -78,6 +75,9 @@
         >
           <i class="ri-price-tag-3-fill"></i>
           <span>{{ resolvedBlock.name }}</span>
+        </div>
+        <div v-if="isReadOnly" class="EditorBlock-isReadOnly-icon">
+          <i class="ri-lock-fill"></i>
         </div>
       </div>
     </div>
@@ -794,10 +794,6 @@ export default defineComponent({
 .EditorBlock-leftControls {
   left: 4px;
 
-  .EditorBlock-isReadOnly-icon {
-    color: #666666;
-  }
-
   .EditorBlock-saveErrorMarker {
     cursor: pointer;
     color: var(--soft-red);
@@ -813,6 +809,10 @@ export default defineComponent({
   transition: opacity 0.1s;
   opacity: 0;
   pointer-events: none;
+}
+
+.EditorBlock-isReadOnly-icon {
+  color: #666666;
 }
 
 .EditorBlock-content,

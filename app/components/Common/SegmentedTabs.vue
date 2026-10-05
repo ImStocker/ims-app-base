@@ -216,6 +216,10 @@ export default defineComponent({
   --button-text-color: var(--SegmentedTabs-item-idle-text-color);
   --button-font-size: 13px;
   --button-font-weight: 600;
+
+  &:not(.state-active) {
+    --button-font-weight: 500;
+  }
   // прозрачные «копии» теней активного пункта: `none` не интерполируется, и без
   // этого shadow у raised появлялся бы скачком вместо перехода
   box-shadow:
