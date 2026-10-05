@@ -11,31 +11,48 @@
       @dragleave.prevent.stop="onSlotDragLeave"
       @drop.prevent.stop="onDrop"
     >
-      <menu-button
-        v-if="!readonly"
-        class="GalleryBlockItem-slot-add"
-        :tooltip="$t('assetEditor.galleryBlockFillSlot')"
-        @show="shownDropdownMenuIdx = item.index"
-        @hide="shownDropdownMenuIdx = null"
-      >
-        <template #button="{ tooltip, show }">
-          <button
-            class="is-button is-button-icon GalleryBlockItem-slot-add-button"
-            :title="tooltip"
-            @click="show"
-          >
-            <i class="ri-image-add-line"></i>
-          </button>
-        </template>
-        <menu-list :menu-list="addMenuList"></menu-list>
-      </menu-button>
-      <div
-        class="GalleryBlockItem-slot-name"
-        :title="item.name || $t('assetEditor.galleryBlockEmptySlot')"
-      >
-        <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
-        <span class="GalleryBlockItem-slot-name-text">{{ item.name }}</span>
-      </div>
+       <menu-button
+         v-if="!readonly && !isUploadingToThisSlot"
+         class="GalleryBlockItem-slot-add"
+         :tooltip="$t('assetEditor.galleryBlockFillSlot')"
+         @show="shownDropdownMenuIdx = item.index"
+         @hide="shownDropdownMenuIdx = null"
+       >
+         <template #button="{ tooltip, show }">
+           <button
+             class="is-button is-button-icon GalleryBlockItem-slot-add-button"
+             :title="tooltip"
+             @click="show"
+           >
+             <i class="ri-image-add-line"></i>
+           </button>
+         </template>
+         <menu-list :menu-list="addMenuList"></menu-list>
+       </menu-button>
+       <div
+         v-if="isUploadingToThisSlot"
+         class="GalleryBlockItem-uploadProgress"
+       >
+         <div
+           class="GalleryBlockItem-uploadProgress-bar"
+           :style="{
+             transform: `scaleY(${uploadProgressPercent}%)`,
+           }"
+         ></div>
+         <div class="GalleryBlockItem-uploadProgress-content">
+           {{ $t('file.uploading') }}
+           <br />
+           {{ uploadProgressPercent }}%
+         </div>
+       </div>
+       <div
+         v-if="!isUploadingToThisSlot"
+         class="GalleryBlockItem-slot-name"
+         :title="item.name || $t('assetEditor.galleryBlockEmptySlot')"
+       >
+         <i class="ri-price-tag-3-line GalleryBlockItem-slot-name-icon"></i>
+         <span class="GalleryBlockItem-slot-name-text">{{ item.name }}</span>
+       </div>
       <drag-overlay
         :visible="isDropTarget"
         :error="slotDragEffect === -1"
@@ -588,6 +605,50 @@ export default defineComponent({
   &.state-active {
     display: block;
   }
+}
+
+.GalleryBlockItem-uploadProgress {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border: 1px solid var(--color-main-yellow);
+  color: var(--color-main-yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 4px;
+  box-sizing: border-box;
+  padding: 20px;
+  z-index: 2;
+}
+
+.GalleryBlockItem-uploadProgress-bar,
+.GalleryBlockItem-uploadProgress-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.GalleryBlockItem-uploadProgress-bar {
+  background: var(--color-main-yellow);
+  opacity: 0.02;
+  transform-origin: bottom;
+}
+
+.GalleryBlockItem-uploadProgress-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  padding: 20px;
 }
 
 .GalleryBlockItem:hover {

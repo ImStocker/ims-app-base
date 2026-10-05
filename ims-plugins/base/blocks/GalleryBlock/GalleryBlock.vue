@@ -28,6 +28,9 @@
               :readonly="readonly"
               :item="item"
               :files="filesForGallery"
+              :current-upload-target-key="currentUploadTargetKey"
+              :upload-progress-percent="uploadProgressPercent"
+              :upload-job="uploadJob"
               @delete="deleteImage(item)"
               @set-caption="onSetGalleryItemCaption(item)"
               @set-name="setName(item)"
@@ -40,7 +43,7 @@
         </template>
         <template #append>
           <div
-            v-if="uploadProgressPercent !== null"
+            v-if="uploadProgressPercent !== null && currentUploadTargetKey === null"
             class="GalleryBlock-uploadProgressPercent"
           >
             <div
