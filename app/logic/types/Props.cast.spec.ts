@@ -11,6 +11,7 @@ import {
   castAssetPropValueToText,
   castAssetPropValueToString,
   castAssetPropValueToTimestamp,
+  getAssetPropValueLen,
   isCheckedAssetPropValue,
   isFilledAssetPropValue,
 } from './Props';
@@ -271,4 +272,26 @@ test('isCheckedAssetPropValue accepts plain object values', () => {
   expect(isCheckedAssetPropValue({})).toBe(false);
   expect(isCheckedAssetPropValue(null)).toBe(false);
   expect(isCheckedAssetPropValue(undefined)).toBe(false);
+});
+
+test('getAssetPropValueLen counts array elements and object keys', () => {
+  expect(getAssetPropValueLen([1, 2, 3])).toBe(3);
+  expect(getAssetPropValueLen([])).toBe(0);
+  expect(getAssetPropValueLen([{ a: 1 }, { b: 2 }])).toBe(2);
+  expect(getAssetPropValueLen({ a: 1, b: 2 })).toBe(2);
+  expect(getAssetPropValueLen({})).toBe(0);
+  expect(getAssetPropValueLen({ nested: { x: 1 } })).toBe(1);
+});
+
+test('getAssetPropValueLen handles booleans, timestamps and strings', () => {
+  expect(getAssetPropValueLen(true)).toBe(1);
+  expect(getAssetPropValueLen(false)).toBe(0);
+  expect(getAssetPropValueLen(TIMESTAMP)).toBe(24);
+  expect(getAssetPropValueLen('hello')).toBe(5);
+  expect(getAssetPropValueLen('')).toBe(0);
+  expect(getAssetPropValueLen(42)).toBe(2);
+  expect(getAssetPropValueLen(null)).toBe(0);
+  expect(getAssetPropValueLen(undefined)).toBe(0);
+  expect(getAssetPropValueLen({ Str: 'hi', Ops: [] })).toBe(2);
+  expect(getAssetPropValueLen({ Enum: 'e', Name: 'Enum Name' })).toBe(9);
 });

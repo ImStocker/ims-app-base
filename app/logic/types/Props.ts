@@ -1045,6 +1045,20 @@ export function isFilledAssetPropValue(
   return true;
 }
 
+export function getAssetPropValueLen(
+  v: AssetPropsPlainObjectValue | undefined,
+): number | null {
+  if (v === null || v === undefined) return null;
+  if (Array.isArray(v)) return v.length;
+  if (typeof v === 'boolean') return v ? 1 : 0;
+  const type = getAssetPropType(v as AssetPropValue);
+  if (type === AssetPropType.TIMESTAMP) return 24; // ISO 8601 string length
+  if (type === undefined && typeof v === 'object' && v !== null) {
+    return Object.keys(v).length;
+  }
+  return castAssetPropValueToString(v).length;
+}
+
 export function getAssetPropsChildNames(
   props: AssetProps,
   root = '',
