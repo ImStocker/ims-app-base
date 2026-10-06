@@ -640,7 +640,8 @@ export function castAssetPropValueToInt(
   }
   const a_str = castAssetPropValueToString(a);
   const r = parseInt(a_str);
-  return isNaN(r) ? null : r;
+  if (isNaN(r) || !/^[+-]?\d+$/.test(a_str)) return null;
+  return r;
 }
 
 export function castAssetPropValueToFloat(
@@ -654,7 +655,9 @@ export function castAssetPropValueToFloat(
   }
   const a_str = castAssetPropValueToString(a);
   const r = parseFloat(a_str);
-  return isNaN(r) ? null : r;
+  if (isNaN(r) || !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(a_str))
+    return null;
+  return r;
 }
 
 export function validateAssetPropValue(v: any): AssetPropValue {
@@ -1006,12 +1009,16 @@ export function splitPropParts(prop: string): string[] {
   return prop.split('\\');
 }
 
-export function isCheckedAssetPropValue(v: AssetPropValue): boolean {
+export function isCheckedAssetPropValue(
+  v: AssetPropsPlainObjectValue | undefined,
+): boolean {
   return isFilledAssetPropValue(v) && v !== false && v !== 0;
 }
 
-export function isFilledAssetPropValue(v: AssetPropValue): boolean {
-  const type = getAssetPropType(v);
+export function isFilledAssetPropValue(
+  v: AssetPropsPlainObjectValue | undefined,
+): boolean {
+  const type = getAssetPropType(v as AssetPropValue);
   switch (type) {
     case AssetPropType.NULL:
       return false;
@@ -1031,6 +1038,9 @@ export function isFilledAssetPropValue(v: AssetPropValue): boolean {
     }
     case AssetPropType.ARRAY:
       return (v as number[]).length > 0;
+  }
+  if (type === undefined) {
+    return Object.keys(v as AssetPropsPlainObject).length > 0;
   }
   return true;
 }

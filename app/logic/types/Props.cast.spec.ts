@@ -11,6 +11,8 @@ import {
   castAssetPropValueToText,
   castAssetPropValueToString,
   castAssetPropValueToTimestamp,
+  isCheckedAssetPropValue,
+  isFilledAssetPropValue,
 } from './Props';
 
 const ASSET_ID = '052d1d35-4072-4286-af97-8799b0bfdcaa';
@@ -87,7 +89,15 @@ test('castAssetPropValueToInt', () => {
   expect(castAssetPropValueToInt(true)).toBe(1);
   expect(castAssetPropValueToInt(false)).toBe(0);
   expect(castAssetPropValueToInt(TIMESTAMP)).toBe(TIMESTAMP.Ts);
+  expect(castAssetPropValueToInt('+42')).toBe(42);
+  expect(castAssetPropValueToInt('-42')).toBe(-42);
   expect(castAssetPropValueToInt('abc')).toBeNull();
+  expect(castAssetPropValueToInt('42abc')).toBeNull();
+  expect(castAssetPropValueToInt('4a2')).toBeNull();
+  expect(castAssetPropValueToInt('42.5')).toBeNull();
+  expect(castAssetPropValueToInt('1e3')).toBeNull();
+  expect(castAssetPropValueToInt(' 42')).toBeNull();
+  expect(castAssetPropValueToInt('')).toBeNull();
   expect(castAssetPropValueToInt({ a: 1 })).toBeNull();
   expect(castAssetPropValueToInt([1, 2])).toBeNull();
   expect(castAssetPropValueToInt(undefined)).toBeNull();
@@ -99,6 +109,18 @@ test('castAssetPropValueToFloat', () => {
   expect(castAssetPropValueToFloat('2.5')).toBe(2.5);
   expect(castAssetPropValueToFloat(TIMESTAMP)).toBe(TIMESTAMP.Ts);
   expect(castAssetPropValueToFloat(true)).toBe(1);
+  expect(castAssetPropValueToFloat('+2.5')).toBe(2.5);
+  expect(castAssetPropValueToFloat('-2.5')).toBe(-2.5);
+  expect(castAssetPropValueToFloat('.5')).toBe(0.5);
+  expect(castAssetPropValueToFloat('5.')).toBe(5);
+  expect(castAssetPropValueToFloat('1e3')).toBe(1000);
+  expect(castAssetPropValueToFloat('1E-2')).toBe(0.01);
+  expect(castAssetPropValueToFloat('2.5abc')).toBeNull();
+  expect(castAssetPropValueToFloat('2.5.5')).toBeNull();
+  expect(castAssetPropValueToFloat('abc')).toBeNull();
+  expect(castAssetPropValueToFloat('1e')).toBeNull();
+  expect(castAssetPropValueToFloat(' 2.5')).toBeNull();
+  expect(castAssetPropValueToFloat('')).toBeNull();
   expect(castAssetPropValueToFloat({ a: 1 })).toBeNull();
   expect(castAssetPropValueToFloat([1, 2])).toBeNull();
   expect(castAssetPropValueToFloat(undefined)).toBeNull();
@@ -214,4 +236,39 @@ test('castAssetPropValueToArray', () => {
   expect(castAssetPropValueToArray(42)).toEqual([]);
   expect(castAssetPropValueToArray(null)).toEqual([]);
   expect(castAssetPropValueToArray(undefined)).toEqual([]);
+});
+
+test('isFilledAssetPropValue accepts plain object values', () => {
+  expect(isFilledAssetPropValue('x')).toBe(true);
+  expect(isFilledAssetPropValue('  ')).toBe(false);
+  expect(isFilledAssetPropValue('')).toBe(false);
+  expect(isFilledAssetPropValue(null)).toBe(false);
+  expect(isFilledAssetPropValue(undefined)).toBe(false);
+  expect(isFilledAssetPropValue([])).toBe(false);
+  expect(isFilledAssetPropValue([1])).toBe(true);
+  expect(isFilledAssetPropValue({ a: 1 })).toBe(true);
+  expect(isFilledAssetPropValue({})).toBe(false);
+  expect(isFilledAssetPropValue([{ a: 1 }])).toBe(true);
+  expect(isFilledAssetPropValue({ Str: 'hi', Ops: [] })).toBe(true);
+  expect(isFilledAssetPropValue({ Str: '  ', Ops: [] })).toBe(true);
+  expect(isFilledAssetPropValue({ Str: '', Ops: [] })).toBe(false);
+  expect(isFilledAssetPropValue({ Str: '', Ops: [{ insert: 'x' }] })).toBe(
+    true,
+  );
+  expect(isFilledAssetPropValue(TIMESTAMP)).toBe(true);
+  expect(isFilledAssetPropValue(0)).toBe(true);
+  expect(isFilledAssetPropValue(false)).toBe(true);
+});
+
+test('isCheckedAssetPropValue accepts plain object values', () => {
+  expect(isCheckedAssetPropValue(true)).toBe(true);
+  expect(isCheckedAssetPropValue(1)).toBe(true);
+  expect(isCheckedAssetPropValue('x')).toBe(true);
+  expect(isCheckedAssetPropValue({ a: 1 })).toBe(true);
+  expect(isCheckedAssetPropValue(false)).toBe(false);
+  expect(isCheckedAssetPropValue(0)).toBe(false);
+  expect(isCheckedAssetPropValue('')).toBe(false);
+  expect(isCheckedAssetPropValue({})).toBe(false);
+  expect(isCheckedAssetPropValue(null)).toBe(false);
+  expect(isCheckedAssetPropValue(undefined)).toBe(false);
 });
