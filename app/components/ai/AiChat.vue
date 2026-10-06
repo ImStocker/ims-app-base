@@ -73,63 +73,72 @@
           </div>
         </div>
       </template>
-
-      <div v-if="showUndoneTurns.length > 0" class="AiChat-undone">
-        <button
-          class="AiChat-undone-toggle"
-          :title="t('aiAssistant.redoChanges')"
-          @click="showUndoneTurnsOpen = !showUndoneTurnsOpen"
-        >
-          <i class="ri-history-line"></i>
-          {{ t('aiAssistant.undoneMessages') }} ({{ showUndoneTurns.length }})
-          <i
-            class="ri-arrow-down-s-line"
-            :class="{ open: showUndoneTurnsOpen }"
-          ></i>
-        </button>
-        <div v-if="showUndoneTurnsOpen" class="AiChat-undone-list">
-          <div
-            v-for="turn in showUndoneTurns"
-            :key="turn.id"
-            class="AiChat-undone-item"
-          >
-            <div class="AiChat-undone-text">{{ turn.userMessage }}</div>
-            <button
-              class="is-button is-button-icon-small AiChat-turnActions-btn"
-              :title="t('aiAssistant.redoChanges')"
-              @click="redoTurn(turn.id)"
-            >
-              <i class="ri-arrow-go-forward-line"></i>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div
-      v-if="aiEditManager.changeIds.length > 0 || lastRedoableTurn"
+      v-if="
+        aiEditManager.changeIds.length > 0 ||
+        lastRedoableTurn ||
+        showUndoneTurns.length > 0
+      "
       class="AiChat-changeIds"
     >
-      <span class="AiChat-changeIds-label">
-        <i class="ri-file-list-3-line"></i>
-        {{ t('aiAssistant.changes') }} ({{ aiEditManager.changeIds.length }})
-      </span>
-      <button
-        class="AiChat-revertBtn"
-        :disabled="!lastUndoableTurn || aiEditManager.isGenerating"
-        :title="t('aiAssistant.undo')"
-        @click="undoLastTurn"
-      >
-        <i class="ri-arrow-go-back-line"></i>
-      </button>
-      <button
-        class="AiChat-revertBtn"
-        :disabled="!lastRedoableTurn || aiEditManager.isGenerating"
-        :title="t('aiAssistant.redo')"
-        @click="redoLastTurn"
-      >
-        <i class="ri-arrow-go-forward-line"></i>
-      </button>
+      <div v-if="showUndoneTurnsOpen" class="AiChat-undone-list">
+        <div
+          v-for="turn in showUndoneTurns"
+          :key="turn.id"
+          class="AiChat-undone-item"
+        >
+          <div class="AiChat-undone-text">{{ turn.userMessage }}</div>
+          <button
+            class="is-button is-button-icon-small AiChat-turnActions-btn"
+            :title="t('aiAssistant.redoChanges')"
+            @click="redoTurn(turn.id)"
+          >
+            <i class="ri-arrow-go-forward-line"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="AiChat-changeIds-actions">
+        <button
+          v-if="showUndoneTurns.length > 0"
+          class="AiChat-changeIds-undoneBtn"
+          :title="t('aiAssistant.undoneMessages')"
+          @click="showUndoneTurnsOpen = !showUndoneTurnsOpen"
+        >
+          <span class="AiChat-changeIds-undoneArrow">
+            <i
+              class="ri-arrow-right-s-line"
+              :class="{ open: showUndoneTurnsOpen }"
+            ></i>
+          </span>
+          <span>{{ t('aiAssistant.undoneMessages') }}</span>
+        </button>
+        <div class="AiChat-changeIds-undo">
+          <span class="AiChat-changeIds-label">
+            {{ t('aiAssistant.changes') }} ({{
+              aiEditManager.changeIds.length
+            }})
+          </span>
+          <button
+            class="AiChat-revertBtn"
+            :disabled="!lastUndoableTurn || aiEditManager.isGenerating"
+            :title="t('aiAssistant.undo')"
+            @click="undoLastTurn"
+          >
+            <i class="ri-arrow-go-back-line"></i>
+          </button>
+          <button
+            class="AiChat-revertBtn"
+            :disabled="!lastRedoableTurn || aiEditManager.isGenerating"
+            :title="t('aiAssistant.redo')"
+            @click="redoLastTurn"
+          >
+            <i class="ri-arrow-go-forward-line"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
     <ai-panel-send
@@ -507,20 +516,64 @@ defineExpose({
 
 .AiChat-changeIds {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: 4px;
-  padding: 6px 8px;
+  padding: 4px 8px 16px;
+  margin-bottom: -12px;
   font-size: 11px;
   color: var(--color-placeholder, #888);
-  border-top: 1px solid var(--local-border-color);
+  border: 1px solid var(--local-border-color);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: var(--local-bg-color);
+  position: relative;
+  z-index: 0;
+}
+
+.AiChat-changeIds-undoneBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 2px 4px;
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--local-box-color);
+    color: var(--local-text-color);
+  }
+
+  .ri-arrow-right-s-line {
+    display: inline-block;
+    transition: transform 0.2s ease;
+
+    &.open {
+      transform: rotate(-90deg);
+    }
+  }
+}
+
+.AiChat-changeIds-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.AiChat-changeIds-undo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .AiChat-changeIds-label {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-right: 4px;
 }
 
 .AiChat-revertBtn {
@@ -533,7 +586,6 @@ defineExpose({
   border-radius: 4px;
   display: flex;
   align-items: center;
-  margin-left: auto;
 }
 
 .AiChat-revertBtn:hover {
@@ -545,6 +597,14 @@ defineExpose({
   opacity: 0.35;
   cursor: default;
   background: transparent;
+  color: var(--color-placeholder, #888);
+}
+
+.AiChat-undone-list {
+  border-bottom: 1px solid var(--local-border-color, #333);
+  overflow-y: auto;
+  max-height: 200px;
+  font-size: 11px;
   color: var(--color-placeholder, #888);
 }
 
@@ -586,52 +646,11 @@ defineExpose({
   }
 }
 
-.AiChat-undone {
-  margin-top: 4px;
-  border: 1px dashed var(--local-border-color, #444);
-  border-radius: 8px;
-  font-size: 11px;
-  color: var(--color-placeholder, #888);
-}
-
-.AiChat-undone-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 6px 10px;
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font-size: inherit;
-  text-align: left;
-
-  .ri-arrow-down-s-line {
-    margin-left: auto;
-    transition: transform 0.15s;
-
-    &.open {
-      transform: rotate(180deg);
-    }
-  }
-}
-
-.AiChat-undone-list {
-  border-top: 1px dashed var(--local-border-color, #444);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
 .AiChat-undone-item {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--local-border-color, #333);
-  }
 }
 
 .AiChat-undone-text {

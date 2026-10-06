@@ -77,6 +77,8 @@ async function sendMessage() {
   border-radius: 12px;
   max-height: 128px;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .AiPanelSend-textarea {
