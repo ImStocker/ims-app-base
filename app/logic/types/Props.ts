@@ -151,11 +151,11 @@ export function getNowAssetPropValueTimestamp(): AssetPropValueTimestamp {
 }
 
 export function castAssetPropValueToTimestamp(
-  a: AssetPropValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): AssetPropValueTimestamp | null {
   if (a === null) return null;
 
-  const a_type = getAssetPropType(a);
+  const a_type = getAssetPropType(a as AssetPropValue);
   if (a_type === AssetPropType.TIMESTAMP) {
     return a as AssetPropValueTimestamp;
   } else if (
@@ -179,13 +179,15 @@ export function castAssetPropValueToTimestamp(
   }
 }
 
-export function castAssetPropValueToDate(a: AssetPropValue): Date | null {
+export function castAssetPropValueToDate(
+  a: AssetPropsPlainObjectValue | undefined,
+): Date | null {
   const timestamp = castAssetPropValueToTimestamp(a);
   return timestamp ? new Date(timestamp.Ts * 1000) : null;
 }
 
 export function castAssetPropValueToText(
-  a: AssetPropValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): AssetPropValueText {
   if (
     a &&
@@ -195,7 +197,7 @@ export function castAssetPropValueToText(
     return a as AssetPropValueText;
   }
   const str = castAssetPropValueToString(a);
-  const a_type = getAssetPropType(a);
+  const a_type = getAssetPropType(a as AssetPropValue);
   switch (a_type) {
     case AssetPropType.ASSET:
       return {
@@ -242,7 +244,7 @@ export function castAssetPropValueToText(
           {
             insert: {
               prop: {
-                value: a,
+                value: a as AssetPropValue,
                 inline: true,
               },
             },
@@ -472,7 +474,7 @@ export function makeTitleFromAssetPropValue(a: AssetPropValue): {
 }
 
 export function castAssetPropValueToEnum(
-  a: AssetPropValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): AssetPropValueEnum | null {
   if (!a) return null;
   if (!(a as AssetPropValueEnum).Enum) return null;
@@ -480,7 +482,7 @@ export function castAssetPropValueToEnum(
 }
 
 export function castAssetPropValueToAccount(
-  a: AssetPropValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): AssetPropValueAccount | null {
   if (!a) return null;
   if (!(a as AssetPropValueAccount).AccountId) return null;
@@ -488,7 +490,7 @@ export function castAssetPropValueToAccount(
 }
 
 export function castAssetPropValueToAsset(
-  a: AssetPropValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): AssetPropValueAsset | null {
   if (!a) return null;
   if ((a as AssetPropValueAsset).AssetId) {
@@ -519,16 +521,19 @@ export function castAssetPropValueToAsset(
   return null;
 }
 
-export function castAssetPropValueToArray(a: AssetPropValue): number[] {
+export function castAssetPropValueToArray(
+  a: AssetPropsPlainObjectValue | undefined,
+): number[] {
   return Array.isArray(a) ? (a as number[]) : [];
 }
 
 export function castAssetPropValueToString(
-  a: AssetPropValue | undefined,
+  a: AssetPropsPlainObjectValue | undefined,
 ): string {
-  const a_type = getAssetPropType(a);
+  const a_type = getAssetPropType(a as AssetPropValue);
   switch (a_type) {
     case undefined:
+      return a && typeof a === 'object' ? JSON.stringify(a) : '';
     case AssetPropType.NULL:
       return '';
     case AssetPropType.TEXT:
@@ -601,23 +606,23 @@ export function castAssetPropValueToString(
 }
 
 export function castAssetPropPlainObjectValueToString(
-  a: AssetPropsPlainObjectValue,
+  a: AssetPropsPlainObjectValue | undefined,
 ): string {
   if (Array.isArray(a)) {
     return a.map((b) => castAssetPropPlainObjectValueToString(b)).join(', ');
-  } else {
-    const a_type = getAssetPropType(a as AssetPropValue);
-    if (a && a_type === undefined && typeof a === 'object') {
-      return JSON.stringify(a);
-    } else return castAssetPropValueToString(a as AssetPropValue);
   }
+  return castAssetPropValueToString(a);
 }
 
-export function castAssetPropValueToBoolean(a: AssetPropValue): boolean {
+export function castAssetPropValueToBoolean(
+  a: AssetPropsPlainObjectValue | undefined,
+): boolean {
   return a !== undefined && a !== null && a !== 0 && a !== '' && a !== false;
 }
 
-export function castAssetPropValueToInt(a: AssetPropValue): number | null {
+export function castAssetPropValueToInt(
+  a: AssetPropsPlainObjectValue | undefined,
+): number | null {
   if (typeof a === 'number') {
     return Math.round(a);
   } else if (typeof a === 'boolean') {
@@ -631,7 +636,9 @@ export function castAssetPropValueToInt(a: AssetPropValue): number | null {
   return isNaN(r) ? null : r;
 }
 
-export function castAssetPropValueToFloat(a: AssetPropValue): number | null {
+export function castAssetPropValueToFloat(
+  a: AssetPropsPlainObjectValue | undefined,
+): number | null {
   if (typeof a === 'number') {
     return a;
   }
