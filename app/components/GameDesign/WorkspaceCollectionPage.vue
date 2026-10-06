@@ -7,11 +7,14 @@
       <div class="WorkspaceCollectionPage-header">
         <workspace-header
           :icon-class="workspaceIcon"
+          :color-name="workspaceColorName"
+          :can-change="canChange"
           :title="vm.workspace?.title"
           :can-rename="canRename"
           :show-share="!!(userIsAdmin && !isDesktop)"
           :menu-list="vm.workspaceMenu"
           :on-rename="renameWorkspace"
+          :on-save-appearance="saveWorkspaceAppearance"
           @share="openSetUpAccessDialog()"
         >
           <template #manageStart>
@@ -89,6 +92,11 @@ import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
+import {
+  getWorkspaceColorName,
+  getWorkspaceIconName,
+} from '../../logic/utils/workspaceAppearance';
+import type { EntityAppearance } from '../../logic/types/EntityAppearance';
 
 export default defineComponent({
   name: 'WorkspaceCollectionPage',
@@ -123,12 +131,15 @@ export default defineComponent({
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
     },
-    canRename() {
+    canChange() {
       return !!(
         this.userInfo &&
         this.vm.workspace?.rights &&
         this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE
       );
+    },
+    canRename() {
+      return this.canChange;
     },
     userIsAdmin() {
       return this.$getAppManager().get(ProjectManager).isAdmin();
@@ -186,9 +197,14 @@ export default defineComponent({
       return this.$getAppManager().get(ProjectManager).getProjectInfo();
     },
     workspaceIcon() {
+      const custom_icon = getWorkspaceIconName(this.vm.workspace?.props);
+      if (custom_icon) return 'asset-icon-' + custom_icon;
       return this.vm.baseAsset?.icon
         ? 'asset-icon-' + this.vm.baseAsset.icon
         : 'ri-table-view';
+    },
+    workspaceColorName() {
+      return getWorkspaceColorName(this.vm.workspace?.props);
     },
     baseAsset() {
       return this.vm.baseAsset;
@@ -222,6 +238,13 @@ export default defineComponent({
               });
           }
         });
+    },
+    async saveWorkspaceAppearance(params: EntityAppearance) {
+      const workspace_id = this.vm.workspace?.id;
+      if (!workspace_id) return;
+      await this.$getAppManager()
+        .get(CreatorAssetManager)
+        .changeWorkspaceAppearance(workspace_id, params);
     },
     async openSetUpAccessDialog() {
       await this.$getAppManager().get(DialogManager).show(SetUpAccessDialog, {

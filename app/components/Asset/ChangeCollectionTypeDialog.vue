@@ -136,25 +136,33 @@ export default defineComponent({
               },
             });
 
-          const req: ChangeWorkspaceRequest = {
-            props: {
-              type: WORKSPACE_TYPE_COLLECTION,
-              asset: {
-                AssetId: this.collectionType.id,
-                Title: this.collectionType.title ?? '',
-                Name: this.collectionType.name,
-              },
+          const collection_props = {
+            type: WORKSPACE_TYPE_COLLECTION,
+            asset: {
+              AssetId: this.collectionType.id,
+              Title: this.collectionType.title ?? '',
+              Name: this.collectionType.name,
             },
-          };
+          } as const;
 
           const changing_workspace_ids = [
             this.dialog.state.workspaceId,
             ...nested_workspaces.list.map((w) => w.id),
           ];
           for (const workspace_id of changing_workspace_ids) {
-            await this.$getAppManager()
-              .get(CreatorAssetManager)
-              .changeWorkspace(workspace_id, req);
+            const creator_asset_manager =
+              this.$getAppManager().get(CreatorAssetManager);
+            const workspace =
+              await creator_asset_manager.getWorkspaceByIdViaCache(
+                workspace_id,
+              );
+            const req: ChangeWorkspaceRequest = {
+              props: {
+                ...(workspace?.props ?? {}),
+                ...collection_props,
+              },
+            };
+            await creator_asset_manager.changeWorkspace(workspace_id, req);
           }
 
           await this.$getAppManager()

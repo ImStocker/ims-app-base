@@ -1,6 +1,6 @@
 <template>
-  <span class="WorkspaceIcon">
-    <i :class="isCollection ? 'ri-table-view' : 'ri-folder-fill'"></i>
+  <span class="WorkspaceIcon" :style="iconStyle">
+    <i class="WorkspaceIcon-icon" :class="iconClass"></i>
     <span
       v-if="collectionAssetIcon"
       class="WorkspaceIcon-collection-assetAnchor"
@@ -16,11 +16,17 @@
 <script type="text/ecmascript-6" lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
+import UiManager from '../../logic/managers/UiManager';
 import {
   WORKSPACE_TYPE_COLLECTION,
   type Workspace,
 } from '../../logic/types/Workspaces';
 import type { AssetPropValueAsset } from '../../logic/types/Props';
+import {
+  getWorkspaceColorName,
+  getWorkspaceIconClass,
+} from '../../logic/utils/workspaceAppearance';
+import { resolveAssetIconColor } from '../../logic/utils/assetIconColors';
 
 export default defineComponent({
   name: 'WorkspaceIcon',
@@ -30,6 +36,22 @@ export default defineComponent({
   computed: {
     isCollection() {
       return this.workspace.props?.type === WORKSPACE_TYPE_COLLECTION;
+    },
+    iconClass(): string {
+      return getWorkspaceIconClass(
+        this.workspace.props,
+        this.isCollection ? 'ri-table-view' : 'ri-folder-fill',
+      );
+    },
+    color(): string | null {
+      const theme = this.$getAppManager().get(UiManager).getColorTheme();
+      return resolveAssetIconColor(
+        getWorkspaceColorName(this.workspace.props),
+        theme,
+      );
+    },
+    iconStyle() {
+      return this.color ? { color: this.color } : null;
     },
     collectionAssetIcon(): string | null {
       if (this.workspace.props.type !== WORKSPACE_TYPE_COLLECTION) {
@@ -62,6 +84,9 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @use '$style/asset-icons';
+.WorkspaceIcon-icon {
+  @include asset-icons.asset-icons;
+}
 .WorkspaceIcon-collection-assetAnchor {
   position: relative;
   display: inline-block;

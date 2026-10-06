@@ -5,6 +5,7 @@
       'state-loading': cachedWorkspace === undefined && showLoading,
       'state-error': assetNotFound,
     }"
+    :style="linkStyle"
     :project="project"
     :to="{
       name: 'project-workspace-by-id',
@@ -21,7 +22,9 @@
     @click="onClick"
     ><workspace-icon
       v-if="
-        !!showIcon && cachedWorkspace && (isCollection || showIcon === 'always')
+        !!showIcon &&
+        cachedWorkspace &&
+        (isCollection || hasCustomIcon || showIcon === 'always')
       "
       class="WorkspaceLink-icon"
       :workspace="cachedWorkspace"
@@ -54,6 +57,12 @@ import {
   type WorkspaceLink,
 } from '../../logic/types/Workspaces';
 import WorkspaceIcon from './WorkspaceIcon.vue';
+import UiManager from '../../logic/managers/UiManager';
+import {
+  getWorkspaceColorName,
+  getWorkspaceIconName,
+} from '../../logic/utils/workspaceAppearance';
+import { resolveAssetIconColor } from '../../logic/utils/assetIconColors';
 
 const TOOLTIP_OFFSET_X = 10;
 const TOOLTIP_OFFSET_Y = 10;
@@ -135,6 +144,18 @@ export default defineComponent({
     },
     assetNotFound(): boolean {
       return this.hasGddAccess && this.cachedWorkspace === null;
+    },
+    hasCustomIcon(): boolean {
+      return !!getWorkspaceIconName(this.cachedWorkspace?.props);
+    },
+    workspaceColor(): string | null {
+      const color_name = getWorkspaceColorName(this.cachedWorkspace?.props);
+      if (!color_name) return null;
+      const theme = this.$getAppManager().get(UiManager).getColorTheme();
+      return resolveAssetIconColor(color_name, theme);
+    },
+    linkStyle() {
+      return this.workspaceColor ? { color: this.workspaceColor } : null;
     },
   },
   unmounted() {

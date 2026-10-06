@@ -40,6 +40,12 @@ import type {
   AssetPropValueSelection,
 } from '../types/Props';
 import ChangeCollectionTypeDialog from '../../components/Asset/ChangeCollectionTypeDialog.vue';
+import SelectAssetIconDialog from '../../components/Asset/SelectAssetIconDialog.vue';
+import SelectAssetColorDialog from '../../components/Asset/SelectAssetColorDialog.vue';
+import {
+  getWorkspaceColorName,
+  getWorkspaceIconName,
+} from '../utils/workspaceAppearance';
 import { isWorkspaceInsideCollection } from '../../components/GameDesign/workspaceUtils';
 import ProjectContentManager from '../managers/ProjectContentManager';
 import {
@@ -194,7 +200,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       assetActions.push({
         title: this.appManager.$t(
           'mainMenu.' +
-            (typeof process !== 'undefined' && process.platform === 'darwin' ? 'showInFinder' : 'showInExplorer'),
+            (typeof process !== 'undefined' && process.platform === 'darwin'
+              ? 'showInFinder'
+              : 'showInExplorer'),
         ),
         icon: 'ri-folder-open-line',
         action: async () => {
@@ -368,7 +376,9 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       workspaceActions.push({
         title: this.appManager.$t(
           'mainMenu.' +
-            (typeof process !== 'undefined' && process.platform === 'darwin' ? 'openInFinder' : 'openInExplorer'),
+            (typeof process !== 'undefined' && process.platform === 'darwin'
+              ? 'openInFinder'
+              : 'openInExplorer'),
         ),
         icon: 'ri-folder-open-line',
         action: async () => {
@@ -530,6 +540,18 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         title: this.appManager.$t('assetEditor.blockMenu.setServiceName'),
         action: () => this.setServiceName(workspace),
         icon: 'serviceName',
+      });
+    }
+    if (workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE) {
+      workspaceActions.push({
+        title: this.appManager.$t('assetEditor.changeIcon'),
+        action: () => this.changeWorkspaceIcon(workspace),
+        icon: 'ri-image-2-line',
+      });
+      workspaceActions.push({
+        title: this.appManager.$t('assetEditor.changeColor'),
+        action: () => this.changeWorkspaceColor(workspace),
+        icon: 'ri-palette-line',
       });
     }
     if (
@@ -882,6 +904,33 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
           });
       });
     }
+  }
+
+  async changeWorkspaceIcon(workspace: Workspace) {
+    const new_icon = await this.appManager
+      .get(DialogManager)
+      .show(SelectAssetIconDialog, {
+        value: getWorkspaceIconName(workspace.props),
+      });
+    if (new_icon === undefined) return;
+    await this.appManager.get(UiManager).doTask(async () => {
+      await this.appManager
+        .get(CreatorAssetManager)
+        .changeWorkspaceAppearance(workspace.id, { icon: new_icon });
+    });
+  }
+  async changeWorkspaceColor(workspace: Workspace) {
+    const new_color = await this.appManager
+      .get(DialogManager)
+      .show(SelectAssetColorDialog, {
+        value: getWorkspaceColorName(workspace.props),
+      });
+    if (new_color === undefined) return;
+    await this.appManager.get(UiManager).doTask(async () => {
+      await this.appManager
+        .get(CreatorAssetManager)
+        .changeWorkspaceAppearance(workspace.id, { color: new_color });
+    });
   }
 
   async changeCollectionType(workspace: Workspace) {

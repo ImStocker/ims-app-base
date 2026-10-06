@@ -33,6 +33,7 @@ import {
   type WorkspaceMoveResult,
   type WorkspaceQueryDTOWhere,
 } from '../types/Workspaces';
+import type { EntityAppearance } from '../types/EntityAppearance';
 import type {
   ApiRequestList,
   ApiResultListWithMore,
@@ -469,6 +470,22 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       instigator: this._getCurrentUserInstigator(),
     });
     return res;
+  }
+
+  async changeWorkspaceAppearance(
+    workspace_id: string,
+    params: EntityAppearance,
+  ): Promise<Workspace> {
+    const workspace = await this.getWorkspaceByIdViaCache(workspace_id);
+    assert(workspace, "Workspace doesn't exist");
+    const props: AssetProps = { ...workspace.props };
+    if (params.icon !== undefined) {
+      props['icon'] = params.icon;
+    }
+    if (params.color !== undefined) {
+      props['color'] = params.color;
+    }
+    return this.changeWorkspace(workspace_id, { props });
   }
 
   async deleteWorkspace(workspace_id: string): Promise<void> {

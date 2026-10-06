@@ -7,12 +7,15 @@
     <template #header>
       <div class="GameDesignWorkspacePage-header">
         <workspace-header
-          icon-class="asset-icon-folder-fill"
+          :icon-class="workspaceIconClass"
+          :color-name="workspaceColorName"
+          :can-change="canChange"
           :title="vm.workspace?.title ?? $t('translatedTitles.Items')"
           :can-rename="canRename"
           :show-share="!!(userIsAdmin && !isDesktop)"
           :menu-list="vm.workspaceMenu"
           :on-rename="renameWorkspace"
+          :on-save-appearance="saveWorkspaceAppearance"
           @share="openSetUpAccessDialog()"
         >
           <template #item-createElement>
@@ -103,6 +106,11 @@ import CreateElementButtons from '../Asset/CreateElementButtons.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
+import {
+  getWorkspaceColorName,
+  getWorkspaceIconClass,
+} from '../../logic/utils/workspaceAppearance';
+import type { EntityAppearance } from '../../logic/types/EntityAppearance';
 
 export default defineComponent({
   name: 'GameDesignWorkspacePage',
@@ -161,12 +169,24 @@ export default defineComponent({
     userInfo() {
       return this.$getAppManager().get(AuthManager).getUserInfo();
     },
-    canRename() {
+    canChange() {
       return !!(
         this.userInfo &&
         this.vm.workspace?.rights &&
         this.vm.workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE
       );
+    },
+    canRename() {
+      return this.canChange;
+    },
+    workspaceIconClass() {
+      return getWorkspaceIconClass(
+        this.vm.workspace?.props,
+        'asset-icon-folder-fill',
+      );
+    },
+    workspaceColorName() {
+      return getWorkspaceColorName(this.vm.workspace?.props);
     },
     breadCrumbs(): BreadCrumbsEntity[] | null {
       if (this.workspaceId) {
@@ -251,6 +271,13 @@ export default defineComponent({
               });
           }
         });
+    },
+    async saveWorkspaceAppearance(params: EntityAppearance) {
+      const workspace_id = this.vm.workspace?.id;
+      if (!workspace_id) return;
+      await this.$getAppManager()
+        .get(CreatorAssetManager)
+        .changeWorkspaceAppearance(workspace_id, params);
     },
   },
 });

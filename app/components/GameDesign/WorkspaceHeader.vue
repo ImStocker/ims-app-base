@@ -3,9 +3,12 @@
     <div v-if="isRenamingInProcNewTitle" class="loaderBarFloat"></div>
     <div class="WorkspaceHeader-header">
       <div class="WorkspaceHeader-title">
-        <div class="WorkspaceHeader-icon-box">
-          <i class="WorkspaceHeader-title-icon" :class="iconClass"></i>
-        </div>
+        <workspace-icon-color-control
+          :icon-class="iconClass"
+          :color-name="colorName"
+          :can-change="canChange"
+          :save="onSaveAppearance"
+        />
         <div class="WorkspaceHeader-titles">
           <div class="App-header">
             <renamable-text
@@ -31,16 +34,17 @@
         >
           <i class="ri-share-fill"></i>
         </button>
-        <menu-button v-if="menuList.length > 0">
-          <menu-list :menu-list="menuList">
-            <template #item-createElement>
-              <slot name="item-createElement"></slot>
-            </template>
-            <template #item-createFolder>
-              <slot name="item-createFolder"></slot>
-            </template>
-          </menu-list>
-        </menu-button>
+        <workspace-settings
+          class="WorkspaceHeader-settings"
+          :menu-list="menuList"
+        >
+          <template #item-createElement>
+            <slot name="item-createElement"></slot>
+          </template>
+          <template #item-createFolder>
+            <slot name="item-createFolder"></slot>
+          </template>
+        </workspace-settings>
       </div>
     </div>
   </div>
@@ -50,20 +54,32 @@
 import { defineComponent, type PropType } from 'vue';
 import RenamableText from '../Common/RenamableText.vue';
 import CaptionString from '../Common/CaptionString.vue';
-import MenuButton from '../Common/MenuButton.vue';
-import MenuList from '../Common/MenuList.vue';
 import type { ExtendedMenuListItem } from '../../logic/types/MenuList';
+import WorkspaceIconColorControl from '../Asset/WorkspaceIconColorControl.vue';
+import WorkspaceSettings from './WorkspaceSettings.vue';
+import type { EntityAppearance } from '../../logic/types/EntityAppearance';
 
 export default defineComponent({
   name: 'WorkspaceHeader',
   components: {
     RenamableText,
     CaptionString,
-    MenuButton,
-    MenuList,
+    WorkspaceIconColorControl,
+    WorkspaceSettings,
   },
   props: {
     iconClass: { type: String, required: true },
+    colorName: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    canChange: { type: Boolean, default: false },
+    onSaveAppearance: {
+      type: [Function, null] as PropType<
+        ((params: EntityAppearance) => Promise<void>) | null
+      >,
+      default: null,
+    },
     title: {
       type: String as PropType<string | null>,
       default: null,
@@ -108,8 +124,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@use '$style/asset-icons';
-
 .WorkspaceHeader {
   width: 100%;
 }
@@ -133,21 +147,6 @@ export default defineComponent({
     gap: 10px;
     margin-bottom: 0px;
   }
-}
-.WorkspaceHeader-icon-box {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
-  color: var(--color-accent);
-  font-size: 18px;
-}
-.WorkspaceHeader-title-icon {
-  @include asset-icons.asset-icons;
 }
 .WorkspaceHeader-titles {
   display: flex;
