@@ -51,6 +51,12 @@ export default class AiEditManager extends AppSubManagerBase {
     return this._projectDatabase;
   }
 
+  protected _trackChangeId(_changeId: string): void {}
+
+  protected _isChangeIdActive(_changeId: string): boolean {
+    return true;
+  }
+
   private get _session_db(): IAiSessionStorage | null {
     return this._sessionStorage;
   }
@@ -159,38 +165,46 @@ export default class AiEditManager extends AppSubManagerBase {
     this._syncChangeIds();
   }
 
-  /** Keeps the session-level change list in sync with per-turn state. */
   private _syncChangeIds(): void {
     const ids: string[] = [];
     for (const turn of this.turns) {
       if (turn.undone) continue;
       for (const cid of turn.changeIds) {
+        if (!this._isChangeIdActive(cid)) continue;
         if (!ids.includes(cid)) ids.push(cid);
       }
     }
     this.changeIds = ids;
   }
 
-  /** Last turn that still has unreverted changes. */
+  canUndoTurn(turn: AiTurn): boolean {
+    return (
+      !this.isGenerating &&
+      !turn.undone &&
+      turn.status === 'done' &&
+      turn.changeIds.some((cid) => this._isChangeIdActive(cid))
+    );
+  }
+
+  canRedoTurn(turn: AiTurn): boolean {
+    return (
+      turn.undone &&
+      (turn.undoneChangeIds ?? []).some((cid) => this._isChangeIdActive(cid))
+    );
+  }
+
   get lastUndoableTurn(): AiTurn | null {
     for (let i = this.turns.length - 1; i >= 0; i--) {
       const turn = this.turns[i]!;
-      if (turn.undone) continue;
-      if (turn.status !== 'done') continue;
-      if (turn.changeIds.length === 0) continue;
-      return turn;
+      if (this.canUndoTurn(turn)) return turn;
     }
     return null;
   }
 
-  /** Most recently undone turn. */
   get lastRedoableTurn(): AiTurn | null {
     for (let i = this.turns.length - 1; i >= 0; i--) {
       const turn = this.turns[i]!;
-      if (!turn.undone) continue;
-      if (turn.undoneChangeIds && turn.undoneChangeIds.length > 0) {
-        return turn;
-      }
+      if (this.canRedoTurn(turn)) return turn;
     }
     return null;
   }
@@ -198,11 +212,15 @@ export default class AiEditManager extends AppSubManagerBase {
   private async _undoChangeIds(changeIds: string[]): Promise<string[]> {
     const creatorAssetManager = this.appManager.get(CreatorAssetManager);
     const inverseIds: string[] = [];
-    for (let i = changeIds.length - 1; i >= 0; i--) {
-      const changeId = changeIds[i]!;
+    const activeIds = changeIds.filter((cid) => this._isChangeIdActive(cid));
+    for (let i = activeIds.length - 1; i >= 0; i--) {
+      const changeId = activeIds[i]!;
       try {
         const res = await creatorAssetManager.changeAssetsUndo({ changeId });
-        if (res?.changeId) inverseIds.push(res.changeId);
+        if (res?.changeId) {
+          inverseIds.push(res.changeId);
+          this._trackChangeId(res.changeId);
+        }
       } catch {
         // Failed to revert this change — skip it and keep reverting the rest.
       }
@@ -210,14 +228,9 @@ export default class AiEditManager extends AppSubManagerBase {
     return inverseIds;
   }
 
-  /**
-   * Reverts every change produced by one turn and hides that turn from the chat.
-   * The inverse changes are remembered so redo can bring everything back.
-   */
   async undoTurn(turnId: string): Promise<void> {
     const turn = this.turns.find((t) => t.id === turnId);
-    if (!turn || turn.undone || turn.changeIds.length === 0) return;
-    if (this.isGenerating) return;
+    if (!turn || !this.canUndoTurn(turn)) return;
 
     const inverseIds = await this._undoChangeIds([...turn.changeIds]);
 
@@ -233,20 +246,15 @@ export default class AiEditManager extends AppSubManagerBase {
     this.turns = [...this.turns];
   }
 
-  /** Undo for the most recent turn that produced changes. */
   async undoLastTurn(): Promise<void> {
     const turn = this.lastUndoableTurn;
     if (!turn) return;
     await this.undoTurn(turn.id);
   }
 
-  /**
-   * Applies the changes of an undone turn again (revert of the revert).
-   */
   async redoTurn(turnId: string): Promise<void> {
     const turn = this.turns.find((t) => t.id === turnId);
-    if (!turn || !turn.undone) return;
-    if (this.isGenerating) return;
+    if (!turn || !this.canRedoTurn(turn) || this.isGenerating) return;
 
     const restoredIds = await this._undoChangeIds([
       ...(turn.undoneChangeIds ?? []),
@@ -265,7 +273,6 @@ export default class AiEditManager extends AppSubManagerBase {
     this.turns = [...this.turns];
   }
 
-  /** Redo for the most recently undone turn. */
   async redoLastTurn(): Promise<void> {
     const turn = this.lastRedoableTurn;
     if (!turn) return;
@@ -362,19 +369,28 @@ export default class AiEditManager extends AppSubManagerBase {
         changeAsset: async (input: any, turn: AiTurn) => {
           const result = await tools.changeAsset.handler(input);
           if (!result.success) throw new Error(result.error);
-          if (result.changeId) turn.changeIds.push(result.changeId);
+          if (result.changeId) {
+            turn.changeIds.push(result.changeId);
+            this._trackChangeId(result.changeId);
+          }
           return result;
         },
         createAsset: async (args: any, turn: AiTurn) => {
           const result = await tools.createAsset.handler(args);
           if (!result.success) throw new Error(result.error);
-          if (result.changeId) turn.changeIds.push(result.changeId);
+          if (result.changeId) {
+            turn.changeIds.push(result.changeId);
+            this._trackChangeId(result.changeId);
+          }
           return result;
         },
         deleteAsset: async (args: any, turn: AiTurn) => {
           const result = await tools.deleteAsset.handler(args);
           if (!result.success) throw new Error(result.error);
-          if (result.changeId) turn.changeIds.push(result.changeId);
+          if (result.changeId) {
+            turn.changeIds.push(result.changeId);
+            this._trackChangeId(result.changeId);
+          }
           return result;
         },
         createWorkspace: async (args: any) => {
@@ -633,10 +649,6 @@ export default class AiEditManager extends AppSubManagerBase {
     return lines.join('\n');
   }
 
-  /**
-   * Assembles the system prompt from overridable sections.
-   * Subclasses override individual section builders instead of the whole prompt.
-   */
   protected _buildInstructions(): string {
     return [
       this._buildRole(),
@@ -659,7 +671,6 @@ export default class AiEditManager extends AppSubManagerBase {
       .join('\n\n');
   }
 
-  /** App-specific role. Override in subclasses (e.g. scriptwriter persona). */
   protected _buildRole(): string {
     return 'You are an assistant that helps users manage project files. Your task is to help users work with assets and workspaces.';
   }
@@ -790,11 +801,6 @@ ${this._buildBlockSpecs()}`;
 {"title": "New Asset", "workspaceId": "workspace_id", "parentId": "parent_template_id", "blocks": [{"name": "description", "type": "props", "props": {"content": "Some text"}}]}`;
   }
 
-  /**
-   * App-specific extra instructions appended to the system prompt.
-   * Empty by default — subclasses (e.g. scriptwriter) add their own context
-   * without overriding the whole prompt.
-   */
   protected _buildExtraContext(): string {
     return '';
   }

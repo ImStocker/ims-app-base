@@ -198,21 +198,14 @@ const visibleTurns = computed(() =>
 );
 
 const showUndoneTurns = computed(() =>
-  aiEditManager.turns.filter(
-    (turn) => turn.undone && (turn.undoneChangeIds?.length ?? 0) > 0,
-  ),
+  aiEditManager.turns.filter((turn) => aiEditManager.canRedoTurn(turn)),
 );
 
 const lastUndoableTurn = computed(() => aiEditManager.lastUndoableTurn);
 const lastRedoableTurn = computed(() => aiEditManager.lastRedoableTurn);
 
 function canUndoTurn(turn: AiTurn): boolean {
-  return (
-    !aiEditManager.isGenerating &&
-    !turn.undone &&
-    turn.status === 'done' &&
-    turn.changeIds.length > 0
-  );
+  return aiEditManager.canUndoTurn(turn);
 }
 
 function buildMenu(): MenuListItem[] {
