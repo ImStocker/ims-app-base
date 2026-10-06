@@ -1918,3 +1918,179 @@ export function diffAssetPropObjects(
   }
   return has_changes ? [difference] : [];
 }
+
+// ---------------------------------------------------------------------------
+// Asset links extraction (props + markdown)
+// ---------------------------------------------------------------------------
+
+export type AssetPropLinkType = 'mention' | 'formula' | 'task';
+
+export type ExtractedAssetPropLink = {
+  blockProp: string;
+  targetAssetId: string;
+  targetBlockId: string | null;
+  targetAnchor: string | null;
+  type: AssetPropLinkType;
+};
+
+export type AssetPropsLink = ExtractedAssetPropLink | { mention: AssetMention };
+
+export type MarkdownAssetLink = {
+  assetId: string;
+  blockId: string | null;
+  anchor: string | null;
+  label: string;
+};
+
+const AssetIdRegexp =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAssetId(v: unknown): v is string {
+  return typeof v === 'string' && AssetIdRegexp.test(v);
+}
+
+const MarkdownWikiLinkRegexp = /\[\[([^[\]\n]+)\]\]/g;
+const MarkdownWikiLinkAddressRegexp =
+  /^asset:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:#([\s\S]*))?$/i;
+const MarkdownWikiLinkBlockRegexp =
+  /^bid-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:~([\s\S]*))?$/i;
+const MarkdownWikiLinkSeparatorRegexp = /^([^|]+?)(?:\\)?\|([\s\S]*)$/;
+
+// Extracts `[[asset:<uuid>|Label]]` wiki links from a markdown string.
+// Address may contain `#<anchor>` or `#bid-<blockId>[~<anchor>]` fragment.
+export function extractAssetLinksFromMarkdown(
+  markdown: string,
+): MarkdownAssetLink[] {
+  const res: MarkdownAssetLink[] = [];
+  if (typeof markdown !== 'string' || markdown.indexOf('[[') < 0) return res;
+
+  MarkdownWikiLinkRegexp.lastIndex = 0;
+  const seen = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = MarkdownWikiLinkRegexp.exec(markdown)) !== null) {
+    const inner = match[1];
+    // `[[address|label]]`, separator may be escaped (`\|`) inside GFM tables
+    const separator_match = inner.match(MarkdownWikiLinkSeparatorRegexp);
+    const address = (separator_match ? separator_match[1] : inner).trim();
+    const label = separator_match ? separator_match[2].trim() : '';
+
+    const address_match = address.match(MarkdownWikiLinkAddressRegexp);
+    if (!address_match) continue;
+    const asset_id = address_match[1];
+    const fragment = address_match[2] ? address_match[2] : null;
+
+    let block_id: string | null = null;
+    let anchor: string | null = null;
+    if (fragment) {
+      const block_match = fragment.match(MarkdownWikiLinkBlockRegexp);
+      if (block_match) {
+        block_id = block_match[1];
+        anchor = block_match[2] ? block_match[2] : null;
+      } else {
+        anchor = fragment;
+      }
+    }
+
+    const key = asset_id + '|' + (block_id ? block_id : '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    res.push({
+      assetId: asset_id,
+      blockId: block_id,
+      anchor,
+      label,
+    });
+  }
+  return res;
+}
+
+// Extracts asset links from block props:
+// - rich text ops (asset attributes, tasks, props, mentions)
+// - asset prop values
+// - plain string props (markdown text, e.g. `[[asset:<uuid>|Label]]`)
+export function extractAssetLinksFromProps(
+  props: AssetProps,
+  extract_formulas = false,
+): AssetPropsLink[] {
+  if (extract_formulas) {
+    return [];
+  }
+  const res: AssetPropsLink[] = [];
+  for (const [prop, val] of Object.entries(props)) {
+    if (!val) continue;
+
+    if ((val as AssetPropValueText).Ops) {
+      for (const op_struct of walkAssetPropValueTextOps(
+        (val as AssetPropValueText).Ops,
+      )) {
+        if (
+          op_struct.attributeAsset &&
+          isAssetId(op_struct.attributeAsset.value.AssetId)
+        ) {
+          res.push({
+            blockProp: prop,
+            targetAssetId: op_struct.attributeAsset.value.AssetId,
+            targetBlockId: null,
+            targetAnchor: null,
+            type: 'mention',
+          });
+        }
+        if (
+          op_struct.insertTask &&
+          isAssetId(op_struct.insertTask.value.AssetId)
+        ) {
+          res.push({
+            blockProp: prop,
+            targetAssetId: op_struct.insertTask.value.AssetId,
+            targetBlockId: null,
+            targetAnchor: null,
+            type: 'mention',
+          });
+        }
+        if (
+          op_struct.insertProp &&
+          op_struct.insertProp.value &&
+          isAssetId((op_struct.insertProp.value as AssetPropValueAsset).AssetId)
+        ) {
+          res.push({
+            blockProp: prop,
+            targetAssetId: (op_struct.insertProp.value as AssetPropValueAsset)
+              .AssetId,
+            targetBlockId: null,
+            targetAnchor: null,
+            type: 'mention',
+          });
+        }
+        if (op_struct.insertMention && isAssetId(op_struct.insertMention.id)) {
+          res.push({
+            mention: {
+              ...op_struct.insertMention,
+            },
+          });
+        }
+      }
+    } else if ((val as AssetPropValueAsset).AssetId) {
+      if (isAssetId((val as AssetPropValueAsset).AssetId)) {
+        res.push({
+          blockProp: prop,
+          targetAssetId: (val as AssetPropValueAsset).AssetId,
+          targetBlockId: null,
+          targetAnchor: null,
+          type: 'mention',
+        });
+      }
+    } else if (typeof val === 'string' && val.indexOf('[[') >= 0) {
+      for (const md_link of extractAssetLinksFromMarkdown(val)) {
+        res.push({
+          blockProp: prop,
+          targetAssetId: md_link.assetId,
+          targetBlockId: md_link.blockId,
+          targetAnchor: md_link.anchor,
+          type: 'mention',
+        });
+      }
+    }
+  }
+  return res;
+}
