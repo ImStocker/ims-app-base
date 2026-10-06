@@ -289,6 +289,7 @@ export function* walkAssetPropValueTextOps(
   insertFile?: { value: AssetPropValueFile };
   insertMention?: AssetMention;
   attributeAsset?: { value: AssetPropValueAsset };
+  attributeWorkspace?: { value: AssetPropValueWorkspace };
 }> {
   if (!(ops as unknown)) return;
   for (const op of ops) {
@@ -325,6 +326,13 @@ export function* walkAssetPropValueTextOps(
         op.attributes.asset.value !== undefined &&
         (op.attributes.asset.value as AssetPropValueAsset).AssetId
           ? op.attributes.asset
+          : undefined,
+      attributeWorkspace:
+        op.attributes &&
+        op.attributes.workspace &&
+        op.attributes.workspace.value !== undefined &&
+        (op.attributes.workspace.value as AssetPropValueWorkspace).WorkspaceId
+          ? op.attributes.workspace
           : undefined,
     };
   }
