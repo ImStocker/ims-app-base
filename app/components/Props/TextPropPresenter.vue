@@ -50,8 +50,6 @@ export default defineComponent({
       const value = truncated.truncated
         ? joinAssetPropValueTexts(truncated.result, '...')
         : truncated.result;
-      // Truncation always yields a TEXT value; keep plain strings as strings
-      // so markdown reaches the markdown presenter.
       return this.isRichText ? value : castAssetPropValueToString(value);
     },
   },

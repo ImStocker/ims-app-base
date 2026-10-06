@@ -17,6 +17,7 @@ import {
   PROPS_FORMAT,
 } from '#logic/ai-core/AiProjectTools';
 import EditorManager from '#logic/managers/EditorManager';
+import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
 import { decodeLLMJSONWithAi } from './llm-utils';
 import { formatDate } from '#logic/utils/format';
 
@@ -155,6 +156,120 @@ export default class AiEditManager extends AppSubManagerBase {
     const db = this._session_db;
     if (!db) return;
     this.turns = await db.loadTurns(sessionId);
+    this._syncChangeIds();
+  }
+
+  /** Keeps the session-level change list in sync with per-turn state. */
+  private _syncChangeIds(): void {
+    const ids: string[] = [];
+    for (const turn of this.turns) {
+      if (turn.undone) continue;
+      for (const cid of turn.changeIds) {
+        if (!ids.includes(cid)) ids.push(cid);
+      }
+    }
+    this.changeIds = ids;
+  }
+
+  /** Last turn that still has unreverted changes. */
+  get lastUndoableTurn(): AiTurn | null {
+    for (let i = this.turns.length - 1; i >= 0; i--) {
+      const turn = this.turns[i]!;
+      if (turn.undone) continue;
+      if (turn.status !== 'done') continue;
+      if (turn.changeIds.length === 0) continue;
+      return turn;
+    }
+    return null;
+  }
+
+  /** Most recently undone turn. */
+  get lastRedoableTurn(): AiTurn | null {
+    for (let i = this.turns.length - 1; i >= 0; i--) {
+      const turn = this.turns[i]!;
+      if (!turn.undone) continue;
+      if (turn.undoneChangeIds && turn.undoneChangeIds.length > 0) {
+        return turn;
+      }
+    }
+    return null;
+  }
+
+  private async _undoChangeIds(changeIds: string[]): Promise<string[]> {
+    const creatorAssetManager = this.appManager.get(CreatorAssetManager);
+    const inverseIds: string[] = [];
+    for (let i = changeIds.length - 1; i >= 0; i--) {
+      const changeId = changeIds[i]!;
+      try {
+        const res = await creatorAssetManager.changeAssetsUndo({ changeId });
+        if (res?.changeId) inverseIds.push(res.changeId);
+      } catch {
+        // Failed to revert this change — skip it and keep reverting the rest.
+      }
+    }
+    return inverseIds;
+  }
+
+  /**
+   * Reverts every change produced by one turn and hides that turn from the chat.
+   * The inverse changes are remembered so redo can bring everything back.
+   */
+  async undoTurn(turnId: string): Promise<void> {
+    const turn = this.turns.find((t) => t.id === turnId);
+    if (!turn || turn.undone || turn.changeIds.length === 0) return;
+    if (this.isGenerating) return;
+
+    const inverseIds = await this._undoChangeIds([...turn.changeIds]);
+
+    turn.undone = true;
+    turn.undoneChangeIds = inverseIds;
+    turn.status = 'undone';
+
+    const db = this._session_db;
+    if (db) await db.updateTurn(turn);
+
+    this._syncChangeIds();
+    this.turnVersion++;
+    this.turns = [...this.turns];
+  }
+
+  /** Undo for the most recent turn that produced changes. */
+  async undoLastTurn(): Promise<void> {
+    const turn = this.lastUndoableTurn;
+    if (!turn) return;
+    await this.undoTurn(turn.id);
+  }
+
+  /**
+   * Applies the changes of an undone turn again (revert of the revert).
+   */
+  async redoTurn(turnId: string): Promise<void> {
+    const turn = this.turns.find((t) => t.id === turnId);
+    if (!turn || !turn.undone) return;
+    if (this.isGenerating) return;
+
+    const restoredIds = await this._undoChangeIds([
+      ...(turn.undoneChangeIds ?? []),
+    ]);
+
+    turn.changeIds = restoredIds;
+    turn.undoneChangeIds = [];
+    turn.undone = false;
+    turn.status = 'done';
+
+    const db = this._session_db;
+    if (db) await db.updateTurn(turn);
+
+    this._syncChangeIds();
+    this.turnVersion++;
+    this.turns = [...this.turns];
+  }
+
+  /** Redo for the most recently undone turn. */
+  async redoLastTurn(): Promise<void> {
+    const turn = this.lastRedoableTurn;
+    if (!turn) return;
+    await this.redoTurn(turn.id);
   }
 
   async sendMessage(text: string) {
@@ -211,9 +326,7 @@ export default class AiEditManager extends AppSubManagerBase {
       turn.completedAt = new Date().toISOString();
       this.isGenerating = false;
       this._abortController = null;
-      if (turn.changeIds.length > 0) {
-        this.changeIds = [...new Set([...this.changeIds, ...turn.changeIds])];
-      }
+      this._syncChangeIds();
       await db.updateTurn(turn);
       this.turnVersion++;
       this.turns = [...this.turns];

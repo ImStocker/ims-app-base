@@ -74,14 +74,9 @@ export default defineComponent({
   },
   emits: ['selectView'],
   computed: {
-    // Тот же гейт, что и у кнопки сохранения внутри дропдаунов: сохранять вид
-    // может не каждый участник проекта.
     userRole() {
       return this.$getAppManager().get(ProjectManager).getUserRoleInProject();
     },
-    // Есть ли что сохранять. `isChangedCurrentView` сравнивает конкретное
-    // свойство с сохранённым, поэтому берём «хоть одно из» по списку опций —
-    // он же перечисляет всё, что вид умеет менять.
     viewOptions(): ViewOptionType[] {
       return [
         {
@@ -100,12 +95,6 @@ export default defineComponent({
     },
   },
   methods: {
-    // Именно метод, а не computed: `vm` — обычный экземпляр контроллера,
-    // переданный пропом, а `_unsavedViewData` мутируется на месте. Computed
-    // собрал бы зависимостей ровно одну (сам проп) и навсегда закешировал бы
-    // первое значение, тогда как существующие точки «есть несохранённые
-    // изменения» работают именно тем, что это выражения в шаблоне — они
-    // пересчитываются на каждом рендере. Здесь нужен тот же механизм.
     isCurrentViewChanged(): boolean {
       return this.viewOptions.some((option) =>
         this.vm.isChangedCurrentView(option.name),

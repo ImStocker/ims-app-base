@@ -11,9 +11,22 @@
         </div>
       </div>
 
-      <template v-for="turn in aiEditManager.turns" :key="turn.id">
+      <template v-for="turn in visibleTurns" :key="turn.id">
         <div class="AiChat-message from-user">
           <div class="AiChat-message-bubble">{{ turn.userMessage }}</div>
+          <div v-if="canUndoTurn(turn)" class="AiChat-turnActions">
+            <span class="AiChat-turnActions-count">
+              <i class="ri-file-list-3-line"></i>
+              {{ t('aiAssistant.changes') }} ({{ turn.changeIds.length }})
+            </span>
+            <button
+              class="AiChat-turnActions-btn"
+              :title="t('aiAssistant.undoChanges')"
+              @click="undoTurn(turn.id)"
+            >
+              <i class="ri-arrow-go-back-line"></i>
+            </button>
+          </div>
         </div>
 
         <div class="AiChat-message from-assistant">
@@ -67,19 +80,62 @@
           </div>
         </div>
       </template>
+
+      <div v-if="showUndoneTurns.length > 0" class="AiChat-undone">
+        <button
+          class="AiChat-undone-toggle"
+          :title="t('aiAssistant.redoChanges')"
+          @click="showUndoneTurnsOpen = !showUndoneTurnsOpen"
+        >
+          <i class="ri-history-line"></i>
+          {{ t('aiAssistant.undoneMessages') }} ({{ showUndoneTurns.length }})
+          <i
+            class="ri-arrow-down-s-line"
+            :class="{ open: showUndoneTurnsOpen }"
+          ></i>
+        </button>
+        <div v-if="showUndoneTurnsOpen" class="AiChat-undone-list">
+          <div
+            v-for="turn in showUndoneTurns"
+            :key="turn.id"
+            class="AiChat-undone-item"
+          >
+            <div class="AiChat-undone-text">{{ turn.userMessage }}</div>
+            <button
+              class="AiChat-turnActions-btn"
+              :title="t('aiAssistant.redoChanges')"
+              @click="redoTurn(turn.id)"
+            >
+              <i class="ri-arrow-go-forward-line"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div v-if="aiEditManager.changeIds.length > 0" class="AiChat-changeIds">
+    <div
+      v-if="aiEditManager.changeIds.length > 0 || lastRedoableTurn"
+      class="AiChat-changeIds"
+    >
       <span class="AiChat-changeIds-label">
         <i class="ri-file-list-3-line"></i>
         {{ t('aiAssistant.changes') }} ({{ aiEditManager.changeIds.length }})
       </span>
       <button
         class="AiChat-revertBtn"
-        :title="t('aiAssistant.revertAll')"
-        @click="revertAllChanges"
+        :disabled="!lastUndoableTurn || aiEditManager.isGenerating"
+        :title="t('aiAssistant.undo')"
+        @click="undoLastTurn"
       >
         <i class="ri-arrow-go-back-line"></i>
+      </button>
+      <button
+        class="AiChat-revertBtn"
+        :disabled="!lastRedoableTurn || aiEditManager.isGenerating"
+        :title="t('aiAssistant.redo')"
+        @click="redoLastTurn"
+      >
+        <i class="ri-arrow-go-forward-line"></i>
       </button>
     </div>
 
@@ -110,7 +166,7 @@ import AiToolCall from './AiToolCall.vue';
 import { useAppManager, useI18n } from '#imports';
 import AiEditManager from '#logic/ai-core/AiEditManager';
 import ProjectManager from '#logic/managers/ProjectManager';
-import CreatorAssetManager from '#logic/managers/CreatorAssetManager';
+import type { AiTurn } from '#logic/ai-core/AiTypes';
 import type { AiModelDescriptor } from '#logic/ai-core/AiModelDescriptors';
 import DialogManager from '#logic/managers/DialogManager';
 import UiManager from '#logic/managers/UiManager';
@@ -142,6 +198,29 @@ const thinkingOpen = reactive(
 const userScrolledAway = ref(false);
 const scrollThreshold = 40;
 const selectedSessionId = ref<string | null>(null);
+const showUndoneTurnsOpen = ref(false);
+
+const visibleTurns = computed(() =>
+  aiEditManager.turns.filter((turn) => !turn.undone),
+);
+
+const showUndoneTurns = computed(() =>
+  aiEditManager.turns.filter(
+    (turn) => turn.undone && (turn.undoneChangeIds?.length ?? 0) > 0,
+  ),
+);
+
+const lastUndoableTurn = computed(() => aiEditManager.lastUndoableTurn);
+const lastRedoableTurn = computed(() => aiEditManager.lastRedoableTurn);
+
+function canUndoTurn(turn: AiTurn): boolean {
+  return (
+    !aiEditManager.isGenerating &&
+    !turn.undone &&
+    turn.status === 'done' &&
+    turn.changeIds.length > 0
+  );
+}
 
 function buildMenu(): MenuListItem[] {
   const sessionItems: MenuListItem[] = aiEditManager.sessions.map((s) => ({
@@ -312,13 +391,33 @@ function scrollToBottom() {
   }
 }
 
-async function revertAllChanges() {
-  const ids = [...aiEditManager.changeIds];
-  const creatorAssetManager = appManager.get(CreatorAssetManager);
-  for (const cid of ids) {
-    await creatorAssetManager.changeAssetsUndo({ changeId: cid });
-  }
-  aiEditManager.changeIds = [];
+async function undoTurn(turnId: string) {
+  await aiEditManager.undoTurn(turnId);
+  userScrolledAway.value = false;
+  await nextTick();
+  scrollToBottom();
+}
+
+async function redoTurn(turnId: string) {
+  await aiEditManager.redoTurn(turnId);
+  showUndoneTurnsOpen.value = false;
+  userScrolledAway.value = false;
+  await nextTick();
+  scrollToBottom();
+}
+
+async function undoLastTurn() {
+  await aiEditManager.undoLastTurn();
+  userScrolledAway.value = false;
+  await nextTick();
+  scrollToBottom();
+}
+
+async function redoLastTurn() {
+  await aiEditManager.redoLastTurn();
+  userScrolledAway.value = false;
+  await nextTick();
+  scrollToBottom();
 }
 
 async function sendMessage(input: string) {
@@ -366,9 +465,10 @@ defineExpose({
 
 .AiChat-message {
   display: flex;
+  flex-direction: column;
 
   &.from-user {
-    justify-content: flex-end;
+    align-items: flex-end;
 
     .AiChat-message-bubble {
       background-color: var(--local-box-color);
@@ -379,7 +479,7 @@ defineExpose({
   }
 
   &.from-assistant {
-    justify-content: flex-start;
+    align-items: flex-start;
   }
 
   &:deep(pre) {
@@ -458,6 +558,103 @@ defineExpose({
 .AiChat-revertBtn:hover {
   background: var(--local-box-color);
   color: var(--local-text-color);
+}
+
+.AiChat-revertBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  color: var(--color-placeholder, #888);
+}
+
+.AiChat-turnActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-placeholder, #888);
+}
+
+.AiChat-turnActions-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.AiChat-turnActions-btn {
+  border: 1px solid var(--local-border-color);
+  background: var(--local-box-color);
+  color: var(--color-placeholder, #888);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.AiChat-turnActions-btn:hover {
+  color: var(--local-text-color);
+  border-color: var(--color-accent, #4fc3f7);
+}
+
+.AiChat-undone {
+  margin-top: 4px;
+  border: 1px dashed var(--local-border-color, #444);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--color-placeholder, #888);
+}
+
+.AiChat-undone-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: inherit;
+  text-align: left;
+
+  .ri-arrow-down-s-line {
+    margin-left: auto;
+    transition: transform 0.15s;
+
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.AiChat-undone-list {
+  border-top: 1px dashed var(--local-border-color, #444);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.AiChat-undone-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--local-border-color, #333);
+  }
+}
+
+.AiChat-undone-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: line-through;
 }
 
 .AiChat-thinking {

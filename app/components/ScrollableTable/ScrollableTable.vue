@@ -620,9 +620,6 @@ export default defineComponent({
   opacity: 0;
   pointer-events: none;
 
-  // Widens the grab zone without touching the visible bar: pseudo-elements are
-  // never event.target, so the pointer still resolves to this element and
-  // `closest('.ScrollableTable-columnResizer')` keeps working.
   &:before {
     content: '';
     position: absolute;

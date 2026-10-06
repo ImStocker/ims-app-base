@@ -328,8 +328,6 @@ export default defineComponent({
   align-items: center;
   cursor: pointer;
   height: 100%;
-  // Right padding keeps the sort icon clear of the column resizer, so hovering
-  // the icon does not compete with the resize hit area.
   padding-right: 10px;
   transition: background-color 0.15s;
 

@@ -34,8 +34,10 @@ export type AiTurn = {
   changeIds: string[];
   createdAt: string;
   completedAt?: string;
-  status: 'created' | 'streaming' | 'done' | 'error';
+  status: 'created' | 'streaming' | 'done' | 'error' | 'undone';
   error?: string;
+  undone?: boolean;
+  undoneChangeIds?: string[];
 };
 
 export interface IAiSessionStorage {

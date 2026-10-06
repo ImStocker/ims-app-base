@@ -62,25 +62,15 @@ export default defineComponent({
       type: [String, Number, null],
       default: null,
     },
-    /**
-     * Активный вариант: `accent` — заливка акцентом (системная кнопка .accent),
-     * `raised` — приподнятая пилюля с акцентной иконкой.
-     */
     variant: {
       type: String as PropType<SegmentedTabVariant>,
       default: 'accent',
     },
-    /**
-     * Сколько пунктов показывать до индикатора «+N». 0 — без ограничения.
-     */
     maxItems: {
       type: Number,
       required: false,
       default: 0,
     },
-    /**
-     * Минимальное число пунктов, при котором контрол вообще показывается.
-     */
     minItems: {
       type: Number,
       required: false,
@@ -153,26 +143,14 @@ export default defineComponent({
   --SegmentedTabs-item-radius: 9px;
   --SegmentedTabs-item-padding: 6px 20px;
   --SegmentedTabs-item-max-width: none;
-  // Цвет неактивного пункта. В `accent` это приглушённый основной текст — тот
-  // же, что у кнопок тулбара в _viewToolbarButton.scss: `--local-sub-text-color`
-  // в dark — это rgba(255,255,255,.3), и без заливки он читается как
-  // «выключено». Вариант `raised` переопределяет значение ниже.
   --SegmentedTabs-item-idle-text-color: color-mix(
     in srgb,
     var(--local-text-color) 72%,
     transparent
   );
-  // Заливка активного пункта в варианте `raised`. Вынесена в переменную, а не
-  // задана прямо в `.state-active`, потому что это ровно тот рычаг, которым
-  // пользуется потребитель: `raised` без фона — это тот же вариант с
-  // `--SegmentedTabs-item-active-bg: transparent`. Так не заводится новый
-  // вариант на каждое сочетание (raised-plain, raised-outline, ...), и не
-  // требуется `:deep` в потребителе, знающий внутренние классы компонента.
   --SegmentedTabs-item-active-bg: var(--panel-bg-color);
   --SegmentedTabs-item-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.18),
     inset 0 0 0 1px color-mix(in srgb, var(--local-text-color) 8%, transparent);
-  // Дорожка. Тоже настраивается снаружи: на прозрачной подложке вкладки лежат
-  // прямо на панели, поэтому ни заливки, ни волосяной рамки быть не должно.
   --SegmentedTabs-bg: var(--local-hl-bg-color);
   --SegmentedTabs-border-color: color-mix(
     in srgb,
@@ -192,9 +170,6 @@ export default defineComponent({
   overflow-x: auto;
   overflow-y: hidden;
 }
-// Базовые правила пункта намеренно не вложены в .SegmentedTabs: со scoped это
-// даёт (0,2,0) и позволяет системному `:root .is-button.accent` перебить
-// заливку активного пункта в варианте `accent`.
 .SegmentedTabs-item {
   display: inline-flex;
   align-items: center;
@@ -208,11 +183,6 @@ export default defineComponent({
   --button-border-color: transparent;
   --button-border-radius: var(--SegmentedTabs-item-radius);
   --button-bg-color: transparent;
-  // Цвет НЕактивного пункта. Тема-специфичное значение живёт в переменной на
-  // корне, а не здесь: так вариант `raised` переопределяет его одним правилом
-  // `.SegmentedTabs-variant-raised`, не вступая в спор со специфичностью с
-  // `:hover`/`:focus` ниже. Плюс ровно та же переменная уже используется
-  // кнопками тулбара (_viewToolbarButton.scss), чтобы набор контролов совпадал.
   --button-text-color: var(--SegmentedTabs-item-idle-text-color);
   --button-font-size: 13px;
   --button-font-weight: 600;
@@ -220,8 +190,6 @@ export default defineComponent({
   &:not(.state-active) {
     --button-font-weight: 500;
   }
-  // прозрачные «копии» теней активного пункта: `none` не интерполируется, и без
-  // этого shadow у raised появлялся бы скачком вместо перехода
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0),
     inset 0 0 0 1px transparent;
@@ -248,25 +216,15 @@ export default defineComponent({
     --button-text-color: var(--local-text-color);
   }
 
-  // системное кольцо is-button рисуется на :focus, поэтому мигает при каждом
-  // клике мышью — в тулбаре это лишнее, гасим его и оставляем только клавиатуру
   &:focus:not(:focus-visible) {
     --button-outline-width: 0px;
   }
 
   &:focus-visible {
-    // 2px кольцо + 1px отступ = 3px, влезает в 4px padding дорожки и не срезается
-    // её overflow по скруглённым углам
     outline-offset: 1px;
   }
 }
-// Правило идёт после `.SegmentedTabs` и на равной с ним специфичности —
-// выигрывает порядок, поэтому переопределение Variable не нужно.
 .SegmentedTabs-variant-raised {
-  // В `raised` неактивные пункты отступают активному сильнее: дорожки-заливки
-  // тут нет (у ViewTabs она прозрачная), и различие держится на тексте.
-  // Контраст к фону панели: 2.64:1 в dark и 3.54:1 в light — для 13px это ниже
-  // AA (4.5:1). Если нужен AA, поставь ~58% основного текста: 4.98 / 3.82.
   --SegmentedTabs-item-idle-text-color: var(--local-sub-text-color);
 }
 .SegmentedTabs-variant-raised .SegmentedTabs-item {

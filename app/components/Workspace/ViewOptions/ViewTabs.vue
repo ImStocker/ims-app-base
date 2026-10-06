@@ -9,10 +9,6 @@
     :style="{
       '--SegmentedTabs-item-padding': '6px 12px',
       '--SegmentedTabs-item-max-width': '150px',
-      // Панель, в которой живут вкладки, не имеет своей заливки, поэтому
-      // дорожка и активная плитка уходят в прозрачность: заливка активной
-      // плитки `--panel-bg-color` и так совпадает с фоном панели, так что
-      // «приподнятость» всё равно держалась бы на одной тени.
       '--SegmentedTabs-bg': 'transparent',
       '--SegmentedTabs-border-color': 'transparent',
       '--SegmentedTabs-item-active-bg': 'transparent',

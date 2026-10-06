@@ -282,17 +282,11 @@ export default defineComponent({
   --local-bg-color: var(--editor-bg-color);
   background-color: var(--local-bg-color);
 }
-// два уровня контекста, чтобы (0,4,0) надёжно перебило `:root .is-button:focus`
-// (0,3,0) — иначе клик мышью подсвечивал бы кнопку серой заливкой темы
 .WorkspaceCollectionPage .WorkspaceCollectionPage-header {
   @include viewToolbarButton.view-toolbar-button(
     'WorkspaceCollectionPage-manage-baseAsset'
   );
 
-  // В шапке соседи — иконки на 20px с радиусом 0.26em (5.2px) и высотой 35px,
-  // поэтому подстраиваемся под их ряд: 15px текст и 9px вертикального отступа
-  // дают те же 35px. Сам рецепт — из общей кнопки тулбара, чтобы «тихий» стиль
-  // не расползся по интерфейсу.
   .WorkspaceCollectionPage-manage-baseAsset {
     --button-font-size: 15px;
     --button-border-radius: 6px;
