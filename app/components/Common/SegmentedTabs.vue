@@ -181,15 +181,11 @@ export default defineComponent({
   --button-icon-gap: 6px;
   --button-border-width: 0px;
   --button-border-color: transparent;
-  --button-border-radius: var(--SegmentedTabs-item-radius);
+  --button-border-radius: var(--SegmentedTabs-item-radius) !important;
   --button-bg-color: transparent;
   --button-text-color: var(--SegmentedTabs-item-idle-text-color);
   --button-font-size: 13px;
   --button-font-weight: 600;
-
-  &:not(.state-active) {
-    --button-font-weight: 500;
-  }
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0),
     inset 0 0 0 1px transparent;
@@ -198,7 +194,6 @@ export default defineComponent({
     color 0.18s,
     box-shadow 0.18s;
 
-  // не перебиваем акцентную заливку активного пункта
   &:not(.state-active):hover {
     --button-bg-color: var(--button-bg-color-hover);
     --button-text-color: var(--local-text-color);
