@@ -111,6 +111,7 @@ test('castAssetPropValueToBoolean', () => {
   expect(castAssetPropValueToBoolean(1)).toBe(true);
   expect(castAssetPropValueToBoolean(0)).toBe(false);
   expect(castAssetPropValueToBoolean('')).toBe(false);
+  expect(castAssetPropValueToBoolean('0')).toBe(false);
   expect(castAssetPropValueToBoolean(false)).toBe(false);
   expect(castAssetPropValueToBoolean(null)).toBe(false);
   expect(castAssetPropValueToBoolean(undefined)).toBe(false);

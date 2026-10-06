@@ -617,7 +617,14 @@ export function castAssetPropPlainObjectValueToString(
 export function castAssetPropValueToBoolean(
   a: AssetPropsPlainObjectValue | undefined,
 ): boolean {
-  return a !== undefined && a !== null && a !== 0 && a !== '' && a !== false;
+  return (
+    a !== undefined &&
+    a !== null &&
+    a !== 0 &&
+    a !== '' &&
+    a !== '0' &&
+    a !== false
+  );
 }
 
 export function castAssetPropValueToInt(
