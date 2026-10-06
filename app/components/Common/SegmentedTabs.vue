@@ -186,9 +186,6 @@ export default defineComponent({
   --button-text-color: var(--SegmentedTabs-item-idle-text-color);
   --button-font-size: 13px;
   --button-font-weight: 600;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0),
-    inset 0 0 0 1px transparent;
   transition:
     background-color 0.18s,
     color 0.18s,

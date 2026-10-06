@@ -14,17 +14,21 @@
       <template v-for="turn in visibleTurns" :key="turn.id">
         <div class="AiChat-message from-user">
           <div class="AiChat-message-bubble">{{ turn.userMessage }}</div>
-          <div v-if="canUndoTurn(turn)" class="AiChat-turnActions">
-            <span class="AiChat-turnActions-count">
-              <i class="ri-file-list-3-line"></i>
-              {{ t('aiAssistant.changes') }} ({{ turn.changeIds.length }})
-            </span>
+          <div class="AiChat-turnActions">
             <button
-              class="AiChat-turnActions-btn"
+              v-if="canUndoTurn(turn)"
+              class="is-button is-button-icon-small AiChat-turnActions-btn"
               :title="t('aiAssistant.undoChanges')"
               @click="undoTurn(turn.id)"
             >
               <i class="ri-arrow-go-back-line"></i>
+            </button>
+            <button
+              class="is-button is-button-icon-small AiChat-turnActions-btn"
+              :title="t('common.copy')"
+              @click="copyMessage(turn.userMessage)"
+            >
+              <i class="ri-file-copy-line"></i>
             </button>
           </div>
         </div>
@@ -47,25 +51,14 @@
                   class="AiChat-thinking-body AiChat-thinking-streaming"
                   >{{ action.text }}</pre
                 >
-                <div
-                  v-else
-                  class="AiChat-thinking"
-                  @click="toggleThinking(action)"
-                >
-                  <div class="AiChat-thinking-header">
-                    <i class="ri-brain-line"></i>
-                    <span>{{ t('aiAssistant.thought') }}</span>
-                    <i
-                      class="ri-arrow-down-s-line"
-                      :class="{ open: thinkingOpen.has(action) }"
-                    />
-                  </div>
-                  <pre
-                    v-if="thinkingOpen.has(action)"
-                    class="AiChat-thinking-body"
-                    >{{ action.text }}</pre
-                  >
-                </div>
+                <AiCollapsible v-else icon="ri-brain-line">
+                  <template #title>
+                    {{ t('aiAssistant.thought') }}
+                  </template>
+                  <template #body>
+                    <pre class="AiChat-thinking-body">{{ action.text }}</pre>
+                  </template>
+                </AiCollapsible>
               </template>
             </template>
             <div v-if="turn.status === 'streaming'" class="AiChat-cursor">
@@ -102,7 +95,7 @@
           >
             <div class="AiChat-undone-text">{{ turn.userMessage }}</div>
             <button
-              class="AiChat-turnActions-btn"
+              class="is-button is-button-icon-small AiChat-turnActions-btn"
               :title="t('aiAssistant.redoChanges')"
               @click="redoTurn(turn.id)"
             >
@@ -152,17 +145,10 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  computed,
-  onMounted,
-  nextTick,
-  watch,
-  type PropType,
-} from 'vue';
+import { ref, computed, onMounted, nextTick, watch, type PropType } from 'vue';
 import AiPanelSend from './AiPanelSend.vue';
 import AiToolCall from './AiToolCall.vue';
+import AiCollapsible from './AiCollapsible.vue';
 import { useAppManager, useI18n } from '#imports';
 import AiEditManager from '#logic/ai-core/AiEditManager';
 import ProjectManager from '#logic/managers/ProjectManager';
@@ -177,6 +163,7 @@ import type { MenuListItem } from '#logic/types/MenuList';
 import { marked } from 'marked';
 import { markdownImageWidthExtension } from '#logic/utils/markdownImageWidth';
 import { sanitizeHtml } from '#logic/utils/sanitizeHtml';
+import { clipboardCopyPlainText } from '#logic/utils/clipboard';
 
 marked.use({ extensions: [markdownImageWidthExtension] });
 
@@ -192,9 +179,6 @@ const appManager = useAppManager();
 const aiEditManager = appManager.get(AiEditManager);
 
 const messagesRef = ref<HTMLElement | null>(null);
-const thinkingOpen = reactive(
-  new WeakSet<{ type: 'thinking'; text: string }>(),
-);
 const userScrolledAway = ref(false);
 const scrollThreshold = 40;
 const selectedSessionId = ref<string | null>(null);
@@ -308,14 +292,6 @@ function onScroll() {
     el.scrollHeight - el.scrollTop - el.clientHeight > scrollThreshold;
 }
 
-function toggleThinking(action: { type: 'thinking'; text: string }) {
-  if (thinkingOpen.has(action)) {
-    thinkingOpen.delete(action);
-  } else {
-    thinkingOpen.add(action);
-  }
-}
-
 async function setupAiModel(provider?: AiModelDescriptor) {
   await appManager.get(DialogManager).show(AiModelSettingsDialog, {
     setProviderName: provider ? provider.name : undefined,
@@ -398,6 +374,11 @@ async function undoTurn(turnId: string) {
   scrollToBottom();
 }
 
+async function copyMessage(text: string) {
+  await clipboardCopyPlainText(text);
+  appManager.get(UiManager).showSuccess(t('common.copied'));
+}
+
 async function redoTurn(turnId: string) {
   await aiEditManager.redoTurn(turnId);
   showUndoneTurnsOpen.value = false;
@@ -472,7 +453,7 @@ defineExpose({
 
     .AiChat-message-bubble {
       background-color: var(--local-box-color);
-      padding: 0px 12px;
+      padding: 6px 12px;
       border-radius: 12px;
       margin-bottom: 2px;
     }
@@ -570,34 +551,39 @@ defineExpose({
 .AiChat-turnActions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--color-placeholder, #888);
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 2px 6px 2px 4px;
+  font-size: 12px;
+  color: var(--local-sub-text-color);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease;
 }
 
-.AiChat-turnActions-count {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.AiChat-message.from-user:hover .AiChat-turnActions,
+.AiChat-message.from-user:focus-within .AiChat-turnActions {
+  opacity: 1;
+  visibility: visible;
 }
 
 .AiChat-turnActions-btn {
-  border: 1px solid var(--local-border-color);
-  background: var(--local-box-color);
-  color: var(--color-placeholder, #888);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  padding: 3px 7px;
-  border-radius: 6px;
   display: flex;
   align-items: center;
-}
+  justify-content: center;
+  color: var(--local-sub-text-color);
+  padding: 4px;
 
-.AiChat-turnActions-btn:hover {
-  color: var(--local-text-color);
-  border-color: var(--color-accent, #4fc3f7);
+  &:hover {
+    color: var(--local-text-color);
+  }
+
+  i {
+    font-size: 12px;
+  }
 }
 
 .AiChat-undone {
@@ -657,34 +643,6 @@ defineExpose({
   text-decoration: line-through;
 }
 
-.AiChat-thinking {
-  border: 1px solid var(--local-border-color, #444);
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 4px 0;
-  font-size: 12px;
-}
-
-.AiChat-thinking-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: var(--local-box-color, rgba(255, 255, 255, 0.05));
-  cursor: pointer;
-  user-select: none;
-  color: var(--color-placeholder, #888);
-
-  .ri-arrow-down-s-line {
-    margin-left: auto;
-    transition: transform 0.15s;
-
-    &.open {
-      transform: rotate(180deg);
-    }
-  }
-}
-
 .AiChat-thinking-body {
   margin: 0;
   padding: 8px 10px;
@@ -693,8 +651,7 @@ defineExpose({
   font-family: monospace;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--sub-text-color, #888);
-  border-top: 1px solid var(--local-border-color, #333);
+  color: var(--local-sub-text-color);
   max-height: 300px;
   overflow-y: auto;
 }
