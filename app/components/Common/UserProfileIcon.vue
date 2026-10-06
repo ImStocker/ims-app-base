@@ -2,8 +2,8 @@
   <div class="UserProfileIcon" :class="avatarColorClass">
     <div class="UserProfileIcon-content">
       <img
-        v-if="avatarImage"
-        :src="avatarImage"
+        v-if="avatarLoadedImage"
+        :src="avatarLoadedImage"
         class="UserProfileIcon-content-img"
       />
       <span v-else class="UserProfileIcon-content-name">{{
@@ -31,6 +31,11 @@ export default defineComponent({
       type: Number,
       default: 64,
     },
+  },
+  data() {
+    return {
+      avatarLoadedImage: null as string | null,
+    };
   },
   computed: {
     avatarImage() {
@@ -63,7 +68,7 @@ export default defineComponent({
     },
   },
   watch: {
-    displayingUserId() {
+    avatarImage() {
       this.reloadAvatar();
     },
   },
@@ -76,11 +81,26 @@ export default defineComponent({
         return;
       }
       try {
-        await this.$getAppManager()
+        const url = await this.$getAppManager()
           .get(AuthManager)
           .getAvatar(this.displayingUserId, this.imageSize);
+        if (url) {
+          this.avatarLoadedImage = await new Promise((res, rej) => {
+            const image = new Image();
+            image.onload = () => {
+              res(url);
+            };
+            image.onerror = () => {
+              rej(new Error('Failed to load avatar: ' + url));
+            };
+            image.src = url;
+          });
+        } else {
+          this.avatarLoadedImage = null;
+        }
       } catch (err) {
         console.error(err);
+        this.avatarLoadedImage = null;
       }
     },
   },
