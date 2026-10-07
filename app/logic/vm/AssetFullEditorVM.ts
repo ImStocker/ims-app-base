@@ -91,8 +91,10 @@ export class AssetFullEditorVM {
   async load() {
     try {
       this.loadError = null;
-      this.loadDone = false;
       if (this.openedAssetId) {
+        if (!this.assetFulls.hasOwnProperty(this.openedAssetId)) {
+          this.loadDone = false; // Reset load state only if asset id is changed
+        }
         const assets_result = await this.appManager
           .get(CreatorAssetManager)
           .getAssetInstancesList({
