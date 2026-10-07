@@ -68,6 +68,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    allowFocusedInput: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['dropdown-state-change'],
   data() {
@@ -108,6 +112,7 @@ export default defineComponent({
         return;
       }
       if (
+        !this.allowFocusedInput &&
         document.activeElement &&
         (document.activeElement.tagName === 'INPUT' ||
           document.activeElement.tagName === 'TEXTAREA')

@@ -10,7 +10,7 @@
     <context-menu-zone
       class="ImcGrid-contextMenuZone"
       :get-menu-list="getCellContextMenuList"
-      :disabled="editMode"
+      :allow-focused-input="true"
     >
       <div
         class="ImcGrid-contextMenuWrapper"
