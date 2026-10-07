@@ -143,6 +143,7 @@ export default {
     ctrlToOpen: 'Ctrl+Клик, чтобы открыть в новой вкладке',
     yes: 'Да',
     no: 'Нет',
+    copy: 'Копировать',
     copied: 'Скопировано',
     downloadError: 'Ошибка загрузки',
   },

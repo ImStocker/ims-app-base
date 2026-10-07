@@ -1188,7 +1188,7 @@ export default defineComponent({
   --imc-grid-selection-border-color: var(--color-main-yellow);
   --imc-grid-selection-overlay-color: var(--color-main-yellow);
   --imc-grid-selection-border-width: 2px;
-  --imc-grid-cell-lines: 3;
+  --imc-grid-cell-lines: 5;
 }
 .ImcGrid-table:deep(.ImcGrid-cell) {
   user-select: none;

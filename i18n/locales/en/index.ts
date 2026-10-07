@@ -134,6 +134,7 @@ export default {
     ctrlToOpen: 'Ctrl+Click to open in new tab',
     yes: 'Yes',
     no: 'No',
+    copy: 'Copy',
     copied: 'Copied',
     downloadError: 'Download error',
   },

@@ -137,20 +137,9 @@ export default defineComponent({
         ];
       }
 
-      const list = columns.map((col) => {
-        let type = col.type;
-        if (type === 'text') {
-          type = 'textCut';
-        }
-        return {
-          ...col,
-          type,
-        };
-      });
-
       return {
-        list,
-        map: Object.fromEntries(list.map((l) => [l.propKey, l])),
+        list: columns,
+        map: Object.fromEntries(columns.map((l) => [l.propKey, l])),
       };
     },
     filteredColumns() {
