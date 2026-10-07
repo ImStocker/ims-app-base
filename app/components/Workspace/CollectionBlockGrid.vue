@@ -36,15 +36,16 @@
     </imc-grid>
     <div
       v-if="userRole"
-      class="CollectionBlockGrid-controls use-buttons-action"
+      class="CollectionBlockGrid-controls use-buttons-options"
     >
       <button
-        class="is-button"
+        class="is-button CollectionBlockGrid-addRow"
         :class="{
           loading: vm.assetsContent.addBusy,
         }"
         @click="addRow"
       >
+        <i class="ri-add-line"></i>
         {{ $t('sourcePage.folders.collection.addRow') }}
       </button>
     </div>
@@ -333,8 +334,13 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './ViewOptions/viewToolbarButton';
+
 .CollectionBlockGrid-grid {
   margin-bottom: 10px;
+}
+.CollectionBlockGrid-controls {
+  @include viewToolbarButton.view-toolbar-button('CollectionBlockGrid-addRow');
 }
 .WorkspaceCollectionContent-header-common-cell {
   display: flex;

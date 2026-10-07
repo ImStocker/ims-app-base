@@ -8,14 +8,18 @@
       class="CollectionBlockCards-Card"
     ></workspace-collection-cards-one>
   </div>
-  <div v-if="userRole" class="CollectionBlockCards-controls use-buttons-action">
+  <div
+    v-if="userRole"
+    class="CollectionBlockCards-controls use-buttons-options"
+  >
     <button
-      class="is-button"
+      class="is-button CollectionBlockCards-addCard"
       :class="{
         loading: vm.assetsContent.addBusy,
       }"
       @click="addCard"
     >
+      <i class="ri-add-line"></i>
       {{ $t('sourcePage.folders.collection.addCard') }}
     </button>
   </div>
@@ -83,10 +87,17 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './ViewOptions/viewToolbarButton';
+
 .CollectionBlockCards {
   gap: 10px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   margin-bottom: 10px;
+}
+.CollectionBlockCards-controls {
+  @include viewToolbarButton.view-toolbar-button(
+    'CollectionBlockCards-addCard'
+  );
 }
 </style>

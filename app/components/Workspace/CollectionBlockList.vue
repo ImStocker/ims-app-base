@@ -9,14 +9,15 @@
       :always-show-image-zone="hasImages"
     ></collection-block-list-one>
   </div>
-  <div v-if="userRole" class="CollectionBlockList-controls use-buttons-action">
+  <div v-if="userRole" class="CollectionBlockList-controls use-buttons-options">
     <button
-      class="is-button"
+      class="is-button CollectionBlockList-addListItem"
       :class="{
         loading: vm.assetsContent.addBusy,
       }"
       @click="addListItem"
     >
+      <i class="ri-add-line"></i>
       {{ $t('sourcePage.folders.collection.addListItem') }}
     </button>
   </div>
@@ -115,10 +116,17 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+@use './ViewOptions/viewToolbarButton';
+
 .CollectionBlockList {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 10px;
+}
+.CollectionBlockList-controls {
+  @include viewToolbarButton.view-toolbar-button(
+    'CollectionBlockList-addListItem'
+  );
 }
 </style>
