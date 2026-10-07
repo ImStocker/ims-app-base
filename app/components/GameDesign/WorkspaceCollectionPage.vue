@@ -25,7 +25,7 @@
               :to="baseAssetLink"
               @click.prevent="openBaseAsset"
             >
-              <i class="ri-settings-3-fill"></i>
+              <asset-icon :asset="baseAsset"></asset-icon>
               <caption-string :value="baseAsset.title"></caption-string>
             </project-link>
           </template>
@@ -91,6 +91,7 @@ import UiManager from '../../logic/managers/UiManager';
 import CreatorAssetManager from '../../logic/managers/CreatorAssetManager';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import AssetIcon from '../Asset/AssetIcon.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
 import {
   getWorkspaceColorName,
@@ -108,6 +109,7 @@ export default defineComponent({
     ProjectLink,
     CreateFolderBox,
     CreateAssetBox,
+    AssetIcon,
     WorkspaceHeader,
   },
   provide() {
@@ -289,6 +291,7 @@ export default defineComponent({
 
   .WorkspaceCollectionPage-manage-baseAsset {
     --button-font-size: 15px;
+    --button-font-weight: 400;
     --button-border-radius: 6px;
   }
 }

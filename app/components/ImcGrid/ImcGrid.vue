@@ -576,6 +576,7 @@ export default defineComponent({
       }
       this.editMode = false;
       this.hiddenInputBuffer = '';
+      this.focusHiddenText();
       if (!this.$el) return;
       const cell_el = this.$el.querySelector(
         `.ImcGrid-cell[data-col="${this.focusedCell.col}"][data-row="${this.focusedCell.row}"]`,
@@ -585,6 +586,12 @@ export default defineComponent({
         block: 'nearest',
         inline: 'nearest',
       });
+    },
+    focusHiddenText() {
+      const hidden = this.$refs['hiddenText'] as HTMLTextAreaElement | null;
+      if (hidden && document.activeElement !== hidden) {
+        hidden.focus();
+      }
     },
     _askHandleKey(key: string): boolean {
       const handle_event: HandleKeyEvent = {
@@ -609,7 +616,8 @@ export default defineComponent({
             const is_focused_last =
               this.focusedCell.row === this.rows.length - 1 &&
               this.focusedCell.col === this.columns.length - 1;
-            if (!is_focused_first && !is_focused_last) {
+            const exits_grid = e.shiftKey ? is_focused_first : is_focused_last;
+            if (!exits_grid) {
               e.preventDefault();
               this.onMoveSelection(e.shiftKey ? -1 : 1, 0, true);
             }
@@ -767,6 +775,13 @@ export default defineComponent({
       if (!comp) return;
       const active = await comp.awaitFirstComponentReady();
       if (!active) return;
+      // The user may have left this cell (Tab / click) while the editor was loading.
+      const still_current =
+        this.editMode &&
+        !!this.focusedCell &&
+        this.focusedCell.row === coord.row &&
+        this.focusedCell.col === coord.col;
+      if (!still_current) return;
       this.onInputCell(coord.row, coord.col, changes);
       await this.$nextTick();
 
