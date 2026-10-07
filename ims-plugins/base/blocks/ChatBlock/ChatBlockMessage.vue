@@ -498,7 +498,6 @@ export default defineComponent({
   width: 30px;
   height: 30px;
   margin: auto 5px 5px 0;
-  background-color: var(--color-accent);
   color: var(--local-text-on-primary-color);
 
   &.hidden {
