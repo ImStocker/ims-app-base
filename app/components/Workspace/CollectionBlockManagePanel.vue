@@ -17,6 +17,14 @@
         v-if="userRole && isCurrentViewChanged()"
         @save="saveView()"
       ></save-view-button>
+      <reset-view-button
+        v-if="userRole && isCurrentViewChanged()"
+        @reset="resetView()"
+      ></reset-view-button>
+      <div
+        v-if="userRole && isCurrentViewChanged()"
+        class="CollectionBlockManagePanel-separator"
+      ></div>
       <component
         :is="option.component"
         v-for="option of viewOptions"
@@ -37,6 +45,7 @@
 import { defineComponent, type Component, type PropType } from 'vue';
 import SelectViewButton from './ViewOptions/SelectViewButton.vue';
 import SaveViewButton from './ViewOptions/SaveViewButton.vue';
+import ResetViewButton from './ViewOptions/ResetViewButton.vue';
 import ViewOptionButton from './ViewOptions/ViewOptionButton.vue';
 import ViewPropertiesButton from './ViewOptions/ViewPropertiesButton.vue';
 import ViewTabs from './ViewOptions/ViewTabs.vue';
@@ -57,6 +66,7 @@ export default defineComponent({
   components: {
     SelectViewButton,
     SaveViewButton,
+    ResetViewButton,
     ViewOptionButton,
     ViewFilterButton,
     ViewPropertiesButton,
@@ -107,6 +117,13 @@ export default defineComponent({
           await this.vm.saveCurrentView();
         });
     },
+    resetView() {
+      this.$getAppManager()
+        .get(UiManager)
+        .doTask(async () => {
+          await this.vm.discardCurrentViewChanges();
+        });
+    },
   },
 });
 </script>
@@ -139,5 +156,12 @@ export default defineComponent({
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
+}
+.CollectionBlockManagePanel-separator {
+  align-self: center;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: color-mix(in srgb, var(--local-border-color) 60%, transparent);
 }
 </style>

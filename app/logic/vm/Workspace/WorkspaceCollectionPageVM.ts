@@ -447,4 +447,12 @@ export class WorkspaceCollectionPageVM
       delete this._unsavedViewData[current_key];
     }
   }
+
+  async discardCurrentViewChanges() {
+    const current_key = this.currentView.key;
+    if (this._unsavedViewData.hasOwnProperty(current_key)) {
+      delete this._unsavedViewData[current_key];
+    }
+    await this._loadAssetsContent(false);
+  }
 }

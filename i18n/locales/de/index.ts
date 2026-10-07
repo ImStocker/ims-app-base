@@ -1114,6 +1114,7 @@ export default {
     addSort: 'Sortierung hinzufügen',
     addFilter: 'Filter hinzufügen',
     saveView: 'Ansicht speichern',
+    resetChanges: 'Zurücksetzen',
     noProps: 'Keine Eigenschaften ausgewählt. Eigenschaften auswählen',
   },
   diagram: {

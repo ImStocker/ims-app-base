@@ -1102,6 +1102,7 @@ export default {
     addSort: 'Add sort',
     addFilter: 'Add filter',
     saveView: 'Save view',
+    resetChanges: 'Reset',
     noProps: 'No properties selected. Select properties',
   },
   diagram: {

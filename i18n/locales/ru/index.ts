@@ -1121,6 +1121,7 @@ export default {
     addSort: 'Добавить сортировку',
     addFilter: 'Добавить фильтр',
     saveView: 'Сохранить вид',
+    resetChanges: 'Сбросить',
     noProps: 'Не выбрано ни одно свойство. Выберите свойства',
   },
   diagram: {
