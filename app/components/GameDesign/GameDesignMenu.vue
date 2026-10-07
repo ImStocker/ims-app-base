@@ -21,13 +21,14 @@
             ref="projectTree"
             :selection="selection"
             class="GameDesignMenu-treePresenter"
-            selection-mode="single"
+            selection-mode="multiple"
             :get-asset-menu="(asset) => gddVM?.getAssetMenu(asset) ?? []"
             :get-workspace-menu="
               (workspace) => gddVM?.getWorkspaceMenu(workspace) ?? []
             "
             :external-vm="gddVM"
             @update:selection="setSelection($event)"
+            @selection:context="setContextSelection($event)"
           >
             <template #assetAppend="{ asset }">
               <notification-icon
@@ -178,7 +179,8 @@ export default defineComponent({
           ? {
               title: this.$t(
                 'mainMenu.' +
-                  (typeof process !== 'undefined' && process.platform === 'darwin'
+                  (typeof process !== 'undefined' &&
+                  process.platform === 'darwin'
                     ? 'openInFinder'
                     : 'openInExplorer'),
               ),
@@ -244,6 +246,11 @@ export default defineComponent({
       this.selection = val;
       const vm = this.gddVM;
       vm.selection = val;
+    },
+    setContextSelection(val: ProjectTreeSelectedItem[]) {
+      this.selection = val;
+      const vm = this.gddVM;
+      vm.setMultiSelection(val);
     },
     getImportExportMenuItems(): MenuListItem[] {
       if (!this.gddWorkspace) return [];

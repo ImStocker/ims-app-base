@@ -49,6 +49,7 @@
           :anchor-item="anchorItem"
           :get-node-class="getNodeClass"
           @update:selection="$emit('update:selection', $event)"
+          @selection:context="$emit('selection:context', $event)"
           @item:click="$emit('item:click', $event)"
           @item:dblclick="$emit('item:dblclick', $event)"
           @item:expand="$emit('item:expand', $event)"
@@ -152,6 +153,7 @@ export default defineComponent({
   },
   emits: [
     'update:selection',
+    'selection:context',
     'item:click',
     'item:dblclick',
     'item:expand',

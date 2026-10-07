@@ -149,9 +149,50 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
       return null;
     }
 
+    // Exclude nested items: keep only the topmost dragged items
+    // (a folder dragged together with its descendants).
+    const dragged_workspace_ids = new Set(
+      nodes
+        .filter((node) => node.item.payload.type === 'workspace')
+        .map((node) => node.item.payload.id),
+    );
+    if (dragged_workspace_ids.size > 0) {
+      const has_dragged_ancestor = (
+        workspace_id: string | null | undefined,
+      ): boolean => {
+        const visited = new Set<string>();
+        let current_id = workspace_id ?? null;
+        while (current_id && !visited.has(current_id)) {
+          visited.add(current_id);
+          if (dragged_workspace_ids.has(current_id)) return true;
+          const workspace = this.appManager
+            .get(CreatorAssetManager)
+            .getWorkspaceByIdViaCacheSync(current_id);
+          current_id = workspace?.parentId ?? null;
+        }
+        return false;
+      };
+      nodes = nodes.filter((node) => {
+        if (node.item.payload.type === 'asset') {
+          const asset = this.appManager
+            .get(CreatorAssetManager)
+            .getAssetShortViaCacheSync(node.item.payload.id);
+          return !has_dragged_ancestor(asset?.workspaceId);
+        }
+        const workspace = this.appManager
+          .get(CreatorAssetManager)
+          .getWorkspaceByIdViaCacheSync(node.item.payload.id);
+        if (!workspace) return true;
+        return !has_dragged_ancestor(workspace.parentId);
+      });
+      if (nodes.length === 0) {
+        return null;
+      }
+    }
+
     let canMove = false;
     let sourceWorkspaceId: string | null | undefined = undefined;
-    let first = false;
+    let first = true;
     for (const node of nodes) {
       if (node.item.payload.type === 'asset') {
         const asset = this.appManager

@@ -694,6 +694,8 @@ export default {
       inputName: 'Enter type name',
       deleteConfirm: 'Are you sure you want to delete {title} type?',
     },
+    deleteSelectedItemsConfirm:
+      'Are you sure you want to delete selected items ({count})?',
   },
   boardPage: {
     addWatcher: 'Add watcher',

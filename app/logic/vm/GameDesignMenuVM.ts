@@ -14,7 +14,7 @@ import DialogManager from '../managers/DialogManager';
 import UiManager from '../managers/UiManager';
 import PromptDialog from '../../components/Common/PromptDialog.vue';
 import FastCreateAssetDialog from '../../components/Asset/FastCreateAssetDialog.vue';
-import { markRaw, unref } from 'vue';
+import { markRaw, reactive, unref, watch } from 'vue';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import type { ProjectTreeSelectedItem } from './IProjectTreePresenterVM';
@@ -63,6 +63,10 @@ import SetUpNotificationsDialog from '#components/Asset/Rights/SetUpNotification
 
 export class GameDesignMenuVM extends ProjectTreePresenterVM {
   private _searchValue: AssetPropValueSelection | null = null;
+  private _selectionState = reactive({
+    items: [] as ProjectTreeSelectedItem[],
+  });
+  private _stopRouteWatch: (() => void) | null = null;
 
   constructor(
     appManager: IAppManager,
@@ -70,6 +74,20 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   ) {
     super(appManager, getDefaultProjectTreePresenterVMOptions());
     this.setOptions(this._getTreePresenterOptions());
+    this._stopRouteWatch = watch(
+      () => unref(this.appManager.getRouter().currentRoute),
+      () => {
+        this._selectionState.items = [];
+      },
+    );
+  }
+
+  override destroy() {
+    if (this._stopRouteWatch) {
+      this._stopRouteWatch();
+      this._stopRouteWatch = null;
+    }
+    super.destroy();
   }
 
   public get searchValue(): AssetPropValueSelection | null {
@@ -138,7 +156,7 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     }
   }
 
-  get selection(): ProjectTreeSelectedItem[] {
+  private _routeSelection(): ProjectTreeSelectedItem[] {
     const selectedAssetId = unref(this.appManager.getRouter().currentRoute)
       .params.assetId;
     if (selectedAssetId) {
@@ -158,8 +176,16 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     return [];
   }
 
+  get selection(): ProjectTreeSelectedItem[] {
+    if (this._selectionState.items.length > 0) {
+      return this._selectionState.items;
+    }
+    return this._routeSelection();
+  }
+
   set selection(val: ProjectTreeSelectedItem[]) {
-    if (val.length === 0) return;
+    this._selectionState.items = [...val];
+    if (val.length !== 1) return;
     if (val[0].type === 'asset') {
       openProjectLink(this.appManager, this.getProjectInfo(), {
         name: 'project-asset-by-id',
@@ -175,6 +201,10 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         },
       });
     }
+  }
+
+  setMultiSelection(val: ProjectTreeSelectedItem[]) {
+    this._selectionState.items = [...val];
   }
 
   getAssetMenu(asset: AssetShort): ExtendedMenuListItem[] {
@@ -343,9 +373,21 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       });
     }
     if (this.appManager.get(CreatorAssetManager).canDeleteAsset(asset)) {
+      const multi = this._multiSelectionContext({
+        type: 'asset',
+        id: asset.id,
+      });
+      const count = multi ? multi.length : 0;
+      const suffix = count > 1 ? ` (${count})` : '';
       assetActions.push({
-        title: this.appManager.$t('sourcePage.elements.delete'),
-        action: () => this.deleteAssetMenu(asset),
+        title:
+          count > 1
+            ? this.appManager.$t('common.dialogs.delete') + suffix
+            : this.appManager.$t('sourcePage.elements.delete'),
+        action: () =>
+          count > 1
+            ? this.deleteSelectionMenu(multi!)
+            : this.deleteAssetMenu(asset),
         icon: 'delete',
         danger: true,
       });
@@ -628,9 +670,21 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       this.appManager.get(CreatorAssetManager).canDeleteWorkspace(workspace) &&
       has_parent
     ) {
+      const multi = this._multiSelectionContext({
+        type: 'workspace',
+        id: workspace.id,
+      });
+      const count = multi ? multi.length : 0;
+      const suffix = count > 1 ? ` (${count})` : '';
       workspaceActions.push({
-        title: this.appManager.$t('sourcePage.folders.delete'),
-        action: () => this.deleteWorkspaceMenu(workspace),
+        title:
+          count > 1
+            ? this.appManager.$t('common.dialogs.delete') + suffix
+            : this.appManager.$t('sourcePage.folders.delete'),
+        action: () =>
+          count > 1
+            ? this.deleteSelectionMenu(multi!)
+            : this.deleteWorkspaceMenu(workspace),
         danger: true,
         icon: 'delete',
       });
@@ -791,6 +845,109 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
       });
       return true;
     }
+  }
+
+  private _multiSelectionContext(
+    clicked: ProjectTreeSelectedItem,
+  ): ProjectTreeSelectedItem[] | null {
+    const selection = this.selection;
+    if (selection.length <= 1) return null;
+    const in_selection = selection.some(
+      (s) => s.type === clicked.type && s.id === clicked.id,
+    );
+    if (!in_selection) return null;
+    return this._collectTopLevelDeletable(selection);
+  }
+
+  private _collectTopLevelDeletable(
+    selection: ProjectTreeSelectedItem[],
+  ): ProjectTreeSelectedItem[] {
+    const asset_manager = this.appManager.get(CreatorAssetManager);
+
+    const deletable_workspaces = new Set<string>();
+    for (const item of selection) {
+      if (item.type !== 'workspace') continue;
+      const workspace = asset_manager.getWorkspaceByIdViaCacheSync(item.id);
+      if (
+        workspace &&
+        workspace.parentId &&
+        asset_manager.canDeleteWorkspace(workspace)
+      ) {
+        deletable_workspaces.add(workspace.id);
+      }
+    }
+
+    const has_deletable_ancestor = (
+      workspace_id: string | null | undefined,
+    ): boolean => {
+      const visited = new Set<string>();
+      let current_id = workspace_id ?? null;
+      while (current_id && !visited.has(current_id)) {
+        visited.add(current_id);
+        if (deletable_workspaces.has(current_id)) return true;
+        const workspace =
+          asset_manager.getWorkspaceByIdViaCacheSync(current_id);
+        current_id = workspace?.parentId ?? null;
+      }
+      return false;
+    };
+
+    const res: ProjectTreeSelectedItem[] = [];
+    for (const item of selection) {
+      if (item.type === 'asset') {
+        const asset = asset_manager.getAssetShortViaCacheSync(item.id);
+        if (!asset || !asset_manager.canDeleteAsset(asset)) continue;
+        if (has_deletable_ancestor(asset.workspaceId)) continue;
+        res.push(item);
+      } else if (item.type === 'workspace') {
+        if (!deletable_workspaces.has(item.id)) continue;
+        const workspace = asset_manager.getWorkspaceByIdViaCacheSync(item.id);
+        if (!workspace) continue;
+        if (has_deletable_ancestor(workspace.parentId)) continue;
+        res.push(item);
+      }
+    }
+    return res;
+  }
+
+  async deleteSelectionMenu(items: ProjectTreeSelectedItem[]) {
+    const asset_ids = items.filter((i) => i.type === 'asset').map((i) => i.id);
+    const workspace_ids = items
+      .filter((i) => i.type === 'workspace')
+      .map((i) => i.id);
+    const count = asset_ids.length + workspace_ids.length;
+    if (count === 0) return;
+    const suffix = count > 1 ? ` (${count})` : '';
+    const answer = await this.appManager
+      .get(DialogManager)
+      .show(ConfirmDialog, {
+        header: this.appManager.$t('common.dialogs.delete') + suffix + '?',
+        message: this.appManager.$t('sourcePage.deleteSelectedItemsConfirm', {
+          count,
+        }),
+        yesCaption: this.appManager.$t('common.dialogs.delete'),
+        danger: true,
+      });
+    if (answer) {
+      await this.appManager.get(UiManager).doTask(async () => {
+        if (asset_ids.length > 0) {
+          await this.deleteAsset({
+            where: {
+              id: asset_ids,
+            },
+          });
+          for (const id of asset_ids) {
+            this.deleteItemInState(`asset:${id}`);
+          }
+        }
+        for (const id of workspace_ids) {
+          await this.deleteWorkspace(id);
+        }
+      });
+      this.setMultiSelection([]);
+      return true;
+    }
+    return false;
   }
 
   //-------------------------workspaces actions---------------------------------

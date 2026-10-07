@@ -23,6 +23,7 @@
       :draggable="isDraggable"
       @click="onClicked"
       @dblclick="onDoubleClicked"
+      @contextmenu.capture="onContextMenuCapture"
       @dragstart="onDragStart"
       @dragover="onDragOver"
       @dragleave="onDragLeave"
@@ -75,6 +76,7 @@
         :anchor-item="anchorItem"
         :get-node-class="getNodeClass"
         @update:selection="$emit('update:selection', $event)"
+        @selection:context="$emit('selection:context', $event)"
         @item:click="$emit('item:click', $event)"
         @item:dblclick="$emit('item:dblclick', $event)"
         @item:expand="$emit('item:expand', $event)"
@@ -180,6 +182,7 @@ export default defineComponent({
   },
   emits: [
     'update:selection',
+    'selection:context',
     'item:click',
     'item:dblclick',
     'item:expand',
@@ -426,6 +429,22 @@ export default defineComponent({
       return (
         this.$refs.children as TreePresenterChildrenComp
       ).findNodeComponent(node);
+    },
+    onContextMenuCapture(ev: MouseEvent) {
+      if (this.selectionMode !== 'multiple') return;
+      if (this.item.disabled) return;
+      if (this.isSelectedParams.selected) return;
+      const e: TreePresenterItemEvent<any, MouseEvent> = {
+        target: {
+          item: this.item,
+          parents: this.parents,
+        },
+        defaultPrevented: false,
+        originalEvent: ev,
+      };
+      this.$emit('item:focus', e);
+      if (e.defaultPrevented) return;
+      this.$emit('selection:context', [this.item]);
     },
     onClicked(ev: MouseEvent) {
       if (
