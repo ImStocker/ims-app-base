@@ -339,18 +339,6 @@ export default defineComponent({
         ...(gdd_folder &&
         gdd_folder.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
         !this.isDesktop &&
-        !this.hideLinks
-          ? [
-              {
-                title: this.$t('gddPage.createRef'),
-                action: this.createRef,
-                icon: 'link',
-              },
-            ]
-          : []),
-        ...(gdd_folder &&
-        gdd_folder.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
-        !this.isDesktop &&
         (this.hasComments ||
           (gdd_folder.rights >= MIN_WORKSPACE_RIGHTS_TO_COMMENT &&
             this.allowAddComments))

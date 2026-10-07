@@ -184,17 +184,6 @@ export default defineComponent({
               icon: 'task',
             }
           : null,
-        !this.isArticle &&
-          !this.isGuest &&
-          !this.isDiscussion &&
-          !this.isSystemAsset &&
-          !this.isDesktop
-          ? {
-              title: this.$t('gddPage.createRef'),
-              action: this.createRef,
-              icon: 'link',
-            }
-          : null,
         this.historyShown && !this.isDiscussion && !this.isDesktop
           ? {
               title: this.$t('gddPage.history'),
