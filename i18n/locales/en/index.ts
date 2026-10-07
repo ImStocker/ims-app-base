@@ -673,7 +673,7 @@ export default {
       create: 'Create element',
       createX: 'Create {x}',
       delete: 'Delete element',
-      deleteElements: 'Удалить элементы',
+      deleteElements: 'Delete elements',
       rename: 'Rename element "{element}"',
       inputElementName: 'Enter element name',
       deleteElementConfirm:
