@@ -583,6 +583,7 @@ export default {
   dragOverlay: {
     drop: 'Перетащите файлы сюда',
     imagesOnly: 'Принимаются только изображения',
+    imagesAndVideosOnly: 'Принимаются только изображения и видео',
   },
   imcEditor: {
     autocompleteMore: 'Еще...',

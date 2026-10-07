@@ -134,3 +134,31 @@ export function getGalleryItemKey(
     ? normalizeAssetPropPart(val)
     : encodeAssetPropPartWithCapitals(val);
 }
+
+export const VideoFileExts = ['mov', 'mpg', 'avi', 'mp4'];
+
+const videoFileRegexp = new RegExp(`\\.(${VideoFileExts.join('|')})$`, 'i');
+
+export function isVideoFileName(name: string | null | undefined): boolean {
+  return !!name && videoFileRegexp.test(name);
+}
+
+const EXTERNAL_VIDEO_TYPES: GalleryBlockItemType[] = [
+  'youtube',
+  'extvideo',
+  'rutube',
+  'vkvideo',
+];
+
+export function isGalleryVideoItem(
+  item: Pick<GalleryBlockItemObject, 'type' | 'value'> | null | undefined,
+): boolean {
+  if (!item || !item.type || !item.value) return false;
+  if (EXTERNAL_VIDEO_TYPES.includes(item.type)) return true;
+  if (item.type === 'file') {
+    const value = item.value;
+    if (typeof value !== 'object' || !('FileId' in value)) return false;
+    return isVideoFileName((value as AssetPropValueFile).Title);
+  }
+  return false;
+}

@@ -29,8 +29,14 @@ export default defineComponent({
       required: true,
     },
     type: {
-      type: String as PropType<'extvideo' | 'youtube' | 'vkvideo' | 'rutube'>,
+      type: String as PropType<
+        'file' | 'extvideo' | 'youtube' | 'vkvideo' | 'rutube'
+      >,
       default: 'youtube',
+    },
+    title: {
+      type: String as PropType<string | null>,
+      default: null,
     },
   },
   data() {
@@ -61,7 +67,7 @@ export default defineComponent({
       return m[0];
     },
     stubTitle(): string | null {
-      return this.extvideoTitle;
+      return this.title || this.extvideoTitle;
     },
   },
   methods: {

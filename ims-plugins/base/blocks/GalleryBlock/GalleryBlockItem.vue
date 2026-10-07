@@ -55,11 +55,17 @@
         :error="slotDragEffect === -1"
         :text="
           slotDragEffect === -1
-            ? $t('dragOverlay.imagesOnly')
+            ? $t('dragOverlay.imagesAndVideosOnly')
             : $t('assetEditor.galleryBlockDropToSlot')
         "
       ></drag-overlay>
     </div>
+    <gallery-block-video
+      v-else-if="isVideo"
+      class="GalleryBlockItem-content"
+      :type="item.type"
+      :value="item.value"
+    ></gallery-block-video>
     <file-presenter
       v-else-if="item.type === 'file'"
       :inline="true"
@@ -71,17 +77,6 @@
       :tooltip="fileTooltip"
       @click="fileClick"
     ></file-presenter>
-    <gallery-block-video
-      v-else-if="
-        item.type === 'youtube' ||
-        item.type === 'extvideo' ||
-        item.type === 'rutube' ||
-        item.type === 'vkvideo'
-      "
-      class="GalleryBlockItem-content"
-      :code="item.value ? item.value.toString() : ''"
-      :type="item.type"
-    ></gallery-block-video>
     <img
       v-else-if="item.type === 'extimage'"
       :src="itemValueAsString"
@@ -132,6 +127,7 @@ import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
 import {
   isGalleryItemEmpty,
   isGalleryItemSlot,
+  isGalleryVideoItem,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
 import GalleryBlockVideo from './GalleryBlockVideo.vue';
@@ -280,6 +276,9 @@ export default defineComponent({
       if (this.item.type !== 'file') return null;
       return useFilePresenterParams(this.item.value as AssetPropValueFile).link;
     },
+    isVideo(): boolean {
+      return isGalleryVideoItem(this.item);
+    },
   },
   watch: {
     fileImageSrc() {
@@ -318,10 +317,10 @@ export default defineComponent({
         ev.dataTransfer && ev.dataTransfer.types.includes('Files');
       let effect = is_file_move ? 1 : 0;
       if (is_file_move && ev.dataTransfer && ev.dataTransfer.items) {
-        const are_images = [...ev.dataTransfer.items].some((i) => {
-          return /^image\/.+$/i.test(i.type);
+        const are_allowed = [...ev.dataTransfer.items].some((i) => {
+          return /^(image|video)\/.+$/i.test(i.type);
         });
-        effect = are_images ? 1 : -1;
+        effect = are_allowed ? 1 : -1;
       }
       if (!this.dragOverSlot) {
         this.dragOverSlot = true;
@@ -419,7 +418,16 @@ export default defineComponent({
           .get(DialogManager)
           .show(FilePresenterDialog, {
             value: file,
-            files: (this.files ?? []).map((el) => el.value),
+            files: (this.files ?? [])
+              .filter(
+                // TODO: refactor this. It would be more logical if you could run through
+                // all possible gallery items, but FilePresenter does not support external ones.
+                (el) =>
+                  el.value &&
+                  typeof el.value === 'object' &&
+                  'FileId' in el.value,
+              )
+              .map((el) => el.value),
           });
       }
     },

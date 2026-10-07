@@ -37,6 +37,9 @@ export function useFilePresenterParams(
       icon = 'ri-file-image-fill';
       inlineType = 'img';
       break;
+    case 'mpg':
+      icon = 'ri-file-video-fill';
+      break;
     case 'mov':
     case 'mp4':
     case 'avi':

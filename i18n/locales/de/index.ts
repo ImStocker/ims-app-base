@@ -577,6 +577,7 @@ export default {
   dragOverlay: {
     drop: 'Dateien hierher ziehen',
     imagesOnly: 'Nur Bilder',
+    imagesAndVideosOnly: 'Nur Bilder und Videos',
   },
   imcEditor: {
     autocompleteMore: 'Mehr...',

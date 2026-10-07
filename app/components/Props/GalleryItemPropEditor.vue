@@ -73,6 +73,7 @@ import type { MenuListItem } from '#logic/types/MenuList';
 import type { PropsFormFieldDef, PropsFormState } from '#logic/types/PropsForm';
 import type { AssetDisplayMode } from '#logic/utils/assets';
 import type { GalleryBlockItemType } from '~ims-plugin-base/blocks/GalleryBlock/GalleryBlock';
+import { VideoFileExts } from '~ims-plugin-base/blocks/GalleryBlock/GalleryBlock';
 import ExternalLinkDialog from '~ims-plugin-base/blocks/GalleryBlock/ExternalLinkDialog.vue';
 import GalleryBlockVideoDialog from '~ims-plugin-base/blocks/GalleryBlock/GalleryBlockVideoDialog.vue';
 import FilePresenterDialog from '#components/File/FilePresenterDialog.vue';
@@ -82,7 +83,15 @@ import MenuButton from '#components/Common/MenuButton.vue';
 import MenuList from '#components/Common/MenuList.vue';
 import PromptDialog from '#components/Common/PromptDialog.vue';
 
-const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'bmp', 'svg', 'gif']);
+const ALLOWED_EXTENSIONS = new Set([
+  'jpg',
+  'jpeg',
+  'png',
+  'bmp',
+  'svg',
+  'gif',
+  ...VideoFileExts,
+]);
 
 const VIDEO_TYPES: GalleryBlockItemType[] = [
   'youtube',

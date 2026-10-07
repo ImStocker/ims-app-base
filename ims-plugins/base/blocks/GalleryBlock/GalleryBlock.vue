@@ -98,7 +98,7 @@
       :error="dragEffect === -1"
       :text="
         dragEffect === -1
-          ? $t('dragOverlay.imagesOnly')
+          ? $t('dragOverlay.imagesAndVideosOnly')
           : $t('dragOverlay.drop')
       "
     ></drag-overlay>
@@ -140,8 +140,17 @@ import ConfirmDialog from '#components/Common/ConfirmDialog.vue';
 import type { UploadingJob } from '#logic/managers/EditorManager';
 import EditorManager from '#logic/managers/EditorManager';
 import { getNextIndexWithTimestamp } from '#components/Asset/Editor/blockUtils';
+import { VideoFileExts } from './GalleryBlock';
 
-const AllowedExtensions = new Set(['jpg', 'jpeg', 'png', 'bmp', 'svg', 'gif']);
+const AllowedExtensions = new Set([
+  'jpg',
+  'jpeg',
+  'png',
+  'bmp',
+  'svg',
+  'gif',
+  ...VideoFileExts,
+]);
 
 export default defineComponent({
   name: 'GalleryBlock',
@@ -684,10 +693,10 @@ export default defineComponent({
         ev.dataTransfer && ev.dataTransfer.types.includes('Files');
       this.dragEffect = is_file_move ? 1 : 0;
       if (is_file_move && ev.dataTransfer && ev.dataTransfer.items) {
-        const are_images = [...ev.dataTransfer.items].some((i) => {
-          return /^image\/.+$/i.test(i.type);
+        const are_allowed = [...ev.dataTransfer.items].some((i) => {
+          return /^(image|video)\/.+$/i.test(i.type);
         });
-        this.dragEffect = are_images ? 1 : -1;
+        this.dragEffect = are_allowed ? 1 : -1;
       }
       if (ev.dataTransfer && this.dragEffect !== 1) {
         ev.dataTransfer.dropEffect = 'none';
