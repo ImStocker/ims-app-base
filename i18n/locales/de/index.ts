@@ -652,6 +652,7 @@ export default {
         addCard: 'Karte hinzufügen',
         addListItem: 'Element hinzufügen',
         changeCollectionType: 'Sammlungstyp ändern',
+        copyServiceName: 'Dienstnamen kopieren',
         typeMismathInCollection:
           'Die ausgewählte Sammlung unterstützt diesen Typ nicht',
         folders: 'Ordner',

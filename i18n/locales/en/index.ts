@@ -646,6 +646,7 @@ export default {
         addCard: 'Add card',
         addListItem: 'Add item',
         changeCollectionType: 'Change collection type',
+        copyServiceName: 'Copy service name',
         typeMismathInCollection:
           'The selected collection does not support this type',
         folders: 'Folders',

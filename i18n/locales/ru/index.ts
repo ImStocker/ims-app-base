@@ -658,6 +658,7 @@ export default {
         addCard: 'Добавить карточку',
         addListItem: 'Добавить пункт',
         changeCollectionType: 'Изменить тип коллекции',
+        copyServiceName: 'Скопировать служебное имя',
         typeMismathInCollection:
           'Выбранная коллекция не поддерживает заданный тип',
         folders: 'Папки',

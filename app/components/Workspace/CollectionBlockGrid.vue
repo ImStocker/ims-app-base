@@ -8,6 +8,7 @@
       :columns="columns"
       :get-body-cell-class="getBodyCellClass"
       :get-cell-context-menu="getCellContextMenu"
+      :get-header-cell-context-menu="getHeaderContextMenu"
       @resize-column="onColumnResize"
       @reset-column-width="onColumnReset"
       @change-cells="changeCells"
@@ -74,6 +75,9 @@ import type {
   ImcGridRow,
   ImcGridChangeCell,
 } from '../ImcGrid/ImcGrid';
+import { getColumnServiceName } from '../GameDesign/WorkspaceCollectionContent';
+import type { MenuListItem } from '../../logic/types/MenuList';
+import { clipboardCopyPlainText } from '../../logic/utils/clipboard';
 
 export default defineComponent({
   name: 'CollectionBlockGrid',
@@ -235,6 +239,23 @@ export default defineComponent({
           },
         },
       ];
+    },
+    getHeaderContextMenu(column: ImcGridColumn): MenuListItem[] {
+      const service_name = getColumnServiceName(column);
+      if (!service_name) return [];
+      return [
+        {
+          title: this.$t('sourcePage.folders.collection.copyServiceName'),
+          icon: 'ri-file-copy-line',
+          action: () => this.copyColumnServiceName(service_name),
+        },
+      ];
+    },
+    async copyColumnServiceName(service_name: string) {
+      await clipboardCopyPlainText(service_name);
+      this.$getAppManager()
+        .get(UiManager)
+        .showSuccess(this.$t('common.copied'));
     },
     async deleteRow(row: ImcGridRow) {
       const asset_id = row.id;

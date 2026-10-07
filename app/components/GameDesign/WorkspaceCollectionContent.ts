@@ -83,3 +83,17 @@ export function gatherColumns(
 
   return columns;
 }
+
+export function getColumnServiceName(
+  column: ImcGridColumn & { blockRef?: string },
+): string | null {
+  const block_ref = column.blockRef;
+  if (!block_ref) return null;
+  const prop_key_prefix = block_ref + '|';
+  const field_key = column.propKey.startsWith(prop_key_prefix)
+    ? column.propKey.slice(prop_key_prefix.length)
+    : column.propKey;
+  if (!field_key) return null;
+  if (field_key === 'value') return block_ref;
+  return block_ref + '.' + field_key;
+}

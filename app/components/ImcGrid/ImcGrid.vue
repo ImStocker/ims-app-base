@@ -217,6 +217,12 @@ export default defineComponent({
       >,
       default: null,
     },
+    getHeaderCellContextMenu: {
+      type: [Function, null] as PropType<
+        ((column: ImcGridColumn, col_index: number) => MenuListItem[]) | null
+      >,
+      default: null,
+    },
   },
   emits: [
     'resizeColumn',
@@ -247,6 +253,10 @@ export default defineComponent({
       contextMenuCellInfo: null as {
         row: ImcGridRow;
         rowIndex: number;
+        colIndex: number;
+      } | null,
+      contextMenuHeaderInfo: null as {
+        column: ImcGridColumn;
         colIndex: number;
       } | null,
     };
@@ -1104,8 +1114,22 @@ export default defineComponent({
     },
     onCellContextMenu(event: MouseEvent) {
       const target = event.target as HTMLElement;
+      const header_cell = target.closest<HTMLElement>('[data-part="header"]');
+      if (header_cell) {
+        const col_index = parseInt(header_cell.dataset.col ?? '', 10);
+        const column = isNaN(col_index) ? null : this.columns[col_index];
+        this.contextMenuCellInfo = null;
+        this.contextMenuHeaderInfo = column
+          ? { column, colIndex: col_index }
+          : null;
+        return;
+      }
       const cell = target.closest<HTMLElement>('.ImcGrid-cell');
-      if (!cell) return;
+      this.contextMenuHeaderInfo = null;
+      if (!cell) {
+        this.contextMenuCellInfo = null;
+        return;
+      }
       const col_index = parseInt(cell.dataset.col ?? '', 10);
       const row_index = parseInt(cell.dataset.row ?? '', 10);
       if (isNaN(row_index) || isNaN(col_index)) return;
@@ -1118,6 +1142,13 @@ export default defineComponent({
       };
     },
     getCellContextMenuList(): MenuListItem[] {
+      if (this.contextMenuHeaderInfo) {
+        if (!this.getHeaderCellContextMenu) return [];
+        return this.getHeaderCellContextMenu(
+          this.contextMenuHeaderInfo.column,
+          this.contextMenuHeaderInfo.colIndex,
+        );
+      }
       if (!this.contextMenuCellInfo || !this.getCellContextMenu) return [];
       return this.getCellContextMenu(
         this.contextMenuCellInfo.row,
