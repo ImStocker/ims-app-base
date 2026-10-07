@@ -9,7 +9,9 @@ import type {
   GetCommentsResultDTO,
   SetLikeDTO,
   CommentReplyCreateDTO,
+  AssetsCommentsResult,
 } from '../types/CommentTypes';
+import type { AssetQueryWhere } from '../types/AssetsType';
 import CreatorAssetManager from './CreatorAssetManager';
 import { Service, HttpMethods } from './ApiWorker';
 
@@ -24,6 +26,24 @@ export default class CommentManager extends AppSubManagerBase {
 
   async init() {}
 
+  async getAssetsComments(
+    where: AssetQueryWhere,
+  ): Promise<AssetsCommentsResult> {
+    return await this._apiManager.call<AssetsCommentsResult>(
+      Service.CREATORS,
+      HttpMethods.GET,
+      'assets/comment',
+      {
+        where: JSON.stringify(where),
+      },
+    );
+  }
+
+  async loadAssetComments(assetId: string): Promise<void> {
+    const res = await this.getAssetsComments({ id: assetId });
+    this.appManager.get(CreatorAssetManager).updateCommentsCache(res);
+  }
+
   async createComment(
     params: CommentCreateDTO,
   ): Promise<CommentCreateResponseDTO> {
@@ -35,11 +55,11 @@ export default class CommentManager extends AppSubManagerBase {
         ...params,
       },
     );
-    await this.appManager.get(CreatorAssetManager).getAssetInstancesList({
-      where: {
-        id: [params.assetId],
-      },
-    });
+    try {
+      await this.loadAssetComments(params.assetId);
+    } catch (err) {
+      console.error('Failed to refresh asset comments', err);
+    }
     return res;
   }
 

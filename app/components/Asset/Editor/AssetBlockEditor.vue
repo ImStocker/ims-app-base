@@ -94,7 +94,7 @@
               </template>
             </editor-block>
             <asset-block-comment
-              v-if="showComments && !isDesktop"
+              v-if="showComments"
               :ref="(el) => setBlockCommentRef(item, index, el)"
               class="AssetBlockEditor-commentButton"
               :resolved-block="item"
@@ -267,9 +267,6 @@ export default defineComponent({
     };
   },
   computed: {
-    isDesktop() {
-      return this.$getAppManager().$appConfiguration.isDesktop;
-    },
     hasComments(): boolean {
       const comments_count =
         this.assetBlockEditor.assetFull?.comments.length ?? 0;

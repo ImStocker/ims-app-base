@@ -61,6 +61,7 @@ import {
   MIN_WORKSPACE_RIGHTS_TO_READ,
 } from '../types/Rights';
 import { assert } from '../utils/typeUtils';
+import type { AssetsCommentsResult } from '../types/CommentTypes';
 import ProjectManager from './ProjectManager';
 import type {
   AssetGlobalHistoryResultDTO,
@@ -834,6 +835,16 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       Object.values(full_res.objects.workspaces),
       request_listen,
     );
+  }
+
+  public updateCommentsCache(comments_res: AssetsCommentsResult): void {
+    assert(this._fullAssetsCache, 'Not inited');
+    for (const assetId of comments_res.ids) {
+      const instance = this._fullAssetsCache.getElementSync(assetId);
+      if (instance) {
+        instance.comments = comments_res.comments[assetId] ?? [];
+      }
+    }
   }
 
   public requestExternalEventListenFullAssetIds(asset_ids: string[]) {

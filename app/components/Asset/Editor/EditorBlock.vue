@@ -350,7 +350,6 @@ export default defineComponent({
           : []),
         ...(gdd_folder &&
         gdd_folder.rights >= MIN_WORKSPACE_RIGHTS_TO_READ &&
-        !this.isDesktop &&
         (this.hasComments ||
           (gdd_folder.rights >= MIN_WORKSPACE_RIGHTS_TO_COMMENT &&
             this.allowAddComments))

@@ -203,7 +203,9 @@ export class AssetFullInstance implements AssetFull {
     this.ownTitle = asset.ownTitle;
     this.references = asset.references;
     this.index = asset.index;
-    this.comments = asset.comments;
+    if (asset.comments?.length || !this.comments?.length) {
+      this.comments = asset.comments ?? [];
+    }
     this.lastViewedAt = asset.lastViewedAt ?? null;
     this.unread = asset.unread ?? 0;
     if (this.activated) {

@@ -74,3 +74,11 @@ export type AssetCommentDTO = {
   lastViewedAt: string;
   hasMention: boolean;
 };
+
+export type AssetsCommentsResult = {
+  ids: string[];
+  comments: {
+    [assetId: string]: AssetCommentDTO[];
+  };
+  total: number;
+};

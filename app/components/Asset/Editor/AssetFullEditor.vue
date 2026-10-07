@@ -78,6 +78,7 @@ import {
   BLOCK_TYPE_PROPS,
 } from '../../../logic/constants';
 import EditorManager from '../../../logic/managers/EditorManager';
+import CommentManager from '../../../logic/managers/CommentManager';
 import RightPanel from '#components/Common/RightPanel.vue';
 import AssetHistory from '../History/AssetHistory.vue';
 
@@ -136,7 +137,30 @@ export default defineComponent({
       return this.assetEditor.getOpenedAssetFull();
     },
   },
+  watch: {
+    currentSingleAsset: {
+      immediate: true,
+      handler(
+        asset: { id: string } | null,
+        prev: { id: string } | null | undefined,
+      ) {
+        if (import.meta.server) return;
+        if (!this.showComments || !asset) return;
+        if (prev && prev.id === asset.id) return;
+        this.fetchAssetComments(asset.id);
+      },
+    },
+  },
   methods: {
+    async fetchAssetComments(assetId: string) {
+      try {
+        await this.$getAppManager()
+          .get(CommentManager)
+          .loadAssetComments(assetId);
+      } catch (err) {
+        console.error('Failed to load asset comments', err);
+      }
+    },
     async closeHistory() {
       await this.assetEditor.changeMode('usual');
     },
