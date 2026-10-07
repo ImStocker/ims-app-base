@@ -466,7 +466,7 @@ export default {
     propsBlockPasteFromBufferEmpty: 'There is no table property in clipboard',
     propsBlockCopied: 'Property copied',
     propsBlockFieldUntitled: 'Untitled',
-    propsBlockFieldTitlePlaceholder: 'Enter field',
+    propsBlockFieldPlaceholder: 'Enter field',
     propsBlockFieldType: 'Field type',
     propsBlockFieldIsMultiple: 'Is multiple',
     propsBlockFieldParameters: 'Parameters',
