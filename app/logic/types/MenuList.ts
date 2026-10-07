@@ -19,6 +19,7 @@ export type MenuListItem = {
     | Component;
   keepOpenOnClick?: boolean;
   disabled?: boolean;
+  loading?: boolean;
   tooltip?: string;
   params?: Record<string, any>;
   proFunction?: keyof LicenseFeatures;

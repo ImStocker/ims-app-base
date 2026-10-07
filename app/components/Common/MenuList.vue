@@ -22,12 +22,15 @@
               danger: item.danger,
               [item.cssClass!]: item.cssClass ?? undefined,
             }"
-            :disabled="item.disabled"
+            :disabled="item.disabled || item.loading"
             :attach-position="attachPosition"
             :title="item.tooltip ?? item.title"
             @click="handleClick(item)"
           >
-            <div v-if="item.icon" class="MenuList-item-inner-icon">
+            <div v-if="item.loading" class="MenuList-item-inner-icon">
+              <span class="loaderSpinner MenuList-item-inner-spinner" />
+            </div>
+            <div v-else-if="item.icon" class="MenuList-item-inner-icon">
               <i :class="getDropdownIconClass(item)"></i>
             </div>
             <div
@@ -213,7 +216,7 @@ export default defineComponent({
       return !!this.$slots['item-' + item.name + '-extra-content'];
     },
     handleClick(item: MenuListItem) {
-      if (!item.action) return;
+      if (!item.action || item.loading) return;
       item.action();
       if (!item.keepOpenOnClick) {
         this.dispatchMenuActionExecutedEvent(item);
@@ -390,5 +393,9 @@ div.MenuList-item-inner {
   &.drop-right {
     margin-left: auto;
   }
+}
+
+.MenuList-item-inner-spinner {
+  font-size: 1em;
 }
 </style>
