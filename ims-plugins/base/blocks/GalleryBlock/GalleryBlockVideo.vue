@@ -5,19 +5,11 @@
     target="_blank"
     @click.prevent="open"
   >
-    <img
-      v-if="previewLink"
+    <video-preview
       class="GalleryBlockVideo-preview"
-      :src="previewLink"
-    />
-    <div v-else class="ExternalVideo-preview">
-      <div class="ExternalVideo-preview-title">
-        {{ extvideoTitle }}
-      </div>
-    </div>
-    <div v-if="previewLink" class="GalleryBlockVideo-play">
-      <i class="ri-play-circle-line"></i>
-    </div>
+      :type="type"
+      :code="code"
+    ></video-preview>
   </a>
 </template>
 
@@ -25,10 +17,11 @@
 import { type PropType, defineComponent } from 'vue';
 import DialogManager from '#logic/managers/DialogManager';
 import GalleryBlockVideoDialog from './GalleryBlockVideoDialog.vue';
+import VideoPreview from './VideoPreview.vue';
 
 export default defineComponent({
   name: 'GalleryBlockVideo',
-  components: {},
+  components: { VideoPreview },
   props: {
     code: {
       type: String,
@@ -40,15 +33,6 @@ export default defineComponent({
     },
   },
   computed: {
-    extvideoTitle() {
-      if (this.type === 'extvideo') {
-        const m = this.link.match(/[^/]+(?=\.mp4$)/);
-        if (!m) return null;
-        return m[0];
-      } else {
-        return null;
-      }
-    },
     link() {
       let link = '';
       switch (this.type) {
@@ -66,18 +50,6 @@ export default defineComponent({
           break;
         case 'extvideo':
           link = this.code;
-          break;
-      }
-      return link;
-    },
-    previewLink() {
-      let link = '';
-      switch (this.type) {
-        case 'youtube':
-          link = 'https://i.ytimg.com/vi/' + this.code + '/0.jpg';
-          break;
-        case 'rutube':
-          link = `https://rutube.ru/api/video/${this.code}/thumbnail/?redirect=1`;
           break;
       }
       return link;
@@ -103,44 +75,10 @@ export default defineComponent({
   position: relative;
   display: block;
   text-decoration: none;
-}
-
-.GalleryBlockVideo-preview {
-  display: block;
-  height: 100%;
   min-width: 150px;
-}
-
-.ExternalVideo-preview {
-  min-width: 300px;
-  background-color: var(--local-bg-color);
-  background-size: 100px 100px;
-
-  .ExternalVideo-preview-title {
-    position: absolute;
-    bottom: 10px;
-    text-align: center;
-    width: 100%;
-  }
-}
-
-.GalleryBlockVideo-play {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 100px;
-  color: var(--text-intense);
-  opacity: 0.2;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.4;
-  }
+  --video-preview-stub-min-width: 300px;
+  --video-preview-play-size: 100px;
+  --video-preview-stub-titled-play-size: 100px;
 }
 
 video::-webkit-media-controls {

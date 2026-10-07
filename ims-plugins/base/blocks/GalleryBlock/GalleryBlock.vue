@@ -43,7 +43,9 @@
         </template>
         <template #append>
           <div
-            v-if="uploadProgressPercent !== null && currentUploadTargetKey === null"
+            v-if="
+              uploadProgressPercent !== null && currentUploadTargetKey === null
+            "
             class="GalleryBlock-uploadProgressPercent"
           >
             <div
@@ -111,14 +113,12 @@ import {
   extractGalleryBlockEntries,
   getGalleryItemKey,
   isGalleryItemEmpty,
-  isGalleryItemSlot,
   type GalleryBlockExtractedEntries,
   type GalleryBlockItemObject,
 } from './GalleryBlock';
 import GalleryBlockItem from './GalleryBlockItem.vue';
 import {
   castAssetPropValueToString,
-  encodeAssetPropPartWithCapitals,
   makeBlockRef,
   normalizeAssetPropPart,
   type AssetProps,
