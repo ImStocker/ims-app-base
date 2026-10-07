@@ -35,6 +35,7 @@
           @mousedown="onMouseDown"
           @mousemove="onMouseMove"
           @resize-column="$emit('resizeColumn', $event)"
+          @reset-column-width="$emit('resetColumnWidth', $event)"
         >
           <template
             v-for="column of columns"
@@ -219,6 +220,7 @@ export default defineComponent({
   },
   emits: [
     'resizeColumn',
+    'resetColumnWidth',
     'changeCells',
     'blur',
     'focus',

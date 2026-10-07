@@ -9,6 +9,7 @@
       :get-body-cell-class="getBodyCellClass"
       :get-cell-context-menu="getCellContextMenu"
       @resize-column="onColumnResize"
+      @reset-column-width="onColumnReset"
       @change-cells="changeCells"
       @handle-key="handleGridKey($event)"
       @column-click="$emit('column-click', $event)"
@@ -283,6 +284,19 @@ export default defineComponent({
       new_props[prop_index] = {
         ...new_props[prop_index],
         width: ev.width,
+      };
+      this.vm.changeCurrentView('props', new_props);
+    },
+    onColumnReset(ev: { name: string }) {
+      const current_view = this.vm.modifiedCurrentView;
+      const prop_index = current_view.props.findIndex(
+        (p) => p.prop === ev.name,
+      );
+      if (prop_index < 0) return;
+      const new_props = [...current_view.props];
+      new_props[prop_index] = {
+        ...new_props[prop_index],
+        width: null,
       };
       this.vm.changeCurrentView('props', new_props);
     },

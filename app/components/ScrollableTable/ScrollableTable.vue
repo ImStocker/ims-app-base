@@ -53,6 +53,7 @@
             'state-interact':
               interactResizer && interactResizer.name === col.column.name,
           }"
+          @dblclick.stop="onResizerDblClick(col.column.name)"
         ></div>
       </div>
     </div>
@@ -160,6 +161,7 @@ const $slots = useSlots();
 
 const $emit = defineEmits<{
   resizeColumn: [{ name: string; width: number }];
+  resetColumnWidth: [{ name: string }];
 }>();
 
 const props = defineProps({
@@ -420,6 +422,11 @@ function onMouseDown(e: MouseEvent) {
   }
 }
 
+function onResizerDblClick(name: string) {
+  resizerCapture(false);
+  $emit('resetColumnWidth', { name });
+}
+
 let _resizerCaptureMove = null as null | ((e: MouseEvent) => void);
 let _resizeCaptureMouseUp = null as null | ((e: MouseEvent) => void);
 let _resizerCaptureRelease = null as null | (() => void);
@@ -454,15 +461,16 @@ function resizerCapture(val: boolean, startX?: number, _startY?: number) {
   };
   _resizeCaptureMouseUp = (_e: MouseEvent) => {
     const col = props.columns.find((c) => c.name === resizer.name);
-    if (!col) return;
-    const new_width = Math.max(
-      MIN_COLUMN_WIDTH,
-      (col.width ?? 0) + resizer.shiftX,
-    );
-    $emit('resizeColumn', {
-      name: resizer.name,
-      width: new_width,
-    });
+    if (col && resizer.shiftX !== 0) {
+      const new_width = Math.max(
+        MIN_COLUMN_WIDTH,
+        (col.width ?? 0) + resizer.shiftX,
+      );
+      $emit('resizeColumn', {
+        name: resizer.name,
+        width: new_width,
+      });
+    }
 
     if (_resizerCaptureRelease) {
       _resizerCaptureRelease();

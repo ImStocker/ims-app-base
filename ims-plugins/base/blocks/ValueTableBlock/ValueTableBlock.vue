@@ -34,6 +34,7 @@
       :get-cell-context-menu="getCellContextMenu"
       @change-cells="changeCells($event)"
       @resize-column="onColumnResize"
+      @reset-column-width="onColumnReset"
       @update:selected-ranges="onSelectionUpdated"
     >
       <template
@@ -153,6 +154,7 @@ import {
   AssetPropType,
   assignSubObjectToAssetProps,
   castAssetPropValueToString,
+  convertAssetPropsToPlainObject,
   makeBlockRef,
   normalizeAssetPropPart,
   type AssetPropValue,
@@ -733,6 +735,20 @@ export default defineComponent({
         null,
         `__columns\\${ev.name}\\width`,
         ev.width,
+      );
+    },
+    onColumnReset(ev: { name: string }) {
+      if (this.readonly) return;
+      const plain = convertAssetPropsToPlainObject(this.resolvedBlock.computed);
+      const columns = (plain as any).__columns;
+      if (!columns || typeof columns !== 'object') return;
+      const column = columns[ev.name];
+      if (!column || typeof column !== 'object' || !column.width) return;
+      this.assetChanger.deleteBlockPropKey(
+        this.resolvedBlock.assetId,
+        makeBlockRef(this.resolvedBlock),
+        null,
+        `__columns\\${ev.name}\\width`,
       );
     },
     changeCells(changes: ImcGridChangeCell[]) {
