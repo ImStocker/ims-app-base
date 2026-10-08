@@ -8,44 +8,50 @@
     }"
   >
     <button
-      v-if="!show_chat"
       class="is-button is-button-icon"
       :class="{ 'active-button': hasChanges && !commentWasOpened }"
-      @click="openChat()"
+      @click="toggleChat()"
     >
       <i v-if="blockComment?.hasMention" class="ri-chat-unread-fill"></i>
       <i v-else-if="hasMessages" class="ri-chat-4-fill"></i>
       <i v-else class="ri-chat-new-fill"></i>
     </button>
-    <div
-      v-else-if="!openedComment || openedComment === resolvedBlock.id"
-      class="AssetBlockComment-chat"
+    <dropdown-element
+      v-model:shown="show_chat"
+      attach-position="right"
+      hide-trigger="clickOutsideAttached"
+      @hide="onChatHide"
     >
-      <Teleport to=".AssetsPageContent-rightColumn">
-        <div class="AssetBlockComment-chat">
+      <div class="AssetBlockComment-chat">
+        <div class="AssetBlockComment-chat-header">
+          <span class="AssetBlockComment-chat-title">
+            <i class="ri-chat-4-fill"></i>
+            <span>{{ $t('hub.comments') }}</span>
+          </span>
           <button
             class="is-button is-button-icon AssetBlockComment-chat-close"
             @click="show_chat = false"
           >
             <i class="ri-close-fill"></i>
           </button>
-          <chat-block
-            ref="chat"
-            v-model:last-viewed-at="lastViewedAt"
-            class="AssetBlockComment-chat-block tiny-scrollbars"
-            :resolved-block="resolvedBlock"
-            :asset-block-editor="assetBlockEditor"
-            :readonly="!canComment"
-          ></chat-block>
         </div>
-      </Teleport>
-    </div>
+        <chat-block
+          ref="chat"
+          v-model:last-viewed-at="lastViewedAt"
+          class="AssetBlockComment-chat-block tiny-scrollbars"
+          :resolved-block="resolvedBlock"
+          :asset-block-editor="assetBlockEditor"
+          :readonly="!canComment"
+        ></chat-block>
+      </div>
+    </dropdown-element>
   </div>
   <div v-else></div>
 </template>
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import ChatBlock from '~ims-plugin-base/blocks/ChatBlock/ChatBlock.vue';
+import DropdownElement from '../../Common/DropdownElement.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import AuthManager from '../../../logic/managers/AuthManager';
@@ -53,6 +59,7 @@ export default defineComponent({
   name: 'AssetBlockComment',
   components: {
     ChatBlock,
+    DropdownElement,
   },
   props: {
     assetBlockEditor: {
@@ -127,29 +134,46 @@ export default defineComponent({
     },
   },
   methods: {
-    revealCommentReply(reply_id: string) {
-      const chat = this.$refs['chat'];
+    async revealCommentReply(reply_id: string) {
+      let chat = this.$refs['chat'] as InstanceType<typeof ChatBlock> | null;
+      for (let i = 0; i < 6 && !chat; i++) {
+        await this.$nextTick();
+        chat = this.$refs['chat'] as InstanceType<typeof ChatBlock> | null;
+      }
       if (!chat) return false;
-      (chat as InstanceType<typeof ChatBlock>).revealCommentReply(reply_id);
+      return chat.revealCommentReply(reply_id);
     },
     openChat() {
       this.show_chat = true;
       this.$emit('open-comment', this.resolvedBlock.id);
       this.commentWasOpened = true;
     },
+    toggleChat() {
+      if (this.show_chat) {
+        this.show_chat = false;
+      } else {
+        this.openChat();
+      }
+    },
+    async onChatHide() {
+      await this.$nextTick();
+      if (this.openedComment === this.resolvedBlock.id) {
+        this.$emit('open-comment', null);
+      }
+    },
   },
 });
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @use '$style/devices-mixins.scss';
 .AssetBlockComment {
   opacity: 0;
   position: absolute;
   top: 0;
   right: -30px;
+
   &.is-active {
     opacity: 1;
-    right: -310px;
   }
   &.has-message {
     opacity: 1;
@@ -159,44 +183,77 @@ export default defineComponent({
   }
 }
 .AssetBlockComment-chat {
-  margin-top: 25px;
-  position: fixed;
-  z-index: 1;
-  width: 322px;
-  padding-top: 33px;
+  --AssetBlockComment-chat-width: 322px;
+  display: flex;
+  flex-direction: column;
+  width: var(--AssetBlockComment-chat-width);
+  height: 100%;
+  min-height: 600px;
+  border-radius: 16px;
+  border: 1px solid var(--local-border-color);
+  background-color: var(--editor-bg-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 
   @include devices-mixins.device-type(not-pc) {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    margin-top: 40px;
-    padding-right: 8px;
+    position: fixed;
+    top: 56px;
+    left: 8px;
+    right: 8px;
+    bottom: 12px;
+    width: auto;
+    height: auto;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+}
+.AssetBlockComment-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px 10px 16px;
+  border-bottom: 1px solid var(--local-border-color);
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+.AssetBlockComment-chat-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-main);
+  i {
+    color: var(--color-accent);
+    font-size: 14px;
   }
 }
 .AssetBlockComment-chat-close {
-  position: absolute;
-  left: 0;
-  top: 16px;
-
+  font-size: 18px;
+  color: var(--color-text-subtle);
+  &:hover {
+    color: var(--color-text-main);
+  }
   @include devices-mixins.device-type(not-pc) {
+    position: static;
     left: auto;
-    right: 8px;
-    top: 34px;
-    font-size: 20px;
+    right: auto;
+    top: auto;
+    font-size: 18px;
   }
 }
 .AssetBlockComment-chat-block {
-  border-radius: 34px !important;
-  min-height: calc(100vh - 80px);
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  background-color: var(--panel-bg-color) !important;
-  margin-left: 8px;
-  --local-bg-color: var(--panel-bg-color) !important;
-  border: 1px solid var(--local-border-color);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0 !important;
+  margin-left: 0;
+  background-color: transparent !important;
+  --local-bg-color: transparent !important;
+  border: none !important;
 }
 .AssetBlockComment-chat-block:deep(.ChatBlock-sendForm-wrapper) {
-  border-radius: 20px;
+  border-radius: 12px;
+  margin: 8px;
+  background: var(--panel-bg-color) !important;
 }
 </style>
