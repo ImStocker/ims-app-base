@@ -16,6 +16,7 @@ import { escapeRegExp } from '../../../logic/utils/stringUtils';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import {
   ProjectTreePresenterBaseVM,
+  compareProjectTreeItems,
   type ProjectTreeItemPayload,
 } from './ProjectTreePresenterBaseVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
@@ -366,7 +367,7 @@ export class ProjectWorkspacesPresenterVM extends ProjectTreePresenterBaseVM {
       ...found_additional.map((ao, index) => {
         return this.makeItemForAdditional(ao, index);
       }),
-    ];
+    ].sort(compareProjectTreeItems);
   }
 
   protected override get isDragDropAllowed() {

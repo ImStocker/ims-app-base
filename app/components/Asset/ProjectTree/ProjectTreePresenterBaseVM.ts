@@ -1,4 +1,5 @@
 import {
+  TREE_PRESENTER_ROOT_STATE_ID,
   TreePresenterBaseVM,
   type TreePresenterDragOverResult,
   type TreePresenterItem,
@@ -62,6 +63,35 @@ export type ProjectTreePresenterDropTarget = {
   beforeNode: TreePresenterItemInTree<ProjectTreeItemPayload> | undefined;
 };
 
+/**
+ * Canonical client-side ordering for project tree children. Mirrors the
+ * server's ORDER BY (type grouping, index ASC NULLS LAST, title, id) so the
+ * same order survives load, drag&drop events and reloads.
+ */
+export function compareProjectTreeItems(
+  a: TreePresenterItem<ProjectTreeItemPayload>,
+  b: TreePresenterItem<ProjectTreeItemPayload>,
+): number {
+  if (a.payload.type !== b.payload.type) {
+    if (a.payload.type === 'asset') return -1;
+    else if (a.payload.type === 'workspace') {
+      return b.payload.type === 'asset' ? 1 : -1;
+    } else return 1;
+  }
+
+  const a_index = a.payload.index;
+  const b_index = b.payload.index;
+  if (a_index === null && b_index !== null) return 1;
+  if (b_index === null && a_index !== null) return -1;
+  if (a_index !== null && b_index !== null && a_index !== b_index) {
+    return a_index - b_index;
+  }
+
+  const by_title = (a.title ?? '').localeCompare(b.title ?? '');
+  if (by_title !== 0) return by_title;
+  return a.id.localeCompare(b.id);
+}
+
 export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<ProjectTreeItemPayload> {
   protected dragSelfContext: ProjectTreePresenterDragContext | null = null;
   protected loadedRootWorkspaceId: string | null | undefined = undefined;
@@ -107,7 +137,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
     workspace: Workspace,
   ): TreePresenterItem<ProjectTreeItemPayload> {
     return {
-      id: `workspace:${workspace.id}`,
+      id: this.getWorspaceStateId(workspace.id),
       expandable: true,
       title: workspace.title,
       payload: {
@@ -134,6 +164,12 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
       },
       draggable: false,
     };
+  }
+
+  protected getWorspaceStateId(workspaceId: string | null): string {
+    return !this.isRootWorkspaceId(workspaceId)
+      ? `workspace:${workspaceId}`
+      : TREE_PRESENTER_ROOT_STATE_ID;
   }
 
   public override dragStart(
@@ -411,6 +447,55 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
         ];
       }
       any_move = true;
+    } else if (target.workspace !== undefined) {
+      // Inside/root drop without a before-node: append the moved items to the
+      // end of the target children instead of keeping their stale index from
+      // the previous parent.
+      const target_workspace_content = await this.getChildren(
+        target.workspace ? this.makeItemForWorkspace(target.workspace) : null,
+      );
+
+      const append_indexes = (
+        type: 'asset' | 'workspace',
+        movers: { id: string }[],
+      ): { ids: string[]; indexFrom: number } => {
+        const siblings = target_workspace_content.filter(
+          (tw) =>
+            tw.payload.type === type &&
+            !movers.some((m) => m.id === tw.payload.id),
+        );
+        const has_null_index = siblings.some((s) => s.payload.index === null);
+        if (has_null_index || siblings.length === 0) {
+          // NULL indexes sort last, so a fresh numeric index would land the
+          // movers before the nulls: renumber the whole group instead.
+          return {
+            ids: [
+              ...siblings.map((s) => s.payload.id),
+              ...movers.map((m) => m.id),
+            ],
+            indexFrom: 1,
+          };
+        }
+        const last_index = siblings[siblings.length - 1].payload.index;
+        return {
+          ids: movers.map((m) => m.id),
+          indexFrom:
+            last_index === null ? 1 : getNextIndexWithTimestamp(last_index),
+        };
+      };
+
+      if (drop.assets.length > 0) {
+        const append = append_indexes('asset', drop.assets);
+        moving_assets_params.ids = append.ids;
+        moving_assets_params.indexFrom = append.indexFrom;
+        any_move = true;
+      }
+      if (drop.workspaces.length > 0) {
+        const append = append_indexes('workspace', drop.workspaces);
+        moving_workspace_params.ids = append.ids;
+        moving_workspace_params.indexFrom = append.indexFrom;
+        any_move = true;
+      }
     }
 
     const from_workspace_id: string | null | undefined = (() => {
@@ -646,31 +731,7 @@ export abstract class ProjectTreePresenterBaseVM extends TreePresenterBaseVM<Pro
   protected reorderStateChildren(
     state: TreePresenterNodeState<ProjectTreeItemPayload>,
   ) {
-    state.children.sort((a, b) => {
-      if (a.payload.type !== b.payload.type) {
-        if (a.payload.type === 'asset') return -1;
-        else if (a.payload.type === 'workspace') {
-          return b.payload.type === 'asset' ? 1 : -1;
-        } else return 1;
-      }
-
-      const a_params = { index: a.payload.index, title: a.title };
-      const b_params = { index: b.payload.index, title: b.title };
-
-      if (a_params.index !== null && b_params.index === null) {
-        return -1;
-      } else if (b_params.index !== null && a_params.index === null) {
-        return 1;
-      } else if (
-        a_params.index !== null &&
-        b_params.index !== null &&
-        a_params.index !== b_params.index
-      ) {
-        return a_params.index - b_params.index;
-      } else {
-        return (a_params.title ?? '').localeCompare(b_params.title ?? '');
-      }
-    });
+    state.children.sort(compareProjectTreeItems);
   }
 
   protected isRootWorkspaceId(workspace_id: string | null) {
