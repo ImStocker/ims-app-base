@@ -41,6 +41,7 @@
     :height="height ?? undefined"
     controls
     :src="fileInfo?.link ?? undefined"
+    @error="onMediaError"
   ></video>
   <figure
     v-else-if="fileInfo?.inlineType === 'audio'"
@@ -51,6 +52,7 @@
       controls
       :title="tooltip"
       :src="fileInfo?.link ?? undefined"
+      @error="onMediaError"
     ></audio>
   </figure>
   <iframe
@@ -115,6 +117,11 @@ export default defineComponent({
     menuList: { type: Array<ExtendedMenuListItem>, default: () => [] },
   },
   emits: ['click', 'error'],
+  data() {
+    return {
+      playbackError: false,
+    };
+  },
   computed: {
     isDesktop() {
       return this.$getAppManager().$appConfiguration.isDesktop;
@@ -171,12 +178,13 @@ export default defineComponent({
         this.fileValue.Title,
         `${this.$t('file.size')}: ${formatFileSize(this.fileValue.Size, (key) => this.$t(key))}`,
         '',
-        ...(this.fileInfo?.inlineType
+        ...(this.fileInfo?.inlineType && !this.playbackError
           ? [this.$t('file.clickToOpen'), this.$t('file.ctrlToDownload')]
           : [this.$t('file.clickToDownload')]),
       ].join('\n');
     },
     displayAsLink() {
+      if (this.playbackError) return true;
       if (!this.inline) return true;
       return !this.fileInfo?.inlineType;
     },
@@ -190,7 +198,16 @@ export default defineComponent({
         : null;
     },
   },
+  watch: {
+    fileId() {
+      this.playbackError = false;
+    },
+  },
   methods: {
+    onMediaError() {
+      this.playbackError = true;
+      this.$emit('error');
+    },
     async downloadFile() {
       await this.$getAppManager()
         .get(UiManager)
@@ -215,7 +232,12 @@ export default defineComponent({
         return;
       }
 
-      if (ev.ctrlKey || ev.metaKey || !this.fileInfo?.inlineType) {
+      if (
+        ev.ctrlKey ||
+        ev.metaKey ||
+        !this.fileInfo?.inlineType ||
+        this.playbackError
+      ) {
         await this.downloadFile();
       } else {
         this.$getAppManager().get(DialogManager).show(FilePresenterDialog, {
@@ -270,6 +292,27 @@ export default defineComponent({
   min-width: 20px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.FilePresenter-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  padding: 3px 10px;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+
+  &:hover {
+    background: var(--color-accent);
+    color: #fff;
+  }
 }
 
 figure.FilePresenter {
