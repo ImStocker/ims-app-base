@@ -700,6 +700,7 @@ export default defineComponent({
       const comment_content_to_db: any =
         typeof content === 'object' ? { ...content } : content;
       const new_message_id = 'temp-' + uuidv4();
+      const createdAt = new Date().toString();
       const new_message: CommentReplyDTO = {
         id: new_message_id,
         commentId: this.chatCommentBranch?.id ?? '',
@@ -709,8 +710,8 @@ export default defineComponent({
           Name: this.userInfo ? this.userInfo.name : '',
         },
         content: { '': content },
-        createdAt: new Date().toString(),
-        updatedAt: new Date().toString(),
+        createdAt,
+        updatedAt: createdAt,
         sended: false,
         likes: [],
       };
@@ -719,7 +720,7 @@ export default defineComponent({
         this.unsentMessages.unshift(new_message);
         await this.scrollToBottom();
 
-        this.$emit('update:lastViewedAt', new Date().toISOString());
+        this.$emit('update:lastViewedAt', createdAt);
 
         try {
           const res = await this.$getAppManager()
@@ -729,7 +730,7 @@ export default defineComponent({
               answerToReplyId: answerToId,
               content: { '': comment_content_to_db },
             });
-          this.$emit('update:lastViewedAt', new Date().toISOString());
+          this.$emit('update:lastViewedAt', createdAt);
           if (res) {
             const newMessageIndex = this.unsentMessages.findIndex(
               (message: CommentReplyDTO) => message.id === new_message_id,

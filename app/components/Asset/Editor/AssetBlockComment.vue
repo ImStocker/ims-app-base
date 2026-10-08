@@ -244,6 +244,7 @@ export default defineComponent({
   flex-direction: column;
   width: var(--AssetBlockComment-chat-width);
   height: 100%;
+  max-height: var(--DropdownContainer-freeHeight);
   min-height: 600px;
   border-radius: 16px;
   border: 1px solid var(--local-border-color);
