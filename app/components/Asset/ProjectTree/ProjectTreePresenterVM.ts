@@ -20,6 +20,7 @@ import { escapeRegExp } from '../../../logic/utils/stringUtils';
 import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import {
   ProjectTreePresenterBaseVM,
+  compareProjectTreeItems,
   type ProjectTreeItemPayload,
 } from './ProjectTreePresenterBaseVM';
 import ProjectManager from '../../../logic/managers/ProjectManager';
@@ -361,7 +362,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       ...found_additional.map((ao, index) => {
         return this.makeItemForAdditional(ao, index);
       }),
-    ];
+    ].sort(compareProjectTreeItems);
   }
 
   protected override transformChildren(
@@ -443,9 +444,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
         .get(CreatorAssetManager)
         .reloadSubscriber.subscribe(async (changes) => {
           this.forgetChildren(
-            this.isRootWorkspaceId(changes.workspaceId ?? null)
-              ? ''
-              : 'workspace:' + changes.workspaceId,
+            this.getWorspaceStateId(changes.workspaceId ?? null),
           );
         });
       this._projectContentEventsSubscriber = this.appManager
@@ -476,6 +475,11 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     this._resetInit(false);
   }
 
+  protected override getWorspaceStateId(workspaceId: string | null): string {
+    if (!this.options.showWorkspaceTree) return TREE_PRESENTER_ROOT_STATE_ID;
+    return super.getWorspaceStateId(workspaceId);
+  }
+
   private async _ensureWorkspacePathExists(
     workspace_id: string | null,
   ): Promise<TreePresenterNodeState<ProjectTreeItemPayload>> {
@@ -502,7 +506,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
           if (!swapping_workspace) break;
           const root_state = this.ensureState(TREE_PRESENTER_ROOT_STATE_ID);
           const swap_to_state = this.ensureState(
-            `workspace:${swapping_workspace.id}`,
+            this.getWorspaceStateId(swapping_workspace.id),
           );
           swap_to_state.children = root_state.children;
           swap_to_state.loaded = true;
@@ -518,7 +522,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       return this.ensureState(TREE_PRESENTER_ROOT_STATE_ID);
     }
     const exists_parent_state = this.findOwnerState(
-      `workspace:${workspace_id}`,
+      this.getWorspaceStateId(workspace_id),
     );
     if (!exists_parent_state) {
       const workspace = await this.appManager
@@ -546,7 +550,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
         }
       }
     }
-    return this.ensureState(`workspace:${workspace_id}`);
+    return this.ensureState(this.getWorspaceStateId(workspace_id));
   }
 
   private _getAllVisibleWorkspaceIds() {
@@ -586,7 +590,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     }
 
     for (const workspace_id of missing_workspace_ids) {
-      this.deleteItemInState(`workspace:${workspace_id}`);
+      this.deleteItemInState(this.getWorspaceStateId(workspace_id));
     }
   }
 
@@ -686,11 +690,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
           await this._ensureWorkspacePathExists(asset.workspaceId);
         }
         const old_owner_state = this.findOwnerState(`asset:${asset.id}`);
-        const new_owner_id =
-          this.options.showWorkspaceTree &&
-          !this.isRootWorkspaceId(asset.workspaceId)
-            ? `workspace:${asset.workspaceId}`
-            : '';
+        const new_owner_id = this.getWorspaceStateId(asset.workspaceId);
         const new_owner_state = this.getState(new_owner_id);
         let new_owner_state_reorder = false;
         if (old_owner_state) {
@@ -717,7 +717,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
           }
         }
         if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
-          if (new_owner_state && new_owner_state.expanded) {
+          if (new_owner_state && new_owner_state.loaded) {
             new_owner_state.children.push(this.makeItemForAssetShort(asset));
             new_owner_state_reorder = true;
           }
@@ -767,9 +767,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
           ) {
             for (const workspace_id of change_res.wTchIds) {
               const state = this.getState(
-                this.isRootWorkspaceId(workspace_id)
-                  ? TREE_PRESENTER_ROOT_STATE_ID
-                  : `workspace:${workspace_id}`,
+                this.getWorspaceStateId(workspace_id),
               );
               // Force reload
               if (state) {
@@ -821,7 +819,7 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     }
 
     for (const workspace_id of change_res.wDelIds) {
-      this.deleteItemInState(`workspace:${workspace_id}`);
+      this.deleteItemInState(this.getWorspaceStateId(workspace_id));
     }
 
     if (!this.options.showWorkspaceTree) {
@@ -841,14 +839,11 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       }
 
       const is_matched = await this._checkWorkspaceIsMatched(workspace);
-      if (!is_matched) {
-        continue;
-      }
 
-      const old_owner_state = this.findOwnerState(`workspace:${workspace.id}`);
-      const new_owner_id = !this.isRootWorkspaceId(workspace.parentId)
-        ? `workspace:${workspace.parentId}`
-        : '';
+      const old_owner_state = this.findOwnerState(
+        this.getWorspaceStateId(workspace.id),
+      );
+      const new_owner_id = this.getWorspaceStateId(workspace.parentId);
 
       const new_owner_state = this.getState(new_owner_id);
       let new_owner_state_reorder = false;
@@ -867,14 +862,16 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
           }
         }
       }
-      if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
-        if (new_owner_state && new_owner_state.expanded) {
-          new_owner_state.children.push(this.makeItemForWorkspace(workspace));
-          new_owner_state_reorder = true;
+      if (is_matched) {
+        if (!old_owner_state || old_owner_state.state.id !== new_owner_id) {
+          if (new_owner_state && new_owner_state.loaded) {
+            new_owner_state.children.push(this.makeItemForWorkspace(workspace));
+            new_owner_state_reorder = true;
+          }
         }
-      }
-      if (new_owner_state_reorder && new_owner_state) {
-        states_to_be_reorder.add(new_owner_state);
+        if (new_owner_state_reorder && new_owner_state) {
+          states_to_be_reorder.add(new_owner_state);
+        }
       }
     }
     if (states_to_be_reorder.size > 0) {

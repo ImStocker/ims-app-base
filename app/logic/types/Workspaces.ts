@@ -51,8 +51,8 @@ export type Workspace = {
 
 export type WorkspaceMoveParams = {
   parentId?: string | null;
-  indexFrom?: number;
-  indexTo?: number;
+  indexFrom?: number | null;
+  indexTo?: number | null;
   ids: string[];
 };
 

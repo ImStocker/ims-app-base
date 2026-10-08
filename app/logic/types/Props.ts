@@ -800,7 +800,7 @@ export function compareAssetPropValues(
   if (an === null) return -1;
   if (bn === null) return 1;
   const a_type = getAssetPropType(an);
-  const b_type = getAssetPropType(an);
+  const b_type = getAssetPropType(bn);
   if (a_type === b_type) {
     switch (a_type) {
       case undefined:
