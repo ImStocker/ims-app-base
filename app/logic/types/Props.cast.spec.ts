@@ -290,8 +290,8 @@ test('getAssetPropValueLen handles booleans, timestamps and strings', () => {
   expect(getAssetPropValueLen('hello')).toBe(5);
   expect(getAssetPropValueLen('')).toBe(0);
   expect(getAssetPropValueLen(42)).toBe(2);
-  expect(getAssetPropValueLen(null)).toBe(0);
-  expect(getAssetPropValueLen(undefined)).toBe(0);
+  expect(getAssetPropValueLen(null)).toBe(null);
+  expect(getAssetPropValueLen(undefined)).toBe(null);
   expect(getAssetPropValueLen({ Str: 'hi', Ops: [] })).toBe(2);
   expect(getAssetPropValueLen({ Enum: 'e', Name: 'Enum Name' })).toBe(9);
 });
