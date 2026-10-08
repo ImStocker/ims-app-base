@@ -467,7 +467,7 @@ export default {
     propsBlockPasteFromBufferEmpty: 'There is no table property in clipboard',
     propsBlockCopied: 'Property copied',
     propsBlockFieldUntitled: 'Untitled',
-    propsBlockFieldTitlePlaceholder: 'Enter field',
+    propsBlockFieldPlaceholder: 'Enter field',
     propsBlockFieldType: 'Field type',
     propsBlockFieldIsMultiple: 'Is multiple',
     propsBlockFieldParameters: 'Parameters',
@@ -676,7 +676,7 @@ export default {
       create: 'Create element',
       createX: 'Create {x}',
       delete: 'Delete element',
-      deleteElements: 'Удалить элементы',
+      deleteElements: 'Delete elements',
       rename: 'Rename element "{element}"',
       inputElementName: 'Enter element name',
       deleteElementConfirm:
@@ -697,6 +697,8 @@ export default {
       inputName: 'Enter type name',
       deleteConfirm: 'Are you sure you want to delete {title} type?',
     },
+    deleteSelectedItemsConfirm:
+      'Are you sure you want to delete selected items ({count})?',
   },
   boardPage: {
     addWatcher: 'Add watcher',

@@ -709,6 +709,8 @@ export default {
       inputName: 'Введите имя типа',
       deleteConfirm: 'Вы уверены, что хотите удалить тип "{title}"?',
     },
+    deleteSelectedItemsConfirm:
+      'Вы уверены, что хотите удалить выбранные элементы ({count})?',
   },
   boardPage: {
     addWatcher: 'Добавить наблюдателя',

@@ -790,6 +790,29 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
     await this._externalUpdateByEventTask;
   }
 
+  private async _checkWorkspaceIsMatched(
+    workspace: Workspace,
+  ): Promise<boolean> {
+    if (!this._analyzedWhere) return false;
+
+    if (this._analyzedWhere.rootWorkspaces.length > 0) {
+      let found = false;
+      let current: Workspace | null = workspace;
+      while (current && current.parentId) {
+        found = this._analyzedWhere.rootWorkspaces.some(
+          (w) => current && w.id === current.parentId,
+        );
+        if (found) break;
+        current = await this.appManager
+          .get(CreatorAssetManager)
+          .getWorkspaceByIdViaCache(current.parentId);
+      }
+      if (!found) return false;
+    }
+
+    return true;
+  }
+
   protected async _handleWorkspacesEventsImpl(
     change_res: ProjectContentChangeEventArg,
   ) {
@@ -816,6 +839,12 @@ export class ProjectTreePresenterVM extends ProjectTreePresenterBaseVM {
       if (!workspace) {
         continue;
       }
+
+      const is_matched = await this._checkWorkspaceIsMatched(workspace);
+      if (!is_matched) {
+        continue;
+      }
+
       const old_owner_state = this.findOwnerState(`workspace:${workspace.id}`);
       const new_owner_id = !this.isRootWorkspaceId(workspace.parentId)
         ? `workspace:${workspace.parentId}`

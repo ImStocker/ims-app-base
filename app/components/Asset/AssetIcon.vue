@@ -3,14 +3,16 @@
     class="AssetIcon"
     :class="{
       ['asset-icon-' +
-      (displayingAssetIcon ? displayingAssetIcon : 'file-fill')]: !assetImage,
+      (displayingAssetIcon ? displayingAssetIcon : 'file-fill')]:
+        !assetImage || iconImageFailed,
     }"
     ><asset-icon-image
-      v-if="assetImage"
+      v-if="assetImage && !iconImageFailed"
       class="AssetIcon-image"
       :asset="asset"
       :width="16"
       :height="16"
+      @error="iconImageFailed = true"
     ></asset-icon-image>
   </span>
 </template>
@@ -29,6 +31,11 @@ export default defineComponent({
   props: {
     asset: { type: Object as PropType<AssetLink>, required: true },
     useImage: { type: Boolean, default: true },
+  },
+  data() {
+    return {
+      iconImageFailed: false,
+    };
   },
   computed: {
     hasImage() {
@@ -76,6 +83,11 @@ export default defineComponent({
       }
       if (this.asset.icon !== undefined) return this.asset.icon;
       return null;
+    },
+  },
+  watch: {
+    assetImage() {
+      this.iconImageFailed = false;
     },
   },
 });

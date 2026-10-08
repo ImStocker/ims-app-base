@@ -14,6 +14,7 @@
           }
         : null
     "
+    @error="$emit('error')"
   ></file-presenter>
 </template>
 
@@ -27,6 +28,8 @@ import { useAppManager } from '#imports';
 const FilePresenter = defineAsyncComponent(
   () => import('../File/FilePresenter.vue'),
 );
+
+defineEmits(['error']);
 
 const props = defineProps({
   asset: {

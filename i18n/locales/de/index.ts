@@ -704,6 +704,8 @@ export default {
       inputName: 'Typnamen eingeben',
       deleteConfirm: 'Möchtest du den Typ {title} wirklich löschen?',
     },
+    deleteSelectedItemsConfirm:
+      'Möchtest du die ausgewählten Elemente ({count}) wirklich löschen?',
   },
   boardPage: {
     addWatcher: 'Beobachter hinzufügen',

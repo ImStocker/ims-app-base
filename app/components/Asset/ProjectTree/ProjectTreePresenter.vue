@@ -6,6 +6,7 @@
     :tree-presenter-vm="treePresenterVM"
     :selection-mode="selectionMode"
     :get-node-class="getNodeClass"
+    @selection:context="onSelectionContext"
     @item:click="$emit('item:click', $event)"
     @item:dblclick="$emit('item:dblclick', $event)"
     @item:expand="$emit('item:expand', $event)"
@@ -193,6 +194,7 @@ export default defineComponent({
   },
   emits: [
     'update:selection',
+    'selection:context',
     'item:click',
     'item:dblclick',
     'item:expand',
@@ -270,6 +272,18 @@ export default defineComponent({
     }
   },
   methods: {
+    onSelectionContext(val: TreePresenterItem<ProjectTreeItemPayload>[]) {
+      this.$emit(
+        'selection:context',
+        val.map((v) => {
+          return {
+            id: v.payload.id,
+            type: v.payload.type,
+            title: v.title,
+          };
+        }),
+      );
+    },
     getNodeClass(item: TreePresenterItem<ProjectTreeItemPayload>) {
       return `type-${item.payload.type}`;
     },
