@@ -980,8 +980,10 @@ export default {
     freeVersionLimit:
       'History for the last {days} days is shown. Upgrade to the PRO version to access the full history.',
     upgradeToPro: 'Upgrade to PRO',
-  },  hub: {
+  },
+  hub: {
     comments: 'Comments',
+    commentsToBlock: 'Comments to block "{title}"',
   },
   setUpAccessDialog: {
     hidden: 'Hidden',

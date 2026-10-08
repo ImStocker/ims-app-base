@@ -990,8 +990,10 @@ export default {
     freeVersionLimit:
       'Der Verlauf der letzten {days} Tage wird angezeigt. Upgrade auf PRO für den vollständigen Verlauf.',
     upgradeToPro: 'Auf PRO upgraden',
-  },  hub: {
+  },
+  hub: {
     comments: 'Kommentare',
+    commentsToBlock: 'Kommentare zum Block „{title}“',
   },
   setUpAccessDialog: {
     hidden: 'Verborgen',

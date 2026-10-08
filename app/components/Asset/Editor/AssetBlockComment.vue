@@ -24,9 +24,9 @@
     >
       <div class="AssetBlockComment-chat">
         <div class="AssetBlockComment-chat-header">
-          <span class="AssetBlockComment-chat-title">
+          <span class="AssetBlockComment-chat-title" :title="chatTitle">
             <i class="ri-chat-4-fill"></i>
-            <span>{{ $t('hub.comments') }}</span>
+            <span>{{ chatTitle }}</span>
           </span>
           <button
             class="is-button is-button-icon AssetBlockComment-chat-close"
@@ -52,7 +52,10 @@
 import { defineComponent, type PropType } from 'vue';
 import ChatBlock from '~ims-plugin-base/blocks/ChatBlock/ChatBlock.vue';
 import DropdownElement from '../../Common/DropdownElement.vue';
-import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
+import {
+  convertTranslatedTitle,
+  type ResolvedAssetBlock,
+} from '../../../logic/utils/assets';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import AuthManager from '../../../logic/managers/AuthManager';
 export default defineComponent({
@@ -126,6 +129,16 @@ export default defineComponent({
         (!this.blockComment.lastViewedAt ||
           this.blockComment.lastViewedAt < this.blockComment.updatedAt)
       );
+    },
+    blockTitleText() {
+      const source = this.resolvedBlock.title || this.resolvedBlock.name;
+      if (!source) return '';
+      return convertTranslatedTitle(source, (key) => this.$t(key));
+    },
+    chatTitle() {
+      const block_title = this.blockTitleText;
+      if (!block_title) return this.$t('hub.comments');
+      return this.$t('hub.commentsToBlock', { title: block_title });
     },
   },
   watch: {
@@ -219,12 +232,20 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
   font-size: 13px;
   color: var(--color-text-main);
   i {
+    flex: none;
     color: var(--color-accent);
     font-size: 14px;
+  }
+  > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 .AssetBlockComment-chat-close {

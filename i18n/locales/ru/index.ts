@@ -996,8 +996,10 @@ export default {
     freeVersionLimit:
       'Показывается история за последние {days} дней. Обновите приложение до версии PRO, чтобы получить доступ к полной истории',
     upgradeToPro: 'Обновить до PRO',
-  },  hub: {
+  },
+  hub: {
     comments: 'Комментарии',
+    commentsToBlock: 'Комментарии к блоку «{title}»',
   },
   setUpAccessDialog: {
     hidden: 'Скрыто',
