@@ -10,11 +10,18 @@
     <button
       class="is-button is-button-icon"
       :class="{ 'active-button': hasChanges && !commentWasOpened }"
+      :disabled="chatOpening"
       @click="toggleChat()"
     >
-      <i v-if="blockComment?.hasMention" class="ri-chat-unread-fill"></i>
-      <i v-else-if="hasMessages" class="ri-chat-4-fill"></i>
-      <i v-else class="ri-chat-new-fill"></i>
+      <span
+        v-if="chatOpening"
+        class="loaderSpinner AssetBlockComment-loader"
+      ></span>
+      <template v-else>
+        <i v-if="blockComment?.hasMention" class="ri-chat-unread-fill"></i>
+        <i v-else-if="hasMessages" class="ri-chat-4-fill"></i>
+        <i v-else class="ri-chat-new-fill"></i>
+      </template>
     </button>
     <dropdown-element
       v-model:shown="show_chat"
@@ -41,7 +48,7 @@
           class="AssetBlockComment-chat-block tiny-scrollbars"
           :resolved-block="resolvedBlock"
           :asset-block-editor="assetBlockEditor"
-          :readonly="!canComment"
+          :readonly="chatReadonly || !canComment"
         ></chat-block>
       </div>
     </dropdown-element>
@@ -58,6 +65,7 @@ import {
 } from '../../../logic/utils/assets';
 import type { AssetBlockEditorVM } from '../../../logic/vm/AssetBlockEditorVM';
 import AuthManager from '../../../logic/managers/AuthManager';
+import CommentManager from '../../../logic/managers/CommentManager';
 export default defineComponent({
   name: 'AssetBlockComment',
   components: {
@@ -83,6 +91,8 @@ export default defineComponent({
     return {
       show_chat: false,
       commentWasOpened: false,
+      chatReadonly: false,
+      chatOpening: false,
     };
   },
   computed: {
@@ -144,6 +154,9 @@ export default defineComponent({
   watch: {
     openedComment() {
       this.show_chat = this.openedComment === this.resolvedBlock.id;
+      if (this.show_chat) {
+        void this.refreshChatAccess();
+      }
     },
   },
   methods: {
@@ -156,12 +169,35 @@ export default defineComponent({
       if (!chat) return false;
       return chat.revealCommentReply(reply_id);
     },
-    openChat() {
-      this.show_chat = true;
-      this.$emit('open-comment', this.resolvedBlock.id);
-      this.commentWasOpened = true;
+    async openChat() {
+      if (this.chatOpening) {
+        return;
+      }
+      this.chatOpening = true;
+      try {
+        const comment_manager = this.$getAppManager().get(CommentManager);
+        const full_access = await comment_manager.checkChatAccess();
+        if (!full_access && !this.hasMessages) {
+          await comment_manager.requestChatSetup();
+          return;
+        }
+        this.chatReadonly = !full_access;
+        this.show_chat = true;
+        this.$emit('open-comment', this.resolvedBlock.id);
+        this.commentWasOpened = true;
+      } finally {
+        this.chatOpening = false;
+      }
+    },
+    async refreshChatAccess() {
+      this.chatReadonly = !(await this.$getAppManager()
+        .get(CommentManager)
+        .checkChatAccess());
     },
     toggleChat() {
+      if (this.chatOpening) {
+        return;
+      }
       if (this.show_chat) {
         this.show_chat = false;
       } else {
@@ -194,6 +230,13 @@ export default defineComponent({
   .active-button {
     color: var(--color-accent);
   }
+  button:disabled {
+    cursor: default;
+  }
+  .AssetBlockComment-loader {
+    --loader-spinner-color1: currentColor;
+    --loader-spinner-color2: transparent;
+  }
 }
 .AssetBlockComment-chat {
   --AssetBlockComment-chat-width: 322px;
@@ -201,6 +244,7 @@ export default defineComponent({
   flex-direction: column;
   width: var(--AssetBlockComment-chat-width);
   height: 100%;
+  max-height: var(--DropdownContainer-freeHeight);
   min-height: 600px;
   border-radius: 16px;
   border: 1px solid var(--local-border-color);
