@@ -13,6 +13,7 @@ import type {
 } from '../types/CommentTypes';
 import type { AssetQueryWhere } from '../types/AssetsType';
 import CreatorAssetManager from './CreatorAssetManager';
+import ProjectManager from './ProjectManager';
 import { Service, HttpMethods } from './ApiWorker';
 
 export default class CommentManager extends AppSubManagerBase {
@@ -25,6 +26,14 @@ export default class CommentManager extends AppSubManagerBase {
   }
 
   async init() {}
+
+  async checkChatAccess(): Promise<boolean> {
+    return true;
+  }
+
+  async requestChatSetup(): Promise<void> {
+    return;
+  }
 
   async getAssetsComments(
     where: AssetQueryWhere,
@@ -40,6 +49,9 @@ export default class CommentManager extends AppSubManagerBase {
   }
 
   async loadAssetComments(assetId: string): Promise<void> {
+    if (!this.appManager.get(ProjectManager).getProjectInfo()?.id) {
+      return;
+    }
     const res = await this.getAssetsComments({ id: assetId });
     this.appManager.get(CreatorAssetManager).updateCommentsCache(res);
   }

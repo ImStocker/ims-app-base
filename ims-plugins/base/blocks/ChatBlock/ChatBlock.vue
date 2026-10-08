@@ -135,6 +135,10 @@ export default defineComponent({
       type: String,
       default: undefined,
     },
+    readonly: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['sendMessage', 'update:lastViewedAt'],
   data() {
@@ -161,6 +165,7 @@ export default defineComponent({
   computed: {
     canComment() {
       return (
+        !this.readonly &&
         this.assetBlockEditor.assetFull &&
         this.assetBlockEditor.assetFull.rights >= AssetRights.COMMENT
       );
