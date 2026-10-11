@@ -109,6 +109,15 @@ import type { FieldTypeController } from '#logic/types/FieldTypeController';
 import EditorManager from '#logic/managers/EditorManager';
 import AsyncComponent from '#components/Common/AsyncComponent.vue';
 
+const ANY_FIELD_CONTROLLER: FieldTypeController = {
+  name: 'any',
+  title: '',
+  editor: async () => AnyTypePropField,
+  presenter: async () => AnyTypePropField,
+};
+
+const STRING_PRESENTER_FALLBACK = async () => StringPropPresenter;
+
 export default defineComponent({
   name: 'PropFieldValue',
   components: { FormBuilderFieldTooltip, AsyncComponent },
@@ -184,12 +193,7 @@ export default defineComponent({
       const hint = this.field.hint;
       let controller: FieldTypeController | undefined;
       if (!this.field.type) {
-        controller = {
-          name: 'any',
-          title: '',
-          editor: async () => AnyTypePropField,
-          presenter: async () => AnyTypePropField,
-        };
+        controller = ANY_FIELD_CONTROLLER;
       } else {
         const map = this.$getAppManager().get(EditorManager).getFieldTypesMap();
         controller = map.hasOwnProperty(type) ? map[type] : undefined;
@@ -205,7 +209,7 @@ export default defineComponent({
     presenterComponent() {
       if (this.fieldTypeInfo.controller)
         return this.fieldTypeInfo.controller.presenter;
-      else return async () => StringPropPresenter;
+      else return STRING_PRESENTER_FALLBACK;
     },
   },
   watch: {},
