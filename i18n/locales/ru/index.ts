@@ -206,6 +206,7 @@ export default {
       backlog: 'Бэклог',
       archive: 'Архив',
       boards: 'Доски',
+      sprints: 'Спринты',
       mainBoard: 'Основная доска',
       currentTasks: 'Текущие задачи',
       current: 'Текущие',
@@ -635,6 +636,17 @@ export default {
       formula: 'Формула',
     },
   },
+  formulaEditor: {
+    placeholder: 'Введите формулу…',
+    parseError: 'Неверный синтаксис формулы',
+    empty: 'Пустая формула',
+    insertRefHint: 'Нажмите, чтобы вставить ссылку',
+    errorMissingAsset: 'ссылка на ассет не найдена',
+    errorMissingRef: 'Ссылка не найдена',
+    errorDivByZero: 'Деление на ноль',
+    errorCircular: 'Циклическая ссылка',
+    errorInvalid: 'Недопустимая формула',
+  },
   sourcePage: {
     folders: {
       create: 'Создать папку',
@@ -1027,11 +1039,6 @@ export default {
   },
   errorPage: {
     goBack: 'Вернуться',
-  },
-  taskDisplayModes: {
-    board: 'Доски',
-    list: 'Список',
-    calendar: 'Календарь',
   },
   autoExport: {
     autoExportPageHeader: 'Экспорт в локальный проект',

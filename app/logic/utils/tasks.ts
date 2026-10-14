@@ -21,6 +21,7 @@ export enum TaskDisplayMode {
   BOARD = 'board',
   LIST = 'list',
   CALENDAR = 'calendar',
+  GANTT = 'gantt',
 }
 
 export const TaskWorkspaceTypes: {
@@ -45,3 +46,4 @@ export const WORKSPACE_CHECKLIST_NAME = 'tasks-items';
 export const WORKSPACE_BACKLOG_NAME = 'tasks-backlog';
 export const WORKSPACE_BOARDS_NAME = 'tasks-boards';
 export const WORKSPACE_MAIN_BOARD_NAME = 'tasks-mainboard';
+export const WORKSPACE_SPRINTS_NAME = 'tasks-sprints';
