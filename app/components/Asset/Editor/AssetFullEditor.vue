@@ -72,6 +72,7 @@ import ProjectManager from '../../../logic/managers/ProjectManager';
 import AssetBlockEditorRoot from './AssetBlockEditorRoot.vue';
 import type { ResolvedAssetBlock } from '../../../logic/utils/assets';
 import {
+  BLOCK_NAME_INFO,
   BLOCK_NAME_LOCALE,
   BLOCK_NAME_PROPS,
   BLOCK_TYPE_LOCALE,
@@ -177,6 +178,11 @@ export default defineComponent({
       await this.assetEditor.changeAssetLinks([this.currentSingleAsset.id]);
     },
     filterBlocks(block: ResolvedAssetBlock) {
+      if (this.layoutDescriptor.props.hideInfoPropsBlocks) {
+        if (block.name === BLOCK_NAME_INFO && block.type === BLOCK_TYPE_PROPS) {
+          return false;
+        }
+      }
       if (this.layoutDescriptor.props.headerLocaleButton) {
         if (
           block.name === BLOCK_NAME_LOCALE &&

@@ -45,6 +45,7 @@ export type AssetLayoutDescriptorProps = {
   headerLocaleButton?: boolean;
   headerPropsButton?: boolean;
   headerHideParent?: boolean;
+  hideInfoPropsBlocks?: boolean;
 };
 
 export type AssetLayoutDescriptor = {
