@@ -90,7 +90,6 @@ export default defineComponent({
 </script>
 <style lang="scss" scoped>
 .ValueSwitcher {
-  width: 100%;
   display: flex;
   --ValueSwitcher-border-radius: 999px;
 }
