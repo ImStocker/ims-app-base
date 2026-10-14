@@ -381,3 +381,84 @@ h5 {
 .disable-page-loading-indicator .App-loadingIndicator {
   display: none;
 }
+
+[data-theme='ims-dark'] .vc-light {
+  --vc-color: var(--local-text-color, #e9e9e9);
+  --vc-bg: var(--local-box-color, #2c2b29);
+  --vc-border: var(--local-border-color, rgba(255, 255, 255, 0.1));
+  --vc-hover-bg: rgba(255, 255, 255, 0.1);
+  --vc-focus-ring: 0 0 0 2px rgba(238, 216, 17, 0.7);
+
+  --vc-accent-500: var(--color-accent, #eed811);
+  --vc-accent-600: var(--color-accent-light, #ffec48);
+
+  --vc-header-arrow-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+  --vc-header-arrow-hover-bg: var(--local-hl-bg-color, #3b3a38);
+  --vc-header-title-color: var(--local-text-color, #e9e9e9);
+
+  --vc-weekday-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+  --vc-weeknumber-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+
+  --vc-nav-hover-bg: var(--local-hl-bg-color, #3b3a38);
+  --vc-nav-title-color: var(--local-text-color, #e9e9e9);
+  --vc-nav-item-hover-box-shadow: none;
+  --vc-nav-item-active-color: #222222;
+  --vc-nav-item-active-bg: var(--color-accent, #eed811);
+  --vc-nav-item-active-box-shadow: none;
+  --vc-nav-item-current-color: var(--color-accent-light, #ffec48);
+
+  --vc-day-popover-container-color: var(--local-text-color, #e9e9e9);
+  --vc-day-popover-container-bg: var(--local-box-color, #2c2b29);
+  --vc-day-popover-container-border: var(--local-border-color, rgba(255, 255, 255, 0.1));
+  --vc-day-popover-header-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+
+  --vc-popover-content-color: var(--local-text-color, #e9e9e9);
+  --vc-popover-content-bg: var(--dropdown-bg-color, #1d1d1df7);
+  --vc-popover-content-border: var(--dropdown-hl-bg-color, #3a3a3a99);
+
+  --vc-time-picker-border: var(--local-border-color, rgba(255, 255, 255, 0.1));
+  --vc-time-weekday-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+  --vc-time-month-color: var(--color-accent, #eed811);
+  --vc-time-day-color: var(--color-accent, #eed811);
+  --vc-time-year-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+  --vc-time-select-group-bg: transparent;
+  --vc-time-select-group-border:transparent;
+  --vc-time-select-group-icon-color: var(--local-text-color, #e9e9e9);
+
+  --vc-select-color: var(--input-text-color, #e0e0e0);
+  --vc-select-bg: var(--input-bg-color, #252525);
+  --vc-select-hover-bg: var(--local-hl-bg-color, #3b3a38);
+
+  --vc-day-content-hover-bg: rgba(255, 255, 255, 0.1);
+  --vc-day-content-disabled-color: var(--local-sub-text-color, rgba(255, 255, 255, 0.3));
+
+  .vc-popover-content {
+    backdrop-filter: var(--dropdown-bg-filter, blur(2px));
+  }
+  .vc-header button,
+  .vc-popover-content button{
+    background: transparent;
+    &:hover{
+      background:var(--vc-nav-hover-bg)
+    }
+  }
+}
+
+[data-theme='ims-dark'] .vc-light.vc-attr,
+[data-theme='ims-dark'] .vc-light .vc-attr {
+  --vc-content-color: var(--color-accent, #eed811);
+  --vc-highlight-outline-bg: var(--local-box-color, #2c2b29);
+  --vc-highlight-outline-border: var(--color-accent, #eed811);
+  --vc-highlight-outline-content-color: var(--color-accent-light, #ffec48);
+  --vc-highlight-light-bg: rgba(238, 216, 17, 0.2);
+  --vc-highlight-light-content-color: var(--color-accent-light, #ffec48);
+  --vc-highlight-solid-bg: var(--color-accent, #eed811);
+  --vc-highlight-solid-content-color: #222222;
+  --vc-dot-bg: var(--color-accent, #eed811);
+  --vc-bar-bg: var(--color-accent, #eed811);
+}
+[data-theme='ims-light'] .vc-light {
+  --vc-time-select-group-bg: transparent;
+  --vc-time-select-group-border:transparent;
+
+}
