@@ -188,9 +188,12 @@ export async function setAssetCompleted(
         }
       }
       complete_progress = 1;
-      await appManager
-        .get(TaskManager)
-        .setTasksAreCompleted(mark_tasks_done, true);
+      await appManager.get(TaskManager).setTasksAreCompleted(
+        {
+          ids: mark_tasks_done,
+        },
+        true,
+      );
     }
   }
   if (val) {

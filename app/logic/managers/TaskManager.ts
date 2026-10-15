@@ -56,7 +56,10 @@ export default abstract class TaskManager extends AppSubManagerBase {
 
   abstract setTaskIsCompleted(id: string, val: boolean): Promise<void>;
 
-  abstract setTasksAreCompleted(ids: string[], val: boolean): Promise<void>;
+  abstract setTasksAreCompleted(
+    filter: { ids: string[] },
+    val: boolean,
+  ): Promise<void>;
 
   abstract showCreateTaskDialog(
     options?: AssetSetDTO,
@@ -80,20 +83,7 @@ export default abstract class TaskManager extends AppSubManagerBase {
     },
   ): Promise<void>;
 
-  abstract assignTasksTo(
-    where: TaskQueryDTOWhere,
-    account: AssetPropValueAccount | null,
-  ): Promise<void>;
-
   abstract getBacklogWorkspaceId(): Promise<string | null>;
 
-  abstract moveTasksToArchive(
-    where: TaskQueryDTOWhere,
-    setArchived?: boolean,
-  ): Promise<void>;
   abstract getTaskBoardsWorkspaceId(): Promise<string | null>;
-
-  abstract getFirstColumnOfBoard(
-    board_id: string,
-  ): Promise<TaskBoardColumn | null>;
 }
