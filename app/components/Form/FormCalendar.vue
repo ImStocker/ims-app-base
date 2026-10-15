@@ -205,7 +205,7 @@ export default defineComponent({
 }
 .FormDatePicker-input-i {
   position: absolute;
-  top: 5px;
+  top: 3px;
   right: 10px;
   font-size: 16px;
   color: #ccc;
@@ -217,7 +217,7 @@ export default defineComponent({
   position: absolute;
   cursor: pointer;
   right: 30px;
-  top: 5px;
+  top: 3px;
   opacity: 0.5;
   color: var(--text-intense);
   &:hover {
@@ -228,6 +228,6 @@ export default defineComponent({
   position: fixed !important;
 }
 .FormDatePicker:deep(.is-today) {
-  color: var(--default-accent-secondary);
+  color: var(--color-accent);
 }
 </style>

@@ -2,6 +2,7 @@ import type { AssetShort } from './AssetsType';
 import type {
   AssetPropValue,
   AssetPropValueAccount,
+  AssetPropValueAsset,
   AssetPropValueEnum,
   AssetPropValueFile,
   AssetPropValueTimestamp,
@@ -21,10 +22,12 @@ export type TaskEntity = AssetShort & {
   archivedAt?: string | null;
   color: string | null;
   scheduledAt: string | null;
+  startAt: string | null;
   estimatedTime: number | null;
   estimatedSp: number | null;
   actualTime: number | null;
   category?: AssetPropValueEnum | null;
+  sprint?: AssetPropValueAsset | null;
   timeLogs: TaskTimeLogRecord[];
   subTaskIds: string[];
   planMilestone: AssetPropValueEnum | null;

@@ -197,6 +197,7 @@ export default {
       backlog: 'Backlog',
       archive: 'Archiv',
       boards: 'Boards',
+      sprints: 'Sprints',
       mainBoard: 'Hauptboard',
       currentTasks: 'Aktuelle Aufgaben',
       current: 'Aktuelle Aufgaben',
@@ -629,6 +630,17 @@ export default {
       formula: 'Formel',
     },
   },
+  formulaEditor: {
+    placeholder: 'Formel eingeben…',
+    parseError: 'Ungültige Formelsyntax',
+    empty: 'Leere Formel',
+    insertRefHint: 'Klicken, um Referenz einzufügen',
+    errorMissingAsset: 'Asset-Referenz nicht gefunden',
+    errorMissingRef: 'Referenz nicht gefunden',
+    errorDivByZero: 'Division durch Null',
+    errorCircular: 'Zirkuläre Referenz',
+    errorInvalid: 'Ungültige Formel',
+  },
   sourcePage: {
     folders: {
       create: 'Ordner erstellen',
@@ -1027,11 +1039,6 @@ export default {
   },
   errorPage: {
     goBack: 'Zurück zur Startseite',
-  },
-  taskDisplayModes: {
-    board: 'Board',
-    list: 'Liste',
-    calendar: 'Kalender',
   },
   autoExport: {
     autoExportPageHeader: 'Export in ein lokales Projekt',

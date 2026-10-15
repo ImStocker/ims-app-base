@@ -63,6 +63,7 @@ export const BLOCK_NAME_LOCALE = 'locale';
 export const BLOCK_TYPE_LOCALE = 'locale';
 export const BLOCK_NAME_PROPS = 'props';
 export const BLOCK_TYPE_PROPS = 'props';
+export const BLOCK_NAME_INFO = 'info';
 
 export const TASK_COLUMN_ENUM = '00000000-0000-0000-0000-000000000038';
 
