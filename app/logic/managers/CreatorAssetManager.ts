@@ -728,6 +728,15 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     await this.getAssetInstance(assetId);
   }
 
+  async requestAssetInstanceInCacheList(assetIds: string[]): Promise<void> {
+    if (assetIds.length === 0) {
+      return;
+    }
+    await Promise.all(
+      assetIds.map((assetId) => this.requestAssetInstanceInCache(assetId)),
+    );
+  }
+
   async requestWorkspaceInCache(workspaceId: string): Promise<void> {
     if (!workspaceId) return;
     await this.getWorkspaceByIdViaCache(workspaceId);
@@ -1605,6 +1614,22 @@ export default class CreatorAssetManager extends AppSubManagerBase {
       cur_workspace_id = workspace.parentId;
     }
     return res;
+  }
+
+  checkWorkspaceIsInsideFromCache(
+    workspace_id: string,
+    target_workspace_id: string,
+    allow_same = false,
+  ): boolean | undefined {
+    if (workspace_id === target_workspace_id) {
+      return allow_same;
+    }
+    const workspace_parents =
+      this.getParentWorkspacesListFromCache(workspace_id);
+    if (workspace_parents === undefined) {
+      return undefined;
+    }
+    return workspace_parents.some((w) => w.id === target_workspace_id);
   }
 
   async checkWorkspaceIsInside(
