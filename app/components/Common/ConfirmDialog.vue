@@ -1,7 +1,7 @@
 <template>
   <dialog-content
     class="PromptDialog"
-    @escape-press="choose(false)"
+    @escape-press="choose(escapeResult)"
     @enter-press="choose(true)"
   >
     <div class="ConfirmDialog">
@@ -60,6 +60,7 @@ type DialogProps = {
   danger?: boolean;
   noCaption?: string;
   forbidClose?: boolean;
+  escapeResult?: boolean | null;
 };
 
 type DialogResult = boolean | null;
@@ -111,6 +112,11 @@ export default defineComponent({
     },
     forbidClose() {
       return this.dialog.state.forbidClose;
+    },
+    escapeResult(): boolean | null {
+      return this.dialog.state.escapeResult === undefined
+        ? false
+        : this.dialog.state.escapeResult;
     },
   },
   mounted() {

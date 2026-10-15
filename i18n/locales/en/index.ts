@@ -858,6 +858,11 @@ export default {
       deleteFormat: 'Delete format',
       deleteFormatConfirm: 'Are you sure to delete format?',
       createFormat: 'Create format',
+      unsavedChangesHeader: 'Unsaved changes',
+      unsavedChangesMessage:
+        'The format "{title}" has unsaved changes. Save them before continuing?',
+      dontSave: "Don't save",
+      cannotSave: 'Fill in the required format settings before saving',
       settings: {
         enterName: 'Enter name',
         assetsType: 'Element type',

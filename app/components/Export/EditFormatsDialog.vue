@@ -2,7 +2,7 @@
   <dialog-content
     class="EditFormatsDialog"
     :loading="isLoading"
-    @escape-press="dialog.close()"
+    @escape-press="requestClose"
   >
     <div class="Dialog-header EditFormatsDialog-header">
       {{ dialogHeader }}
@@ -58,10 +58,7 @@
             >
               <button
                 class="is-button is-button-text EditFormatsDialog-content-list-item"
-                @click="
-                  selectedFormat = format;
-                  creatingFormat = null;
-                "
+                @click="selectFormatInList(format)"
               >
                 <span>
                   {{ format.title }}
@@ -100,6 +97,7 @@
         <div class="EditFormatsDialog-content-settings">
           <edit-format
             v-if="selectedFormat"
+            ref="editFormat"
             :format="selectedFormat"
             :base-asset="baseAssetComp"
             :is-saving="isFormatSaving"
@@ -118,7 +116,7 @@
     </template>
     <div class="EditFormatsDialog-footer">
       <div class="EditFormatsDialog-footer-buttons">
-        <button class="is-button is-button-action" @click="dialog.close()">
+        <button class="is-button is-button-action" @click="requestClose">
           {{ $t('common.dialogs.close') }}
         </button>
         <button
@@ -286,13 +284,19 @@ export default defineComponent({
           await this.$getAppManager()
             .get(ExportFormatManager)
             .deleteExportFormat(id);
-          this.selectedFormat = null;
+          if (this.selectedFormat?.id === id) this.selectedFormat = null;
         });
       this.deletingFormatId = null;
 
       await this.load();
     },
     async createFormat() {
+      const choice = await this.confirmUnsavedChanges();
+      if (choice === 'cancel') return;
+      if (choice === 'save') {
+        const saved = await this.saveCurrentFormat();
+        if (!saved) return;
+      }
       const format_titles = new Set(this.formats.map((a) => a.title));
       this.creatingFormat = {
         id: uuidv4(),
@@ -314,6 +318,55 @@ export default defineComponent({
         jscode: '',
       };
       this.selectedFormat = this.creatingFormat;
+    },
+    async confirmUnsavedChanges(): Promise<'save' | 'discard' | 'cancel'> {
+      if (!this.isFormatUnsaved) return 'discard';
+      const res = await this.$getAppManager()
+        .get(DialogManager)
+        .show(ConfirmDialog, {
+          header: this.$t('importExport.formats.unsavedChangesHeader'),
+          message: this.$t('importExport.formats.unsavedChangesMessage', {
+            title: this.selectedFormat?.title ?? '',
+          }),
+          yesCaption: this.$t('common.dialogs.save'),
+          noCaption: this.$t('importExport.formats.dontSave'),
+          cancelCaption: this.$t('common.dialogs.cancelCaption'),
+          withCancel: true,
+          escapeResult: null,
+        });
+      if (res === true) return 'save';
+      if (res === false) return 'discard';
+      return 'cancel';
+    },
+    async saveCurrentFormat(): Promise<boolean> {
+      const editFormat = this.$refs.editFormat as InstanceType<
+        typeof EditFormat
+      > | null;
+      if (!editFormat) return true;
+      const state = editFormat.getStateForSave();
+      if (!state) return false;
+      await this.saveFormat(state);
+      return true;
+    },
+    async requestClose() {
+      const choice = await this.confirmUnsavedChanges();
+      if (choice === 'cancel') return;
+      if (choice === 'save') {
+        const saved = await this.saveCurrentFormat();
+        if (!saved) return;
+      }
+      this.dialog.close();
+    },
+    async selectFormatInList(format: ExportFormatWithId) {
+      if (format.id === this.selectedFormat?.id) return;
+      const choice = await this.confirmUnsavedChanges();
+      if (choice === 'cancel') return;
+      if (choice === 'save') {
+        const saved = await this.saveCurrentFormat();
+        if (!saved) return;
+      }
+      this.selectedFormat = format;
+      this.creatingFormat = null;
     },
     async load() {
       try {

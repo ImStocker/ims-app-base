@@ -871,6 +871,11 @@ export default {
       deleteFormat: 'Удалить формат',
       deleteFormatConfirm: 'Вы уверены, что хотите удалить формат?',
       createFormat: 'Создать формат',
+      unsavedChangesHeader: 'Несохранённые изменения',
+      unsavedChangesMessage:
+        'В формате «{title}» есть несохранённые изменения. Сохранить их перед продолжением?',
+      dontSave: 'Не сохранять',
+      cannotSave: 'Заполните обязательные настройки формата перед сохранением',
       settings: {
         enterName: 'Введите название',
         assetsType: 'Тип элемента',

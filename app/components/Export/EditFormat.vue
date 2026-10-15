@@ -29,7 +29,10 @@ import FormBuilderModelBindObject from '../Form/FormBuilderModelBindObject';
 import type { AssetQueryWhere, AssetShort } from '../../logic/types/AssetsType';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import { makeProjectContextFromAppManager } from '../../logic/types/IProjectContext';
-import type { ExportFormat } from '../../logic/managers/ExportFormatManager';
+import type {
+  ExportFormat,
+  ExportFormatWithId,
+} from '../../logic/managers/ExportFormatManager';
 import {
   castAssetPropValueToString,
   type AssetPropValue,
@@ -106,14 +109,16 @@ export default defineComponent({
     formats() {
       return this.$getAppManager().get(ExportFormatManager).getExportFormats();
     },
-    isSaveDisabled() {
+    isFormatIncomplete() {
       return (
-        this.isSaving ||
         !this.formatSegmentType ||
         ((this.formatKind === 'selectFields' ||
           this.formatSegmentType === 'csv') &&
           !this.formatFields.length)
       );
+    },
+    isSaveDisabled() {
+      return this.isSaving || this.isFormatIncomplete;
     },
     isDirty() {
       return this.hasChanges || this.isNew;
@@ -390,8 +395,11 @@ export default defineComponent({
     format() {
       this.formatState = this.getClearedFormatState();
     },
-    isDirty() {
-      this.$emit('dirty', this.isDirty);
+    isDirty: {
+      immediate: true,
+      handler() {
+        this.$emit('dirty', this.isDirty);
+      },
     },
   },
   async mounted() {
@@ -475,7 +483,13 @@ export default defineComponent({
 
       return await this.getSampleAssetByTemplate(this.formatKind, fields);
     },
-    save() {
+    getStateForSave(): ExportFormatWithId | null {
+      if (this.isFormatIncomplete) {
+        this.$getAppManager()
+          .get(UiManager)
+          .showError(this.$t('importExport.formats.cannotSave'));
+        return null;
+      }
       if (this.isNew) {
         const existing_format = this.formats.findIndex(
           (el) => el.title === this.formatState.title,
@@ -484,10 +498,16 @@ export default defineComponent({
           this.$getAppManager()
             .get(UiManager)
             .showError(this.$t('importExport.formats.formatAlreadyExists'));
-          return;
+          return null;
         }
       }
-      this.$emit('change', { ...this.formatState });
+      return { ...this.formatState } as ExportFormatWithId;
+    },
+    save() {
+      const state = this.getStateForSave();
+      if (state) {
+        this.$emit('change', state);
+      }
     },
     cancel() {
       this.formatState = this.getClearedFormatState();

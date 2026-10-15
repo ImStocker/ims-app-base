@@ -866,6 +866,12 @@ export default {
       deleteFormat: 'Format löschen',
       deleteFormatConfirm: 'Möchtest du das Format wirklich löschen?',
       createFormat: 'Format erstellen',
+      unsavedChangesHeader: 'Ungespeicherte Änderungen',
+      unsavedChangesMessage:
+        'Das Format „{title}“ enthält ungespeicherte Änderungen. Vor dem Fortfahren speichern?',
+      dontSave: 'Nicht speichern',
+      cannotSave:
+        'Fülle die erforderlichen Formateinstellungen vor dem Speichern aus',
       settings: {
         enterName: 'Namen eingeben',
         assetsType: 'Elementtyp',
