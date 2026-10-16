@@ -6,3 +6,9 @@
 .vs__dropdown-option{
     white-space: normal;
 }
+
+.vs__dropdown-menu{
+    width: max-content;
+    min-width: var(--DropdownContainer-attachToElement-width);
+    max-width: var(--DropdownContainer-freeWidth);
+}
