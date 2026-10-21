@@ -169,7 +169,7 @@ export default defineComponent({
       default: '',
     },
   },
-  emits: ['focus', 'update:model-value', 'blur'],
+  emits: ['focus', 'update:model-value', 'blur', 'enter'],
 
   data() {
     return {
@@ -340,7 +340,12 @@ export default defineComponent({
                 }
               },
             }),
-            shortcuts(() => this.readonly),
+            shortcuts(
+              () => this.readonly,
+              () => {
+                this.$emit('enter');
+              },
+            ),
             // `[[` inside a cell opens the same asset-link picker.
             linkPickerTrigger((request) => this.onLinkPickerChange(request))[0]
               .value,
@@ -379,7 +384,12 @@ export default defineComponent({
         },
         {
           type: 'default',
-          value: shortcuts(() => this.readonly),
+          value: shortcuts(
+            () => this.readonly,
+            () => {
+              this.$emit('enter');
+            },
+          ),
         },
       ];
     },

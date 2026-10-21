@@ -30,6 +30,7 @@ import { defineComponent } from 'vue';
 import {
   AssetPropType,
   getAssetPropType,
+  sameAssetPropValues,
   type AssetPropValue,
 } from '#logic/types/Props';
 import TextPropEditor from '../TextPropEditor.vue';
@@ -139,7 +140,9 @@ export default defineComponent({
       return res_value;
     },
     commitValue() {
-      this.$emit('update:modelValue', this.castValue(this.editValue));
+      const value = this.castValue(this.editValue);
+      if (sameAssetPropValues(value, this.modelValue)) return;
+      this.$emit('update:modelValue', value);
     },
     onBlur() {
       this.commitValue();

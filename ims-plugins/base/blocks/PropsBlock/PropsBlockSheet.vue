@@ -53,6 +53,7 @@
         :field="ent"
         @change-props="$emit('changeProps', $event)"
         @click="selectProp(ent)"
+        @enter="$emit('enter')"
       ></prop-field-value-stack>
     </template>
     <div
@@ -154,6 +155,7 @@ export default defineComponent({
   },
   emits: [
     'changeProps',
+    'enter',
     'save',
     'discard',
     'renameProp',

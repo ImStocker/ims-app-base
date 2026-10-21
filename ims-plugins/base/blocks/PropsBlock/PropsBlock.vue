@@ -23,6 +23,7 @@
       @change-service-name="changeServiceName($event.key, $event.name)"
       @change-props="changeBlockProps($event)"
       @add-prop="addNew($event)"
+      @enter="persist"
     ></props-block-sheet>
     <right-panel v-if="changeSettingsPropKey">
       <props-block-change-settings
@@ -494,6 +495,9 @@ export default defineComponent({
       this.$emit('save');
       this.assetBlockEditor.exitEditMode();
       this.resetGlobalClickOutside(false);
+    },
+    persist() {
+      this.$emit('save');
     },
     async enterEditMode(ev?: MouseEvent) {
       if (this.readonly) return;

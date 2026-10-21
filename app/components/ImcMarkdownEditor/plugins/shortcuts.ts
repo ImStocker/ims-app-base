@@ -4,7 +4,10 @@ import { applyFormat, type FormatType } from '../format-commands';
 import type { SelectionInfo } from './selection-toolbar';
 import { viewToInkLike } from '../editor-adapter';
 
-export function shortcuts(isReadOnly: () => boolean): Extension {
+export function shortcuts(
+  isReadOnly: () => boolean,
+  onCtrlEnter?: () => void,
+): Extension {
   const run =
     (type: FormatType) =>
     (view: EditorView): boolean => {
@@ -26,6 +29,18 @@ export function shortcuts(isReadOnly: () => boolean): Extension {
     keymap.of([
       { key: 'Mod-b', run: run('bold') },
       { key: 'Mod-i', run: run('italic') },
+      ...(onCtrlEnter
+        ? [
+            {
+              key: 'Mod-Enter',
+              run: (): boolean => {
+                if (isReadOnly()) return false;
+                onCtrlEnter();
+                return true;
+              },
+            },
+          ]
+        : []),
     ]),
   );
 }

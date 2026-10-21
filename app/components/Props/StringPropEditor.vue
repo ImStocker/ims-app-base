@@ -81,10 +81,9 @@ export default defineComponent({
   mounted() {},
   methods: {
     emitChange(event: Event) {
-      this.$emit(
-        'update:modelValue',
-        (event?.target as HTMLInputElement)?.value,
-      );
+      const value = (event?.target as HTMLInputElement)?.value;
+      if (value === castAssetPropValueToString(this.modelValue)) return;
+      this.$emit('update:modelValue', value);
     },
     emitInput(event: Event) {
       this.$emit('inputValue', (event?.target as HTMLInputElement)?.value);
