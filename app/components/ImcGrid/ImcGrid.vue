@@ -77,6 +77,7 @@
                 @change-props="
                   onInputCell(rowIndex, column_index, $event, true)
                 "
+                @enter="onCellEnter"
               ></prop-field-value-stack>
               <slot
                 :name="`cell-append-${column.name}`"
@@ -228,6 +229,7 @@ export default defineComponent({
     'resizeColumn',
     'resetColumnWidth',
     'changeCells',
+    'enter',
     'blur',
     'focus',
     'update:selectedRanges',
@@ -339,6 +341,10 @@ export default defineComponent({
     changeSelection(innerSelectedRanges: ImcGridSelectedRange[]) {
       this.flushPreviewValue();
       this.innerSelectedRanges = innerSelectedRanges;
+    },
+    onCellEnter() {
+      this.flushPreviewValue();
+      this.$emit('enter');
     },
     changeCell(change: ImcGridChangeCell) {
       this.$emit('changeCells', [change]);

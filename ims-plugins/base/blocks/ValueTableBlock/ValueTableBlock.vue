@@ -33,6 +33,7 @@
       :readonly="readonly"
       :get-cell-context-menu="getCellContextMenu"
       @change-cells="changeCells($event)"
+      @enter="persist"
       @resize-column="onColumnResize"
       @reset-column-width="onColumnReset"
       @update:selected-ranges="onSelectionUpdated"
@@ -334,6 +335,9 @@ export default defineComponent({
       this.$emit('save');
       this.assetBlockEditor.exitEditMode();
       this.resetGlobalClickOutside(false);
+    },
+    persist() {
+      this.$emit('save');
     },
     async enterEditMode(ev?: MouseEvent) {
       if (this.readonly) return;

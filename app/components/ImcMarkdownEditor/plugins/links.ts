@@ -1,84 +1,61 @@
-import { syntaxTree } from '@codemirror/language';
 import {
   RangeSet,
   StateField,
   type EditorState,
   type Extension,
   type Range,
-  type Text,
 } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
-import type { SyntaxNode } from '@lezer/common';
+import { syntaxTree } from '@codemirror/language';
 import EditorManager from '../../../logic/managers/EditorManager';
 import type { IAppManager } from '../../../logic/managers/IAppManager';
+import { resolveExternalHref } from '../markdown-links';
+import { findMarkdownLinkRanges } from './link-scan';
+
+export { getLinkTargetUrl } from './link-scan';
 
 interface PluginConfig {
   appManager: IAppManager;
 }
 
-function openLink(url: string, appManager: IAppManager) {
-  const trimmed = url.trim();
+function openLink(href: string, appManager: IAppManager) {
+  const trimmed = href.trim();
 
+  // An internal link: the asset of the project it points at is opened by the
+  // app itself.
   const assetMatch = trimmed.match(/^#asset:([0-9a-f-]+)$/i);
   if (assetMatch) {
     appManager.get(EditorManager).openAsset(assetMatch[1], 'popup');
     return;
   }
 
-  // Open web/mail URLs in a new tab.
-  if (
-    /^https?:\/\//i.test(trimmed) ||
-    /^mailto:/i.test(trimmed) ||
-    /^ftp:\/\//i.test(trimmed)
-  ) {
-    window.open(trimmed, '_blank', 'noopener,noreferrer');
-    return;
-  }
-
-  // Best-effort fallback for relative/asset paths.
-  window.open(trimmed, '_blank', 'noopener,noreferrer');
+  // An external address: the shared rules decide how it is written, so the
+  // editor and the presenter open the very same address.
+  window.open(
+    resolveExternalHref(trimmed) ?? trimmed,
+    '_blank',
+    'noopener,noreferrer',
+  );
 }
 
 // The whole link (label + markers) gets this class so it is visually a link and
 // so a mousedown on it can be intercepted to open the URL. The markers
 // (`[`, `]`, `(`, `)` and the URL) stay hidden by the live-preview plugin.
-const linkMark = Decoration.mark({ class: 'cm-md-link' });
-
-// The grammar parses a URL-shaped *label* as a `URL` node too
-// (`[https://a](https://b)` has two URL children: the label and the target).
-// The target is the URL that directly follows the `(` `LinkMark` — the label
-// (which may itself be a URL or contain one) comes before the `]`.
-// NOTE: the returned node must be compared by position, not identity — the
-// sibling-derived node is a distinct object from the one an iterator yields.
-export function getLinkTargetUrl(
-  link: SyntaxNode,
-  doc: Text,
-): SyntaxNode | null {
-  // Autolinks (`<https://x>` or a bare URL) have a single URL child that is
-  // both text and target.
-  if (link.name === 'Autolink') return link.getChild('URL');
-  const linkMarks = link.getChildren('LinkMark');
-  if (linkMarks.length === 0) return link.getChild('URL');
-  let cur = link.firstChild;
-  while (cur) {
-    if (cur.name === 'LinkMark' && doc.sliceString(cur.from, cur.to) === '(') {
-      const next = cur.nextSibling;
-      if (!next) return null;
-      if (next.name === 'URL') return next;
-      if (next.name === 'Autolink') return next.getChild('URL');
-      return null;
-    }
-    cur = cur.nextSibling;
-  }
-  return null;
+//
+// The address the link points at is carried along, so a click does not have to
+// resolve the syntax tree again.
+function linkMark(href: string): Decoration {
+  return Decoration.mark({
+    class: 'cm-md-link',
+    attributes: { 'data-md-href': href },
+  });
 }
 
-const decorate = (
-  state: EditorState,
-  _appManager: IAppManager,
-): DecorationSet => {
+const decorate = (state: EditorState): DecorationSet => {
   const ranges: Range<Decoration>[] = [];
 
+  // While the caret is inside a link, the raw markdown is shown so it can be
+  // edited (consistent with the wiki links and the live-preview markers).
   const cursorInside = (from: number, to: number) =>
     state.selection.ranges.some((r) =>
       // A collapsed caret counts as inside only when strictly between the
@@ -90,53 +67,17 @@ const decorate = (
         : r.from <= to && r.to >= from,
     );
 
-  // Walk the URL nodes (also matched/hidden by the live-preview plugin) and
-  // mark their enclosing Link/Autolink as clickable. Only the *target* URL
-  // (last URL child of a Link) drives the mark — a URL-shaped label is a URL
-  // node too, but the Link must be marked only once.
-  const seenLinks = new Set<number>();
-  syntaxTree(state).iterate({
-    enter: (ref) => {
-      if (ref.type.name !== 'URL') return;
-      const link = ref.node.parent;
-      if (!link) return;
-      const linkName = link.name;
-      if (linkName !== 'Link' && linkName !== 'Autolink') return;
-      const targetUrl = getLinkTargetUrl(link, state.doc);
-      if (
-        !targetUrl ||
-        targetUrl.from !== ref.node.from ||
-        targetUrl.to !== ref.node.to
-      ) {
-        return;
-      }
+  for (const link of findMarkdownLinkRanges(state, cursorInside)) {
+    ranges.push(linkMark(link.href).range(link.from, link.to));
+  }
 
-      // Skip incomplete links (`[]()` / `[text]()`): there is nothing to open,
-      // and marking them clickable would be misleading.
-      const url = state.doc.sliceString(ref.from, ref.to);
-      if (!url) return;
-
-      const from = link.from;
-      const to = link.to;
-
-      // While the caret is inside the link, show the raw markdown so it can be
-      // edited (consistent with wiki links / the live-preview marker reveal).
-      if (cursorInside(from, to)) return;
-      if (seenLinks.has(from)) return;
-      seenLinks.add(from);
-
-      ranges.push(linkMark.range(from, to));
-    },
-  });
-
-  ranges.sort((a, b) => a.from - b.from);
   return ranges.length > 0 ? RangeSet.of(ranges) : Decoration.none;
 };
 
 export const linkWidgets = (config: PluginConfig): Extension => {
   const field = StateField.define<DecorationSet>({
     create(state) {
-      return decorate(state, config.appManager);
+      return decorate(state);
     },
     update(value, tr) {
       if (
@@ -144,7 +85,7 @@ export const linkWidgets = (config: PluginConfig): Extension => {
         tr.selectionSet ||
         syntaxTree(tr.state) !== syntaxTree(tr.startState)
       ) {
-        return decorate(tr.state, config.appManager);
+        return decorate(tr.state);
       }
       return value.map(tr.changes);
     },
@@ -155,28 +96,19 @@ export const linkWidgets = (config: PluginConfig): Extension => {
 
   // Open the link when the user clicks the (clickable) link text.
   const handlers = EditorView.domEventHandlers({
-    mousedown: (event, view) => {
+    mousedown: (event) => {
       const target = event.target as HTMLElement | null;
-      if (!target || !target.closest('.cm-md-link')) return false;
+      if (!target) return false;
 
-      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-      if (pos == null) return false;
-
-      const node = syntaxTree(view.state).resolve(pos, -1);
-      let link = node;
-      while (link && link.name !== 'Link' && link.name !== 'Autolink') {
-        link = link.parent;
-      }
+      // The decoration of a link carries the address it points at.
+      const link = target.closest<HTMLElement>('[data-md-href]');
       if (!link) return false;
 
-      const urlNode = getLinkTargetUrl(link, view.state.doc);
-      const url = urlNode
-        ? view.state.doc.sliceString(urlNode.from, urlNode.to)
-        : '';
-      if (!url) return false;
+      const href = link.getAttribute('data-md-href');
+      if (!href) return false;
 
       event.preventDefault();
-      openLink(url, config.appManager);
+      openLink(href, config.appManager);
       return true;
     },
   });

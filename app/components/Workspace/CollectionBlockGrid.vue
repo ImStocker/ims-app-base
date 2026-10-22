@@ -12,6 +12,7 @@
       @resize-column="onColumnResize"
       @reset-column-width="onColumnReset"
       @change-cells="changeCells"
+      @enter="onGridEnter"
       @handle-key="handleGridKey($event)"
       @column-click="$emit('column-click', $event)"
     >
@@ -96,6 +97,7 @@ export default defineComponent({
       clickOutside: null as SetClickOutsideCancel | null,
       addBusy: false,
       savingBusy: false,
+      pendingChangeCells: null as Promise<unknown> | null,
     };
   },
   computed: {
@@ -344,11 +346,23 @@ export default defineComponent({
       }
       if (changes_map.size === 0) return;
 
-      await this.$getAppManager()
+      const task = this.$getAppManager()
         .get(UiManager)
         .doTask(async () => {
           await this.vm.assetsContent.changeItems([...changes_map.values()]);
         });
+      this.pendingChangeCells = task;
+      try {
+        await task;
+      } finally {
+        if (this.pendingChangeCells === task) {
+          this.pendingChangeCells = null;
+        }
+      }
+    },
+    async onGridEnter() {
+      await this.pendingChangeCells;
+      await this.vm.saveChanges();
     },
   },
 });

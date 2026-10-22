@@ -25,6 +25,7 @@ import type { IAppManager } from '../../logic/managers/IAppManager';
 import { renderImageHtml } from '../../logic/utils/markdownImageWidth';
 import { parseImagePathToFile } from './plugins/imc-images';
 import { parseLinkAddress, parseWikiLink } from './plugins/wiki-links/format';
+import { matchBareMarkdownLink, resolveExternalHref } from './markdown-links';
 import {
   generateTextHeaderAnchor,
   makeAnchorTagId,
@@ -371,6 +372,24 @@ presenterMarked.use({
     calloutExtension,
     blankLinesExtension,
   ],
+  tokenizer: {
+    // The url rule is taken from the shared module, so the presenter and the
+    // editor recognize exactly the same addresses (the grammar of CodeMirror
+    // does not know every scheme `marked` links, for example `ftp://`).
+    // Returning `undefined` means "not a link" — `marked` then continues with
+    // the next rule, exactly as it does without this tokenizer.
+    url(src) {
+      const link = matchBareMarkdownLink(src);
+      if (!link) return undefined;
+      return {
+        type: 'link',
+        raw: link.text,
+        text: link.text,
+        href: link.href,
+        tokens: [{ type: 'text', raw: link.text, text: link.text }],
+      };
+    },
+  },
   renderer: {
     codespan(token) {
       return `<code class="cm-code">${esc(token.text)}</code>`;
@@ -664,6 +683,8 @@ export default defineComponent({
 
       if (href) {
         e.preventDefault();
+        // An internal link: the asset of the project it points at is opened by
+        // the app itself.
         if (href.startsWith('#asset:')) {
           const assetMatch = /^#asset:([0-9a-f-]+)$/i.exec(href);
           if (assetMatch && manager) {
@@ -671,6 +692,7 @@ export default defineComponent({
           }
           return;
         }
+        // A link to a heading of the presented document.
         if (href.startsWith('#')) {
           const id = decodeURIComponent(href.slice(1));
           const element =
@@ -680,15 +702,13 @@ export default defineComponent({
           element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
         }
-        if (
-          /^https?:\/\//i.test(href) ||
-          /^mailto:/i.test(href) ||
-          /^ftp:\/\//i.test(href)
-        ) {
-          window.open(href, '_blank', 'noopener,noreferrer');
-          return;
-        }
-        window.open(href, '_blank', 'noopener,noreferrer');
+        // An external address: the shared rules decide how it is written, so
+        // the editor and the presenter open the very same address.
+        window.open(
+          resolveExternalHref(href) ?? href,
+          '_blank',
+          'noopener,noreferrer',
+        );
         return;
       }
 
