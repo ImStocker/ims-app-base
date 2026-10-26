@@ -8,6 +8,7 @@ export enum AssetPropType {
   INTEGER = 'integer',
   FLOAT = 'float',
   ARRAY = 'array',
+  STRUCT = 'struct',
   TEXT = 'text',
   FILE = 'file',
   BLOB = 'blob',
@@ -20,6 +21,10 @@ export enum AssetPropType {
   WORKSPACE = 'workspace',
   TIMESTAMP = 'timestamp',
   TYPE = 'type',
+}
+
+export function isStructureMarker(value: unknown): value is [''] {
+  return Array.isArray(value) && value.length === 1 && value[0] === '';
 }
 
 export type AssetPropValueTextOp = {
@@ -114,6 +119,7 @@ export type AssetPropValue =
   | number
   | boolean
   | number[]
+  | ['']
   | AssetPropValueText
   | AssetPropValueFile
   | AssetPropValueBlob
@@ -558,6 +564,9 @@ export function castAssetPropValueToString(
       return `[${(a as AssetPropValueAccount).Name ?? ''}](#account:${
         (a as AssetPropValueAccount).AccountId
       })`;
+    case AssetPropType.STRUCT:
+      // Structure marker [''] — a container, has no scalar representation
+      return '';
     case AssetPropType.ARRAY:
       // NOTE: При переводе в строку одиночных значений мы не можем получить значения массива, поэтому выводим только кол-во
       return `array[${(a as number[]).length}]`;
@@ -676,6 +685,8 @@ export function getAssetPropType(v: AssetPropValue): AssetPropType | undefined {
   else if (typeof v === 'boolean') return AssetPropType.BOOLEAN;
   else if (typeof v === 'number') {
     return Number.isInteger(v) ? AssetPropType.INTEGER : AssetPropType.FLOAT;
+  } else if (isStructureMarker(v)) {
+    return AssetPropType.STRUCT;
   } else if (Array.isArray(v)) return AssetPropType.ARRAY;
   else if (typeof v === 'object') {
     if (
@@ -853,6 +864,9 @@ export function compareAssetPropValues(
           return scomp;
         }
       }
+      case AssetPropType.STRUCT:
+        // Markers are identical by shape
+        return 0;
       case AssetPropType.ARRAY: {
         const ac = a as number[];
         const bc = b as number[];
@@ -1173,7 +1187,7 @@ export function convertAssetPropsToPlainObject<T extends AssetPropsPlainObject>(
     if (key[0] === '~') {
       res[key] = val;
     } else if (parts.length === 1) {
-      res[parts[0]] = val;
+      res[parts[0]] = isStructureMarker(val) ? {} : val;
     } else {
       if (nested.hasOwnProperty(parts[0])) {
         nested[parts[0]][parts.slice(1).join('\\')] = val;
@@ -1218,7 +1232,14 @@ export function extractSubObjectAsPlainValue<
 >(props: AssetProps, root = ''): T {
   let plain_data: AssetPropsPlainObjectValue;
   const sub_object = extractAssetPropsSubObject(props, root);
-  if (sub_object.hasOwnProperty('')) {
+  if (isStructureMarker(sub_object[''])) {
+    const struct_object: AssetProps = { ...sub_object };
+    delete struct_object[''];
+    plain_data =
+      Object.keys(struct_object).length > 0
+        ? convertAssetPropsToPlainObject(struct_object)
+        : {};
+  } else if (sub_object.hasOwnProperty('')) {
     if (Array.isArray(sub_object[''])) {
       const arr = convertAssetPropsToPlainObject(sub_object);
       plain_data = Array.isArray(arr['']) ? arr[''] : [];
@@ -1246,7 +1267,9 @@ export function assignPlainValueToAssetProps(
         assignPlainValueToAssetProps(
           target,
           value[index],
-          (prefix ? prefix + '\\' : '') + index,
+          // Root-level children are addressed with a leading backslash so
+          // they stay nested under the "" slot on conversion
+          (prefix ? prefix + '\\' : '\\') + index,
         );
       }
     } else {
@@ -1254,7 +1277,7 @@ export function assignPlainValueToAssetProps(
       if (type === undefined) {
         const digit_keys: number[] = [];
         let digit_all_keys = true;
-        for (const [key, val] of Object.entries(
+        for (const [key] of Object.entries(
           value as Record<string, AssetPropValue>,
         )) {
           if (/^\d+$/.test(key)) {
@@ -1262,15 +1285,30 @@ export function assignPlainValueToAssetProps(
           } else {
             digit_all_keys = false;
           }
+        }
+        const all_digit_keys = digit_all_keys && digit_keys.length > 0;
+        for (const [key, val] of Object.entries(
+          value as Record<string, AssetPropValue>,
+        )) {
+          let child_key = key;
+          if (prefix) {
+            child_key = prefix + '\\' + key;
+          } else if (all_digit_keys && /^\d+$/.test(key)) {
+            // Root-level array elements get a leading backslash to stay
+            // nested under the "" slot on conversion
+            child_key = '\\' + key;
+          }
           assignPlainValueToAssetProps(
             target,
             val as AssetPropsPlainObject,
-            (prefix ? prefix + '\\' : '') + key,
+            child_key,
           );
         }
-        if (digit_all_keys && digit_keys.length > 0) {
+        if (all_digit_keys) {
           digit_keys.sort((a, b) => a - b);
           target[prefix] = digit_keys;
+        } else if (prefix !== '') {
+          target[prefix] = [''];
         }
       } else {
         target[prefix] = value as AssetPropValue;
@@ -1881,18 +1919,83 @@ export function applyPropsChange(
       result.props[p] = val;
     }
 
+    // Stale descendants: a non-array overlay value makes the key a leaf,
+    // old subtree values are moved into the undo entry
+    for (const [p, val] of Object.entries(parsed_change.overlay)) {
+      if (Array.isArray(val)) continue;
+      for (const [oldn, oldv] of Object.entries(old_vals)) {
+        if (oldn[0] === '~') continue;
+        if (oldn.startsWith(p + '\\')) {
+          undo_change[oldn] = oldv;
+          delete result.props[oldn];
+        }
+      }
+    }
+
+    // Structure markers: every strict ancestor of a nested overlay key is a
+    // structure root — mark it with [''] so merge/cleanup keep its children
+    for (const p of Object.keys(parsed_change.overlay)) {
+      const path_parts = p.split('\\');
+      for (let part_i = 1; part_i < path_parts.length; part_i++) {
+        const ancestor = path_parts.slice(0, part_i).join('\\');
+        if (ancestor === '') continue;
+        const current = result.props[ancestor];
+        if (Array.isArray(current)) continue;
+        if (
+          !undo_change.hasOwnProperty(ancestor) &&
+          !undo_change.hasOwnProperty('~' + ancestor)
+        ) {
+          if (result.props.hasOwnProperty(ancestor)) {
+            undo_change[ancestor] = current;
+          } else if (!isDeletedInUndo(ancestor)) {
+            const parent_red = redirectParentProp(ancestor);
+            undo_change['~' + ancestor] =
+              parent_red.oldname === null ? null : true;
+          }
+        }
+        result.props[ancestor] = [''];
+      }
+    }
+
+    // Drop ~X undo entries made redundant by an ancestor delete (~A: null/true)
+    // or by an ancestor restored to a non-array value. Ancestors go first so a
+    // chain of redundant deletes collapses to the shallowest one.
+    const undo_simplify_keys = Object.keys(undo_change).sort(
+      (a, b) => a.split('\\').length - b.split('\\').length,
+    );
+    for (const undo_key of undo_simplify_keys) {
+      if (!undo_change.hasOwnProperty(undo_key)) continue;
+      if (undo_key[0] !== '~' || undo_key[1] === '~') continue;
+      if (undo_change[undo_key] !== true) continue;
+      const path_parts = undo_key.substring(1).split('\\');
+      for (let part_i = 1; part_i < path_parts.length; part_i++) {
+        const ancestor = path_parts.slice(0, part_i).join('\\');
+        if (ancestor === '') continue;
+        const ancestor_delete = undo_change['~' + ancestor];
+        if (
+          (undo_change.hasOwnProperty(ancestor) &&
+            !Array.isArray(undo_change[ancestor])) ||
+          ancestor_delete === true ||
+          ancestor_delete === null
+        ) {
+          delete undo_change[undo_key];
+          break;
+        }
+      }
+    }
+
     result.undo.unshift(undo_change);
   }
 
-  // Post-process arrays
-  recalculatePropsArrayIndexes(result.props);
+  // Post-process: shallow-wins cleanup + array index recalculation
+  finishMergeInheritedProps(result.props);
 
   return result;
 }
 
 export function recalculatePropsArrayIndexes(props: AssetProps) {
   for (const [arr_prop, arr_val] of Object.entries(props)) {
-    if (Array.isArray(arr_val)) {
+    if (Array.isArray(arr_val) && !isStructureMarker(arr_val)) {
       const indices_set = new Set<number>();
       const index_regexp = new RegExp(
         '^' + escapeRegExp(arr_prop + '\\') + '(-?\\d+(\\.\\d+)?)',
@@ -1913,6 +2016,30 @@ export function recalculatePropsArrayIndexes(props: AssetProps) {
       props[arr_prop] = indices;
     }
   }
+}
+
+export function finishMergeInheritedProps(props: AssetProps): AssetProps {
+  if (!props) return props;
+  for (const prop_key of Object.keys(props)) {
+    if (prop_key === '' || prop_key[0] === '~') continue;
+    if (!props.hasOwnProperty(prop_key)) continue;
+    if (Array.isArray(props[prop_key])) continue;
+    const child_prefix = prop_key + '\\';
+    for (const child_key of Object.keys(props)) {
+      if (child_key.startsWith(child_prefix)) {
+        delete props[child_key];
+      }
+    }
+  }
+  if (
+    props.hasOwnProperty('') &&
+    !Array.isArray(props['']) &&
+    Object.keys(props).length > 1
+  ) {
+    delete props[''];
+  }
+  recalculatePropsArrayIndexes(props);
+  return props;
 }
 
 export function extractRemapParentProps(props: AssetProps): {
