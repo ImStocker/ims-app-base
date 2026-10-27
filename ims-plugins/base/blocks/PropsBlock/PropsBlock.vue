@@ -491,12 +491,14 @@ export default defineComponent({
         }
       }
     },
-    save() {
+    async save() {
+      await this.$getAppManager().get(UiManager).blurActiveElement();
       this.$emit('save');
       this.assetBlockEditor.exitEditMode();
       this.resetGlobalClickOutside(false);
     },
-    persist() {
+    async persist() {
+      await this.$getAppManager().get(UiManager).blurActiveElement();
       this.$emit('save');
     },
     async enterEditMode(ev?: MouseEvent) {
@@ -567,7 +569,8 @@ export default defineComponent({
         this.clickOutside = null;
       }
       if (restart) {
-        this.clickOutside = setImsClickOutside(this.$el, () => {
+        this.clickOutside = setImsClickOutside(this.$el, async () => {
+          await this.$getAppManager().get(UiManager).blurActiveElement();
           this.save();
         });
       }
