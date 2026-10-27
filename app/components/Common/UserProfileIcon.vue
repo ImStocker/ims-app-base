@@ -5,6 +5,7 @@
         v-if="avatarLoadedImage"
         :src="avatarLoadedImage"
         class="UserProfileIcon-content-img"
+        @error="onAvatarError"
       />
       <span v-else class="UserProfileIcon-content-name">{{
         croppedUserName
@@ -15,7 +16,9 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import type { AssetPropValueAccount } from '../../logic/types/Props';
-import AuthManager from '../../logic/managers/AuthManager';
+import AuthManager, {
+  DEFAULT_AVATAR_SIZE,
+} from '../../logic/managers/AuthManager';
 import ProjectManager from '../../logic/managers/ProjectManager';
 import { getAccountShortAbbr } from '../../logic/utils/stringUtils';
 import { getAvatarColorClass } from '../../logic/utils/avatarColors';
@@ -29,7 +32,7 @@ export default defineComponent({
     },
     imageSize: {
       type: Number,
-      default: 64,
+      default: DEFAULT_AVATAR_SIZE,
     },
   },
   data() {
@@ -78,30 +81,20 @@ export default defineComponent({
   methods: {
     async reloadAvatar() {
       if (!this.displayingUserId) {
+        this.avatarLoadedImage = null;
         return;
       }
       try {
-        const url = await this.$getAppManager()
+        this.avatarLoadedImage = await this.$getAppManager()
           .get(AuthManager)
           .getAvatar(this.displayingUserId, this.imageSize);
-        if (url) {
-          this.avatarLoadedImage = await new Promise((res, rej) => {
-            const image = new Image();
-            image.onload = () => {
-              res(url);
-            };
-            image.onerror = () => {
-              rej(new Error('Failed to load avatar: ' + url));
-            };
-            image.src = url;
-          });
-        } else {
-          this.avatarLoadedImage = null;
-        }
       } catch (err) {
         console.error(err);
         this.avatarLoadedImage = null;
       }
+    },
+    onAvatarError() {
+      this.avatarLoadedImage = null;
     },
   },
 });
