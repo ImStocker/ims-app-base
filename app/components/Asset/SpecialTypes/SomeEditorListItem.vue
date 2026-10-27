@@ -1,5 +1,5 @@
 <template>
-  <div class="SomeEditorListItem" :class="{ 'state-opened': opened }">
+  <div class="SomeEditorListItem" :class="{ 'state-opened': isOpened }">
     <div class="SomeEditorListItem-main">
       <i v-if="!readonly" class="SomeEditorListItem-drag ri-draggable"></i>
       <div class="SomeEditorListItem-main-content">
@@ -8,13 +8,13 @@
       <button
         v-if="$slots['item-advanced']"
         class="SomeEditorListItem-arrow"
-        @click="opened = !opened"
+        @click="toggleOpened"
       >
         <i class="ri-arrow-down-s-line"></i>
       </button>
     </div>
     <div
-      v-if="opened && $slots['item-advanced']"
+      v-if="isOpened && $slots['item-advanced']"
       class="SomeEditorListItem-advanced"
     >
       <slot name="item-advanced"></slot>
@@ -36,13 +36,32 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    opened: {
+      type: Boolean,
+      default: undefined,
+    },
   },
+  emits: ['update:opened'],
   data() {
     return {
-      opened: false,
+      internalOpened: false,
     };
   },
-  computed: {},
+  computed: {
+    isOpened() {
+      return this.opened === undefined ? this.internalOpened : this.opened;
+    },
+  },
+  methods: {
+    toggleOpened() {
+      const newVal = !this.isOpened;
+      if (this.opened === undefined) {
+        this.internalOpened = newVal;
+      } else {
+        this.$emit('update:opened', newVal);
+      }
+    },
+  },
 });
 </script>
 <style lang="scss" scoped>
@@ -120,10 +139,8 @@ export default defineComponent({
     transition: transform 0.2s;
   }
 }
-.SomeEditorListItem.state-opened {
-  .SomeEditorListItem-arrow > i {
-    transform: rotate(180deg);
-  }
+.SomeEditorListItem.state-opened > .SomeEditorListItem-main > .SomeEditorListItem-arrow > i {
+  transform: rotate(180deg);
 }
 .SomeEditorListItem-advanced {
   border-top: 1px solid var(--local-border-color);

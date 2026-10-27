@@ -18,7 +18,7 @@
         <FormInput
           ref="input"
           :autofocus="true"
-          :value="dialog.state.value ? dialog.state.value : undefined"
+          :value="value ?? ''"
           :placeholder="dialog.state.placeholder"
           :type="dialog.state.type ?? 'text'"
           @input="value = $event"
@@ -90,7 +90,7 @@ export default defineComponent({
   emits: ['dialog-parameters'],
   data() {
     return {
-      value: null as string | null,
+      value: (this.dialog.state.value ?? null) as string | null,
       busy: false,
     };
   },
@@ -122,7 +122,6 @@ export default defineComponent({
       });
     }
     if (this.dialog.state.value) {
-      this.value = this.dialog.state.value;
       const input = this.$refs['input'] as InstanceType<
         typeof FormInput
       > | null;

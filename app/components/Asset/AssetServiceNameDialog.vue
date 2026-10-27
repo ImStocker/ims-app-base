@@ -17,7 +17,7 @@
       <div class="Dialog-message AssetServiceNameDialog-input">
         <FormInput
           :autofocus="true"
-          :value="dialog.state.value ? dialog.state.value : undefined"
+          :value="value ?? ''"
           :placeholder="dialog.state.placeholder"
           @input="value = $event"
         />
@@ -101,7 +101,7 @@ export default defineComponent({
   emits: ['dialog-parameters'],
   data() {
     return {
-      value: null as string | null,
+      value: (this.dialog.state.value ?? null) as string | null,
       busy: false,
     };
   },
@@ -134,9 +134,6 @@ export default defineComponent({
       this.$emit('dialog-parameters', {
         forbidClose: true,
       });
-    }
-    if (this.dialog.state.value) {
-      this.value = this.dialog.state.value;
     }
   },
   methods: {
