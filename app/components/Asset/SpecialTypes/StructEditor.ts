@@ -1,4 +1,5 @@
 import {
+  castAssetPropValueToArray,
   castAssetPropValueToBoolean,
   castAssetPropValueToString,
   extractAssetPropsSubObject,
@@ -14,7 +15,7 @@ export function extractStructFormFields(
   const res: PropsFormFieldDef[] = [];
   const struct_fields_indices = info_block.computed['fields'];
   if (Array.isArray(struct_fields_indices)) {
-    for (const ind of struct_fields_indices) {
+    for (const ind of castAssetPropValueToArray(struct_fields_indices)) {
       const type = info_block.computed[`fields\\${ind}\\type`];
       const multiple = info_block.computed[`fields\\${ind}\\multiple`];
       const name = info_block.computed[`fields\\${ind}\\name`];

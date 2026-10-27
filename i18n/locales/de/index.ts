@@ -5,6 +5,7 @@ export default {
     hidePassword: 'Passwort ausblenden',
     goHome: 'Zur Startseite',
     welcome: 'Willkommen bei Creators, {user}',
+    optional: '(optional)',
     contextMenu: {
       openPageInNewTab: 'Seite in neuem Tab öffnen',
       open: 'Öffnen',

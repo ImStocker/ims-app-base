@@ -16,10 +16,10 @@ import {
 } from './makePropsChange';
 import {
   applyPropsChange,
+  finishMergeInheritedProps,
   mergeInheritedProps,
   parseAssetNewBlockRef,
   parseChange,
-  recalculatePropsArrayIndexes,
   type AssetProps,
   type AssetPropValue,
 } from './Props';
@@ -617,7 +617,7 @@ export abstract class AssetChanger {
       exists_block.inherited ?? {},
       exists_block.props,
     );
-    recalculatePropsArrayIndexes(exists_block.computed);
+    finishMergeInheritedProps(exists_block.computed);
   }
 
   private _applyChangesBlockProps(
