@@ -434,10 +434,6 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
               await window.imshost.fs.exists(workspace_local_path);
             if (workspace_exists) {
               await window.imshost.shell.showFolder(workspace_local_path);
-            } else {
-              await window.imshost.shell.showItemInFolder(
-                workspace_local_path + '.imw.json',
-              );
             }
           }
         },
