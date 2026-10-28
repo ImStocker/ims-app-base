@@ -64,6 +64,15 @@ export interface IProjectDatabaseAsset {
     params: AssetChangeDTO,
     options?: { pid?: string },
   ): Promise<AssetsChangeResult>;
+  assetsChangeReplace(
+    params: {
+      where: AssetWhereParams;
+      find: AssetProps;
+      replace: AssetProps;
+      options?: { wholeProp?: boolean; ignoreCase?: boolean };
+    },
+    options?: { pid?: string },
+  ): Promise<AssetsChangeResult>;
   assetsChangeUndo(
     params: {
       changeId: string;

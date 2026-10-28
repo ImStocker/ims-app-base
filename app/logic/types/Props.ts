@@ -309,37 +309,37 @@ export function* walkAssetPropValueTextOps(
           : undefined,
       insertTask:
         op.insert &&
-        op.insert.task &&
-        op.insert.task.value !== undefined &&
-        (op.insert.task.value as AssetPropValueAsset).AssetId
+          op.insert.task &&
+          op.insert.task.value !== undefined &&
+          (op.insert.task.value as AssetPropValueAsset).AssetId
           ? op.insert.task
           : undefined,
       insertFile:
         op.insert &&
-        op.insert.file &&
-        op.insert.file.value !== undefined &&
-        (op.insert.file.value as AssetPropValueFile).FileId
+          op.insert.file &&
+          op.insert.file.value !== undefined &&
+          (op.insert.file.value as AssetPropValueFile).FileId
           ? op.insert.file
           : undefined,
       insertMention:
         op.insert &&
-        op.insert.mention &&
-        op.insert.mention.id !== undefined &&
-        op.insert.mention.accountId !== undefined
+          op.insert.mention &&
+          op.insert.mention.id !== undefined &&
+          op.insert.mention.accountId !== undefined
           ? op.insert.mention
           : undefined,
       attributeAsset:
         op.attributes &&
-        op.attributes.asset &&
-        op.attributes.asset.value !== undefined &&
-        (op.attributes.asset.value as AssetPropValueAsset).AssetId
+          op.attributes.asset &&
+          op.attributes.asset.value !== undefined &&
+          (op.attributes.asset.value as AssetPropValueAsset).AssetId
           ? op.attributes.asset
           : undefined,
       attributeWorkspace:
         op.attributes &&
-        op.attributes.workspace &&
-        op.attributes.workspace.value !== undefined &&
-        (op.attributes.workspace.value as AssetPropValueWorkspace).WorkspaceId
+          op.attributes.workspace &&
+          op.attributes.workspace.value !== undefined &&
+          (op.attributes.workspace.value as AssetPropValueWorkspace).WorkspaceId
           ? op.attributes.workspace
           : undefined,
     };
@@ -553,17 +553,14 @@ export function castAssetPropValueToString(
     case AssetPropType.BOOLEAN:
       return a ? '1' : '0';
     case AssetPropType.BLOB:
-      return `[](#blob:${(a as AssetPropValueBlob).Type}:${
-        (a as AssetPropValueBlob).Blob
-      })`;
+      return `[](#blob:${(a as AssetPropValueBlob).Type}:${(a as AssetPropValueBlob).Blob
+        })`;
     case AssetPropType.FILE:
-      return `[${(a as AssetPropValueFile).Title ?? ''}](#file:${
-        (a as AssetPropValueFile).FileId
-      })`;
+      return `[${(a as AssetPropValueFile).Title ?? ''}](#file:${(a as AssetPropValueFile).FileId
+        })`;
     case AssetPropType.ACCOUNT:
-      return `[${(a as AssetPropValueAccount).Name ?? ''}](#account:${
-        (a as AssetPropValueAccount).AccountId
-      })`;
+      return `[${(a as AssetPropValueAccount).Name ?? ''}](#account:${(a as AssetPropValueAccount).AccountId
+        })`;
     case AssetPropType.STRUCT:
       // Structure marker [''] — a container, has no scalar representation
       return '';
@@ -571,31 +568,27 @@ export function castAssetPropValueToString(
       // NOTE: При переводе в строку одиночных значений мы не можем получить значения массива, поэтому выводим только кол-во
       return `array[${(a as number[]).length}]`;
     case AssetPropType.ASSET:
-      return `[${
-        (a as AssetPropValueAsset).Title
-          ? (a as AssetPropValueAsset).Title
-          : ((a as AssetPropValueAsset).Name ?? '')
-      }](#asset:${(a as AssetPropValueAsset).AssetId}${
-        (a as AssetPropValueAsset).BlockId
+      return `[${(a as AssetPropValueAsset).Title
+        ? (a as AssetPropValueAsset).Title
+        : ((a as AssetPropValueAsset).Name ?? '')
+        }](#asset:${(a as AssetPropValueAsset).AssetId}${(a as AssetPropValueAsset).BlockId
           ? '#block:' +
-            (a as AssetPropValueAsset).BlockId +
-            ((a as AssetPropValueAsset).Anchor
-              ? '~anchor:' + (a as AssetPropValueAsset).Anchor
-              : '')
+          (a as AssetPropValueAsset).BlockId +
+          ((a as AssetPropValueAsset).Anchor
+            ? '~anchor:' + (a as AssetPropValueAsset).Anchor
+            : '')
           : ''
-      })`;
+        })`;
     case AssetPropType.WORKSPACE:
-      return `[${
-        (a as AssetPropValueWorkspace).Title
-          ? (a as AssetPropValueWorkspace).Title
-          : ((a as AssetPropValueWorkspace).Name ?? '')
-      }](#workspace:${(a as AssetPropValueWorkspace).WorkspaceId})`;
+      return `[${(a as AssetPropValueWorkspace).Title
+        ? (a as AssetPropValueWorkspace).Title
+        : ((a as AssetPropValueWorkspace).Name ?? '')
+        }](#workspace:${(a as AssetPropValueWorkspace).WorkspaceId})`;
     case AssetPropType.PROJECT:
-      return `[${
-        (a as AssetPropValueProject).Title
-          ? (a as AssetPropValueProject).Title
-          : ((a as AssetPropValueProject).ProjectId ?? '')
-      }](#project:${(a as AssetPropValueProject).ProjectId})`;
+      return `[${(a as AssetPropValueProject).Title
+        ? (a as AssetPropValueProject).Title
+        : ((a as AssetPropValueProject).ProjectId ?? '')
+        }](#project:${(a as AssetPropValueProject).ProjectId})`;
     case AssetPropType.FORMULA:
     case AssetPropType.SELECTION:
       return JSON.stringify(a);
@@ -1338,9 +1331,9 @@ export function convertAssetPropValueTextOpsToStr(
         if ((op_struct.op.insert as any).file) {
           str.push(
             ((op_struct.op.insert as any).file.inline ? '!' : '') +
-              castAssetPropValueToString(
-                (op_struct.op.insert as any).file.value,
-              ),
+            castAssetPropValueToString(
+              (op_struct.op.insert as any).file.value,
+            ),
           );
         } else if ((op_struct.op.insert as any).task) {
           str.push(
@@ -1355,16 +1348,14 @@ export function convertAssetPropValueTextOpsToStr(
     }
     if (op_struct.attributeAsset) {
       str.push(
-        `[${op_struct.op.insert.replace(/[[\]]/g, (x) => '\\' + x)}](#asset:${
-          op_struct.attributeAsset.value.AssetId
-        }${
-          op_struct.attributeAsset.value.BlockId
-            ? '#block:' +
-              op_struct.attributeAsset.value.BlockId +
-              (op_struct.attributeAsset.value.Anchor
-                ? '~anchor:' + op_struct.attributeAsset.value.Anchor
-                : '')
-            : ''
+        `[${op_struct.op.insert.replace(/[[\]]/g, (x) => '\\' + x)}](#asset:${op_struct.attributeAsset.value.AssetId
+        }${op_struct.attributeAsset.value.BlockId
+          ? '#block:' +
+          op_struct.attributeAsset.value.BlockId +
+          (op_struct.attributeAsset.value.Anchor
+            ? '~anchor:' + op_struct.attributeAsset.value.Anchor
+            : '')
+          : ''
         })`,
       );
     } else {
@@ -2063,19 +2054,28 @@ export function extractRemapParentProps(props: AssetProps): {
     remapParentProps: remap_parent_props,
   };
 }
+
+/**
+ * Build a props change that turns `current` into `desired`.
+ *
+ * Argument order is (desired, current): the returned change is meant to be
+ * applied to the *second* argument. Applying it to the first would be a no-op.
+ *
+ * Returns an empty array when the two objects are already equal.
+ */
 export function diffAssetPropObjects(
-  source: AssetProps,
-  target: AssetProps,
+  desired: AssetProps,
+  current: AssetProps,
 ): AssetProps[] {
   // флаг, есть ли хотя бы 1 изменение. Если нет, то отправляю пустой массив
   let has_changes = false;
   const difference: AssetProps = {};
-  for (const key of Object.keys(target)) {
-    if (source[key] !== undefined) {
-      const res = compareAssetPropValues(source[key], target[key], true);
+  for (const key of Object.keys(current)) {
+    if (desired[key] !== undefined) {
+      const res = compareAssetPropValues(desired[key], current[key], true);
       if (res !== 0) {
         has_changes = true;
-        difference[key] = source[key];
+        difference[key] = desired[key];
       }
     } else {
       has_changes = true;
@@ -2083,10 +2083,10 @@ export function diffAssetPropObjects(
     }
   }
   // напомнить про массивы
-  for (const key of Object.keys(source)) {
-    if (!target.hasOwnProperty(key)) {
+  for (const key of Object.keys(desired)) {
+    if (!current.hasOwnProperty(key)) {
       has_changes = true;
-      difference[key] = source[key];
+      difference[key] = desired[key];
     }
   }
   return has_changes ? [difference] : [];
@@ -2129,8 +2129,326 @@ const MarkdownWikiLinkBlockRegexp =
   /^bid-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:~([\s\S]*))?$/i;
 const MarkdownWikiLinkSeparatorRegexp = /^([^|]+?)(?:\\)?\|([\s\S]*)$/;
 
-// Extracts `[[asset:<uuid>|Label]]` wiki links from a markdown string.
-// Address may contain `#<anchor>` or `#bid-<blockId>[~<anchor>]` fragment.
+// ---------------------------------------------------------------------------
+// Search & replace helpers (shared between server and desktop)
+// ---------------------------------------------------------------------------
+
+export type AssetPropsContainValue = {
+  wholeProp: boolean,
+  ignoreCase: boolean
+}
+
+function _escapeRegExp(str: string): string {
+  return (str || '').toString().replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
+}
+
+// replace = undefined - just search. Returns undefined for all matched values
+function _findReplaceAssetPropValue(
+  value: AssetPropValue,
+  find: AssetPropValue,
+  replace: AssetPropValue | undefined,
+  wholeProp: boolean,
+  ignoreCase: boolean,
+): AssetPropValue | undefined {
+  const v = value;
+  const findType = getAssetPropType(find);
+
+  if (v === null) {
+    if (v === find) return replace;
+    return v;
+  }
+
+  if (typeof v === 'string') {
+    if (typeof find === 'string') {
+      if (wholeProp) {
+        const equal = ignoreCase
+          ? v.toLowerCase() === find.toLowerCase()
+          : v === find;
+        if (equal) return replace;
+        return v;
+      }
+      if (find === '' || v === '') {
+        return v;
+      }
+      const flags = ignoreCase ? 'gi' : 'g';
+      const regex = new RegExp(_escapeRegExp(find), flags);
+      return v.replace(regex, () =>
+        typeof replace === 'string' ? replace : castAssetPropValueToString(replace ?? ''),
+      );
+    }
+    if (wholeProp && sameAssetPropValues(v, find, true)) {
+      return replace;
+    }
+    return v;
+  }
+
+  if (typeof v === 'number' || typeof v === 'boolean') {
+    if (sameAssetPropValues(v, find, true)) {
+      return replace;
+    }
+    return v;
+  }
+
+  if (Array.isArray(v)) {
+    // We cannot compare arrays or structures themself here
+    return v;
+  }
+
+  const valType = getAssetPropType(v);
+
+  if (valType === AssetPropType.TEXT) {
+    const text = v as AssetPropValueText;
+    if (typeof find === 'string') {
+      if (wholeProp) {
+        const equal = ignoreCase
+          ? text.Str.toLowerCase() === find.toLowerCase()
+          : text.Str === find;
+        if (equal) return replace;
+        return v;
+      }
+      if (find === '') return v;
+      const flags = ignoreCase ? 'gi' : 'g';
+      const regex = new RegExp(_escapeRegExp(find), flags);
+      const newStr = text.Str.replace(regex, () =>
+        typeof replace === 'string' ? (replace) : castAssetPropValueToString(replace ?? ''),
+      );
+      const newOps = (text.Ops || []).map((op: AssetPropValueTextOp) => {
+        if (op && typeof op.insert === 'string') {
+          return {
+            ...op,
+            insert: op.insert.replace(regex, () =>
+              typeof replace === 'string' ? (replace) : castAssetPropValueToString(replace ?? ''),
+            ),
+          };
+        }
+        return op;
+      });
+      const changed =
+        newStr !== text.Str ||
+        JSON.stringify(newOps) !== JSON.stringify(text.Ops);
+      if (changed) {
+        return { ...text, Str: newStr, Ops: newOps } as AssetPropValueText;
+      }
+      return v;
+    }
+    if (sameAssetPropValues(v, find, true)) {
+      return replace;
+    }
+    return v;
+  }
+
+  if (valType !== undefined && valType !== AssetPropType.NULL && typeof v === 'object') {
+    if (findType === valType) {
+      const match =
+        (valType === AssetPropType.FILE && (v as AssetPropValueFile).FileId === (find as AssetPropValueFile).FileId) ||
+        (valType === AssetPropType.ASSET && (v as AssetPropValueAsset).AssetId === (find as AssetPropValueAsset).AssetId) ||
+        (valType === AssetPropType.ACCOUNT && (v as AssetPropValueAccount).AccountId === (find as AssetPropValueAccount).AccountId) ||
+        (valType === AssetPropType.WORKSPACE && (v as AssetPropValueWorkspace).WorkspaceId === (find as AssetPropValueWorkspace).WorkspaceId) ||
+        (valType === AssetPropType.PROJECT && (v as AssetPropValueProject).ProjectId === (find as AssetPropValueProject).ProjectId) ||
+        (valType === AssetPropType.ENUM &&
+          (v as AssetPropValueEnum).Enum === (find as AssetPropValueEnum).Enum &&
+          (v as AssetPropValueEnum).Name === (find as AssetPropValueEnum).Name) ||
+        (valType === AssetPropType.TIMESTAMP && (v as AssetPropValueTimestamp).Ts === (find as AssetPropValueTimestamp).Ts) ||
+        (valType === AssetPropType.TYPE &&
+          (v as AssetPropValueType).Type === (find as AssetPropValueType).Type &&
+          ((v as AssetPropValueType).Kind ?? '') === ((find as AssetPropValueType).Kind ?? '') &&
+          JSON.stringify((v as AssetPropValueType).Of ?? null) === JSON.stringify((find as AssetPropValueType).Of ?? null) &&
+          !(v as { Blob?: unknown }).Blob) ||
+        (valType === AssetPropType.BLOB &&
+          (v as AssetPropValueBlob).Type === (find as AssetPropValueBlob).Type &&
+          (v as AssetPropValueBlob).Blob === (find as AssetPropValueBlob).Blob) ||
+        (valType === AssetPropType.FORMULA &&
+          JSON.stringify((v as AssetPropValueFormula).F) === JSON.stringify((find as AssetPropValueFormula).F)) ||
+        (valType === AssetPropType.SELECTION &&
+          JSON.stringify((v as AssetPropValueSelection).Where) === JSON.stringify((find as AssetPropValueSelection).Where));
+      if (match) return replace;
+    }
+    if (sameAssetPropValues(v, find, true)) {
+      return replace;
+    }
+    return v;
+  }
+
+  return v;
+}
+
+// ---------------------------------------------------------------------------
+// Pattern-level search & replace helpers (operate on AssetProps subtrees)
+// ---------------------------------------------------------------------------
+
+function _isIndexArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.length > 0 && value.every((x) => typeof x === 'number');
+}
+
+function _isStructureMarker(value: unknown): boolean {
+  return isStructureMarker(value);
+}
+
+// Recursively match a find pattern node against the haystack subtree at haystackKey.
+// prefix is the find-relative path of the current node ('' for the root).
+// Index-array parents map child keys positionally: needle key segment (an index in the
+// needle array) resolves to haystack key haystackKey + "\" + actualArray[needlePosition].
+function _matchAssetPropsNode(
+  props: AssetProps,
+  haystackKey: string,
+  find: AssetProps,
+  prefix: string,
+  wholeProp: boolean,
+  ignoreCase: boolean,
+): boolean {
+  const rootValue = find[prefix];
+
+  // Root value check
+  if (find[prefix] !== undefined) {
+    const actual = props[haystackKey];
+    const fv = rootValue;
+    if (_isStructureMarker(fv)) {
+      if (!_isStructureMarker(actual)) return false;
+    } else if (_isIndexArray(fv)) {
+      if (!Array.isArray(actual) || actual.length !== fv.length || _isStructureMarker(actual)) return false;
+    } else {
+      const r = _findReplaceAssetPropValue(actual as AssetPropValue, fv as AssetPropValue, undefined, wholeProp, ignoreCase);
+      if (r === actual) return false;
+    }
+  }
+
+  // Children: entries whose key extends prefix with one or more segments
+  const childKeys = Object.keys(find).filter((k) => {
+    if (k === prefix) return false;
+    if (prefix === '') return k.startsWith('\\');
+    return k.startsWith(prefix + '\\');
+  });
+
+  // group by first segment after prefix
+  const segments = new Set<string>();
+  for (const ck of childKeys) {
+    const rest = prefix === '' ? ck : ck.substring(prefix.length);
+    const seg = rest.split('\\').filter((s) => s !== '')[0];
+    if (seg !== undefined) segments.add(seg);
+  }
+
+  for (const seg of segments) {
+    // parent find value (the node's own value) determines positional mapping
+    const parentNodeValue = rootValue;
+    let haystackChildKey: string;
+    if (parentNodeValue !== undefined && Array.isArray(parentNodeValue) && _isIndexArray(parentNodeValue)) {
+      const pos = parentNodeValue.indexOf(Number(seg));
+      const actualArr = props[haystackKey];
+      if (pos < 0 || !Array.isArray(actualArr) || pos >= actualArr.length) return false;
+      haystackChildKey = haystackKey + '\\' + actualArr[pos];
+    } else {
+      haystackChildKey = haystackKey + '\\' + seg;
+    }
+
+    if (props[haystackChildKey] === undefined) return false;
+
+    const childFindPrefix = prefix + '\\' + seg;
+    if (!_matchAssetPropsNode(props, haystackChildKey, find, childFindPrefix, wholeProp, ignoreCase)) return false;
+  }
+
+  return true;
+}
+
+function _matchAssetPropsPattern(props: AssetProps, rootKey: string, find: AssetProps, wholeProp: boolean, ignoreCase: boolean): boolean {
+  return _matchAssetPropsNode(props, rootKey, find, '', wholeProp, ignoreCase);
+}
+
+
+
+
+export function assetPropsContainValue(
+  props: AssetProps | null | undefined,
+  find: AssetProps,
+  options?: AssetPropsContainValue,
+): boolean {
+  if (!props) return false;
+  const wholeProp = options?.wholeProp ?? false;
+  const ignoreCase = options?.ignoreCase ?? false;
+  const roots = [...new Set(Object.keys(props).map((k) => k.split('\\')[0]))];
+  for (const root of roots) {
+    if (_matchAssetPropsPattern(props, root, find, wholeProp, ignoreCase)) return true;
+  }
+  return false;
+}
+
+export function replaceAssetProps(
+  props: AssetProps | null | undefined,
+  find: AssetProps,
+  replace: AssetProps,
+  options?: AssetPropsContainValue,
+): AssetProps {
+  const res: AssetProps = props ? { ...props } : {};
+  if (!props) return res;
+  const wholeProp = options?.wholeProp ?? false;
+  const ignoreCase = options?.ignoreCase ?? false;
+
+  const findHasSubkeys = Object.keys(find).some((k) => k !== '');
+  const replaceHasSubkeys = Object.keys(replace).some((k) => k !== '');
+
+  if (!findHasSubkeys && !replaceHasSubkeys) {
+    // Legacy single-value behavior: value-level replace over every key
+    for (const [key, val] of Object.entries(props)) {
+      const findValue = (find[''] ?? val) as AssetPropValue;
+      const replaceValue = (replace[''] ?? val) as AssetPropValue;
+      const r = _findReplaceAssetPropValue(val, findValue, replaceValue, wholeProp, ignoreCase);
+      res[key] = r;
+    }
+    return res;
+  }
+
+  // Structural pattern: collect matched roots on original props
+  const roots = [...new Set(Object.keys(props).map((k) => k.split('\\')[0]))];
+  const matched: string[] = [];
+  for (const root of roots) {
+    if (_matchAssetPropsPattern(props, root, find, wholeProp, ignoreCase)) {
+      matched.push(root);
+    }
+  }
+  // shallowest first; skip roots nested under an already-applied root
+  matched.sort((a, b) => a.length - b.length);
+  const applied: string[] = [];
+  for (const root of matched) {
+    if (applied.some((r) => root === r || root.startsWith(r + '\\'))) continue;
+    applied.push(root);
+
+    // Remove old subtree
+    for (const key of Object.keys(res)) {
+      if (key === root || key.startsWith(root + '\\')) {
+        delete res[key];
+      }
+    }
+    // Build new subtree from replace pattern
+    const findRootValue = find[''];
+    const replaceRootValue = replace[''];
+    let newRoot: AssetPropValue;
+    if (Array.isArray(replaceRootValue)) {
+      newRoot = replaceRootValue as AssetPropValue;
+    } else if (findRootValue !== undefined && replaceRootValue !== undefined) {
+      newRoot = _findReplaceAssetPropValue(
+        props[root] as AssetPropValue,
+        findRootValue as AssetPropValue,
+        replaceRootValue as AssetPropValue,
+        wholeProp,
+        ignoreCase,
+      ) as AssetPropValue;
+    } else if (replaceRootValue !== undefined) {
+      newRoot = replaceRootValue as AssetPropValue;
+    } else {
+      newRoot = props[root] as AssetPropValue;
+    }
+    res[root] = newRoot;
+    for (const [rk, rv] of Object.entries(replace)) {
+      if (rk === '') continue;
+      res[root + rk] = rv as AssetPropValue;
+    }
+  }
+
+  return res;
+}
+
+
+
+
 export function extractAssetLinksFromMarkdown(
   markdown: string,
 ): MarkdownAssetLink[] {
