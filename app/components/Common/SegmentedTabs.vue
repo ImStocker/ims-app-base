@@ -11,6 +11,7 @@
       :key="item.key"
       type="button"
       role="tab"
+      :title="item.hint"
       class="is-button SegmentedTabs-item"
       :class="{
         'state-active': isActive(item),
@@ -24,9 +25,10 @@
       <slot name="item" :item="item" :active="isActive(item)">
         <i v-if="item.icon" :class="[item.icon, 'SegmentedTabs-item-icon']"></i>
         <caption-string
+          v-if="item.label"
           class="SegmentedTabs-item-label"
           :value="item.label"
-          :title="item.label"
+          :title="item.hint ?? item.label"
         ></caption-string>
       </slot>
     </button>
@@ -44,7 +46,8 @@ export type SegmentedTabVariant = 'accent' | 'raised';
 
 type SegmentedTabItem = {
   key: string | number;
-  label: string;
+  label?: string;
+  hint?: string;
   icon?: string;
 };
 
@@ -141,7 +144,7 @@ export default defineComponent({
 .SegmentedTabs {
   --SegmentedTabs-radius: 12px;
   --SegmentedTabs-item-radius: 9px;
-  --SegmentedTabs-item-padding: 6px 20px;
+  --SegmentedTabs-item-padding: 8.58px;
   --SegmentedTabs-item-max-width: none;
   --SegmentedTabs-item-idle-text-color: color-mix(
     in srgb,
@@ -160,7 +163,7 @@ export default defineComponent({
 
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--SegmentedTabs-item-gap, 6px);
   min-width: 0;
   max-width: 100%;
   padding: 4px;
@@ -170,7 +173,7 @@ export default defineComponent({
   overflow-x: auto;
   overflow-y: hidden;
 }
-.SegmentedTabs-item {
+.SegmentedTabs-item.is-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
