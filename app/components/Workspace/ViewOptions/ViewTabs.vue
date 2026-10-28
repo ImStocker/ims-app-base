@@ -7,7 +7,6 @@
     variant="raised"
     class="ViewTabs"
     :style="{
-      '--SegmentedTabs-item-padding': '6px 12px',
       '--SegmentedTabs-item-max-width': '150px',
       '--SegmentedTabs-bg': 'transparent',
       '--SegmentedTabs-border-color': 'transparent',
