@@ -259,6 +259,7 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
+    this.emitDirty();
     if (this.focusLock) {
       this.focusLock.cancel();
       this.focusLock = null;
@@ -291,11 +292,13 @@ export default defineComponent({
     },
     onBlurEditorElement(_e: FocusEvent) {
       this.emitDirty();
-      if (
-        !this.quillController.shouldBeFocused() &&
-        window.document.activeElement &&
-        window.document.activeElement !== document.body
-      ) {
+      // NOTE: do not filter on `document.activeElement !== <body>` here.
+      // Clicking a non-focusable area (or a programmatic blur) leaves focus on
+      // <body>, and skipping onBlur in that case meant the `blur` event never
+      // reached field editors (e.g. AnyTypePropField.commitValue()), so typed
+      // values were dropped. `shouldBeFocused()` already covers focus staying
+      // inside the editor (logical tree) and open modals.
+      if (!this.quillController.shouldBeFocused()) {
         this.onBlur();
       }
     },
@@ -310,6 +313,7 @@ export default defineComponent({
       this.$emit('escape');
     },
     async onBlur() {
+      this.emitDirty();
       const lock = this.focusLock;
       this.focusLock = null;
       if (lock) await lock.unlock();
@@ -426,6 +430,7 @@ export default defineComponent({
       }
       if (restart && this.$el) {
         this.clickOutside = setImsClickOutside(this.$el, () => {
+          this.emitDirty();
           setTimeout(() => {
             if (!this.quillController.shouldBeFocused()) {
               this.onBlur();

@@ -243,6 +243,12 @@ export default defineComponent({
       }
     },
     _onActivatedBlur() {
+      const activatedEditor = this.$refs.activatedEditor as InstanceType<
+        typeof ImcEditorActivated
+      > | null;
+      if (activatedEditor) {
+        activatedEditor.emitDirty();
+      }
       this.$emit('blur');
       this.deactivate();
     },
