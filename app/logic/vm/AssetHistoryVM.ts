@@ -120,16 +120,16 @@ export class AssetHistoryVM {
     const changed_asset = unref(changed_asset_version);
     if (!changed_asset) return;
     const full = copyAssetFullData(changed_asset);
-    const new_title = await this.appManager
-      .get(DialogManager)
-      .show(PromptDialog, {
+    const new_title = (
+      (await this.appManager.get(DialogManager).show(PromptDialog, {
         header: this.appManager.$t('gddPage.saveAsCopy', {
           element: convertTranslatedTitle(full.title ?? '', this.appManager.$t),
         }),
         message: this.appManager.$t('gddPage.inputElementName'),
         yesCaption: this.appManager.$t('gddPage.saveAsCopy'),
         value: full.title ?? '',
-      });
+      })) ?? ''
+    ).trim();
     if (!new_title) return;
     return await this.appManager
       .get(CreatorAssetManager)

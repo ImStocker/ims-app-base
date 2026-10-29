@@ -765,9 +765,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   async copyElement(asset: AssetShort) {
     let title = asset.title ?? '';
     if (title) title += ' - 2';
-    const new_title = await this.appManager
-      .get(DialogManager)
-      .show(PromptDialog, {
+    const new_title = (
+      (await this.appManager.get(DialogManager).show(PromptDialog, {
         header: this.appManager.$t('sourcePage.elements.copy', {
           element: convertTranslatedTitle(asset.title ?? '', (...args) =>
             this.appManager.$t(...args),
@@ -776,7 +775,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         message: this.appManager.$t('sourcePage.elements.inputElementName'),
         yesCaption: this.appManager.$t('common.dialogs.copy'),
         value: title,
-      });
+      })) ?? ''
+    ).trim();
     if (new_title) {
       await this.appManager.get(UiManager).doTask(async () => {
         const full = await this.appManager
@@ -788,9 +788,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
   }
 
   async renameElement(asset: AssetShort) {
-    const new_title = await this.appManager
-      .get(DialogManager)
-      .show(PromptDialog, {
+    const new_title = (
+      (await this.appManager.get(DialogManager).show(PromptDialog, {
         header: this.appManager.$t('sourcePage.elements.rename', {
           element: convertTranslatedTitle(asset.title ?? '', (...args) =>
             this.appManager.$t(...args),
@@ -799,7 +798,8 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
         message: this.appManager.$t('sourcePage.elements.inputElementName'),
         yesCaption: this.appManager.$t('common.dialogs.rename'),
         value: asset?.title ?? '',
-      });
+      })) ?? ''
+    ).trim();
     if (new_title) {
       await this.appManager.get(UiManager).doTask(async () => {
         await this.appManager.get(CreatorAssetManager).changeAssets({
