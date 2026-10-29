@@ -769,70 +769,72 @@ export default defineComponent({
             this.editor.focus();
           }
         };
+      // The context menu is built in script, so resolve every label here.
+      const t = (key: string) => this.$t(`imcEditor.${key}`);
       return [
         {
-          title: 'Insert link',
+          title: t('link.insertLink'),
           name: 'ctx-insert-link',
           icon: 'ri-link',
           action: () =>
             this.openLinkPickerForRange(sel, this.toolbarTargetView),
         },
         {
-          title: 'Insert external link',
+          title: t('link.insertExternalLink'),
           name: 'ctx-insert-ext-link',
           icon: 'ri-external-link-line',
           action: () => this.insertExternalLink(sel),
         },
         { type: 'separator', name: 'ctx-sep-1' },
         {
-          title: 'Format',
+          title: t('menu.format'),
           name: 'ctx-format',
           icon: 'ri-text',
           children: [
             {
-              title: 'Bold',
+              title: t('tools.bold'),
               name: 'ctx-bold',
               icon: 'ri-bold',
               action: fmt('bold'),
             },
             {
-              title: 'Italic',
+              title: t('tools.italic'),
               name: 'ctx-italic',
               icon: 'ri-italic',
               action: fmt('italic'),
             },
             {
-              title: 'Strikethrough',
+              title: t('tools.strike'),
               name: 'ctx-strike',
               icon: 'ri-strikethrough',
               action: fmt('strike'),
             },
             {
-              title: 'Highlight',
+              title: t('tools.highlight'),
               name: 'ctx-highlight',
               icon: 'ri-mark-pen-fill',
               action: fmt('highlight'),
             },
             {
-              title: 'Inline code',
+              title: t('tools.code'),
               name: 'ctx-code',
               icon: 'ri-code-s-slash-fill',
               action: fmt('code'),
             },
             {
-              title: 'Superscript',
+              title: t('tools.super'),
               name: 'ctx-sup',
               icon: 'ri-superscript',
               action: fmt('superscript'),
             },
             {
-              title: 'Subscript',
+              title: t('tools.sub'),
               name: 'ctx-sub',
               icon: 'ri-subscript',
               action: fmt('subscript'),
             },
             {
-              title: 'Formula',
+              title: t('tools.formula'),
               name: 'ctx-formula',
               icon: 'ri-formula',
               action: fmt('formula'),
@@ -840,85 +842,85 @@ export default defineComponent({
           ],
         },
         {
-          title: 'Paragraph',
+          title: t('menu.paragraph'),
           name: 'ctx-paragraph',
           icon: 'ri-paragraph',
           children: [
             {
-              title: 'Heading 1',
+              title: t('tools.header-1'),
               name: 'ctx-h1',
               icon: 'ri-h-1',
               action: block('h1'),
             },
             {
-              title: 'Heading 2',
+              title: t('tools.header-2'),
               name: 'ctx-h2',
               icon: 'ri-h-2',
               action: block('h2'),
             },
             {
-              title: 'Heading 3',
+              title: t('tools.header-3'),
               name: 'ctx-h3',
               icon: 'ri-h-3',
               action: block('h3'),
             },
             {
-              title: 'Heading 4',
+              title: t('tools.header-4'),
               name: 'ctx-h4',
               icon: 'ri-h-4',
               action: block('h4'),
             },
             { type: 'separator', name: 'ctx-sep-p1' },
             {
-              title: 'Bullet list',
+              title: t('tools.list-bullet'),
               name: 'ctx-bullet',
               icon: 'ri-list-unordered',
               action: block('bullet_list'),
             },
             {
-              title: 'Numbered list',
+              title: t('tools.list-ordered'),
               name: 'ctx-ordered',
               icon: 'ri-list-ordered',
               action: block('ordered_list'),
             },
             {
-              title: 'Task list',
+              title: t('tools.list-task'),
               name: 'ctx-task',
               icon: 'ri-list-check-2',
               action: block('task_list'),
             },
             {
-              title: 'Quote',
+              title: t('tools.blockquote'),
               name: 'ctx-quote',
               icon: 'ri-double-quotes-r',
               action: block('quote'),
             },
             { type: 'separator', name: 'ctx-sep-p2' },
             {
-              title: 'Notice block',
+              title: t('tools.callout'),
               name: 'ctx-notice',
               icon: 'ri-text-block',
               children: [
                 {
-                  title: 'Info',
+                  title: t('tools.callout-info'),
                   name: 'ctx-note-info',
                   icon: 'ri-information-2-line',
                   action: block('callout', { calloutType: 'info' }),
                 },
                 {
-                  title: 'Warning',
+                  title: t('tools.callout-warning'),
                   name: 'ctx-note-warning',
                   icon: 'ri-alert-line',
                   action: block('callout', { calloutType: 'warning' }),
                 },
                 {
-                  title: 'Solution',
+                  title: t('tools.callout-solution'),
                   name: 'ctx-note-solution',
                   icon: 'ri-checkbox-circle-line',
                   action: block('callout', { calloutType: 'solution' }),
                 },
                 {
-                  title: 'Error',
+                  title: t('tools.callout-error'),
                   name: 'ctx-note-error',
                   icon: 'ri-error-warning-line',
                   action: block('callout', { calloutType: 'error' }),
@@ -928,12 +930,12 @@ export default defineComponent({
           ],
         },
         {
-          title: 'Insert',
+          title: t('menu.insert'),
           name: 'ctx-insert',
           icon: 'ri-add-line',
           children: [
             {
-              title: 'Table',
+              title: t('menu.table'),
               name: 'ctx-table',
               icon: 'ri-table-2',
               action: () => {
@@ -941,7 +943,7 @@ export default defineComponent({
               },
             },
             {
-              title: 'Horizontal rule',
+              title: t('menu.horizontalRule'),
               name: 'ctx-hr',
               icon: 'ri-separator',
               action: () => {
@@ -949,7 +951,7 @@ export default defineComponent({
               },
             },
             {
-              title: 'Code block',
+              title: t('tools.code-block'),
               name: 'ctx-codeblock',
               icon: 'ri-code-box-fill',
               action: block('code_block'),
@@ -958,27 +960,27 @@ export default defineComponent({
         },
         { type: 'separator', name: 'ctx-sep-2' },
         {
-          title: 'Cut',
+          title: t('menu.cut'),
           name: 'ctx-cut',
           icon: 'ri-scissors-cut-line',
           disabled: sel.text.length === 0,
           action: () => this.cutText(sel),
         },
         {
-          title: 'Copy',
+          title: t('menu.copy'),
           name: 'ctx-copy',
           icon: 'ri-file-copy-line',
           disabled: sel.text.length === 0,
           action: () => this.copyText(sel),
         },
         {
-          title: 'Paste',
+          title: t('menu.paste'),
           name: 'ctx-paste',
           icon: 'ri-clipboard-line',
           action: () => this.pasteText(sel),
         },
         {
-          title: 'Select all',
+          title: t('menu.selectAll'),
           name: 'ctx-select-all',
           icon: 'ri-checkbox-multiple-line',
           action: () => this.selectAllText(),

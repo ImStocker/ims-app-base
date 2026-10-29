@@ -6,7 +6,7 @@
         <button
           class="SelectionToolbar-button is-button"
           :class="{ 'has-dot': !!activeHeading }"
-          title="Heading"
+          :title="$t('imcEditor.tools.header')"
           @mousedown.prevent="openMenu('h')"
         >
           <i :class="headingTriggerIcon"></i>
@@ -20,7 +20,7 @@
             v-for="lvl of headingLevels"
             :key="lvl"
             class="SelectionToolbar-button is-button"
-            :title="'Heading ' + lvl"
+            :title="$t(`imcEditor.tools.header-${lvl}`)"
             @mousedown.prevent="onFormat('h' + lvl)"
           >
             <i
@@ -30,17 +30,19 @@
               ]"
             ></i>
             <span class="SelectionToolbar-menuLabel">{{
-              'Heading ' + lvl
+              $t(`imcEditor.tools.header-${lvl}`)
             }}</span>
           </button>
           <button
             v-if="activeHeading"
             class="SelectionToolbar-button is-button"
-            title="Reset"
+            :title="$t('imcEditor.resetFormat')"
             @mousedown.prevent="onFormat(activeHeading, { reset: true })"
           >
             <i class="ri-close-fill"></i>
-            <span class="SelectionToolbar-menuLabel">Reset</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.resetFormat')
+            }}</span>
           </button>
         </div>
 
@@ -52,7 +54,7 @@
               (active.bullet || active.ordered || active.task)
             ),
           }"
-          title="List"
+          :title="$t('imcEditor.tools.list')"
           @mousedown.prevent="openMenu('list')"
         >
           <i :class="listTriggerIcon"></i>
@@ -64,7 +66,7 @@
         >
           <button
             class="SelectionToolbar-button is-button"
-            title="Bullet list"
+            :title="$t('imcEditor.tools.list-bullet')"
             @mousedown.prevent="onFormat('bullet_list')"
           >
             <i
@@ -73,11 +75,13 @@
                 { 'has-dot': !!(active && active.bullet) },
               ]"
             ></i>
-            <span class="SelectionToolbar-menuLabel">Bullet list</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.tools.list-bullet')
+            }}</span>
           </button>
           <button
             class="SelectionToolbar-button is-button"
-            title="Ordered list"
+            :title="$t('imcEditor.tools.list-ordered')"
             @mousedown.prevent="onFormat('ordered_list')"
           >
             <i
@@ -86,11 +90,13 @@
                 { 'has-dot': !!(active && active.ordered) },
               ]"
             ></i>
-            <span class="SelectionToolbar-menuLabel">Ordered list</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.tools.list-ordered')
+            }}</span>
           </button>
           <button
             class="SelectionToolbar-button is-button"
-            title="Task list"
+            :title="$t('imcEditor.tools.list-task')"
             @mousedown.prevent="onFormat('task_list')"
           >
             <i
@@ -99,23 +105,27 @@
                 { 'has-dot': !!(active && active.task) },
               ]"
             ></i>
-            <span class="SelectionToolbar-menuLabel">Task list</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.tools.list-task')
+            }}</span>
           </button>
           <button
             v-if="activeListKind"
             class="SelectionToolbar-button is-button"
-            title="Reset"
+            :title="$t('imcEditor.resetFormat')"
             @mousedown.prevent="onFormat(activeListKind, { reset: true })"
           >
             <i class="ri-close-fill"></i>
-            <span class="SelectionToolbar-menuLabel">Reset</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.resetFormat')
+            }}</span>
           </button>
         </div>
 
         <button
           class="SelectionToolbar-button is-button"
           :class="{ 'has-dot': !!(active && active.quote) }"
-          title="Quote"
+          :title="$t('imcEditor.tools.blockquote')"
           @mousedown.prevent="onFormat('quote')"
         >
           <i class="ri-double-quotes-r"></i>
@@ -124,7 +134,7 @@
         <button
           class="SelectionToolbar-button is-button"
           :class="{ 'has-dot': !!(active && !!active.callout) }"
-          title="Notice block"
+          :title="$t('imcEditor.tools.callout')"
           @mousedown.prevent="openMenu('notice')"
         >
           <i :class="noticeTriggerIcon"></i>
@@ -152,13 +162,15 @@
           <button
             v-if="active && active.callout"
             class="SelectionToolbar-button is-button"
-            title="Reset"
+            :title="$t('imcEditor.resetFormat')"
             @mousedown.prevent="
               onFormat('callout', { calloutType: active.callout!, reset: true })
             "
           >
             <i class="ri-close-fill"></i>
-            <span class="SelectionToolbar-menuLabel">Reset</span>
+            <span class="SelectionToolbar-menuLabel">{{
+              $t('imcEditor.resetFormat')
+            }}</span>
           </button>
         </div>
       </div>
@@ -182,7 +194,7 @@
         <button
           class="SelectionToolbar-button is-button"
           :class="{ 'has-dot': !!(active && active.link) }"
-          title="Link"
+          :title="$t('imcEditor.tools.link')"
           @mousedown.prevent="openMenu('link')"
         >
           <i class="ri-link"></i>
@@ -195,7 +207,7 @@
           <div class="SelectionToolbar-linkSection">
             <button
               class="SelectionToolbar-button is-button"
-              title="Select element"
+              :title="$t('imcEditor.link.selectElement')"
               @mousedown.prevent="browseAsset"
             >
               <i class="ri-file-search-line"></i>
@@ -210,7 +222,7 @@
             <div class="SelectionToolbar-linkSection">
               <button
                 class="SelectionToolbar-button is-button danger"
-                title="Remove link"
+                :title="$t('imcEditor.link.removeLink')"
                 @mousedown.prevent="removeLink"
               >
                 <i class="ri-link-unlink"></i>
@@ -229,7 +241,7 @@
               <button
                 class="SelectionToolbar-button is-button"
                 :disabled="!url.trim()"
-                title="Apply link"
+                :title="$t('imcEditor.link.applyLink')"
                 @mousedown.prevent="applyLink"
               >
                 <i class="ri-check-fill"></i>
@@ -244,13 +256,13 @@
                 class="SelectionToolbar-button is-button"
                 :href="url"
                 target="_blank"
-                title="Open link"
+                :title="$t('imcEditor.link.openLink')"
               >
                 <i class="ri-external-link-fill"></i>
               </a>
               <button
                 class="SelectionToolbar-button is-button danger"
-                title="Remove link"
+                :title="$t('imcEditor.link.removeLink')"
                 @mousedown.prevent="removeLink"
               >
                 <i class="ri-link-unlink"></i>
@@ -273,7 +285,7 @@
         </button>
         <button
           class="SelectionToolbar-button is-button"
-          title="More"
+          :title="$t('imcEditor.menu.more')"
           @mousedown.prevent="openMenu('more')"
         >
           <i class="ri-more-2-fill"></i>
@@ -314,7 +326,32 @@ import ProjectManager from '../../logic/managers/ProjectManager';
 import { getQueryAssetPropsSelection } from '../../logic/expression/filter/filterExpression';
 
 type ButtonDef = { type: FormatType; title: string; icon: string };
-type CalloutDef = { type: string; icon: string };
+type CalloutDef = { type: string; icon: string; label: string };
+
+// Keys under `imcEditor.tools`; the labels themselves come from `$t`.
+const CALLOUT_KEYS: { type: string; icon: string; key: string }[] = [
+  { type: 'info', icon: 'ri-information-2-line', key: 'callout-info' },
+  { type: 'warning', icon: 'ri-alert-line', key: 'callout-warning' },
+  {
+    type: 'solution',
+    icon: 'ri-checkbox-circle-line',
+    key: 'callout-solution',
+  },
+  { type: 'error', icon: 'ri-error-warning-line', key: 'callout-error' },
+];
+const INLINE_BUTTONS: { type: FormatType; key: string; icon: string }[] = [
+  { type: 'bold', key: 'bold', icon: 'ri-bold' },
+  { type: 'italic', key: 'italic', icon: 'ri-italic' },
+  { type: 'highlight', key: 'highlight', icon: 'ri-mark-pen-fill' },
+];
+const OTHER_TOOLS: { type: FormatType; key: string; icon: string }[] = [
+  { type: 'code_block', key: 'code-block', icon: 'ri-code-box-fill' },
+  { type: 'strike', key: 'strike', icon: 'ri-strikethrough' },
+  { type: 'code', key: 'code', icon: 'ri-code-s-slash-fill' },
+  { type: 'superscript', key: 'super', icon: 'ri-superscript' },
+  { type: 'subscript', key: 'sub', icon: 'ri-subscript' },
+  { type: 'formula', key: 'formula', icon: 'ri-formula' },
+];
 
 export default defineComponent({
   name: 'SelectionToolbar',
@@ -331,35 +368,35 @@ export default defineComponent({
       linkOpen: false,
       url: '',
       headingLevels: [1, 2, 3, 4],
-      calloutTypes: [
-        { type: 'info', icon: 'ri-information-2-line', label: 'Info' },
-        { type: 'warning', icon: 'ri-alert-line', label: 'Warning' },
-        {
-          type: 'solution',
-          icon: 'ri-checkbox-circle-line',
-          label: 'Solution',
-        },
-        { type: 'error', icon: 'ri-error-warning-line', label: 'Error' },
-      ] as CalloutDef[],
-      inlineButtons: [
-        { type: 'bold', title: 'Bold', icon: 'ri-bold' },
-        { type: 'italic', title: 'Italic', icon: 'ri-italic' },
-        { type: 'highlight', title: 'Highlight', icon: 'ri-mark-pen-fill' },
-      ] as ButtonDef[],
-      otherTools: [
-        { type: 'code_block', title: 'Code block', icon: 'ri-code-box-fill' },
-        { type: 'strike', title: 'Strikethrough', icon: 'ri-strikethrough' },
-        { type: 'code', title: 'Inline code', icon: 'ri-code-s-slash-fill' },
-        { type: 'superscript', title: 'Superscript', icon: 'ri-superscript' },
-        { type: 'subscript', title: 'Subscript', icon: 'ri-subscript' },
-        { type: 'formula', title: 'Formula', icon: 'ri-formula' },
-      ] as ButtonDef[],
       lastUsed: this.$getAppManager()
         .get(UiPreferenceManager)
         .getPreference<string>('MarkdownBlockEditor-lastUsedTool', ''),
     };
   },
   computed: {
+    // Localized lazily (not in `data()`): the labels must follow the current
+    // locale rather than being frozen at the moment the toolbar is created.
+    calloutTypes(): CalloutDef[] {
+      return CALLOUT_KEYS.map((c) => ({
+        type: c.type,
+        icon: c.icon,
+        label: this.$t(`imcEditor.tools.${c.key}`),
+      }));
+    },
+    inlineButtons(): ButtonDef[] {
+      return INLINE_BUTTONS.map((b) => ({
+        type: b.type,
+        title: this.$t(`imcEditor.tools.${b.key}`),
+        icon: b.icon,
+      }));
+    },
+    otherTools(): ButtonDef[] {
+      return OTHER_TOOLS.map((t) => ({
+        type: t.type,
+        title: this.$t(`imcEditor.tools.${t.key}`),
+        icon: t.icon,
+      }));
+    },
     activeHeading(): 'h1' | 'h2' | 'h3' | 'h4' | null {
       const a = this.active;
       if (!a) return null;
