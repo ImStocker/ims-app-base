@@ -77,7 +77,6 @@ definePageMeta({
     },
   ],
 });
-console.log(route.query);
 const serviceTitle = (route.query.serviceTitle ?? 'IMS Creators').toString();
 
 usePageHead(() => ({
