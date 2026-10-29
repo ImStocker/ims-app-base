@@ -111,6 +111,10 @@ export default defineComponent({
       },
     },
   },
+  beforeUnmount() {
+    // Fixes bug where edited value is lost when switching cells.
+    this.commitValue();
+  },
   methods: {
     onEditorInput(val: AssetPropValue) {
       this.editValue = val;
