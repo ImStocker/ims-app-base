@@ -52,6 +52,11 @@
             <div
               class="ImcGrid-cell-body-content"
               :class="getCellClass(rowIndex, column_index)"
+              :style="
+                isClampCellExpanded(row, column)
+                  ? { '--imc-grid-cell-lines': 'none' }
+                  : undefined
+              "
             >
               <prop-field-value-stack
                 :ref="(el) => setCellRef(rowIndex, column_index, el as any)"
@@ -65,14 +70,7 @@
                     : row.values[column_index].formState
                 "
                 :field="row.values[column_index].field"
-                :edit-mode="
-                  !readonly &&
-                  !row.values[column_index].field.readonly &&
-                  !!focusedCell &&
-                  focusedCell.row === rowIndex &&
-                  focusedCell.col === column_index &&
-                  editMode
-                "
+                :edit-mode="isCellEditMode(row, rowIndex, column_index)"
                 @input-props="onInputCell(rowIndex, column_index, $event)"
                 @change-props="
                   onInputCell(rowIndex, column_index, $event, true)
@@ -92,6 +90,32 @@
                   focusedCell.col === column_index
                 "
               ></slot>
+              <button
+                v-if="
+                  !isCellEditMode(row, rowIndex, column_index) &&
+                  isClampCellExpanded(row, column)
+                "
+                class="is-button is-button-icon-small ImcGrid-cell-clampToggle"
+                :title="$t('common.showLess')"
+                :aria-label="$t('common.showLess')"
+                @mousedown.stop
+                @click.stop="toggleClampCellExpanded(row, column)"
+              >
+                <i class="ri-arrow-up-s-line"></i>
+              </button>
+              <button
+                v-else-if="
+                  !isCellEditMode(row, rowIndex, column_index) &&
+                  isClampCellOverflowed(row, column)
+                "
+                class="is-button is-button-icon-small ImcGrid-cell-clampToggle"
+                :title="$t('common.showMore')"
+                :aria-label="$t('common.showMore')"
+                @mousedown.stop
+                @click.stop="toggleClampCellExpanded(row, column)"
+              >
+                <i class="ri-arrow-down-s-line"></i>
+              </button>
             </div>
           </template>
         </scrollable-table>
@@ -150,6 +174,10 @@ import type {
 } from '../../logic/types/PropsForm';
 import EditorManager from '../../logic/managers/EditorManager';
 import { type SetClickOutsideCancel, setImsClickOutside } from '../utils/ui';
+import {
+  trackElementSize,
+  type TrackElementSizeHandler,
+} from '../../logic/utils/trackElementSize';
 import { makeFormStateFromProps } from '../../logic/utils/assets';
 import { logicalTreeContains } from '../utils/logical-tree';
 import { isElementInteractive } from '../utils/DomElementUtils';
@@ -164,6 +192,14 @@ function getClickedCellCoord(e: MouseEvent): ImcGridCoord | null {
     row,
     col,
   };
+}
+
+function stringSetsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const value of a) {
+    if (!b.has(value)) return false;
+  }
+  return true;
 }
 
 type MouseClickContext = {
@@ -261,6 +297,11 @@ export default defineComponent({
         column: ImcGridColumn;
         colIndex: number;
       } | null,
+      expandedClampCells: new Set<string>(),
+      clampOverflowCells: new Set<string>(),
+      clampResizeTracker: null as null | TrackElementSizeHandler,
+      clampContentObserver: null as null | MutationObserver,
+      clampRemeasurePlanned: false,
     };
   },
   computed: {
@@ -289,7 +330,36 @@ export default defineComponent({
       }
     },
   },
+  // TODO: replace logic of cell expanding with normal row height resize
+  mounted() {
+    const root = this.$el as HTMLElement;
+    this.clampResizeTracker = trackElementSize(root, () => {
+      this.planClampRemeasure();
+    });
+    if (typeof MutationObserver !== 'undefined') {
+      this.clampContentObserver = new MutationObserver(() => {
+        this.planClampRemeasure();
+      });
+      this.clampContentObserver.observe(root, {
+        childList: true,
+        subtree: true,
+      });
+    }
+    this.planClampRemeasure();
+  },
+  updated() {
+    this.planClampRemeasure();
+  },
   unmounted() {
+    if (this.clampResizeTracker) {
+      this.clampResizeTracker.cancel();
+      this.clampResizeTracker = null;
+    }
+    if (this.clampContentObserver) {
+      this.clampContentObserver.disconnect();
+      this.clampContentObserver = null;
+    }
+    // end TODO
     if (this.mouseClickContext) {
       this.mouseClickContext.destroy();
       this.mouseClickContext = null;
@@ -401,6 +471,81 @@ export default defineComponent({
         'state-sel-bottom': is_selected && sel_bottom,
       };
     },
+    // TODO: replace logic of cell expanding with normal row height resize
+    getClampCellKey(row: ImcGridRow, column: ImcGridColumn): string {
+      return `${row.id}:${column.name}`;
+    },
+    isClampCellExpanded(row: ImcGridRow, column: ImcGridColumn): boolean {
+      return this.expandedClampCells.has(this.getClampCellKey(row, column));
+    },
+    isClampCellOverflowed(row: ImcGridRow, column: ImcGridColumn): boolean {
+      return this.clampOverflowCells.has(this.getClampCellKey(row, column));
+    },
+    isCellEditMode(
+      row: ImcGridRow,
+      rowIndex: number,
+      colIndex: number,
+    ): boolean {
+      return (
+        !this.readonly &&
+        !row.values[colIndex].field.readonly &&
+        !!this.focusedCell &&
+        this.focusedCell.row === rowIndex &&
+        this.focusedCell.col === colIndex &&
+        this.editMode
+      );
+    },
+    toggleClampCellExpanded(row: ImcGridRow, column: ImcGridColumn) {
+      const key = this.getClampCellKey(row, column);
+      const new_expanded = new Set(this.expandedClampCells);
+      if (new_expanded.has(key)) {
+        new_expanded.delete(key);
+      } else {
+        new_expanded.add(key);
+      }
+      this.expandedClampCells = new_expanded;
+      this.planClampRemeasure();
+    },
+    planClampRemeasure() {
+      if (this.clampRemeasurePlanned) return;
+      this.clampRemeasurePlanned = true;
+      requestAnimationFrame(() => {
+        this.clampRemeasurePlanned = false;
+        this.remeasureClampOverflow();
+      });
+    },
+    remeasureClampOverflow() {
+      const root = this.$el as HTMLElement | null;
+      if (!root) return;
+      const contents = root.querySelectorAll<HTMLElement>(
+        '.ImcGrid-cell-body-content',
+      );
+      const overflowed = new Set<string>();
+      for (const content of contents) {
+        const cell = content.closest<HTMLElement>('.ScrollableTable-cell');
+        if (!cell) continue;
+        const key = `${cell.dataset.id ?? ''}:${cell.dataset.name ?? ''}`;
+        if (this.expandedClampCells.has(key)) {
+          if (this.clampOverflowCells.has(key)) {
+            overflowed.add(key);
+          }
+          continue;
+        }
+        for (const clamped of content.querySelectorAll<HTMLElement>(
+          '.ImcPresenter-content, .ImcMarkdownPresenter',
+        )) {
+          if (clamped.scrollHeight > clamped.clientHeight + 1) {
+            overflowed.add(key);
+            break;
+          }
+        }
+      }
+      if (!stringSetsEqual(overflowed, this.clampOverflowCells)) {
+        this.clampOverflowCells = overflowed;
+      }
+    },
+    // end TODO
+
     onMouseDown(md_ev: MouseEvent) {
       const mousedown_coord = getClickedCellCoord(md_ev);
       if (!mousedown_coord) return;
@@ -1212,6 +1357,7 @@ export default defineComponent({
 }
 
 .ImcGrid-cell-body-content {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: 100%;
@@ -1227,14 +1373,39 @@ export default defineComponent({
     overflow: hidden;
   }
 }
-// Selection frame: an overlay rather than a border, because a border plus a negative-margin compensation shifts the content on every selection change. It stays inside the cell box so that neighbouring backgrounds and overflow clipping cannot cut it.
+
+// Corner icon toggle that drops the per-cell line clamp ("show more") and
+// brings it back ("show less"). Rendered only when the clamped content
+// overflows. Colours, background and hover come from the standard
+// `is-button-icon-small` theme; here only the compact corner placement.
+.ImcGrid-cell-clampToggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 13px;
+  justify-content: center;
+  border-radius: var(--table-border-radius, 4px) 0 0 0;
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+
+  .ImcGrid-cell-body-content:hover &,
+  &:hover,
+  &:focus-visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+  }
+}
 .ImcGrid-table:deep(.ImcGrid-cell) {
   &:before {
     content: '';
     position: absolute;
     inset: 0;
     border-style: solid;
-    // Zero width on the sides that do not bound the selection: CSS paints borders in order top, right, bottom, left, so a transparent later side erases the mitred corner of an earlier coloured one.
     border-width: 0;
     border-color: var(--imc-grid-selection-border-color);
     z-index: 6;

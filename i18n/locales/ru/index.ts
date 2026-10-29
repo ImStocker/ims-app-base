@@ -3,6 +3,8 @@ export default {
   common: {
     showPassword: 'Показать пароль',
     hidePassword: 'Скрыть пароль',
+    showMore: 'Показать ещё',
+    showLess: 'Свернуть',
     goHome: 'На Главную',
     welcome: 'Добро пожаловать в Creators, {user}',
     optional: '(необязательно)',
