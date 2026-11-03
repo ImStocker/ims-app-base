@@ -204,6 +204,8 @@ const props = defineProps({
 });
 
 let _scrollLeft = 0;
+// Applied snap, subtracted back when measuring the left edge.
+let appliedSnapX = 0;
 let touchScroll = null as null | { clientX: number; time: number };
 const highlightedId = ref<null | string>(null);
 const interactResizer = ref<null | {
@@ -387,6 +389,22 @@ function measureHorizontalOverflow() {
   }
 }
 
+// Snaps the table left edge to a whole pixel so header/body borders align.
+function snapTableToPixelGrid(bbox: DOMRect) {
+  const table = tableRef.value;
+  if (!table) return;
+
+  const natural_left = bbox.left - appliedSnapX;
+  const frac = natural_left - Math.floor(natural_left);
+  const target = frac < 0.001 ? 0 : -frac;
+
+  if (Math.abs(target - appliedSnapX) < 0.001) return;
+
+  appliedSnapX = target;
+  table.style.marginLeft = `${target}px`;
+  table.style.marginRight = `${-target}px`;
+}
+
 function onTouchmove(e: TouchEvent) {
   if (!e.currentTarget) return;
   if (!tableRef.value) return;
@@ -551,6 +569,7 @@ onMounted(() => {
   measureHorizontalOverflow();
   if (tableRef.value) {
     elementsBoundsTracker = trackElementBounds(tableRef.value, (bbox) => {
+      snapTableToPixelGrid(bbox);
       measureHorizontalOverflow();
       if (!tableRef.value) {
         tableRealHeaderReservedSpace.value = 0;
@@ -570,9 +589,6 @@ onMounted(() => {
   }
 });
 
-// Column add/remove/resize and value edits change the content width without
-// changing the outer size of the table, so the overflow has to be re-measured
-// after every patch.
 onUpdated(() => {
   measureHorizontalOverflow();
 });
@@ -584,10 +600,6 @@ onUnmounted(() => {
     elementsBoundsTracker = null;
   }
 });
-/*
-export default defineComponent({
-  name: 'ScrollableTable',
-});*/
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>
@@ -600,7 +612,6 @@ export default defineComponent({
   --table-resizer-hit-size: 10px;
   display: flex;
   flex-direction: column;
-  // `overflow: clip` crops the cell backgrounds to the radius without creating a scroll container; `hidden` would break the sticky header/footer.
   overflow: clip;
   border: var(--table-border-width) solid var(--table-border);
   border-radius: var(--table-border-radius);
@@ -617,15 +628,9 @@ export default defineComponent({
   overflow-x: auto;
 }
 
-// Horizontal scrollbar below the table, rendered only while the columns are
-// wider than the visible area. The 1px content sets the height: the browser
-// adds the scrollbar height on top of it, so the strip follows the theme size
-// (12px on PC, 3px on touch via `.large-scrollbars`).
 .ScrollableTable-hScrollbar {
   flex-shrink: 0;
   overflow-x: auto;
-  // Keep any stray content from producing a vertical scrollbar next to the
-  // horizontal one.
   overflow-y: hidden;
   background: var(--table-bg);
 }
