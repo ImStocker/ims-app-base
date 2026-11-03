@@ -127,6 +127,17 @@
         ></slot>
       </div>
     </div>
+    <div
+      v-if="hasHorizontalOverflow"
+      ref="hScrollbar"
+      class="ScrollableTable-hScrollbar large-scrollbars"
+      @scroll.passive="onScroll"
+    >
+      <div
+        class="ScrollableTable-hScrollbar-content"
+        :style="{ width: `${hScrollbarContentWidth}px` }"
+      ></div>
+    </div>
   </div>
 </template>
 
@@ -135,6 +146,7 @@ import {
   computed,
   onMounted,
   onUnmounted,
+  onUpdated,
   ref,
   useTemplateRef,
   type PropType,
@@ -261,9 +273,13 @@ const fillerColumnIndex = computed(() => {
 });
 
 const headerRef = useTemplateRef('header');
-const bodyRef = useTemplateRef('body');
+const bodyRef = useTemplateRef<HTMLElement>('body');
 const footerRef = useTemplateRef('footer');
 const tableRef = useTemplateRef('table');
+const hScrollbarRef = useTemplateRef<HTMLElement>('hScrollbar');
+
+const hasHorizontalOverflow = ref(false);
+const hScrollbarContentWidth = ref(0);
 
 function getHeaderCellStyle(colIndex: number) {
   const res: Record<string, string> = {};
@@ -322,6 +338,7 @@ function updateScroll() {
     headerRef.value,
     bodyRef.value,
     footerRef.value,
+    hScrollbarRef.value,
   ] as (HTMLElement | null)[];
   for (const content of contents) {
     if (!content) continue;
@@ -339,6 +356,35 @@ function setScrollX(val: number) {
     );
   }
   updateScroll();
+}
+
+function measureHorizontalOverflow() {
+  const body = bodyRef.value;
+  if (!body) return;
+
+  const content_width = body.scrollWidth;
+  const visible_width = body.clientWidth;
+  const overflow = content_width > visible_width + 1;
+  const next_content_width = Math.max(content_width, visible_width);
+
+  if (hasHorizontalOverflow.value !== overflow) {
+    hasHorizontalOverflow.value = overflow;
+  }
+  if (hScrollbarContentWidth.value !== next_content_width) {
+    hScrollbarContentWidth.value = next_content_width;
+  }
+
+  if (!overflow) {
+    if (Math.abs(_scrollLeft) >= 0.001) {
+      setScrollX(0);
+    }
+    return;
+  }
+
+  const bar = hScrollbarRef.value;
+  if (bar && Math.abs(bar.scrollLeft - _scrollLeft) >= 0.001) {
+    updateScroll();
+  }
 }
 
 function onTouchmove(e: TouchEvent) {
@@ -502,8 +548,10 @@ onMounted(() => {
   if (footerRef.value) {
     setScrollX(footerRef.value.scrollLeft);
   }
+  measureHorizontalOverflow();
   if (tableRef.value) {
     elementsBoundsTracker = trackElementBounds(tableRef.value, (bbox) => {
+      measureHorizontalOverflow();
       if (!tableRef.value) {
         tableRealHeaderReservedSpace.value = 0;
         return;
@@ -520,6 +568,13 @@ onMounted(() => {
       );
     });
   }
+});
+
+// Column add/remove/resize and value edits change the content width without
+// changing the outer size of the table, so the overflow has to be re-measured
+// after every patch.
+onUpdated(() => {
+  measureHorizontalOverflow();
 });
 
 onUnmounted(() => {
@@ -560,6 +615,23 @@ export default defineComponent({
 
 .ScrollableTable-footer {
   overflow-x: auto;
+}
+
+// Horizontal scrollbar below the table, rendered only while the columns are
+// wider than the visible area. The 1px content sets the height: the browser
+// adds the scrollbar height on top of it, so the strip follows the theme size
+// (12px on PC, 3px on touch via `.large-scrollbars`).
+.ScrollableTable-hScrollbar {
+  flex-shrink: 0;
+  overflow-x: auto;
+  // Keep any stray content from producing a vertical scrollbar next to the
+  // horizontal one.
+  overflow-y: hidden;
+  background: var(--table-bg);
+}
+
+.ScrollableTable-hScrollbar-content {
+  height: 1px;
 }
 
 .ScrollableTable-header-center,
