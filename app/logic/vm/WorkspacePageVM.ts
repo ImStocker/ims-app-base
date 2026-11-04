@@ -1,3 +1,4 @@
+import type { RouteLocationNamedRaw } from 'vue-router';
 import type { IAppManager } from '../managers/IAppManager';
 import { PageVMBase } from '../types/PageVMBase';
 import CreatorAssetManager from '../managers/CreatorAssetManager';
@@ -92,19 +93,29 @@ export class WorkspacePageVM extends PageVMBase<WorkspacePageVMParams> {
     assert(projectInfo, 'Project is not loaded');
 
     if (change_res.wDelIds.includes(this.workspaceId)) {
-      openProjectLink(
-        this.appManager,
-        {
-          id: projectInfo.id,
-          title: projectInfo.title,
-        },
-        {
-          name: 'project-workspace-by-name',
-          params: {
-            workspaceName: 'gdd',
-          },
-        },
+      // Nearest surviving ancestor first
+      const parent_id = change_res.wTchIds.find(
+        (id) => id !== this.workspaceId && !change_res.wDelIds.includes(id),
       );
+      const parent = parent_id
+        ? this.appManager
+            .get(CreatorAssetManager)
+            .getWorkspaceByIdViaCacheSync(parent_id)
+        : null;
+      const target: RouteLocationNamedRaw = parent
+        ? {
+            name: 'project-workspace-by-id',
+            params: {
+              workspaceId: parent.id,
+            },
+          }
+        : {
+            name: 'project-workspace-by-name',
+            params: {
+              workspaceName: 'gdd',
+            },
+          };
+      openProjectLink(this.appManager, projectInfo, target);
       return;
     }
   }
