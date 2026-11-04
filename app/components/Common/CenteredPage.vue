@@ -83,6 +83,11 @@ $padding-top: 38px;
 
 .CenteredPage-header {
   display: flex;
+  // Не участвует в max-content колонки (fit-content): иначе nowrap-заголовок
+  // растит колонку вместо обрезки. На layout-этапе min-width:100% растягивает
+  // шапку до ширины колонки (её задаёт контент, напр. WidthResizer 800px).
+  width: 0;
+  min-width: 100%;
 }
 
 .CenteredPage-content {

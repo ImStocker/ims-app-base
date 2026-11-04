@@ -412,6 +412,18 @@ export default defineComponent({
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
+
+  h1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :deep(.RenamableText-static),
+  :deep(.RenamableText-editor) {
+    flex: 1;
+  }
 
   h1,
   :deep(.ImsTextInput) {
