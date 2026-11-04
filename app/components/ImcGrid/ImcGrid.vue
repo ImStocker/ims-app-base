@@ -551,6 +551,15 @@ export default defineComponent({
       if (!mousedown_coord) return;
       if (this.mouseClickContext) return;
 
+      const edit_row = this.rows[mousedown_coord.row];
+      if (
+        edit_row &&
+        edit_row.values[mousedown_coord.col] &&
+        this.isCellEditMode(edit_row, mousedown_coord.row, mousedown_coord.col)
+      ) {
+        return;
+      }
+
       let clicked_on_already_focused = false;
       const onmouseup = (mu_ev: MouseEvent) => {
         if (!this.mouseClickContext) {
