@@ -106,6 +106,7 @@ export default defineComponent({
 
 .DialogContent-loading {
   text-align: center;
+  margin: auto;
   .loaderSpinner {
     font-size: 16px;
   }
