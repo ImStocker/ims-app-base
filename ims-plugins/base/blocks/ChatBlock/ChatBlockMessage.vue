@@ -523,6 +523,7 @@ export default defineComponent({
   border-radius: 20px;
   padding: 10px 20px 5px;
   min-width: 150px;
+  max-width: 100%;
   position: relative;
   will-change: transform;
 

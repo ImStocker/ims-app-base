@@ -419,7 +419,10 @@ export default defineComponent({
       );
     },
     blockFullAccess() {
-      return this.resolvedBlock.rights === AssetRights.FULL_ACCESS;
+      return (
+        !this.isReadOnly &&
+        this.resolvedBlock.rights === AssetRights.FULL_ACCESS
+      );
     },
     editorBlockHandler(): EditorBlockHandler {
       return {
@@ -713,6 +716,7 @@ export default defineComponent({
       ).invokeBlock(method, ...args);
     },
     startRenaming() {
+      if (this.isReadOnly) return;
       this.isRenaming = true;
     },
     cancelRenaming() {
@@ -747,6 +751,15 @@ export default defineComponent({
 
     .EditorBlock-notificationIcon {
       display: none;
+    }
+  }
+  &.state-readonly {
+    .EditorBlock-header-title-value {
+      cursor: default;
+
+      &:not(.RenamableText-editor):hover {
+        background: transparent;
+      }
     }
   }
   &.state-hide-content {

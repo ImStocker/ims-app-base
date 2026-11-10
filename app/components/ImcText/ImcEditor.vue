@@ -445,11 +445,17 @@ export default defineComponent({
   display: grid;
   grid-column: 1;
   grid-row: 1;
+  // grid-item по умолчанию min-width:auto = min-content: pre с
+  // white-space:pre (код) раздувал dropZone шире контейнера.
+  min-width: 0;
 }
 .ImcEditor-presenter-wrapper,
 .ImcEditor-activated {
   grid-column: 1;
   grid-row: 1;
+  // То же для grid-items: presenter (pre) и активный редактор
+  // (code-block) не должны растягивать редактор за пределы формы.
+  min-width: 0;
 }
 .ImcEditor-presenter-wrapper {
   position: relative;

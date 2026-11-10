@@ -52,11 +52,12 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .RightPanel {
-  position: fixed;
+  position: absolute;
   right: 0;
   top: 0;
   bottom: 0;
-  width: 400px;
+  width: var(--right-panel-width, 400px);
+  pointer-events: auto;
   background: var(--local-box-color);
   z-index: 200;
   box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.2);

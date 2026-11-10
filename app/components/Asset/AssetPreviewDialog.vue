@@ -582,7 +582,15 @@ export default defineComponent({
   display: flex;
 }
 .AssetPreviewDialog-forHistory {
-  margin-left: -170px;
+  @include devices-mixins.device-type(pc) {
+    position: relative;
+    left: calc(var(--right-panel-width, 400px) / -2);
+    max-width: min(800px, calc(100vw - var(--right-panel-width, 400px) - 20px));
+  }
+
+  @include devices-mixins.device-type(not-pc) {
+    margin-left: -170px;
+  }
 }
 .AssetPreviewDialog-loading-wrapper {
   display: flex;

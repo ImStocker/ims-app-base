@@ -459,6 +459,9 @@ export default defineComponent({
 .ImcEditorActivated {
   position: relative;
 }
+.ImcEditorAugmentation {
+  min-width: 0;
+}
 .ImcEditorActivated-autocomplete-target,
 .ImcEditorActivated-toolbar-target {
   position: absolute;

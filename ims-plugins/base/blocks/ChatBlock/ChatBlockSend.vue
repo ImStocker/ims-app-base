@@ -146,6 +146,7 @@ export default defineComponent({
 .ChatBlockSend {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   background: var(--local-bg-color);
   border: 1px solid var(--local-border-color);
   border-radius: 12px;

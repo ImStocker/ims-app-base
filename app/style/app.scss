@@ -23,6 +23,7 @@ $dark-color-selected-dropdown-list-item: #4C4B48;
 $notification-task-background-color: #999;
 
 :root {
+  --right-panel-width: 400px;
   --color-main-yellow: #{$color-main-yellow};
   --color-inherited-value: #{$color-inherited-value};
   --color-ready-value: #{$color-ready-value};
