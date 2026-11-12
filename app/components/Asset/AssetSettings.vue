@@ -56,6 +56,10 @@ export default defineComponent({
       type: Object as PropType<AssetFullEditorVM>,
       required: true,
     },
+    extraItems: {
+      type: Array as PropType<MenuListItem[]>,
+      default: () => [],
+    },
   },
   emits: ['delete'],
   computed: {
@@ -90,6 +94,9 @@ export default defineComponent({
     },
     menuList() {
       const list: any[] = [];
+      if (this.extraItems && this.extraItems.length) {
+        list.push(...this.extraItems);
+      }
       if (!this.isDiscussion && !this.isArticle) {
         list.push(
           this.currentSingleAsset && this.currentSingleAsset.name

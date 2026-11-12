@@ -61,7 +61,7 @@
           :asset-id="vm.assetId"
         ></asset-completion-check-widget>
         <button
-          v-if="selectionInfo.hasLocale"
+          v-if="selectionInfo.hasLocale && !isMobileScreen"
           class="is-button is-button-icon AssetPageHeader-manage-locale"
           :title="$t('gddPage.localization')"
           @click="openLocale()"
@@ -77,7 +77,7 @@
           <i class="ri-list-unordered"></i>
         </button>
         <button
-          v-if="userIsAdmin && !isSystemAsset && !isDesktop"
+          v-if="userIsAdmin && !isSystemAsset && !isDesktop && !isMobileScreen"
           class="is-button is-button-icon AssetPageHeader-manage-share"
           :title="$t('gddPage.share')"
           @click="openSetUpAccessDialog()"
@@ -87,6 +87,7 @@
         <div class="AssetPageHeader-manage-gear">
           <asset-settings
             :asset-editor="vm.assetFullEditorVM"
+            :extra-items="overflowMenuItems"
             @delete="deleteAsset"
           ></asset-settings>
         </div>
@@ -115,7 +116,7 @@ import { convertTranslatedTitle } from '../../../logic/utils/assets';
 import CreatorAssetManager from '../../../logic/managers/CreatorAssetManager';
 import DialogManager from '../../../logic/managers/DialogManager';
 import ConfirmDialog from '../../Common/ConfirmDialog.vue';
-import UiManager from '../../../logic/managers/UiManager';
+import UiManager, { ScreenSize } from '../../../logic/managers/UiManager';
 import { openProjectLink } from '../../../logic/router/routes-helpers';
 import SetUpAccessDialog from '../Rights/SetUpAccessDialog.vue';
 import RequestSignInBlock from '../../Form/RequestSignInBlock.vue';
@@ -128,6 +129,7 @@ import { calcResolvedBlocks } from '../../../logic/types/AssetFullInstance';
 import AssetCompletionCheckWidget from '../Completion/AssetCompletionCheckWidget.vue';
 import AssetPropsDialog from '../AssetPropsDialog.vue';
 import EditorManager from '../../../logic/managers/EditorManager';
+import type { MenuListItem } from '../../../logic/types/MenuList';
 
 export default defineComponent({
   name: 'AssetPageHeader',
@@ -192,6 +194,23 @@ export default defineComponent({
     },
     userIsAdmin() {
       return this.$getAppManager().get(ProjectManager).isAdmin();
+    },
+    isMobileScreen() {
+      return this.$getAppManager()
+        .get(UiManager)
+        .isScreenSize(ScreenSize.NOT_PC);
+    },
+    overflowMenuItems(): MenuListItem[] {
+      if (!this.isMobileScreen) return [];
+      const items: MenuListItem[] = [];
+      if (this.selectionInfo.hasLocale) {
+        items.push({
+          title: this.$t('gddPage.localization'),
+          icon: 'lang',
+          action: this.openLocale,
+        });
+      }
+      return items;
     },
     projectIsHub() {
       return !!(this.projectInfo
@@ -392,12 +411,13 @@ export default defineComponent({
   align-items: center;
   flex: 1;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .AssetPageHeader-title {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0;
+  min-width: min(100px, 100%);
   flex: 1;
 
   .App-header {
@@ -420,9 +440,15 @@ export default defineComponent({
     text-overflow: ellipsis;
   }
 
-  :deep(.RenamableText-static),
+  :deep(.RenamableText-static) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   :deep(.RenamableText-editor) {
     flex: 1;
+    min-width: 0;
   }
 
   h1,
@@ -479,7 +505,8 @@ export default defineComponent({
   margin-top: 15px;
 }
 .AssetPageHeader-assetName {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 12.5px;
   font-weight: normal;
   display: flex;
