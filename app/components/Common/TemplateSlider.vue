@@ -188,7 +188,7 @@ export default defineComponent({
       this.$emit('update:modelValue', id);
     },
     getOpenLink(projectId: string) {
-      return `https://ims.cr5.space/app/p/${projectId}/project`;
+      return `https://imsc.space/app/p/${projectId}/project`;
     },
     sliderPrev() {
       const track = this.$refs.sliderTrack as HTMLElement;
