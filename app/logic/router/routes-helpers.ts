@@ -286,37 +286,10 @@ export function getSignInLink(query?: {
   error?: string;
   email?: string;
 }) {
-  const currentUrl = useRequestURL();
-  const conf = useRuntimeConfig();
-  if (checkMainDomainRoutesAreUsing()) {
-    return {
-      name: 'sign-in',
-      query,
-    };
-  } else {
-    let main_domain = conf.public.MAIN_DOMAIN;
-    if (!main_domain) main_domain = currentUrl.hostname;
-    const url = new URL(
-      '/app/sign-in',
-      currentUrl.protocol +
-        '//' +
-        main_domain +
-        (currentUrl.port ? ':' + currentUrl.port : ''),
-    );
-    if (query && query.error) {
-      url.searchParams.append('error', query.error);
-    }
-    if (query && query.redirect) {
-      url.searchParams.append('redirect', query.redirect);
-      if (
-        checkShowcaseDomainRoutesAreUsing() &&
-        !checkMainDomainRoutesAreUsing()
-      ) {
-        url.searchParams.append('redirectFromService', 'showcase');
-      }
-    }
-    return url.toString();
-  }
+  return {
+    name: 'sign-in',
+    query,
+  };
 }
 
 export async function openSignInLink(
