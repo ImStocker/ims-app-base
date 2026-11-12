@@ -88,7 +88,7 @@ export function getServiceLink(
     path: string,
   ): RouteLocationRaw => {
     if (
-      (is_space && checkShowcaseDomainRoutesAreUsing()) ||
+      checkShowcaseDomainRoutesAreUsing() ||
       (!is_space && checkMainDomainRoutesAreUsing())
     ) {
       const route: RouteLocationRaw = {
