@@ -831,29 +831,6 @@ export default defineComponent({
   align-items: center;
   break-inside: avoid;
   gap: 5px;
-
-  @include devices-mixins.device-type(mb) {
-    display: grid;
-    grid-template-columns: 1fr auto;
-
-    :deep(.AssetBlockEditor-hideButton) {
-      grid-row: 1;
-      grid-column: 1;
-    }
-
-    .EditorBlock-header-title {
-      grid-row: 1;
-      grid-column: 2;
-    }
-    .EditorBlock-header-toolbar {
-      grid-row: 2;
-      grid-column: 1;
-    }
-    .EditorBlock-header-menu {
-      grid-row: 2;
-      grid-column: 2;
-    }
-  }
 }
 
 .EditorBlock-header-title {
