@@ -4,7 +4,7 @@
       <label class="TemplateSlider-label">
         {{ label }}
       </label>
-      <div class="TemplateSlider-nav">
+      <div v-if="!initialTemplate" class="TemplateSlider-nav">
         <button
           class="TemplateSlider-btn"
           :disabled="!canPrev"
@@ -25,8 +25,14 @@
       </div>
     </div>
 
+    <div v-if="initialTemplate" class="TemplateSlider-static">
+      <i class="ri-file-list-3-line TemplateSlider-staticIcon"></i>
+      <span class="TemplateSlider-staticTitle">
+        {{ initialTemplate?.title }}
+      </span>
+    </div>
     <div
-      v-if="loading"
+      v-else-if="!loaded"
       class="TemplateSlider-track TemplateSlider-track--loading"
     >
       <div class="TemplateSlider-spinner"></div>
@@ -73,8 +79,8 @@
         </div>
       </div>
     </div>
-
     <div
+      v-if="loaded && !initialTemplate"
       class="TemplateSlider-card TemplateSlider-empty"
       :class="{ selected: selectedId === null }"
       @click="select(null)"
@@ -112,8 +118,8 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
-    initialTemplateId: {
-      type: String as PropType<string | null>,
+    initialTemplate: {
+      type: Object as PropType<{ id: string; title: string } | null>,
       default: null,
     },
   },
@@ -121,7 +127,7 @@ export default defineComponent({
   data() {
     return {
       templates: [] as ProjectTemplate[],
-      loading: false,
+      loaded: false,
       sliderIndex: 0,
       selectedId: null as string | null,
       canPrev: false,
@@ -136,21 +142,23 @@ export default defineComponent({
     },
   },
   async mounted() {
-    await this.loadTemplates();
-    await this.$nextTick();
-    const track = this.$refs.sliderTrack as HTMLElement;
-    if (track) {
-      track.scrollLeft = 0;
+    if (this.initialTemplate) {
+      this.selectedId = this.initialTemplate.id;
+      this.$emit('update:modelValue', this.selectedId);
+    } else {
+      await this.loadTemplates();
+      await this.$nextTick();
+      this.scrollToSelected();
+      this.$nextTick(() => this.updateScrollState());
+      window.addEventListener('resize', this.updateScrollState);
     }
-    this.$nextTick(() => this.updateScrollState());
-    window.addEventListener('resize', this.updateScrollState);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateScrollState);
   },
   methods: {
     async loadTemplates() {
-      this.loading = true;
+      this.loaded = false;
       try {
         const lang = this.$getAppManager().get(UiManager).getLanguage();
         const all = await this.$getAppManager()
@@ -158,37 +166,45 @@ export default defineComponent({
           .loadProjectTemplates();
         const use_lang = lang === 'ru' ? 'ru' : 'en';
         this.templates = all.filter((p) => p.lang === use_lang && p.id);
-        if (
-          this.modelValue !== null &&
-          this.templates.some((t) => t.id === this.modelValue)
-        ) {
-          this.selectedId = this.modelValue;
-        } else if (
-          this.initialTemplateId &&
-          this.templates.some((t) => t.id === this.initialTemplateId)
-        ) {
-          this.selectedId = this.initialTemplateId;
-        } else if (this.templates.length > 0) {
-          this.selectedId = this.templates[0].id;
-        } else {
-          this.selectedId = null;
-        }
-
-        this.$emit('update:modelValue', this.selectedId);
       } catch {
         this.templates = [];
-        this.selectedId = null;
-        this.$emit('update:modelValue', null);
       } finally {
-        this.loading = false;
+        this.loaded = true;
       }
+
+      if (
+        this.modelValue !== null &&
+        this.templates.some((t) => t.id === this.modelValue)
+      ) {
+        this.selectedId = this.modelValue;
+      } else if (this.templates.length > 0) {
+        this.selectedId = this.templates[0].id;
+      } else {
+        this.selectedId = null;
+      }
+
+      this.$emit('update:modelValue', this.selectedId);
+    },
+    scrollToSelected() {
+      const track = this.$refs.sliderTrack as HTMLElement;
+      if (!track) return;
+      const idx = this.templates.findIndex((t) => t.id === this.selectedId);
+      if (idx <= 0) {
+        track.scrollLeft = 0;
+        return;
+      }
+      const cards = track.querySelectorAll<HTMLElement>('.TemplateSlider-card');
+      const card = cards[idx];
+      if (!card) return;
+      track.scrollLeft +=
+        card.getBoundingClientRect().left - track.getBoundingClientRect().left;
     },
     select(id: string | null) {
       this.selectedId = id;
       this.$emit('update:modelValue', id);
     },
     getOpenLink(projectId: string) {
-      return `https://ims.cr5.space/app/p/${projectId}/project`;
+      return `https://imsc.space/app/p/${projectId}/project`;
     },
     sliderPrev() {
       const track = this.$refs.sliderTrack as HTMLElement;
@@ -473,6 +489,31 @@ export default defineComponent({
 
 .TemplateSlider-empty {
   align-items: flex-start;
+}
+
+// Статичная строка вместо выбора: когда переданного шаблона нет
+// в списке доступных, весь выбор скрывается и шаблон не меняется.
+.TemplateSlider-static {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--local-border-color);
+  border-radius: 18px;
+  background: var(--local-bg-color);
+}
+
+.TemplateSlider-staticIcon {
+  flex: none;
+  font-size: 18px;
+  color: var(--local-sub-text-color);
+}
+
+.TemplateSlider-staticTitle {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--local-text-color);
 }
 
 .no-thumbs {
