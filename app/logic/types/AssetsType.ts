@@ -178,6 +178,25 @@ export type AssetsChangeResult = AssetsFullResult & {
   changeId: string | null;
 };
 
+export type AssetFindMatch = {
+  assetId: string;
+  blockId: string;
+  blockName: string | null;
+  prop: string;
+  value: AssetPropValue;
+};
+
+export type AssetsFindResult = {
+  ids: string[];
+  matches: AssetFindMatch[];
+  more: boolean;
+  objects: {
+    assetShorts: {
+      [key: string]: AssetShort;
+    };
+  };
+};
+
 export type AssetsBatchChangeResultDTO = AssetsChangeResult & {
   createdIds: string[];
   updatedIds: string[];

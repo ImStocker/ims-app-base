@@ -2371,6 +2371,41 @@ export function assetPropsContainValue(
   return false;
 }
 
+export type AssetPropsFindMatch = {
+  prop: string;
+  value: AssetPropValue;
+};
+
+export function findAssetPropsMatches(
+  props: AssetProps | null | undefined,
+  find: AssetProps,
+  options?: AssetPropsContainValue,
+): AssetPropsFindMatch[] {
+  const res: AssetPropsFindMatch[] = [];
+  if (!props) return res;
+  const wholeProp = options?.wholeProp ?? false;
+  const ignoreCase = options?.ignoreCase ?? false;
+
+  const findHasSubkeys = Object.keys(find).some((k) => k !== '');
+  if (!findHasSubkeys) {
+    if (!('' in find)) return res;
+    const needle = find[''] as AssetPropValue;
+    for (const [key, val] of Object.entries(props)) {
+      const r = _findReplaceAssetPropValue(val, needle, undefined, wholeProp, ignoreCase);
+      if (r !== val) res.push({ prop: key, value: val });
+    }
+    return res;
+  }
+
+  const roots = [...new Set(Object.keys(props).map((k) => k.split('\\')[0]))];
+  for (const root of roots) {
+    if (_matchAssetPropsPattern(props, root, find, wholeProp, ignoreCase)) {
+      res.push({ prop: root, value: props[root] });
+    }
+  }
+  return res;
+}
+
 export function replaceAssetProps(
   props: AssetProps | null | undefined,
   find: AssetProps,
@@ -2391,7 +2426,7 @@ export function replaceAssetProps(
       const findValue = (find[''] ?? val) as AssetPropValue;
       const replaceValue = (replace[''] ?? val) as AssetPropValue;
       const r = _findReplaceAssetPropValue(val, findValue, replaceValue, wholeProp, ignoreCase);
-      res[key] = r;
+      res[key] = r ?? val;
     }
     return res;
   }

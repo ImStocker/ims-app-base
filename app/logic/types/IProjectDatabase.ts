@@ -8,6 +8,7 @@ import type {
   AssetReferencesResult,
   AssetMoveResult,
   AssetsChangeResult,
+  AssetsFindResult,
   AssetsFullResult,
   AssetsGraph,
   AssetsShortResult,
@@ -23,7 +24,7 @@ import type {
   ApiResultListWithTotal,
 } from './ProjectTypes';
 import type { AssetProps, AssetPropsPlainObject } from './Props';
-import type { AssetPropsSelection } from './PropsSelection';
+import type { AssetPropsSelection, AssetPropsSelectionOrder } from './PropsSelection';
 import type {
   ChangeWorkspaceRequest,
   Workspace,
@@ -73,6 +74,17 @@ export interface IProjectDatabaseAsset {
     },
     options?: { pid?: string },
   ): Promise<AssetsChangeResult>;
+  assetsFind(
+    params: {
+      where?: AssetWhereParams;
+      find: AssetProps;
+      count?: number;
+      offset?: number;
+      order?: AssetPropsSelectionOrder[];
+      options?: { wholeProp?: boolean; ignoreCase?: boolean };
+    },
+    options?: { pid?: string },
+  ): Promise<AssetsFindResult>;
   assetsChangeUndo(
     params: {
       changeId: string;
