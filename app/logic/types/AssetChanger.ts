@@ -2,6 +2,7 @@ import { assert } from '../utils/typeUtils';
 import { AssetChangeBatch } from './AssetChangeBatch';
 import type {
   AssetBlockParamsDTO,
+  AssetChangeBatchOpDTO,
   AssetChangeContent,
   AssetForEdit,
   AssetPropsParamsDTO,
@@ -19,7 +20,6 @@ import {
   finishMergeInheritedProps,
   mergeInheritedProps,
   parseAssetNewBlockRef,
-  parseChange,
   type AssetProps,
   type AssetPropValue,
 } from './Props';
@@ -68,12 +68,6 @@ export type BlockCursor = {
   offset: number;
 };
 
-export type PropKeyRenamePending = {
-  blockRef: string;
-  propKey: string;
-  newPropKey: string;
-};
-
 export abstract class AssetChanger {
   private _history: HistoryRecord[] = [];
   private _historyPointer = 0;
@@ -93,6 +87,7 @@ export abstract class AssetChanger {
 
   protected abstract _saveChangesImpl(
     request: HistorySaveRequest[],
+    extraOps?: AssetChangeBatchOpDTO[],
   ): Promise<HistorySaveResponse>;
 
   discard() {
@@ -562,56 +557,6 @@ export abstract class AssetChanger {
     return batch.getBatch();
   }
 
-  getPendingPropKeyRenames(): PropKeyRenamePending[] {
-    const result: PropKeyRenamePending[] = [];
-    const batches = this._getBatchedChanges();
-    for (const [, batch] of batches) {
-      for (const change of batch.getBatch()) {
-        if (!change.blocks) continue;
-        for (const [blockRef, blockCh] of Object.entries(change.blocks)) {
-          const changeProps = blockCh?.props;
-          if (!changeProps) continue;
-          const propsList: AssetProps[] = Array.isArray(changeProps)
-            ? changeProps
-            : [changeProps];
-          for (const propsItem of propsList) {
-            const parsed = parseChange(propsItem);
-            for (const { oldname, newname } of parsed.renaming) {
-              result.push({ blockRef, propKey: oldname, newPropKey: newname });
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  getPendingPropKeyRenameOpIds(): number[] {
-    const op_ids: number[] = [];
-    for (let i = this._historyPointer - 1; i >= this._savePointer; i--) {
-      const rec = this._history[i];
-      if (typeof rec.redo === 'function' || !rec.redo?.blocks) continue;
-      if (this._changeHasPropKeyRename(rec.redo)) {
-        op_ids.push(rec.opId);
-      }
-    }
-    return [...new Set(op_ids)].reverse();
-  }
-
-  private _changeHasPropKeyRename(change: AssetChangeContent): boolean {
-    for (const blockCh of Object.values(change.blocks ?? {})) {
-      const props = blockCh?.props;
-      if (!props) continue;
-      const propsList = Array.isArray(props) ? props : [props];
-      for (const propsItem of propsList) {
-        if (parseChange(propsItem).renaming.length > 0) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   private _updateComputedBlockProps(exists_block: AssetBlockEntity) {
     exists_block.computed = mergeInheritedProps(
       exists_block.inherited ?? {},
@@ -880,7 +825,7 @@ export abstract class AssetChanger {
     return result;
   }
 
-  async saveChanges(): Promise<boolean> {
+  async saveChanges(extraOps?: AssetChangeBatchOpDTO[]): Promise<boolean> {
     if (!this._hasChangesInHistory) {
       return false;
     }
@@ -900,7 +845,7 @@ export abstract class AssetChanger {
           changes: batch.getBatch(),
         }));
 
-        const response = await this._saveChangesImpl(request);
+        const response = await this._saveChangesImpl(request, extraOps);
 
         // Формируем undo
         if (history_pointer_old > save_pointer_old) {

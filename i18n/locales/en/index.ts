@@ -295,6 +295,17 @@ export default {
   gddPage: {
     menu: {
       search: 'Search',
+      replace: 'Find and replace',
+      replaceFind: 'Find text',
+      replaceWhole: 'Whole match',
+      replaceIgnoreCase: 'Match case',
+      replacePlaceholder: 'Replace with',
+      replaceAll: 'Replace all',
+      replaceConfirmHeader: 'Replace',
+      replaceConfirm: 'Replace in {num} elements found by the search?',
+      replaceDone: 'Replaced in {num} elements',
+      replaceNothing: 'Nothing to replace',
+      replaceUndo: 'Undo',
       noResults: 'Nothing found',
       empty: 'Nothing yet',
       noSubFolders: 'No subfolders yet',
@@ -488,11 +499,29 @@ export default {
     propsBlockChildrenDeleteHeader: 'Delete template element property',
     propsBlockChildrenDeleteBody:
       'Property will be deelted in all instances of this template. Are you sure want to continue?',
-    propsBlockPropagateRenameHeader: 'The change will affect child elements',
-    propsBlockPropagateRenameBody:
-      'The property key rename will be applied to {count} child elements. Apply the rename to all?',
     propsBlockPropagateRenameAll: 'For all',
     propsBlockPropagateRenameCurrent: 'Only for current',
+    refactor: {
+      header: 'The change will affect child elements',
+      headerEnum: 'The change will affect other project elements',
+      applyAll: 'Apply to all',
+      applyCurrent: 'Apply to current only',
+      moreChanges: '...and {count} more changes',
+      childrenCount: 'The change will be applied to {count} child elements.',
+      skippedRights: '{count} elements will be skipped due to permissions.',
+      enumTargets:
+        'The change will be applied to all project elements that use this enum value.',
+      keyRename: 'Rename field "{from}" to "{to}"',
+      keyDelete: 'Delete field "{from}"',
+      blockRename: 'Rename block "{from}" to "{to}"',
+      blockDelete: 'Delete block "{from}"',
+      primaryChange: 'Set primary column to "{value}"',
+      enumRename: 'Rename enum value "{from}" to "{to}"',
+      enumTitleChange: 'Change title of enum value "{name}"',
+      propagateDone: 'Changes applied to {count} elements',
+      propagateError:
+        'The asset was saved, but related elements were not updated',
+    },
     embedBlockAddDialogHeader: 'Insert embedded document',
     embedBlockLinkAnyPlaceholder:
       'Enter link to the document (Google Docs, Miro, Figma and etc.)',

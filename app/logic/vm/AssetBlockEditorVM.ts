@@ -1,6 +1,7 @@
 import type { IAppManager } from '../managers/IAppManager';
 import CreatorAssetManager from '../managers/CreatorAssetManager';
 import type {
+  AssetChangeBatchOpDTO,
   AssetForEdit,
   AssetQueryWhere,
   AssetReferenceEntity,
@@ -18,16 +19,24 @@ import AssetRefsDialog from '../../components/Asset/References/AssetRefsDialog.v
 import {
   makeBlockRef,
   mergeInheritedProps,
-  parseAssetNewBlockRef,
   stringifyAssetNewBlockRef,
   type AssetProps,
 } from '../types/Props';
 import { AssetRights } from '../types/Rights';
+import type { AssetChanger, BlockCursor } from '../types/AssetChanger';
+import { extractRefactorChanges } from './refactor/detectRefactorChanges';
+import {
+  planInheritancePropagation,
+  type InheritancePropagationPlan,
+} from './refactor/planInheritancePropagation';
+import {
+  buildEnumReplaceRequest,
+  buildRefactorDialogMessage,
+} from './refactor/buildRefactorDialogMessage';
 import type {
-  AssetChanger,
-  BlockCursor,
-  PropKeyRenamePending,
-} from '../types/AssetChanger';
+  RefactorEnumChange,
+  RefactorInheritanceChange,
+} from './refactor/refactorTypes';
 import ProjectManager from '../managers/ProjectManager';
 import { assert } from '../utils/typeUtils';
 import {
@@ -44,7 +53,6 @@ import type {
 } from '../types/ProjectTypes';
 import type { IProjectContext } from '../types/IProjectContext';
 import { computed, reactive, unref, type ComputedRef } from 'vue';
-import { AssetPropWhereOpKind } from '../types/PropsWhere';
 import EditorManager, {
   type EditorContextForAssetRequested,
 } from '../managers/EditorManager';
@@ -87,6 +95,12 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
   editorContextForAssetRequest: EditorContextForAssetRequested | null = null;
   private _mountedComponents = new Map<string, IAssetBlockComponent>();
   historyModeVM: AssetHistoryVM | null = null;
+  /**
+   * `changeId` отдельных вызовов пропагации (сейчас — enum-замена), которые
+   * шли вне общего сейва. Хранятся, чтобы откат можно было выполнить
+   * цепочкой: сначала пропагация, затем само сохранение.
+   */
+  propagatedChangeIds: string[] = [];
 
   static CreateInstance(
     appManager: IAppManager,
@@ -386,210 +400,195 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     await this.assetChanger.redo();
   }
 
+  /**
+   * Сохраняет изменения.
+   *
+   * Если в сохраняемом батче есть изменения, попадающие под рефакторинг
+   * (переименование/удаление ключей PropBlock, PropsBlock, ValueTableBlock,
+   * переименование элемента enum), а затрагиваемые элементы существуют —
+   * спрашивает пользователя: «Изменить во всех» / «Изменить в текущем» /
+   * «Отмена».
+   *
+   * При «Изменить во всех» операции пропагации по наследованию уходят тем же
+   * вызовом `assetsChangeBatch`, что и сохранение: одна транзакция и один
+   * `changeId`. Enum-пропагация идёт отдельным вызовом `assetsChangeReplace`
+   * (сервер сам ищет потребителей значений) — см. `propagatedChangeIds`.
+   *
+   * @returns `false` — сохранение не выполнено (нет изменений либо отмена).
+   */
   async saveChanges(): Promise<boolean> {
     if (!this.assetFull) {
       return false;
     }
 
-    // TODO: Refactor
-    // let propagate_renames: PropKeyRenamePending[] | null = null;
-    // let propagate_rename_op_id: number | undefined;
+    const refactor = await this._prepareRefactorPropagation();
+    if (refactor === null) {
+      // Пользователь отменил сохранение.
+      return false;
+    }
 
-    // const pending_renames = this.assetChanger
-    //   .getPendingPropKeyRenames()
-    //   .filter((rename) => this._propKeyExistsInSavedBlock(rename));
-
-    // if (pending_renames.length > 0) {
-    //   const children = await this.getChildrenAssets(this.assetFull.id);
-    //   if (children.length > 0) {
-    //     const answer = await this.appManager
-    //       .get(DialogManager)
-    //       .show(ConfirmPropagateRenameDialog, {
-    //         header: this.appManager.$t(
-    //           'assetEditor.propsBlockPropagateRenameHeader',
-    //         ),
-    //         message: this.appManager.$t(
-    //           'assetEditor.propsBlockPropagateRenameBody',
-    //           { count: children.length },
-    //         ),
-    //       });
-
-    //     if (answer === 'cancel') {
-    //       return false;
-    //     }
-    //     if (answer === 'all') {
-    //       propagate_renames = pending_renames;
-    //       const rename_op_ids =
-    //         this.assetChanger.getPendingPropKeyRenameOpIds();
-    //       propagate_rename_op_id =
-    //         rename_op_ids.length > 0
-    //           ? rename_op_ids[rename_op_ids.length - 1]
-    //           : undefined;
-    //     }
-    //   }
-    // }
-
-    const res = await this.assetChanger.saveChanges();
-
-    // if (propagate_renames) {
-    //   await this._propagatePropKeyRenames(
-    //     propagate_renames,
-    //     propagate_rename_op_id,
-    //   );
-    // }
+    const res = await this.assetChanger.saveChanges(refactor.ops);
 
     this.historyModeVM = null;
-    return res;
+    if (!res) {
+      return false;
+    }
+
+    if (refactor.enumChanges.length > 0) {
+      await this._propagateEnumChanges(refactor.enumChanges);
+    }
+    return true;
   }
 
-  private _propKeyExistsInSavedBlock(rename: PropKeyRenamePending): boolean {
-    const block = this._findSavedBlock(rename.blockRef);
-    if (!block) return true;
-    // Metadata rename twin targets the same key as its pair, e.g.
-    // `__props\health` mirrors `health`. Check the real key so pairs
-    // survive or drop together.
-    const prop_key = rename.propKey.startsWith('__props\\')
-      ? rename.propKey.substring('__props\\'.length)
-      : rename.propKey;
-
-    if (
-      block.props[prop_key] !== undefined ||
-      (block.inherited ? block.inherited[prop_key] !== undefined : false)
-    ) {
-      return true;
+  /**
+   * Детектит рефакторинг-изменения в сохраняемом батче и, если есть кого
+   * менять, показывает диалог выбора объёма.
+   *
+   * @returns `null` — пользователь отменил сохранение;
+   *          `{ops, enumChanges}` — что отправить вместе с сохранением.
+   */
+  private async _prepareRefactorPropagation(): Promise<{
+    ops: AssetChangeBatchOpDTO[];
+    enumChanges: RefactorEnumChange[];
+  } | null> {
+    const asset_full = this.assetFull;
+    if (!asset_full) {
+      return { ops: [], enumChanges: [] };
     }
 
-    // TableBlock: __columns\<colName> prefix — check if any
-    // __columns\<colName>\* key exists in the block.
-    if (prop_key.startsWith('__columns\\')) {
-      const prefix = prop_key + '\\';
-      if (this._blockHasKeyWithPrefix(block, prefix)) return true;
+    const changes = extractRefactorChanges({
+      assetFull: asset_full,
+      changes: this.assetChanger.getOptimizedSaveBatch(asset_full.id),
+    });
+    if (changes.length === 0) {
+      return { ops: [], enumChanges: [] };
     }
 
-    // TableBlock: <rowId>\values\<colName> — check if the column
-    // definition itself exists rather than requiring the exact cell key.
-    const cell_match = prop_key.match(/^([^\\]+)\\values\\([^\\]+)$/);
-    if (cell_match) {
-      const col_prefix = `__columns\\${cell_match[2]}\\`;
-      if (this._blockHasKeyWithPrefix(block, col_prefix)) return true;
-    }
-
-    // TableBlock: bare <rowId> — table rows are stored as flat
-    // `rowId\values\...` / `rowId\index` keys with no exact rowId key,
-    // so check for children under the row prefix instead.
-    if (
-      !prop_key.includes('\\') &&
-      (this._blockHasKeyWithPrefix(block, '__columns\\') ||
-        block.props['__primary'] !== undefined ||
-        (block.inherited ? block.inherited['__primary'] !== undefined : false))
-    ) {
-      const row_prefix = prop_key + '\\';
-      if (this._blockHasKeyWithPrefix(block, row_prefix)) return true;
-    }
-
-    return false;
-  }
-
-  private _blockHasKeyWithPrefix(
-    block: {
-      props: Record<string, unknown>;
-      inherited: Record<string, unknown> | null;
-    },
-    prefix: string,
-  ): boolean {
-    for (const key of Object.keys(block.props)) {
-      if (key.startsWith(prefix)) return true;
-    }
-    if (block.inherited) {
-      for (const key of Object.keys(block.inherited)) {
-        if (key.startsWith(prefix)) return true;
+    const inheritance_changes: RefactorInheritanceChange[] = [];
+    const enum_changes: RefactorEnumChange[] = [];
+    for (const change of changes) {
+      if (change.kind === 'enum') {
+        enum_changes.push(change);
+      } else {
+        inheritance_changes.push(change);
       }
     }
-    return false;
+
+    // Пропагация по наследованию имеет смысл только при наличии потомков.
+    let plan: InheritancePropagationPlan = {
+      ops: [],
+      affectedChildIds: [],
+      skippedRightsChildIds: [],
+    };
+    if (
+      inheritance_changes.length > 0 &&
+      (await this._countChildrenAssets()) > 0
+    ) {
+      const children = (
+        await this.getAssetInstancesList({
+          where: { typeids: asset_full.id },
+        })
+      ).list;
+      plan = planInheritancePropagation(inheritance_changes, children);
+    }
+
+    const has_inheritance_targets = plan.affectedChildIds.length > 0;
+    const has_enum_targets = enum_changes.length > 0;
+    if (!has_inheritance_targets && !has_enum_targets) {
+      // Пропагировать нечего: сохраняем только текущий ассет, без диалога.
+      return { ops: [], enumChanges: [] };
+    }
+
+    const answer = await this.appManager
+      .get(DialogManager)
+      .show(ConfirmPropagateRenameDialog, {
+        header: this.appManager.$t(
+          has_inheritance_targets
+            ? 'assetEditor.refactor.header'
+            : 'assetEditor.refactor.headerEnum',
+        ),
+        message: buildRefactorDialogMessage({
+          changes,
+          affectedCount: plan.affectedChildIds.length,
+          skippedCount: plan.skippedRightsChildIds.length,
+          hasEnum: has_enum_targets,
+          t: (key, params) => this.appManager.$t(key, params as any),
+        }),
+        allCaption: this.appManager.$t('assetEditor.refactor.applyAll'),
+        currentCaption: this.appManager.$t('assetEditor.refactor.applyCurrent'),
+      });
+
+    if (answer === 'cancel') {
+      return null;
+    }
+    if (answer !== 'all') {
+      // 'current' либо диалог закрыт без явного выбора — сохраняем как есть.
+      return { ops: [], enumChanges: [] };
+    }
+    return { ops: plan.ops, enumChanges: enum_changes };
   }
 
-  private _findSavedBlock(blockRef: string) {
-    const parsed_ref = parseAssetNewBlockRef(blockRef);
-    if (parsed_ref.blockName) {
-      return (
-        this.assetFull?.blocks.find((b) => b.name === parsed_ref.blockName) ??
-        null
-      );
-    }
-    if (parsed_ref.blockId) {
-      return (
-        this.assetFull?.blocks.find((b) => b.id === parsed_ref.blockId) ?? null
-      );
-    }
-    return null;
+  private async _countChildrenAssets(): Promise<number> {
+    const asset_full = this.assetFull;
+    if (!asset_full) return 0;
+    const res = await this.appManager
+      .get(CreatorAssetManager)
+      .getAssetsView<{ id: string }>({
+        select: ['id'],
+        where: { typeids: asset_full.id },
+      });
+    return res.total;
   }
 
-  private async _propagatePropKeyRenames(
-    renames: PropKeyRenamePending[],
-    op_id?: number,
+  /**
+   * Enum-пропагация: сервер сам находит потребителей значений
+   * `{Enum, Name}` и заменяет их на `{Enum, Name, Title}`.
+   *
+   * Идёт отдельным вызовом (и отдельным `changeId`) — при падении сохранение
+   * уже применено, поэтому ошибка показывается явно, а `changeId`
+   * сохраняется в `propagatedChangeIds` для отката цепочкой.
+   */
+  private async _propagateEnumChanges(
+    enum_changes: RefactorEnumChange[],
   ): Promise<void> {
     const asset_full = this.assetFull;
     if (!asset_full) return;
-    const asset_id = asset_full.id;
-
-    const by_block_ref = new Map<
-      string,
-      { propKey: string; newPropKey: string }[]
-    >();
-    for (const rename of renames) {
-      const parsed_ref = parseAssetNewBlockRef(rename.blockRef);
-      const block = parsed_ref.blockId
-        ? asset_full.blocks.find((b) => b.id === parsed_ref.blockId)
-        : null;
-      const block_ref = block
-        ? (block.name ?? stringifyAssetNewBlockRef(null, block.id))
-        : parsed_ref.blockName;
-      if (!block_ref) continue;
-      const list = by_block_ref.get(block_ref) ?? [];
-      list.push({ propKey: rename.propKey, newPropKey: rename.newPropKey });
-      by_block_ref.set(block_ref, list);
-    }
-    if (by_block_ref.size === 0) return;
-
-    await this.assetChanger.executeTask(async () => {
-      const undo_fns: (() => Promise<void>)[] = [];
-      const creatorAssetManager = this.appManager.get(CreatorAssetManager);
-      for (const [block_ref, renames_for_block] of by_block_ref) {
-        const rename_props: AssetProps = {};
-        for (const { propKey, newPropKey } of renames_for_block) {
-          if (propKey === newPropKey) continue;
-          rename_props[`~${propKey}`] = newPropKey;
+    const creator_asset_manager = this.appManager.get(CreatorAssetManager);
+    let changed_count = 0;
+    for (const change of enum_changes) {
+      try {
+        const res = await creator_asset_manager.changeAssetsReplace(
+          buildEnumReplaceRequest(asset_full.id, change),
+        );
+        if (res.changeId) {
+          this.propagatedChangeIds.push(res.changeId);
         }
-        if (Object.keys(rename_props).length === 0) continue;
-        const change_res = await creatorAssetManager.changeAssets({
-          set: {
-            blocks: {
-              [block_ref]: {
-                props: rename_props,
-              },
-            },
-          },
-          where: {
-            typeids: asset_id,
-          },
-        });
-        const change_id = change_res.changeId;
-        if (change_id) {
-          undo_fns.push(async () => {
-            await creatorAssetManager.changeAssetsUndo({
-              changeId: change_id,
-            });
-          });
-        }
+        changed_count += res.ids.length;
+      } catch (err) {
+        console.error('AssetBlockEditor: propagate enum change', err);
+        this.appManager
+          .get(UiManager)
+          .showError(this.appManager.$t('assetEditor.refactor.propagateError'));
+        return;
       }
-      return async () => {
-        for (const fn of undo_fns) {
-          await fn();
-        }
-      };
-    }, op_id);
+    }
+    if (changed_count > 0) {
+      this.appManager.get(UiManager).showSuccess(
+        this.appManager.$t('assetEditor.refactor.propagateDone', {
+          count: changed_count,
+        }),
+      );
+    }
   }
 
+  /**
+   * Переименование сервисного имени блока.
+   *
+   * Раньше метод размножал переименование в детей отдельным прямым вызовом
+   * `changeAssets` — мимо истории, мимо диалога и безусловно. Теперь rename
+   * попадает в общий батч и проходит единый механизм рефакторинга в
+   * `saveChanges` (диалог + одна транзакция с сохранением).
+   */
   async changeBlockServiceName(
     block: ResolvedAssetBlock,
     new_name: string | null,
@@ -601,49 +600,10 @@ export class AssetBlockEditorVM implements IProjectContext, IEditorVM {
     if (block.name === new_name) {
       return; // Nothing to change
     }
-    await this.assetChanger.executeTask(async () => {
-      const change_res = await this.appManager
-        .get(CreatorAssetManager)
-        .changeAssets({
-          set: {
-            blocks: {
-              [stringifyAssetNewBlockRef(
-                block.name,
-                block.name !== null ? null : block.id,
-              )]: {
-                name: new_name,
-              },
-            },
-          },
-          where: {
-            // Change current asset and its child
-            or: {
-              op: AssetPropWhereOpKind.OR,
-              v: [
-                {
-                  id: asset_id,
-                },
-                {
-                  typeids: asset_id,
-                  ownblocks: new_name
-                    ? {
-                        op: AssetPropWhereOpKind.EQUAL_NOT,
-                        v: new_name,
-                      }
-                    : undefined,
-                },
-              ],
-            },
-          },
-        });
-      return async () => {
-        if (change_res.changeId) {
-          await this.appManager.get(CreatorAssetManager).changeAssetsUndo({
-            changeId: change_res.changeId,
-          });
-        }
-      };
+    this.assetChanger.changeBlockParams(asset_id, makeBlockRef(block), {
+      name: new_name,
     });
+    await this.saveChanges();
   }
 
   async commitBlock(_block_ref: string): Promise<boolean> {

@@ -39,6 +39,11 @@ import type {
   AssetPropValueAsset,
   AssetPropValueSelection,
 } from '../types/Props';
+import type { AssetPropWhere } from '../types/PropsWhere';
+import {
+  convertFilterExprToPropWhere,
+  parseFilterExpression,
+} from '../expression/filter/filterExpression';
 import ChangeCollectionTypeDialog from '../../components/Asset/ChangeCollectionTypeDialog.vue';
 import SelectAssetIconDialog from '../../components/Asset/SelectAssetIconDialog.vue';
 import SelectAssetColorDialog from '../../components/Asset/SelectAssetColorDialog.vue';
@@ -99,14 +104,93 @@ export class GameDesignMenuVM extends ProjectTreePresenterVM {
     this.setOptions(this._getTreePresenterOptions());
   }
 
+  public getSearchWhere(): AssetPropWhere {
+    return {
+      ...(this.searchValue ? this.searchValue.Where : {}),
+      issystem: false,
+      workspaceids: this.rootWorkspaceId,
+    };
+  }
+
+  public setSearchFromExpression(expr: string) {
+    const source = (expr ?? '').trim();
+    if (!source) {
+      this.searchValue = null;
+      return;
+    }
+    let where: AssetPropWhere = { query: source };
+    try {
+      const parsed = parseFilterExpression(source);
+      if (parsed) where = convertFilterExprToPropWhere(parsed);
+    } catch {
+      where = { query: source };
+    }
+    this.searchValue = { Str: source, Where: where } as AssetPropValueSelection;
+  }
+
+  public canOpenReplaceInSearch(): boolean {
+    const root_workspace = this.rootWorkspaceCached;
+    if (!root_workspace) return false;
+    return root_workspace.rights >= MIN_WORKSPACE_RIGHTS_TO_CHANGE;
+  }
+
+  public canReplaceInSearch(find: string, replace: string): boolean {
+    if (!this.canOpenReplaceInSearch()) return false;
+    return find.trim().length > 0 && replace.trim().length > 0;
+  }
+
+  public async replaceAllInSearch(
+    find: string,
+    replace_value: string,
+    options?: { wholeProp?: boolean; ignoreCase?: boolean },
+  ): Promise<boolean> {
+    const find_text = find.trim();
+    if (!find_text || !replace_value.trim()) return false;
+
+    const where = this.getSearchWhere();
+
+    const res = await this.appManager.get(UiManager).doTask(() =>
+      this.appManager.get(CreatorAssetManager).changeAssetsReplace({
+        where,
+        find: { '': find_text },
+        replace: { '': replace_value },
+        options,
+      }),
+    );
+    if (!res.success) return false;
+
+    const change_id = res.result.changeId;
+    const changed_num = res.result.ids.length;
+    if (changed_num > 0 && change_id) {
+      this.appManager
+        .get(UiManager)
+        .showSuccess(
+          this.appManager.$t('gddPage.menu.replaceDone', { num: changed_num }),
+          {
+            action: this.appManager.$t('gddPage.menu.replaceUndo'),
+            onAction: () => {
+              this.appManager
+                .get(UiManager)
+                .doTask(() =>
+                  this.appManager
+                    .get(CreatorAssetManager)
+                    .changeAssetsUndo({ changeId: change_id }),
+                );
+            },
+          },
+        );
+    } else {
+      this.appManager
+        .get(UiManager)
+        .showSuccess(this.appManager.$t('gddPage.menu.replaceNothing'));
+    }
+    return true;
+  }
+
   private _getTreePresenterOptions(): ProjectTreePresenterVMOptions {
     return {
       showWorkspaceTree: !this.searchValue,
-      assetWhere: {
-        ...(this.searchValue ? this.searchValue.Where : {}),
-        issystem: false,
-        workspaceids: this.rootWorkspaceId,
-      },
+      assetWhere: this.getSearchWhere(),
       allowDragChange: true,
       additionalOptions: [],
       allowSelectWorkspaces: true,

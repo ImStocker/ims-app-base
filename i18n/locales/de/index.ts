@@ -297,6 +297,17 @@ export default {
   gddPage: {
     menu: {
       search: 'Suchen',
+      replace: 'Suchen und Ersetzen',
+      replaceFind: 'Text finden',
+      replaceWhole: 'Genaue Übereinstimmung',
+      replaceIgnoreCase: 'Groß-/Kleinschreibung beachten',
+      replacePlaceholder: 'Ersetzen durch',
+      replaceAll: 'Alle ersetzen',
+      replaceConfirmHeader: 'Ersetzen',
+      replaceConfirm: 'In {num} durch die Suche gefundenen Elementen ersetzen?',
+      replaceDone: 'In {num} Elementen ersetzt',
+      replaceNothing: 'Nichts zu ersetzen',
+      replaceUndo: 'Rückgängig',
       noResults: 'Nichts gefunden',
       empty: 'Noch nichts vorhanden',
       noSubFolders: 'Noch keine Unterordner',
@@ -491,12 +502,31 @@ export default {
     propsBlockChildrenDeleteHeader: 'Vorlagenelement-Eigenschaft löschen',
     propsBlockChildrenDeleteBody:
       'Die Eigenschaft wird in allen Instanzen dieser Vorlage gelöscht. Möchtest du wirklich fortfahren?',
-    propsBlockPropagateRenameHeader:
-      'Die Änderung betrifft untergeordnete Elemente',
-    propsBlockPropagateRenameBody:
-      'Die Umbenennung des Eigenschaftsschlüssels wird auf {count} untergeordnete Elemente angewendet. Umbenennung auf alle anwenden?',
     propsBlockPropagateRenameAll: 'Für alle',
     propsBlockPropagateRenameCurrent: 'Nur für aktuelles',
+    refactor: {
+      header: 'Die Änderung betrifft untergeordnete Elemente',
+      headerEnum: 'Die Änderung betrifft andere Projektelemente',
+      applyAll: 'Auf alle anwenden',
+      applyCurrent: 'Nur auf aktuelles anwenden',
+      moreChanges: '…und {count} weitere Änderungen',
+      childrenCount:
+        'Die Änderung wird auf {count} untergeordnete Elemente angewendet.',
+      skippedRights:
+        '{count} Elemente werden wegen Berechtigungen übersprungen.',
+      enumTargets:
+        'Die Änderung wird auf alle Projektelemente angewendet, die diesen Enum-Wert verwenden.',
+      keyRename: 'Feld "{from}" in "{to}" umbenennen',
+      keyDelete: 'Feld "{from}" löschen',
+      blockRename: 'Block "{from}" in "{to}" umbenennen',
+      blockDelete: 'Block "{from}" löschen',
+      primaryChange: 'Primärspalte auf "{value}" setzen',
+      enumRename: 'Enum-Wert "{from}" in "{to}" umbenennen',
+      enumTitleChange: 'Titel des Enum-Werts "{name}" ändern',
+      propagateDone: 'Änderungen auf {count} Elemente angewendet',
+      propagateError:
+        'Das Asset wurde gespeichert, aber verwandte Elemente wurden nicht aktualisiert',
+    },
     propsBlockFieldType: 'Typ',
     embedBlockAddDialogHeader: 'Eingebettetes Dokument einfügen',
     embedBlockLinkAnyPlaceholder:

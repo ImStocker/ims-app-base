@@ -1216,6 +1216,32 @@ export default class CreatorAssetManager extends AppSubManagerBase {
     return res;
   }
 
+  async changeAssetsReplace(
+    params: {
+      where: AssetWhereParams;
+      find: AssetProps;
+      replace: AssetProps;
+      options?: { wholeProp?: boolean; ignoreCase?: boolean };
+    },
+    options?: { pid?: string },
+  ): Promise<AssetsChangeResult> {
+    assert(this._projectDatabase, 'Not inited');
+    const res = await this._projectDatabase.assetsChangeReplace(
+      params,
+      options,
+    );
+    this.updateFullInstanceCache(res);
+    await this.projectContentEvents.notify({
+      aUpsIds: res.ids,
+      aDelIds: [],
+      wUpsIds: [],
+      wDelIds: [],
+      wTchIds: res.touchedWIds,
+      instigator: this._getCurrentUserInstigator(),
+    });
+    return res;
+  }
+
   async changeAssetsUndo(
     params: {
       changeId: string;

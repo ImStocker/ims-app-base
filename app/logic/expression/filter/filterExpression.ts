@@ -285,3 +285,54 @@ export function setFilterInAssetPropsSelection(
 
   return new_selection;
 }
+
+export function splitTopLevelQuery(expr: string): {
+  find: string;
+  where: string;
+} {
+  const source = (expr ?? '').trim();
+  if (!source) return { find: '', where: '' };
+
+  let parsed: FilterExprStart | null = null;
+  try {
+    parsed = parseFilterExpression(source, { trackLocations: true });
+  } catch {
+    parsed = null;
+  }
+  if (!parsed) return { find: '', where: source };
+
+  const leaves: FilterExpr[] = [];
+  const flatten = (node: FilterExpr) => {
+    if (node.type === 'and') {
+      flatten(node.left);
+      flatten(node.right);
+    } else {
+      leaves.push(node);
+    }
+  };
+  flatten(parsed);
+
+  const slice = (node: FilterExpr): string | null => {
+    const location = node.location;
+    if (!location) return null;
+    return source.substring(location.start.offset, location.end.offset).trim();
+  };
+
+  if (!leaves.some((leaf) => leaf.type === 'query')) {
+    return { find: '', where: source };
+  }
+
+  const find_parts: string[] = [];
+  const where_parts: string[] = [];
+  for (const leaf of leaves) {
+    const part = slice(leaf);
+    if (part === null || !part) return { find: '', where: source };
+    if (leaf.type === 'query') find_parts.push(part);
+    else where_parts.push(part);
+  }
+
+  return {
+    find: find_parts.join(' '),
+    where: where_parts.join(' '),
+  };
+}

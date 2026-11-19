@@ -10,10 +10,74 @@
       <div class="GameDesignMenu-content">
         <div class="GameDesignMenu-header">
           <slot></slot>
-          <project-tree-search
-            v-model="searchValue"
-            class="GameDesignMenu-header-search"
-          ></project-tree-search>
+          <div class="GameDesignMenu-header-searches">
+            <div v-if="replaceMode" class="GameDesignMenu-header-searchRow">
+              <ims-input
+                v-model="findValue"
+                class="GameDesignMenu-header-search"
+                :placeholder="$t('gddPage.menu.replaceFind') + '...'"
+                autofocus
+              ></ims-input>
+              <button
+                type="button"
+                class="is-input GameDesignMenu-header-replaceButton"
+                :class="{ 'is-active': wholeProp }"
+                :title="$t('gddPage.menu.replaceWhole')"
+                @click="wholeProp = !wholeProp"
+              >
+                <i class="ri-equal-fill GameDesignMenu-header-replaceIcon"></i>
+              </button>
+              <button
+                type="button"
+                class="is-input GameDesignMenu-header-replaceButton"
+                :class="{ 'is-active': ignoreCase }"
+                :title="$t('gddPage.menu.replaceIgnoreCase')"
+                @click="ignoreCase = !ignoreCase"
+              >
+                <span class="GameDesignMenu-header-replaceIcon">Aa</span>
+              </button>
+            </div>
+            <div class="GameDesignMenu-header-searchRow">
+              <project-tree-search
+                ref="searchInput"
+                v-model="searchValue"
+                class="GameDesignMenu-header-search"
+              ></project-tree-search>
+              <button
+                type="button"
+                class="is-input GameDesignMenu-header-replaceButton"
+                :class="{ 'is-active': replaceMode }"
+                :title="$t('gddPage.menu.replace')"
+                :disabled="!canOpenReplace && !replaceMode"
+                @click="toggleReplaceMode"
+              >
+                <i
+                  class="GameDesignMenu-header-replaceIcon"
+                  :class="
+                    replaceMode
+                      ? 'ri-find-replace-fill'
+                      : 'ri-find-replace-line'
+                  "
+                ></i>
+              </button>
+            </div>
+            <div v-if="replaceMode" class="GameDesignMenu-header-searchRow">
+              <ims-input
+                v-model="replaceValue"
+                class="GameDesignMenu-header-search"
+                :placeholder="$t('gddPage.menu.replacePlaceholder') + '...'"
+              ></ims-input>
+              <button
+                type="button"
+                class="is-input GameDesignMenu-header-replaceButton"
+                :title="$t('gddPage.menu.replaceAll')"
+                :disabled="!canReplace || replacing"
+                @click="doReplaceAll"
+              >
+                <i class="ri-check-line GameDesignMenu-header-replaceIcon"></i>
+              </button>
+            </div>
+          </div>
         </div>
         <div class="GameDesignMenu-items tiny-scrollbars">
           <project-tree-presenter
@@ -95,6 +159,8 @@ import type { ProjectTreeSelectedItem } from '../../logic/vm/IProjectTreePresent
 import ContextMenuZone from '../Common/ContextMenuZone.vue';
 import CreateFolderBox from '../Asset/CreateFolderBox.vue';
 import CreateAssetBox from '../Asset/CreateAssetBox.vue';
+import ImsInput from '../Common/ImsInput.vue';
+import { splitTopLevelQuery } from '../../logic/expression/filter/filterExpression';
 import { openProjectLink } from '../../logic/router/routes-helpers';
 
 export default defineComponent({
@@ -107,6 +173,7 @@ export default defineComponent({
     ContextMenuZone,
     CreateFolderBox,
     CreateAssetBox,
+    ImsInput,
   },
   props: {
     gddVM: { type: Object as PropType<GameDesignMenuVM>, required: true },
@@ -114,6 +181,12 @@ export default defineComponent({
   data() {
     return {
       selection: this.gddVM.selection,
+      replaceMode: false,
+      findValue: '',
+      replaceValue: '',
+      wholeProp: false,
+      ignoreCase: false,
+      replacing: false,
     };
   },
   computed: {
@@ -125,6 +198,15 @@ export default defineComponent({
         const vm = this.gddVM;
         vm.searchValue = val;
       },
+    },
+    canOpenReplace(): boolean {
+      return !!this.gddVM && this.gddVM.canOpenReplaceInSearch();
+    },
+    canReplace(): boolean {
+      return (
+        !!this.gddVM &&
+        this.gddVM.canReplaceInSearch(this.findValue, this.replaceValue)
+      );
     },
     showCreationButtons() {
       return this.canCreateElements && !this.projectIsHub;
@@ -252,6 +334,44 @@ export default defineComponent({
       const vm = this.gddVM;
       vm.setMultiSelection(val);
     },
+    flushSearch() {
+      const input = this.$refs.searchInput as
+        | InstanceType<typeof ProjectTreeSearch>
+        | undefined;
+      input?.emitChange();
+    },
+    toggleReplaceMode() {
+      const vm = this.gddVM;
+      if (!vm) return;
+      this.flushSearch();
+      if (this.replaceMode) {
+        const where_str = (this.searchValue?.Str ?? '').trim();
+        const find_str = this.findValue.trim();
+        vm.setSearchFromExpression(
+          [where_str, find_str].filter((part) => part).join(' '),
+        );
+        this.replaceMode = false;
+      } else {
+        const { find, where } = splitTopLevelQuery(this.searchValue?.Str ?? '');
+        this.findValue = find;
+        vm.setSearchFromExpression(where);
+        this.replaceMode = true;
+      }
+    },
+    async doReplaceAll() {
+      const vm = this.gddVM;
+      if (!vm || this.replacing) return;
+      this.replacing = true;
+      try {
+        this.flushSearch();
+        await vm.replaceAllInSearch(this.findValue, this.replaceValue, {
+          wholeProp: this.wholeProp,
+          ignoreCase: this.ignoreCase,
+        });
+      } finally {
+        this.replacing = false;
+      }
+    },
     getImportExportMenuItems(): MenuListItem[] {
       if (!this.gddWorkspace) return [];
       const gdd_workspace = this.gddWorkspace;
@@ -341,9 +461,40 @@ export default defineComponent({
   margin-bottom: 10px;
   margin-left: 0px;
 }
+.GameDesignMenu-header-searches {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.GameDesignMenu-header-searchRow {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
 .GameDesignMenu-header-search {
   min-width: 0;
   flex: 1;
+}
+.GameDesignMenu-header-replaceButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  cursor: pointer;
+
+  &.is-active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  &:disabled {
+    opacity: 0.55;
+  }
+}
+.GameDesignMenu-header-replaceIcon {
+  font-size: var(--input-font-size);
 }
 
 .GameDesignMenu-items {

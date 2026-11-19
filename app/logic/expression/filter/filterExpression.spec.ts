@@ -4,6 +4,7 @@ import {
   stringifyFilterExpression,
   convertFilterExprToPropWhere,
   setFilterInAssetPropsSelection,
+  splitTopLevelQuery,
 } from './filterExpression';
 
 test('parseFilterExpression: block value sugar', () => {
@@ -181,5 +182,73 @@ test('setFilterInAssetPropsSelection: change in place', () => {
       type: 'enemy',
       inside: '123',
     },
+  });
+});
+
+describe('splitTopLevelQuery', () => {
+  test('splits a top level query out of a conjunction', () => {
+    expect(splitTopLevelQuery('inside:abc xxx')).toEqual({
+      find: 'xxx',
+      where: 'inside:abc',
+    });
+  });
+
+  test('query only goes to find', () => {
+    expect(splitTopLevelQuery('xxx')).toEqual({ find: 'xxx', where: '' });
+  });
+
+  test('no query keeps everything in where', () => {
+    expect(splitTopLevelQuery('inside:abc')).toEqual({
+      find: '',
+      where: 'inside:abc',
+    });
+    expect(splitTopLevelQuery('yyy:das')).toEqual({
+      find: '',
+      where: 'yyy:das',
+    });
+  });
+
+  test('several queries separated by filters are joined in find', () => {
+    expect(splitTopLevelQuery('aaa inside:c bbb')).toEqual({
+      find: 'aaa bbb',
+      where: 'inside:c',
+    });
+  });
+
+  test('non top level query is not split', () => {
+    expect(splitTopLevelQuery('a OR b')).toEqual({
+      find: '',
+      where: 'a OR b',
+    });
+    expect(splitTopLevelQuery('NOT xxx')).toEqual({
+      find: '',
+      where: 'NOT xxx',
+    });
+    expect(splitTopLevelQuery('(xxx)')).toEqual({
+      find: '',
+      where: '(xxx)',
+    });
+  });
+
+  test('query inside a group next to a top level query still splits', () => {
+    expect(splitTopLevelQuery('(x) y')).toEqual({
+      find: 'y',
+      where: '(x)',
+    });
+  });
+
+  test('empty and unparsable input is kept in where', () => {
+    expect(splitTopLevelQuery('')).toEqual({ find: '', where: '' });
+    expect(splitTopLevelQuery('   ')).toEqual({ find: '', where: '' });
+    expect(splitTopLevelQuery('  inside:c   xxx  ')).toEqual({
+      find: 'xxx',
+      where: 'inside:c',
+    });
+  });
+
+  test('where part stays parseable', () => {
+    const { where } = splitTopLevelQuery('type:ability block:>30 hello');
+    expect(where).toBe('type:ability block:>30');
+    expect(parseFilterExpression(where)).not.toBeNull();
   });
 });
