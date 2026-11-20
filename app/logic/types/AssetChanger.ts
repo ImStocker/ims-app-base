@@ -831,6 +831,13 @@ export abstract class AssetChanger {
     }
 
     const job = this._lastSavingJob.then(async () => {
+      // Re-check AFTER previously queued saves have settled: they may have
+      // consumed exactly the changes this call was invoked for, and sending
+      // again would re-emit already-persisted ops (and stale undo entries)
+      // to the server — e.g. a just-added block being reverted.
+      if (!this._hasChangesInHistory) {
+        return false;
+      }
       const batches = this._getBatchedChanges();
       if (batches.size === 0) return false;
 
